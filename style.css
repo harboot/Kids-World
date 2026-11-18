@@ -151,7 +151,10 @@ h1 {
   font-weight: 900;
   letter-spacing: -.065em;
 }
-h1 span { color: var(--accent); }
+.title-brand > span, .title-complete { color: var(--accent); }
+.title-complete { display: none; font-size: clamp(37px, 7vw, 96px); letter-spacing: -.05em; }
+[data-state="complete"] .title-brand, [data-state="complete"] .guide { display: none; }
+[data-state="complete"] .title-complete { display: inline; }
 .menu-message { margin: 0; color: var(--subtle); font-size: clamp(14px, 2vw, 18px); line-height: 1.45; }
 .start-button {
   display: inline-flex;
@@ -264,7 +267,7 @@ kbd {
 .dpad button[data-action="forward"] { grid-area: 1 / 2; }
 .dpad button[data-action="left"] { grid-area: 2 / 1; }
 .dpad button[data-action="right"] { grid-area: 2 / 3; }
-.dpad button[data-action="fire"] {
+.dpad button[data-action="jump"] {
   grid-area: 3 / 2;
   background: #4d2d1cef;
   border-color: var(--accent);
@@ -274,8 +277,8 @@ kbd {
 .arrow { width: 10px; height: 10px; border-top: 2px solid currentColor; border-right: 2px solid currentColor; transform: translateY(2px) rotate(-45deg); }
 [data-action="left"] .arrow { transform: rotate(-135deg); }
 [data-action="right"] .arrow { transform: rotate(45deg); }
-[data-action="fire"] .arrow { transform: translateY(-2px) rotate(135deg); }
-.fire-label { font: 800 8px/1 ui-monospace, monospace; letter-spacing: .01em; }
+[data-action="jump"] .arrow { transform: translateY(-2px) rotate(135deg); }
+.pad-label { font: 800 8px/1 ui-monospace, monospace; letter-spacing: .01em; }
 
 @media (orientation: portrait) {
   [data-input="touch"] .orientation { display: block; margin: 13px 0 0; color: var(--accent); font-size: 12px; }
