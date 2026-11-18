@@ -36,7 +36,7 @@ export function fishPose(index, time, pose) {
   const dx = Math.cos(angle) * POND.radiusX * size;
   const dz = Math.sin(angle) * POND.radiusZ * size;
   pose.x = POND.x + dx;
-  pose.y = POND.waterY - 0.13 + Math.cos(angle * 2) * 0.028;
+  pose.y = POND.waterY - 0.137 + Math.cos(angle * 2) * 0.016;
   pose.z = POND.z + dz;
   pose.yaw = Math.atan2(index % 2 ? dz * POND.radiusX : -dz * POND.radiusX,
     index % 2 ? -dx * POND.radiusZ : dx * POND.radiusZ);
@@ -92,7 +92,7 @@ export function addPond(THREE, { scene, mesh, box, facet, matte, obstacles, inst
 
   const fins = new THREE.BufferGeometry();
   fins.setAttribute('position', new THREE.Float32BufferAttribute([
-    0, 0, 0, 0, 0.17, -0.30, 0, -0.17, -0.30,
+    0, 0, 0, 0, 0.078, -0.30, 0, -0.078, -0.30,
   ], 3));
   fins.computeVertexNormals();
   const eye = new THREE.SphereGeometry(0.035, 5, 4);
@@ -103,7 +103,7 @@ export function addPond(THREE, { scene, mesh, box, facet, matte, obstacles, inst
     const tail = new THREE.Group();
     group.name = `Pond fish ${index + 1}`;
     const skin = matte(color);
-    mesh(facet, skin, 0, 0, 0, 0.15, 0.15, 0.41, group);
+    mesh(facet, skin, 0, 0, 0, 0.15, 0.086, 0.41, group);
     const fin = new THREE.MeshLambertMaterial({ color, side: THREE.DoubleSide });
     mesh(fins, fin, 0, 0, 0, 1, 1, 1, tail);
     tail.position.z = -0.33;

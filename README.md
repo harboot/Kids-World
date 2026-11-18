@@ -12,10 +12,10 @@ Returning to Flower Garden or using **Restart area** starts a fresh visit. The b
 
 | Input | Move | Look | Jump | Interact |
 | --- | --- | --- | --- | --- |
-| Desktop | W, A, S, D | Arrow keys | Space | M or click the circle near an object |
+| Desktop | W, A, S, D | Arrow keys or click the scene to use the mouse | Space | M or click the circle when the cursor is free |
 | Touch | Left joystick | Drag the right side | Tap the scene | Tap the circle near an object |
 
-Press Esc to pause on desktop.
+Press Esc to pause and release the cursor on desktop.
 
 Each area has its own looping music, with sound cues for jumping and interacting. The game generates the audio with the Web Audio API after you select **Explore**. The music-note button mutes all sound and remembers the setting between areas.
 

@@ -156,6 +156,7 @@ function explore(THREE, renderer, level) {
   const motion = new THREE.Vector2();
   const speed = new THREE.Vector2();
   const stickAxis = new THREE.Vector2();
+  const mouseDelta = new THREE.Vector2();
   const interactionPoint = new THREE.Vector3();
   const falling = { feet: 0, speed: 0, grounded: true };
   let stickPointer = null;
@@ -201,6 +202,7 @@ function explore(THREE, renderer, level) {
     keys.clear();
     presses.clear();
     lookPointer = null;
+    mouseDelta.set(0, 0);
     resetStick();
     interaction.hidden = true;
   }
@@ -233,6 +235,7 @@ function explore(THREE, renderer, level) {
     game.dataset.state = paused ? 'paused' : 'menu';
     startLabel.textContent = paused ? 'Resume exploring' : 'Explore';
     menuMessage.textContent = paused ? 'Take a break, then continue exploring.' : initialMessage;
+    if (document.pointerLockElement === canvas) document.exitPointerLock();
     renderPending = true;
   }
 
@@ -332,6 +335,25 @@ function explore(THREE, renderer, level) {
   }
 
   interaction.addEventListener('click', interact);
+  interaction.addEventListener('touchend', event => {
+    if (!touchMode()) return;
+    // Handle the tap even when a preceding joystick gesture suppressed its click.
+    event.preventDefault();
+    const { clientX, clientY } = event.changedTouches[0];
+    if (interaction.contains(document.elementFromPoint(clientX, clientY))) interact();
+  }, { passive: false });
+  canvas.addEventListener('click', () => {
+    if (!playing() || touchMode() || document.pointerLockElement === canvas) return;
+    // The arrow keys and the interaction button are available without a lock.
+    canvas.requestPointerLock?.()?.catch(() => {});
+  });
+  document.addEventListener('pointerlockchange', () => {
+    if (document.pointerLockElement === canvas) {
+      if (!playing()) document.exitPointerLock();
+    } else if (playing() && !touchMode()) {
+      menu(true);
+    }
+  });
   window.addEventListener('pageshow', event => {
     if (!event.persisted) return;
     rememberArea();
@@ -381,6 +403,12 @@ function explore(THREE, renderer, level) {
     pitch = clamp(pitch - dy, -1.43, 1.43);
     updateCamera();
   }
+
+  window.addEventListener('mousemove', event => {
+    if (!playing() || document.pointerLockElement !== canvas) return;
+    mouseDelta.x += event.movementX;
+    mouseDelta.y += event.movementY;
+  }, { passive: true });
 
   window.addEventListener('keydown', event => {
     if (event.code === 'Escape' && playing()) {
@@ -518,8 +546,9 @@ function explore(THREE, renderer, level) {
     if (playing()) {
       const horizontal = Number(keys.has('lookRight')) - Number(keys.has('lookLeft'));
       const vertical = Number(keys.has('lookDown')) - Number(keys.has('lookUp'));
-      const dx = horizontal * dt * 1.65;
-      const dy = vertical * dt * 1.65;
+      const dx = horizontal * dt * 1.65 + mouseDelta.x * 0.0022;
+      const dy = vertical * dt * 1.65 + mouseDelta.y * 0.0022;
+      mouseDelta.set(0, 0);
       if (dx || dy) look(dx, dy);
       if (!seated) move(dt);
       world.update?.(dt, camera.position);
@@ -538,6 +567,7 @@ function explore(THREE, renderer, level) {
     audio.setPlaying(false);
     clearInput();
     showError('The WebGL context was lost. Reload the page to continue exploring.');
+    if (document.pointerLockElement === canvas) document.exitPointerLock();
   });
   new ResizeObserver(resize).observe(canvas);
   window.addEventListener('resize', resize);

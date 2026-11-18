@@ -19,8 +19,10 @@ function smooth(value) {
 function naturalHeight(x, z) {
   const hillRadius = Math.hypot((x - HILL.x) / HILL.radiusX, (z - HILL.z) / HILL.radiusZ);
   const hill = HILL.height * (1 - smooth(hillRadius));
-  const basin = -0.42 * (1 - smooth((pondDistance(x, z) - 0.76) / 0.395));
-  return hill + basin;
+  const shore = pondDistance(x, z);
+  const basin = -0.42 * (1 - smooth((shore - 0.76) / 0.395));
+  const deepBed = -0.14 * (1 - smooth((shore - 0.82) / 0.16));
+  return hill + basin + deepBed;
 }
 
 // Sample the same triangles that the renderer draws.
@@ -66,6 +68,7 @@ export function drawTerrain(THREE, scene, terrain) {
   const low = new THREE.Color(0x77984f);
   const high = new THREE.Color(0x9fba6a);
   const bank = new THREE.Color(0xb4a271);
+  const pondBed = new THREE.Color(0x6f9b84);
   const color = new THREE.Color();
 
   for (let row = 0; row <= rows; row++) {
@@ -77,6 +80,7 @@ export function drawTerrain(THREE, scene, terrain) {
       const shade = 0.29 + 0.12 * Math.sin(x * 0.37 + z * 0.29) + 0.13 * Math.max(0, y);
       color.copy(low).lerp(high, shade);
       if (y < -0.025) color.lerp(bank, Math.min(1, -y * 4));
+      if (y < POND.waterY) color.lerp(pondBed, smooth((POND.waterY - y) / 0.24));
       colors.push(color.r, color.g, color.b);
       if (row === rows || col === columns) continue;
       const i = row * stride + col;
@@ -94,11 +98,12 @@ export function drawTerrain(THREE, scene, terrain) {
   scene.add(ground);
 }
 
-export function addHillPath(THREE, scene, getTerrainHeight) {
+export function addHillPath(THREE, { scene, getTerrainHeight, instances, matte }) {
   const points = [[10, 6.2], [12.0, 5.45], [14.1, 5.8], [15.9, 6.8], [16.9, 8.9], [17.15, 11.15], [16.6, 13.7]];
   const curve = new THREE.CatmullRomCurve3(points.map(([x, z]) => new THREE.Vector3(x, 0, z)));
   const positions = [];
   const indices = [];
+  const tufts = [];
   const segments = 52;
   for (let i = 0; i <= segments; i++) {
     const t = i / segments;
@@ -109,6 +114,13 @@ export function addHillPath(THREE, scene, getTerrainHeight) {
       const x = point.x + side * tangent.z * width;
       const z = point.z - side * tangent.x * width;
       positions.push(x, getTerrainHeight(x, z) + 0.038, z);
+      if (i >= 4 && i % 3 === 1) {
+        const offset = side * (0.42 + 1.03 * (0.5 + 0.5 * Math.sin(i * 1.7 + side)));
+        const grassX = x + offset * tangent.z;
+        const grassZ = z - offset * tangent.x;
+        const scale = 0.66 + (i % 5) * 0.13;
+        tufts.push([grassX, getTerrainHeight(grassX, grassZ), grassZ, scale, scale, scale, i * 1.6]);
+      }
     }
     if (i < segments) {
       const a = i * 2;
@@ -122,4 +134,15 @@ export function addHillPath(THREE, scene, getTerrainHeight) {
   const path = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({ color: 0xe6c78c, side: THREE.DoubleSide }));
   path.receiveShadow = true;
   scene.add(path);
+
+  const blades = new THREE.BufferGeometry();
+  blades.setAttribute('position', new THREE.Float32BufferAttribute([
+    -0.09, -0.05, 0, -0.02, -0.05, 0, -0.14, 0.19, 0.025,
+    -0.035, -0.05, 0, 0.045, -0.05, 0, 0.03, 0.29, -0.038,
+    0.02, -0.05, 0.015, 0.095, -0.05, 0.015, 0.17, 0.16, 0.10,
+  ], 3));
+  blades.computeVertexNormals();
+  const grass = matte(0x668a43);
+  grass.side = THREE.DoubleSide;
+  instances(blades, grass, tufts);
 }

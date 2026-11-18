@@ -55,7 +55,7 @@ test('the hill can be climbed and descended with continuous ground contact', () 
 
 test('steep terrain and invalid heights block movement; a stair can be stepped up', () => {
   for (const height of [5, -5, NaN, Infinity]) {
-    const bad = { obstacles: [], getGroundHeight: x => height * Number(x > 0) };
+    const bad = { obstacles: [], getGroundHeight: x => x > 0 ? height : 0 };
     assert.equal(walkElevation(bad, { x: 0, z: 0 }, 0.1, 0, 0, true), null);
   }
 
@@ -129,7 +129,13 @@ test('all eight swimming paths remain within the shore and have deterministic re
     for (let t = 0; t < 120; t += 0.083) {
       fishPose(i, t, pose);
       assert.ok(pondDistance(pose.x, pose.z) < 0.86);
-      assert.ok(pose.y < POND.waterY && pose.y > getTerrainHeight(pose.x, pose.z));
+      assert.ok(pose.y + 0.11 < POND.waterY);
+      for (const offset of [-0.7, 0, 0.5]) {
+        const x = pose.x + Math.sin(pose.yaw) * offset;
+        const z = pose.z + Math.cos(pose.yaw) * offset;
+        assert.ok(pondDistance(x, z) < 0.92);
+        assert.ok(pose.y - 0.11 > getTerrainHeight(x, z));
+      }
       assert.ok([pose.x, pose.y, pose.z, pose.yaw, pose.tail].every(Number.isFinite));
     }
     fishPose(i, 0, pose);

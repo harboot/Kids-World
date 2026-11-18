@@ -237,7 +237,7 @@ function buildGarden(THREE, scene, touch, playerRadius, camera) {
 
   mesh(box, grass, 0, -0.54, 0, 170, 0.1, 160);
   drawTerrain(THREE, scene, terrain);
-  addHillPath(THREE, scene, getTerrainHeight);
+  addHillPath(THREE, { scene, getTerrainHeight, instances, matte });
   mesh(box, path, 0, 0.005, -1.5, 1.56, 0.01, 40);
   mesh(box, path, -7.1, 0.007, 4.18, 14.3, 0.014, 1.35);
   mesh(box, path, -14.0, 0.009, 4.65, 2.55, 0.018, 1.27);

@@ -50,7 +50,9 @@ export function addCabin(THREE, { scene, mesh, box, matte, obstacles, collision 
     part(darkWood, windowX, deck + 1.53, front + 0.152, 0.07, 1.0, 0.04);
     part(darkWood, windowX, deck + 1.53, front + 0.152, 1.33, 0.071, 0.04);
     part(paleWood, windowX, deck + 0.93, front + 0.145, 1.7, 0.11, 0.27);
-    part(darkWood, x + side * 3.27, deck + 1.42, -13.98, 0.21, 2.84, 0.23);
+    const postX = x + side * 3.27;
+    part(darkWood, postX, deck + 1.42, -13.98, 0.21, 2.84, 0.23);
+    obstacles.push(collision(postX, -13.98, 0.21, 0.23, deck + 2.84));
   }
   part(roof, x, deck + 2.63, -14.73, 7.24, 0.19, 2.11).rotation.x = 0.11;
 
@@ -68,6 +70,7 @@ export function addCabin(THREE, { scene, mesh, box, matte, obstacles, collision 
   part(darkWood, 0, 0.07, 0.149, 1.60, 0.14, 0.18, door);
   part(glass, 0, 1.73, 0.154, 0.55, 0.36, 0.035, door);
   part(brass, 0.43, 1.04, 0.178, 0.13, 0.12, 0.12, door);
+  obstacles.push(collision(x, front + 0.2, 1.6, 0.24, deck + 2.31));
 
   part(paleWood, benchX, deck + 0.47, porchZ, 1.62, 0.115, 0.5);
   for (const legX of [benchX - 0.59, benchX + 0.59]) {
