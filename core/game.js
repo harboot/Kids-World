@@ -90,15 +90,18 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   }
 
   const { camera } = view;
-  const worlds = createWorldManager(THREE, { areas, camera, touch: touchDevice, playerRadius: PLAYER_RADIUS });
-  const player = createPlayer(THREE, camera);
   const audio = createAudio(game.querySelector('#sound'));
+  const worlds = createWorldManager(THREE, {
+    areas, camera, touch: touchDevice, playerRadius: PLAYER_RADIUS,
+    services: { hud: game, isPlaying: playing, playCue: audio.playCue },
+  });
+  const player = createPlayer(THREE, camera);
   const interactions = createInteractions(THREE, {
     button: game.querySelector('#interaction'),
     glyph: game.querySelector('#interaction-glyph'),
     label: game.querySelector('#interaction-label'),
     camera, playing, touchMode,
-    runAction(item) { item.act({ heardCue: audio.effect('interact'), sit, travel }); },
+    runAction(item) { item.act({ heardCue: !item.silent && audio.effect('interact'), sit, travel }); },
   });
   const controls = createControls(THREE, {
     game, canvas, joystick: game.querySelector('#joystick'), thumb: game.querySelector('#joystick-thumb'),

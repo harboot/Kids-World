@@ -247,3 +247,54 @@ kbd {
   .start-button { margin-top: 10px; min-height: 40px; }
   .guide { margin-top: 10px; padding-top: 7px; gap: 4px 8px; }
 }
+
+.snow-activity {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+#game:not([data-state="playing"]) .snow-activity { display: none; }
+.snow-activity p {
+  position: absolute;
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 18px;
+  background: #f2faff;
+  color: #27495e;
+  font-size: 13px;
+  font-weight: 750;
+  box-shadow: 0 2px 10px #21384f20;
+}
+
+.snow-progress { top: calc(72px + env(safe-area-inset-top)); left: calc(20px + env(safe-area-inset-left)); }
+.snow-complete { top: calc(105px + env(safe-area-inset-top)); left: calc(20px + env(safe-area-inset-left)); }
+.snow-notice {
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  left: 50%;
+  width: max-content;
+  max-width: 70%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+.snow-notice:empty { display: none; }
+.snow-throw-key { right: calc(20px + env(safe-area-inset-right)); bottom: calc(20px + env(safe-area-inset-bottom)); }
+.snow-throw {
+  position: absolute;
+  right: calc(16px + env(safe-area-inset-right));
+  bottom: calc(22px + env(safe-area-inset-bottom));
+  min-width: 66px;
+  min-height: 50px;
+  padding: 8px 14px;
+  border: 2px solid #ebfaff;
+  border-radius: 28px;
+  background: #316381;
+  color: #faffff;
+  font-weight: 800;
+  box-shadow: 0 3px 11px #21384f45;
+  pointer-events: auto;
+  touch-action: none;
+}
+#game[data-input="mouse"] .snow-throw,
+#game[data-input="touch"] .snow-throw-key { display: none; }
