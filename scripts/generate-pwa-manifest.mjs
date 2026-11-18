@@ -4,13 +4,16 @@ import { sha256, validateManifest, versionFor } from '../pwa/release.js';
 const root = new URL('../', import.meta.url);
 const roots = ['areas', 'assets', 'core', 'pwa', 'vendor'];
 const entryFiles = ['game.js', 'index.html', 'manifest.webmanifest', 'snow.html', 'style.css'];
+const developmentDirs = new Set(['docs', 'test', 'tests', '__tests__', 'node_modules']);
+const developmentFile = /\.(?:md|markdown|map)$|\.(?:test|spec)\.[cm]?js$/i;
 
 async function scan(directory) {
   const entries = await readdir(new URL(directory, root), { withFileTypes: true });
-  const files = await Promise.all(entries.filter(entry => !entry.name.startsWith('.')).map(entry => {
+  const files = await Promise.all(entries.map(entry => {
+    if (entry.name.startsWith('.')) return [];
     const path = directory + '/' + entry.name;
-    if (entry.isDirectory()) return scan(path);
-    if (entry.isFile()) return path;
+    if (entry.isDirectory()) return developmentDirs.has(entry.name) ? [] : scan(path);
+    if (entry.isFile()) return developmentFile.test(entry.name) ? [] : path;
     throw new Error(`Unsupported release entry: ${path}`);
   }));
   return files.flat();

@@ -105,12 +105,14 @@ export function createReleaseCache({ scope, storage = caches, fetchAsset = fetch
     }
   }
 
-  async function prune(keepTags) {
+  async function prune(keepTags, canPrune = () => true) {
     const keep = new Set(keepTags.map(tag => prefix + tag));
     const releases = await ready();
     for (const release of releases.slice(0, 2)) keep.add(release.cacheName);
     const names = await storage.keys();
-    await Promise.all(names.filter(name => name.startsWith(prefix) && !keep.has(name)).map(name => storage.delete(name)));
+    if (!await canPrune()) return;
+    await Promise.all(names.filter(name => name.startsWith(prefix) && releaseTag.test(name.slice(prefix.length)) &&
+      !keep.has(name)).map(name => storage.delete(name)));
   }
 
   return { ready, read, install, prune };

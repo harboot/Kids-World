@@ -44,6 +44,10 @@ Open Kids World online once and wait for **Play**. The progress bar counts files
 
 To test offline locally, finish the first download, enable **Offline** in the browser's Network panel, and reload. Try `index.html?area=snow` directly and use both ice doors. To test failure on a first download, use a fresh browser profile, interrupt the download, and look for **Try again**. To test updates, serve a second generated release from the same address and open a fresh tab. An existing game can keep running. When returning to it after five minutes, the game checks again and offers a reload if a newer release is ready.
 
+### Physical-device checklist
+
+On Android Chrome and iOS Safari, open the GitHub Pages link and wait for **Play**. Install it or add it to the Home Screen, then launch it from the icon. In portrait and landscape, use the joystick and drag to look at the same time. Test jump, tap interactions, audio, and fullscreen where available. Close the app, turn on airplane mode, and reopen from the icon. Cross both ice doors and check that the saved area and mute setting survive reopening.
+
 ### PWA architecture
 
 `index.html` contains the splash and the game markup. `pwa/bootstrap.js` asks the service worker for a complete release before importing the game. The worker checks `version.json` from the network with a deadline. It verifies each file's SHA-256 hash and writes a completion marker only after every file is available. A new release has its own staging cache and can reuse verified files with matching hashes. An interrupted or invalid release leaves the last complete release available offline.
@@ -52,18 +56,22 @@ Each game session requests its shell assets and modules through versioned servic
 
 ### Publish a release
 
-1. Add area code under `areas/`, assets under `assets/`, and runtime modules under `core/` or `pwa/`. The manifest generator scans those directories and `vendor/` recursively.
-2. Run `node scripts/generate-pwa-manifest.mjs`, then `node --test`. Commit the changed files together with `version.json` and `sw.js`.
-3. Publish that commit through GitHub Pages. The release ID comes from the manifest's file hashes. The generated `sw.js` entry point changes with the release ID, so the browser detects a worker update even if its logic stayed the same. `node scripts/generate-pwa-manifest.mjs --check` checks both generated files.
+1. Add area code and area-specific assets under `areas/`. Shared assets go under `assets/`, and runtime modules go under `core/` or `pwa/`. The generator scans those directories and `vendor/` recursively. It skips hidden files, documentation, test directories, test modules, and source maps.
+2. Run `node scripts/generate-pwa-manifest.mjs` and `node --test`. Commit the changes with the generated `version.json` and `sw.js`, then open a pull request.
+3. The **Validate release** GitHub Actions workflow runs `node scripts/generate-pwa-manifest.mjs --check` and `node --test` on pull requests to `main` and pushes to `main`. It fails if either generated file is stale. After the PR passes and merges, GitHub Pages publishes the new release.
+
+The release ID comes from the manifest's file hashes. The generated `sw.js` entry point changes with that ID so browsers detect a worker update even when its logic stays the same.
 
 `version.json` and the generated `sw.js` entry point are published metadata. The manifest hashes the runtime payload, including the worker implementation, without hashing the generated metadata into itself.
 
 ### Troubleshooting
 
-- If the first download fails, reconnect and select **Try again**. The browser console identifies failed requests, hash mismatches, and storage errors.
+- If the first download fails, reconnect and select **Try again**. The browser console identifies failed requests, hash mismatches, and storage errors. When Service Worker registration or cache storage is unavailable, a fresh network page can open the game online. A cached page keeps using its own release.
 - If an update fails, the app uses the saved complete release. Check that Pages published `version.json`, `sw.js`, and their matching runtime files from one commit.
 - Offline play requires a completed download in the same browser profile and site. Browsers can evict cached files when storage is low. Reconnect to repair the download. Browsers without Service Worker support can play online.
 
 ## GitHub Pages
 
 In **Settings → Pages**, deploy from the `main` branch and the `/ (root)` folder. Keep the site on HTTPS for installation and offline play. The relative start URL, Service Worker scope, and file URLs work under `/Kids-World/` or at a custom domain root. `localhost` works for local testing.
+
+Recommended repository description: “Kids World — A kid-friendly 3D browser exploration game with interactive worlds, animals, and activities.”

@@ -45,3 +45,11 @@ export async function validateManifest(manifest) {
 export function assetBase(scope, tag) {
   return new URL(`${releaseRoute}${tag}/`, scope);
 }
+
+export function withTimeout(task, ms, message) {
+  let timer;
+  const deadline = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), ms);
+  });
+  return Promise.race([task, deadline]).finally(() => clearTimeout(timer));
+}

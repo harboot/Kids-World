@@ -1,4 +1,4 @@
-import { assetBase, releaseRoute, releaseTag } from './release.js';
+import { assetBase, releaseRoute, releaseTag, withTimeout } from './release.js';
 
 const scope = new URL('./', document.baseURI);
 const scriptURL = new URL('sw.js', scope);
@@ -21,43 +21,48 @@ let game;
 let gameVersion;
 let lastCheck = 0;
 let checking = false;
+let booting = false;
 
 function showProgress({ stage, completed, total, downloaded }) {
   progressPanel.hidden = false;
-  if (stage === 'checking') {
-    status.textContent = 'Checking for updates…';
+  status.textContent = stage === 'checking' ? 'Checking for updates…' :
+    stage === 'verifying' ? 'Verifying downloaded files…' : 'Preparing your adventure…';
+  if (stage === 'checking' || !Number.isSafeInteger(total) || total <= 0 ||
+      !Number.isSafeInteger(completed) || !Number.isSafeInteger(downloaded)) {
     meter.removeAttribute('value');
     percent.textContent = '';
     count.textContent = '';
     return;
   }
 
-  status.textContent = stage === 'verifying' ? 'Verifying downloaded files…' : 'Preparing your adventure…';
+  completed = Math.min(total, Math.max(0, completed));
+  downloaded = Math.min(completed, Math.max(0, downloaded));
   meter.max = total;
   meter.value = completed;
   percent.textContent = `${Math.floor(completed / total * 100)}%`;
   count.textContent = `${completed} / ${total} files ready · ${downloaded} downloaded`;
 }
 
-function withTimeout(task, ms, message) {
-  let timer;
-  const deadline = new Promise((_, reject) => {
-    timer = setTimeout(() => reject(new Error(message)), ms);
-  });
-  return Promise.race([task, deadline]).finally(() => clearTimeout(timer));
+function localController() {
+  const controller = navigator.serviceWorker?.controller;
+  return controller?.scriptURL === scriptURL.href ? controller : null;
 }
 
 async function register() {
   const existing = await navigator.serviceWorker.getRegistration(scope.href);
-  const local = existing?.scope === scope.href && existing.active?.scriptURL === scriptURL.href;
-  return local ? existing : navigator.serviceWorker.register(scriptURL, {
+  if (existing?.scope === scope.href && existing.active?.scriptURL === scriptURL.href) return existing;
+  const next = await navigator.serviceWorker.register(scriptURL, {
     scope: scope.href, type: 'module', updateViaCache: 'none',
-  }).then(next => next.active ? next : navigator.serviceWorker.ready);
+  });
+  const ready = next.active ? next : await navigator.serviceWorker.ready;
+  if (ready.scope !== scope.href || ready.active?.scriptURL !== scriptURL.href) {
+    throw new Error('The Kids World worker is not active');
+  }
+  return ready;
 }
 
-function command(data, report = () => {}) {
-  const controller = navigator.serviceWorker.controller;
-  const worker = controller?.scriptURL === scriptURL.href ? controller : registration.active;
+function command(data, report = () => {}, timeout = 55000) {
+  const worker = localController() ?? registration?.active;
   const channel = new MessageChannel();
   const reply = new Promise((resolve, reject) => {
     channel.port1.onmessage = ({ data: message }) => {
@@ -67,13 +72,14 @@ function command(data, report = () => {}) {
     };
     worker.postMessage(data, [channel.port2]);
   });
-  return withTimeout(reply, 55000, 'No response from the release worker').finally(() => channel.port1.close());
+  return withTimeout(reply, timeout, 'No response from the release worker').finally(() => channel.port1.close());
 }
 
 async function checkRelease(preferred, cachedOnly, report) {
   lastCheck = Date.now();
   if (!cachedOnly && navigator.onLine) {
-    registration.update().catch(error => console.info('Kids World worker update check deferred.', error));
+    Promise.resolve().then(() => registration?.update())
+      .catch(error => console.info('Kids World worker update check deferred.', error));
   }
   return command({ type: 'prepare', offline: !navigator.onLine, preferred, cachedOnly }, report);
 }
@@ -99,8 +105,8 @@ async function prepareGame(base, message) {
   game.inert = true;
   game.append(update);
   document.body.append(game);
-  const { startGame } = await import(new URL('game.js', base));
-  await startGame(game);
+  const { startGame } = await withTimeout(import(new URL('game.js', base)), 15000, 'Game modules timed out');
+  await withTimeout(startGame(game), 15000, 'Game initialization timed out');
   if (game.dataset.state !== 'menu') {
     throw new Error(game.querySelector('#menu-message').textContent);
   }
@@ -108,19 +114,43 @@ async function prepareGame(base, message) {
   play.hidden = false;
 }
 
+async function selectRelease(requested) {
+  try {
+    if (!isSecureContext || !navigator.serviceWorker?.register) return null;
+    registration = await withTimeout(register(), 10000, 'Service Worker registration timed out');
+    return await checkRelease(shellTag, Boolean(requested && requested === shellTag), showProgress);
+  } catch (error) {
+    console.info('Kids World offline preparation deferred.', error);
+    // A network shell may be controlled even when registration access fails.
+    try {
+      if (!shellTag && localController()) {
+        const cached = await command({ type: 'prepare', cachedOnly: true, offline: !navigator.onLine }, undefined, 2500);
+        if (releaseTag.test(cached?.tag)) return cached;
+      }
+    } catch (cacheError) {
+      console.info('Kids World cached release check unavailable.', cacheError);
+    }
+    return null;
+  }
+}
+
 async function boot() {
-  const supported = isSecureContext && navigator.serviceWorker?.register && 'caches' in window && crypto.subtle;
-  if (!supported) {
-    if (!navigator.onLine) throw new Error('Network needed in online-only mode');
-    await prepareGame(scope, 'Ready to explore online!');
+  const requested = new URL(location.href).searchParams.get(selectionParam);
+  const result = await selectRelease(requested);
+  if (!result || result.status === 'storage') {
+    clearSelection();
+    if (shellTag) {
+      // A cached shell can only load modules from the same release.
+      await prepareGame(assetBase(scope, shellTag), 'Ready to explore with your saved game!');
+    } else {
+      if (!navigator.onLine) throw new Error('Network needed in online-only mode');
+      await prepareGame(scope, 'Ready to explore online!');
+    }
     return;
   }
 
-  registration = await withTimeout(register(), 10000, 'Service Worker registration timed out');
-  const requested = new URL(location.href).searchParams.get(selectionParam);
-  const result = await checkRelease(shellTag, Boolean(requested && requested === shellTag), showProgress);
-  if (!releaseTag.test(result?.tag)) throw new Error('No complete game release is available');
-  if (result.tag !== shellTag || navigator.serviceWorker.controller?.scriptURL !== scriptURL.href) {
+  if (!releaseTag.test(result.tag)) throw new Error('No complete game release is available');
+  if (result.tag !== shellTag) {
     if (requested === result.tag) throw new Error('The browser did not open the verified release');
     reloadTo(result.tag);
     return;
@@ -138,6 +168,8 @@ async function boot() {
 }
 
 async function start() {
+  if (booting || game) return;
+  booting = true;
   retry.hidden = true;
   showProgress({ stage: 'checking' });
   try {
@@ -148,16 +180,19 @@ async function start() {
       'Connect to the internet to download your adventure.';
     progressPanel.hidden = true;
     retry.hidden = false;
+  } finally {
+    booting = false;
   }
 }
 
 retry.addEventListener('click', () => {
+  if (booting) return;
   if (game) location.reload();
   else start();
 });
 
 play.addEventListener('click', event => {
-  if (splash.hidden || !game) return;
+  if (splash.hidden || play.hidden || game?.dataset.state !== 'menu') return;
   splash.hidden = true;
   game.inert = false;
   game.querySelector('#start').dispatchEvent(new PointerEvent('click', {
