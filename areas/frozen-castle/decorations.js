@@ -1,14 +1,15 @@
-import { arch, snowflake } from './palace.js';
+import { addPalaceSign, arch, snowflake } from './palace.js';
 
 export const returnSite = { x: 0, z: 13.29 };
-export const gatewaySite = { x: 9.45, z: -13.25 };
+export const gatewaySite = { x: 0, z: 13.25 };
 
-export function buildDecorations(THREE, builder, document) {
+export function buildDecorations(THREE, builder, document, villageName, gatewayHeight) {
   const { architecture, group, part, beam, solid, ice, materials } = builder;
   const { frost, pearl, blue, deep, glass, lilac, silver, light } = materials;
 
   const entry = group('Grand crystal entrance', returnSite.x, 0, returnSite.z, architecture);
   entry.rotation.y = Math.PI;
+  entry.scale.y = 0.93;
   arch(builder, entry, deep, 5.75, 4.57, 1.45, 0.52, 0.68);
   arch(builder, entry, frost, 5.64, 4.63, 1.33, 0.28, 0.83);
   arch(builder, entry, glass, 3.7, 3.66, 1.15, 0.25, 0.44);
@@ -56,7 +57,7 @@ export function buildDecorations(THREE, builder, document) {
   }
   solid(8.45, -3.7, 3.54, 3.54, 1.9);
 
-  for (const [x, z, rotation] of [[-9.4, 8.65, -0.7], [11.65, -8.6, -1.6]]) {
+  for (const [x, z, rotation] of [[-7.75, 5.55, -0.7], [11.65, -8.6, -1.6]]) {
     const sculpture = group('Ice bird sculpture', x, 0, z, architecture);
     sculpture.rotation.y = rotation;
     part(sculpture, 'drum', deep, 0, 0.18, 0, 0.9, 0.36, 0.9);
@@ -86,13 +87,15 @@ export function buildDecorations(THREE, builder, document) {
     part(chandelier, 'gem', frost, x * 0.75, -0.73, z * 0.75, 0.1, 0.48, 0.1);
   }
   const aurora = buildAurora(THREE, group);
-  const gatewayGlow = buildGateway(THREE, builder, document);
+  const gatewayGlow = buildGateway(THREE, builder, document, villageName, gatewayHeight);
   return { throneInteraction, droplets, chandelierGlow, aurora, gatewayGlow };
 }
 
-function buildGateway(THREE, builder, document) {
-  const { architecture, group, part, solid, ice, materials: { pearl, frost, deep, lilac } } = builder;
-  const gate = group('Snowglow Village gateway', gatewaySite.x, 0, gatewaySite.z, architecture);
+function buildGateway(THREE, builder, document, villageName, gatewayHeight) {
+  const { architecture, group, part, ice, materials: { pearl, frost, deep, lilac } } = builder;
+  const gate = group(villageName + ' gateway', gatewaySite.x, gatewayHeight, gatewaySite.z, architecture);
+  gate.rotation.y = Math.PI;
+  gate.scale.y = 0.87;
   const bronze = ice(0x76506c);
   const gold = ice(0xffd499, 0x744425);
   arch(builder, gate, pearl, 4.14, 3.58, 1.24, 0.47, 0.68);
@@ -101,7 +104,7 @@ function buildGateway(THREE, builder, document) {
   part(gate, 'box', bronze, 0, 1.65, -0.22, 3.56, 3.33, 0.24);
   part(gate, 'gem', lilac, 0, 4.77, 0.23, 0.44, 0.67, 0.27);
   part(gate, 'box', deep, 0, 3.63, 0.35, 3.05, 0.55, 0.21);
-  addPalaceSign(THREE, document, gate, 'Snowglow Village', 0, 3.63, 0.46, 2.86, 0.42);
+  addPalaceSign(THREE, document, gate, villageName, 0, 3.63, 0.46, 2.86, 0.42);
 
   for (const side of [-1, 1]) {
     part(gate, 'box', gold, side * 2.56, 0.98, 0.12, 0.15, 1.96, 0.18);
@@ -110,39 +113,16 @@ function buildGateway(THREE, builder, document) {
     part(gate, 'gem', gold, side * 2.56, 2.02, 0.12, 0.27, 0.31, 0.27);
     snowflake(builder, gate, frost, side * 1.05, 2.65, 0.17, 0.31);
   }
-  const panels = group('Snowglow gateway glow', gatewaySite.x, 0, gatewaySite.z);
+  const panels = group(villageName + ' gateway glow', gatewaySite.x, gatewayHeight, gatewaySite.z);
+  panels.rotation.y = gate.rotation.y;
+  panels.scale.y = gate.scale.y;
   const glow = ice(0x8b666e, 0x3d252b);
   for (const side of [-1, 1]) {
     part(panels, 'box', glow, side * 0.78, 1.7, 0.018, 1.5, 3.15, 0.10);
     part(panels, 'gem', gold, side * 0.21, 1.58, 0.105, 0.1, 0.17, 0.09);
   }
   part(panels, 'gem', glow, 0, 3.54, -0.07, 1.72, 0.62, 0.09);
-  solid(gatewaySite.x, gatewaySite.z, 5.61, 0.74, 5.2);
   return glow;
-}
-
-export function addPalaceSign(THREE, document, parent, text, x, y, z, width, height) {
-  const canvas = document?.createElement('canvas');
-  if (!canvas?.getContext) return;
-  canvas.width = 512;
-  canvas.height = 96;
-  const ink = canvas.getContext('2d');
-  if (!ink) return;
-  ink.fillStyle = '#263657';
-  ink.fillRect(0, 0, canvas.width, canvas.height);
-  ink.strokeStyle = '#bbdbee';
-  ink.lineWidth = 4;
-  ink.strokeRect(4, 4, 504, 88);
-  ink.fillStyle = '#f3fbff';
-  ink.font = 'bold 52px Georgia, serif';
-  ink.textAlign = 'center';
-  ink.textBaseline = 'middle';
-  ink.fillText(text, 256, 49, 468);
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  const sign = new THREE.Mesh(new THREE.PlaneGeometry(width, height), new THREE.MeshBasicMaterial({ map: texture }));
-  sign.position.set(x, y, z);
-  parent.add(sign);
 }
 
 function buildAurora(THREE, group) {

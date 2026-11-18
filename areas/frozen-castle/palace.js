@@ -1,6 +1,5 @@
 export const PALACE_WIDTH = 28;
 export const PALACE_DEPTH = 28;
-export const CHANNEL = { east: -8, west: -12, halfDepth: 2 };
 
 const halfWidth = PALACE_WIDTH / 2;
 const halfDepth = PALACE_DEPTH / 2;
@@ -60,10 +59,10 @@ export function createPalaceBuilder(THREE, scene, obstacles) {
     obstacles.push({ left: x - width / 2, right: x + width / 2, front: z - depth / 2, back: z + depth / 2, height });
   }
 
-  function batchArchitecture() {
-    architecture.updateMatrixWorld(true);
+  function batchParts(source, target) {
+    source.updateMatrixWorld(true);
     const builds = new Map();
-    architecture.traverse(mesh => {
+    source.traverse(mesh => {
       if (!mesh.isMesh) return;
       const key = mesh.geometry.id + ':' + mesh.material.id;
       if (!builds.has(key)) builds.set(key, []);
@@ -74,12 +73,15 @@ export function createPalaceBuilder(THREE, scene, obstacles) {
       const batch = new THREE.InstancedMesh(geometry, material, meshes.length);
       meshes.forEach((mesh, i) => batch.setMatrixAt(i, mesh.matrixWorld));
       batch.instanceMatrix.needsUpdate = true;
-      scene.add(batch);
+      target.add(batch);
     }
-    architecture.clear();
+    source.clear();
   }
 
-  return { architecture, ice, materials, group, part, beam, solid, batchArchitecture };
+  return {
+    architecture, ice, materials, group, part, beam, solid, batchParts,
+    batchArchitecture() { batchParts(architecture, scene); },
+  };
 }
 
 export function buildPalace(THREE, scene, builder) {
@@ -94,24 +96,12 @@ export function buildPalace(THREE, scene, builder) {
   daylight.position.set(-8, 12, 5);
   scene.add(daylight);
 
-  // Floor tiles leave a real opening for the bridge and channel.
   const tiles = [pearl, frost, lilac, pearl, frost];
   for (let x = -13; x < 14; x += 2) {
     for (let z = -13; z < 14; z += 2) {
-      if (x > CHANNEL.west && x < CHANNEL.east && Math.abs(z) < CHANNEL.halfDepth) continue;
       const tile = tiles[((x + 13) * 3 + (z + 13) * 7) % tiles.length];
       box(tile, x, -0.114, z, 1.971, 0.228, 1.971);
     }
-  }
-  const channelCenter = (CHANNEL.west + CHANNEL.east) / 2;
-  const channelWidth = CHANNEL.east - CHANNEL.west;
-  for (const x of [CHANNEL.west, CHANNEL.east]) {
-    box(blue, x, -0.17, 0, 0.02, 0.34, CHANNEL.halfDepth * 2);
-  }
-  for (const z of [-CHANNEL.halfDepth, CHANNEL.halfDepth]) box(blue, channelCenter, -0.17, z, channelWidth, 0.34, 0.025);
-  box(glass, channelCenter, -0.38, 0, channelWidth + 0.03, 0.10, CHANNEL.halfDepth * 2 + 0.03);
-  for (const z of [-1.7, 1.7]) {
-    for (let x = -11.75; x <= -8.25; x += 0.5) gem(frost, x, -0.29, z, 0.25, 0.12, 0.13);
   }
 
   box(blue, 0, 0.006, 4.65, 4.1, 0.012, 18.2);
@@ -241,6 +231,30 @@ export function snowflake({ beam }, parent, material, x, y, z, size) {
     beam(parent, material, [x, y, z], position(1), size * 0.056);
     for (const side of [-1, 1]) beam(parent, material, branch, position(0.93, side * 0.22), size * 0.05);
   }
+}
+
+export function addPalaceSign(THREE, document, parent, text, x, y, z, width, height) {
+  const canvas = document?.createElement('canvas');
+  if (!canvas?.getContext) return;
+  canvas.width = 512;
+  canvas.height = 96;
+  const ink = canvas.getContext('2d');
+  if (!ink) return;
+  ink.fillStyle = '#263657';
+  ink.fillRect(0, 0, canvas.width, canvas.height);
+  ink.strokeStyle = '#bbdbee';
+  ink.lineWidth = 4;
+  ink.strokeRect(4, 4, 504, 88);
+  ink.fillStyle = '#f3fbff';
+  ink.font = 'bold 52px Georgia, serif';
+  ink.textAlign = 'center';
+  ink.textBaseline = 'middle';
+  ink.fillText(text, 256, 49, 468);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(width, height), new THREE.MeshBasicMaterial({ map: texture }));
+  sign.position.set(x, y, z);
+  parent.add(sign);
 }
 
 function addMountains({ architecture, ice, materials: { snow, frost }, part }) {

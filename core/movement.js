@@ -13,10 +13,11 @@ export function overlaps(obstacle, x, z) {
 
 // A null result leaves both horizontal position and elevation unchanged.
 export function walkElevation(world, from, x, z, feet, grounded) {
-  if (world.blocksGround?.(x, z, PLAYER_RADIUS)) return null;
+  if (world.blocksGround?.(x, z, PLAYER_RADIUS, feet, from)) return null;
   const sample = world.getGroundHeight ?? FLAT_GROUND;
-  const currentGround = sample(from.x, from.z);
-  const nextGround = sample(x, z);
+  // Foot height distinguishes an elevated walkway from the floor underneath.
+  const currentGround = sample(from.x, from.z, feet);
+  const nextGround = sample(x, z, feet);
   const followsGround = grounded && feet <= currentGround + 1e-5;
   if (!Number.isFinite(nextGround)) return null;
   if (followsGround && Math.abs(nextGround - currentGround) > MAX_GRADE * Math.hypot(x - from.x, z - from.z) + 1e-5) {
@@ -35,7 +36,7 @@ export function walkElevation(world, from, x, z, feet, grounded) {
 }
 
 export function floorHeight(world, x, z, feet) {
-  let floor = (world.getGroundHeight ?? FLAT_GROUND)(x, z);
+  let floor = (world.getGroundHeight ?? FLAT_GROUND)(x, z, feet);
   floor = Math.max(floor, world.animals?.surface(x, z, feet) ?? -Infinity);
   for (const obstacle of world.obstacles) {
     if (obstacle.height <= feet && obstacle.height > floor && overlaps(obstacle, x, z)) floor = obstacle.height;

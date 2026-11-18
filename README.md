@@ -39,15 +39,15 @@ Complete all three missions to unlock **Enter Frozen Castle** at the end of the 
 
 ## Frozen Castle
 
-Follow the ice mosaic into the grand hall. The staircase leads to the Ice Throne, and the balcony overlooks snowy peaks. Complete the three magical missions in any order.
+Follow the ice mosaic into the grand hall. The staircase at the far end leads to the Ice Throne, and the mountain lookout opens onto snowy peaks. Complete the three magical missions in any order.
 
 - **Awaken the ice crystals.** Use **Activate crystal** at the entrance, near the fountain, and by the staircase. All three illuminate the chandelier.
-- **Build the ice bridge.** Use **Create ice bridge** three times at the pedestal on the near bank. Sections become walkable as they finish forming. You can walk around the channel to reach the rest of the palace.
+- **Build the ice staircase.** Use **Build ice staircase** three times at the pedestal on the west side of the hall. Climb the curved ice stairs to the balcony above the Snow Basin door once the sections finish forming.
 - **Play the crystal melody.** Use **Play crystal** on the blue, pink, and purple crystals in the music corner. Each color counts once. Playing all three starts a short melody and lights the ceiling aurora.
 
-After the three missions, the golden gateway on the far side offers **Enter Snowglow Village**. It displays **Snowglow Village — Coming Soon** while the village is in development. Use **Return to Snow Basin** at the grand entrance to reappear outside the castle door.
+After the three missions, the golden gateway on the upper balcony offers **Enter Arendelle Village**. It displays **Arendelle Village — Coming Soon** while the village is in development. Use **Return to Snow Basin** at the grand entrance to reappear outside the castle door.
 
-Use **Choose level** to replay any completed level. Revisiting an area or selecting **Restart area** resets its current missions. Saved unlocks stay available, including the Frozen Castle entrance and the Snowglow Village gateway.
+Use **Choose level** to replay any completed level. Revisiting an area or selecting **Restart area** resets its current missions. Saved unlocks stay available, including the Frozen Castle entrance and the Arendelle Village gateway. On replay, rebuild the staircase to reach the already unlocked balcony gateway.
 
 | Input | Move | Look | Jump | Interact | Throw in Snow Basin |
 | --- | --- | --- | --- | --- | --- |
@@ -62,7 +62,7 @@ Each area has its own looping music, with sound cues for jumping and interacting
 
 Run `python3 -m http.server 8000` from the project directory, then open `http://localhost:8000`. The browser needs WebGL 2. Three.js r179 (0.179.1) is served from `vendor/`, with its MIT license.
 
-Run `node --test` with Node.js 22.7 or later. It checks movement and collision, bridge access, fish paths, basket transitions, area lifecycle and cleanup, routing, release metadata, download integrity, and fallback behavior.
+Run `node --test` with Node.js 22.7 or later. It checks movement and collision, bridge access, fish paths, basket transitions, area lifecycle and cleanup, curved staircase traversal, routing, release metadata, download integrity, and fallback behavior.
 
 ## Architecture
 
@@ -70,7 +70,7 @@ Run `node --test` with Node.js 22.7 or later. It checks movement and collision, 
 
 `areas/snow-basin.js` composes the area and owns its controls and progress display. `areas/snow-basin/scenery.js` builds the landscape, `props.js` builds the winter activity models, and `activity.js` handles the chop sequence, snowman placement, and swept projectile collision. An area can use the shared `camera`, `hud`, `isPlaying()`, and `playCue(notes)` capabilities during its visit. It can set `silent: true` on an interaction that plays its own cue.
 
-`areas/frozen-castle/index.js` connects the castle lifecycle, mission HUD, and doors. `palace.js` builds and batches the architecture and defines its walkable elevation. `decorations.js` builds the throne, fountain, chandelier, aurora, and gateway. `activities.js` handles the crystals, bridge, and melody.
+`areas/frozen-castle/index.js` connects the castle lifecycle, mission HUD, and doors. `palace.js` builds and batches the architecture and defines its walkable elevation. `decorations.js` builds the throne, fountain, chandelier, aurora, and gateway. `activities.js` handles the three missions, and `staircase.js` builds the curved stairs and supports walking both above and below the entrance balcony.
 
 Area travel replaces the scene and opens the destination's **Explore** menu in the same page. The URL records the area for browser Back and Forward. Opening the site without an area in the URL uses the last visited area. Existing links to `snow.html` and `index.html?arrive=garden` still resolve to their respective areas.
 
