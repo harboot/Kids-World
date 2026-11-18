@@ -1,4 +1,5 @@
 import { BALL_RADIUS, BREAK_DURATION, CHOPS, SNOWMAN_SPHERES } from './activity.js';
+import { registerDoor } from '../ice-door.js';
 
 export function addAxe(THREE, scene, viewmodel, kit, site) {
   const { box, mesh, material } = kit;
@@ -21,10 +22,10 @@ export function addAxe(THREE, scene, viewmodel, kit, site) {
 
   const holder = new THREE.Group();
   holder.name = 'Held axe';
-  holder.position.set(0.43, -0.48, -0.88);
+  holder.position.set(0.28, -0.37, -0.88);
   const carried = axe.clone(true);
-  carried.rotation.z = -0.36;
-  carried.scale.setScalar(0.62);
+  carried.rotation.set(0, Math.PI, 0.25);
+  carried.scale.setScalar(0.54);
   holder.add(carried);
   viewmodel.add(holder);
   axe.position.set(site.x, 0.17, site.z);
@@ -39,39 +40,68 @@ export function addAxe(THREE, scene, viewmodel, kit, site) {
 }
 
 export function addChopTree(THREE, scene, kit, site) {
-  const { box, cone, mesh, material } = kit;
+  const { cone, mesh, material } = kit;
   const tree = new THREE.Group();
   tree.name = 'Marked pine';
   tree.position.set(site.x, 0, site.z);
   scene.add(tree);
 
-  const bark = material(0x84614e);
-  const cut = material(0xecb679);
-  const dark = material(0x6f4837);
   const needles = material(0x366568);
   const frost = material(0xdff3fb);
-  const trunk = new THREE.CylinderGeometry(0.29, 0.61, 1, 9);
+  const trunk = makeCuttableTrunk(THREE);
   const part = (shape, color, x, y, z, sx, sy, sz) => mesh(shape, color, x, y, z, sx, sy, sz, false, tree);
-  part(trunk, bark, 0, 2.67, 0, 1, 5.34, 1);
+  const trunkMesh = part(trunk.geometry, new THREE.MeshLambertMaterial({ vertexColors: true }), 0, 2.67, 0, 1, 1, 1);
+  trunkMesh.name = 'Marked trunk';
   for (const [height, radius, center] of [[2.65, 2.05, 3.57], [2.53, 1.69, 5.00], [2.27, 1.29, 6.60]]) {
     part(cone, needles, 0, center, 0, radius, height, radius).rotation.y = 0.29;
     part(cone, frost, 0, center + 0.35, 0, radius * 0.83, height * 0.87, radius * 0.83).rotation.y = 0.29;
   }
-
-  part(box, cut, -0.55, 0.92, 0, 0.085, 0.12, 0.53).rotation.x = 0.14;
-  const marks = Array.from({ length: CHOPS }, (_, i) => {
-    const mark = part(box, i % 2 ? cut : dark, -0.557, 0.81 - i * 0.075, 0.035 * (i % 2),
-      0.045, 0.069, 0.37 + i * 0.049);
-    mark.rotation.x = i % 2 ? -0.10 : 0.09;
-    return mark;
-  });
 
   // A ground shadow shares the tree's animation without invalidating the static shadow map.
   const shadow = new THREE.Mesh(new THREE.CircleGeometry(1, 16).rotateX(-Math.PI / 2),
     new THREE.MeshBasicMaterial({ color: 0x799eac, transparent: true, opacity: 0.38, depthWrite: false }));
   shadow.position.set(site.x, 0.02, site.z);
   scene.add(shadow);
-  return { tree, marks, shadow };
+  return { tree, setChops: trunk.setChops, shadow };
+}
+
+function makeCuttableTrunk(THREE) {
+  const height = 5.34;
+  const bottomRadius = 0.61;
+  const topRadius = 0.29;
+  const geometry = new THREE.CylinderGeometry(topRadius, bottomRadius, height, 12, 44);
+  const positions = geometry.getAttribute('position');
+  const original = positions.array.slice();
+  const colors = new THREE.Float32BufferAttribute(new Float32Array(original.length), 3);
+  const bark = new THREE.Color(0x84614e);
+  const wood = new THREE.Color(0xdab17c);
+  positions.setUsage(THREE.DynamicDrawUsage);
+  colors.setUsage(THREE.DynamicDrawUsage);
+  geometry.setAttribute('color', colors);
+  let previousChops;
+
+  function setChops(chops) {
+    if (chops === previousChops) return;
+    previousChops = chops;
+    // Move the marked face inwards into a wedge, keeping the same closed trunk mesh.
+    const depth = 0.055 + 0.49 * (chops / CHOPS);
+    for (let i = 0; i < positions.count; i++) {
+      const x = original[i * 3];
+      const y = original[i * 3 + 1] + height / 2;
+      const radius = bottomRadius + (topRadius - bottomRadius) * (y / height);
+      const wedge = Math.max(0, 1 - Math.abs(y - 0.85) / 0.29);
+      const face = Math.max(x, -radius + depth * wedge);
+      positions.setX(i, wedge > 0 ? face : x);
+      const color = wedge > 0 && face > x + 0.002 ? wood : bark;
+      colors.setXYZ(i, color.r, color.g, color.b);
+    }
+    positions.needsUpdate = true;
+    colors.needsUpdate = true;
+    geometry.computeVertexNormals();
+  }
+
+  setChops(0);
+  return { geometry, setChops };
 }
 
 export function addSnowPlay(THREE, scene, viewmodel, kit, piles) {
@@ -149,13 +179,12 @@ export function showSnowmen(models, targets) {
   }
 }
 
-export function addCastleDoor(THREE, scene, kit, { x, z }, announce) {
-  const { box, mesh, material, block } = kit;
+export function addCastleDoor(THREE, scene, kit, { x, z, available, announce }) {
+  const { box, mesh, material, obstacles } = kit;
   const facade = new THREE.Group();
   facade.name = 'Frozen Castle';
   facade.position.set(x, 0, z);
   facade.rotation.y = Math.PI;
-  scene.add(facade);
 
   const blue = material(0x528cad);
   const pale = material(0xbaddec);
@@ -180,6 +209,8 @@ export function addCastleDoor(THREE, scene, kit, { x, z }, announce) {
     part(shard, crystal, side * 0.25, 1.62, 0.46, 0.109, 0.139, 0.085);
   }
 
-  block(x, z, 3.84, 1.01, 4.67);
-  return { x, z, anchorY: 2.28, radius: 2.65, label: 'Frozen Castle', act: announce };
+  return registerDoor(scene, obstacles, facade, {
+    x, z, anchorY: 2.28, radius: 2.65, label: 'Frozen Castle', available, act: announce,
+    bounds: { left: x - 1.92, right: x + 1.92, front: z - 0.505, back: z + 0.505, height: 4.67 },
+  });
 }

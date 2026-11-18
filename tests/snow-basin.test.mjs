@@ -165,15 +165,16 @@ class Element extends EventTarget {
 function buildWorld() {
   const camera = new THREE.PerspectiveCamera();
   const target = new EventTarget();
+  const completed = new Set();
   const hud = new Element();
   hud.ownerDocument = { createElement: () => new Element(), defaultView: target };
   const worlds = createWorldManager(THREE, {
     areas: { snow: snowBasin, garden: { load: () => ({ obstacles: [] }) } },
     camera, touch: true, playerRadius: 0.34,
-    services: { hud, isPlaying: () => true },
+    services: { hud, isPlaying: () => true, isLevelComplete: id => completed.has(id), completeLevel: id => completed.add(id) },
   });
   const visit = worlds.load('snow');
-  return { worlds, camera, target, hud, visit };
+  return { worlds, camera, target, hud, visit, completed };
 }
 
 function fallInWorld(worlds, position = player) {
@@ -213,6 +214,8 @@ test('the actual winter layout produces five reachable targets and replaces the 
   const chop = area.interactions.find(item => item.label === 'Chop tree');
   assert.equal(chop.reachable({ x: 9 }), false);
   assert.equal(walkElevation(area, player, 7.5, -1.85, 2.3, false), null);
+  assert.equal(walkElevation(area, player, 6.1, -1.85, 0, true), null);
+  assert.equal(walkElevation(area, player, 5.8, -1.85, 0, true), 0);
 
   for (let cycle = 0; cycle < 12; cycle++) {
     worlds.reset();
@@ -248,7 +251,9 @@ test('doors, reset and unload keep HUD, held objects and snow controls scoped to
   let destination;
   door.act({ travel: id => { destination = id; } });
   assert.equal(destination, undefined);
-  assert.equal(notice.textContent, 'Frozen Castle — Coming Soon');
+  assert.equal(notice.textContent, '');
+  assert.equal(door.active, false);
+  assert.equal(scene.getObjectByName('Frozen Castle').visible, false);
   exit.act({ travel: id => { destination = id; } });
   assert.equal(destination, 'garden');
   assert.equal(nearestInteraction(area.interactions, { x: 0.9, y: 1.68, z: 6.5 }), pickup);
@@ -285,5 +290,64 @@ test('doors, reset and unload keep HUD, held objects and snow controls scoped to
   assert.ok(again.area.interactions.find(item => item.label === 'Pick up axe').active);
   assert.equal(again.scene.children.some(node => /^Snowman \d/.test(node.name) && node.visible), false);
   assert.equal(hud.children.length, 1);
+  worlds.unload();
+});
+
+test('each chop deepens the same trunk mesh and restart restores the starter notch', () => {
+  const { worlds, visit } = buildWorld();
+  const tree = visit.scene.getObjectByName('Marked pine');
+  const positions = tree.getObjectByName('Marked trunk').geometry.getAttribute('position');
+  const trees = tree.children.length;
+  const notchEdge = () => {
+    let edge = Infinity;
+    for (let i = 0; i < positions.count; i++) {
+      if (Math.abs(positions.getY(i) + 2.67 - 0.85) < 0.1) edge = Math.min(edge, positions.getX(i));
+    }
+    return edge;
+  };
+  const initial = notchEdge();
+  let previous = initial;
+  const { interactions } = visit.area;
+  interactions.find(item => item.label === 'Pick up axe').act();
+  const chop = interactions.find(item => item.label === 'Chop tree');
+  for (let count = 0; count < CHOPS; count++) {
+    assert.ok(chop.act());
+    worlds.update(CHOP_COOLDOWN, player);
+    const edge = notchEdge();
+    assert.ok(edge > previous);
+    assert.equal(tree.children.length, trees);
+    previous = edge;
+  }
+  worlds.reset();
+  assert.equal(notchEdge(), initial);
+  worlds.unload();
+});
+
+test('Frozen Castle unlocks only after the fifth snowman and stays available on replay', () => {
+  const { worlds, visit, completed, camera, target, hud } = buildWorld();
+  const castle = visit.scene.getObjectByName('Frozen Castle');
+  const door = visit.area.interactions.find(item => item.label === 'Frozen Castle');
+  assert.equal(castle.visible, false);
+  fallInWorld(worlds);
+  assert.equal(castle.visible, false);
+  const pile = visit.area.interactions.find(item => item.label === 'Make snowball');
+  const snowmen = visit.scene.children.filter(node => /^Snowman \d/.test(node.name));
+  for (const [i, model] of snowmen.entries()) {
+    const { x, z } = model.position;
+    assert.ok(pile.act());
+    camera.position.set(x, 1.66, z + 1.05);
+    camera.lookAt(x, 1.66, z);
+    target.dispatchEvent(Object.assign(new Event('keydown', { cancelable: true }), { code: 'KeyF' }));
+    worlds.update(0.05, player);
+    assert.equal(door.active, i === 4);
+    assert.equal(castle.visible, i === 4);
+    assert.equal(completed.has('snow'), i === 4);
+  }
+  door.act();
+  assert.equal(hud.children[0].children.find(item => item.className === 'snow-notice').textContent, 'Frozen Castle — Coming Soon');
+  worlds.load('garden');
+  const replay = worlds.load('snow');
+  assert.equal(replay.scene.getObjectByName('Frozen Castle').visible, true);
+  assert.equal(replay.scene.getObjectByName('Snow Basin axe').visible, true);
   worlds.unload();
 });

@@ -5,7 +5,7 @@ export function nextBasketState(state, action) {
   return state;
 }
 
-export function addOrchard(THREE, { scene, viewmodel, mesh, box, facet, matte, obstacles, collision, getTerrainHeight, table }) {
+export function addOrchard(THREE, { scene, viewmodel, mesh, box, facet, matte, obstacles, collision, getTerrainHeight, table, deliver }) {
   const treeX = 11.2;
   const treeZ = 8.25;
   const basketX = 8.7;
@@ -110,6 +110,7 @@ export function addOrchard(THREE, { scene, viewmodel, mesh, box, facet, matte, o
       basket.position.set(table.x, table.y + 0.004, table.z);
       basket.rotation.set(0, -0.18, 0);
       basket.scale.setScalar(1.08);
+      if (basketApples.filter(apple => apple.visible).length >= 5) deliver?.();
     } else {
       basket.position.set(basketX, basketGround + 0.025, basketZ);
       basket.rotation.set(0, 0.21, 0);

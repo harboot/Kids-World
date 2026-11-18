@@ -1,6 +1,6 @@
 # Kids World
 
-Kids World is a first-person exploration game made with HTML, CSS, JavaScript, and Three.js. Follow the path to the ice door at the edge of Flower Garden to visit Snow Basin. The game remembers your last area in this browser and starts there when you reopen it.
+Kids World is a first-person exploration game made with HTML, CSS, JavaScript, and Three.js. Deliver a basket with five apples to the Flower Garden cabin to reveal the ice door to Snow Basin. The game remembers your last area and which levels you have completed in this browser.
 
 - Follow the path beside the apple tree up the hill. You can walk back down the slope or jump from it.
 - Take the basket beside the apple tree, shake the tree, and collect the fallen apples. At the cabin, use **Place basket** on the porch table. **Pick up basket** returns it to you with the apples still inside.
@@ -14,7 +14,9 @@ Returning to Flower Garden or using **Restart area** starts a fresh visit. The b
 
 Pick up the axe by the frozen pond. Approach the marked side of the tall pine and use **Chop tree** five times. After the pine lands, five snowmen appear in different spots within the basin. Use **Make snowball** at a snow pile, aim, and throw. Each snowman breaks into snow on the first hit. You can return to any pile for another snowball.
 
-The original ice door returns to Flower Garden. Try the larger **Frozen Castle** entrance on the opposite edge to see a coming-soon message. **Restart area** or returning from Flower Garden restores the axe, upright pine, and empty snowfield. The activity starts fresh each visit.
+The original ice door returns to Flower Garden. Clearing all five snowmen reveals the **Frozen Castle** entrance, which displays a coming-soon message.
+
+Use **Choose level** in the top-right corner to replay a completed level. Play activities start fresh when revisiting a level or using **Restart area** in the level picker. Previously opened doors stay available.
 
 | Input | Move | Look | Jump | Interact | Throw in Snow Basin |
 | --- | --- | --- | --- | --- | --- |

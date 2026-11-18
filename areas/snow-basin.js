@@ -36,7 +36,8 @@ export const snowBasin = {
   load: loadSnow,
 };
 
-function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlaying, playCue }) {
+function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlaying, playCue, playerRadius = 0.34,
+  isLevelComplete, completeLevel }) {
   const { width, depth } = snowBasin;
   const kit = addWinterScenery({ THREE, scene, touch, width, depth });
   const { obstacles } = kit;
@@ -46,10 +47,15 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
   const returnDoor = addIceDoor(THREE, scene, obstacles, {
     x: 0, z: -14.36, destination: 'garden', label: 'Return to Flower Garden',
   });
-  const castle = addCastleDoor(THREE, scene, kit, { x: -2.3, z: 13.92 }, () => {
-    if (!panel) return;
-    panel.notice.textContent = 'Frozen Castle — Coming Soon';
-    noticeTime = 3;
+  let cleared = false;
+  const castle = addCastleDoor(THREE, scene, kit, {
+    x: -2.3, z: 13.92,
+    available: () => cleared || Boolean(isLevelComplete?.('snow')),
+    announce() {
+      if (!panel) return;
+      panel.notice.textContent = 'Frozen Castle — Coming Soon';
+      noticeTime = 3;
+    },
   });
 
   const direction = new THREE.Vector3();
@@ -75,6 +81,11 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
           model.rotation.y = Math.atan2(-x, 4 - z);
         }
       }
+      if (name === 'hit' && state.destroyed === 5 && !cleared && !isLevelComplete?.('snow')) {
+        cleared = true;
+        completeLevel?.('snow');
+        castle.refresh();
+      }
       playCue?.(cues[name]);
       updateHUD();
     },
@@ -86,9 +97,21 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
     left: treeSite.x - 0.57, front: treeSite.z - 0.6, back: treeSite.z + 0.6,
     get right() { return treeSite.x + (state.tree === 'upright' ? 0.57 : 5.45); },
     get height() { return state.tree === 'upright' ? 5.3 : state.tree === 'falling' ? 2.45 : 0.79; },
+    touches(x, z) {
+      const dx = x - treeSite.x;
+      const dz = z - treeSite.z;
+      if (state.tree === 'upright') return Math.hypot(dx, dz) < 1.22 + playerRadius;
+      const edge = Math.max(0, -dx, dx - 5.45);
+      return Math.hypot(edge, dz) < 1.05 + playerRadius;
+    },
   }, {
     left: treeSite.x + 2.09, right: treeSite.x + 8.12, front: treeSite.z - 1.93, back: treeSite.z + 1.93,
     get height() { return state.tree === 'upright' ? 0 : 1.93; },
+    touches(x, z) {
+      const dx = Math.max(0, this.left - x, x - this.right);
+      const dz = Math.max(0, this.front - z, z - this.back);
+      return Math.hypot(dx, dz) < 0.47 + playerRadius;
+    },
   });
   for (let i = 0; i < play.models.length; i++) {
     obstacles.push({
@@ -120,6 +143,9 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
   function updateModels() {
     axe.axe.visible = axe.ring.visible = !state.axe;
     axe.holder.visible = state.axe && !state.held;
+    if (axe.holder.visible) {
+      axe.holder.position.x = Math.min(0.28, 0.32 * (camera?.aspect ?? 1));
+    }
     const swing = Math.sin(Math.PI * state.cooldown / CHOP_COOLDOWN);
     axe.holder.rotation.set(-0.93 * swing, 0.3 * swing, -0.56 * swing);
     const fall = state.fallTime / FALL_DURATION;
@@ -127,7 +153,8 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
     pine.tree.rotation.z = -Math.PI / 2 * lean;
     pine.shadow.position.x = treeSite.x + lean * 3.75;
     pine.shadow.scale.set(1.04 + lean * 3.25, 1, 0.91 + lean * 0.64);
-    for (let i = 0; i < pine.marks.length; i++) pine.marks[i].visible = i < state.chops;
+    pine.setChops(state.chops);
+    castle.refresh();
     play.held.visible = state.held;
     showSnowmen(play.models, state.targets);
     for (let i = 0; i < play.balls.length; i++) {
