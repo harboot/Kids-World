@@ -2,15 +2,21 @@
 
 Kids World is a first-person exploration game made with HTML, CSS, JavaScript, and Three.js. Deliver a basket with five apples to the Flower Garden cabin to reveal the ice door to Snow Basin. The game remembers your last area and which levels you have completed in this browser.
 
-The hint below the area name shows what to do next and tracks apples, chops, or snowmen during play. On replay, hints start at the first step even if the door is already unlocked. A door sparkles briefly when you first unlock it.
+The hint below the area name shows what to do next and tracks progress during play. On replay, hints start at the first step even if a door is already unlocked. A door sparkles briefly when you first unlock it.
 
 - Follow the path beside the apple tree up the hill. You can walk back down the slope or jump from it.
 - Take the basket beside the apple tree, shake the tree, and collect the fallen apples. At the cabin, use **Place basket** on the porch table. **Pick up basket** returns it to you with the apples still inside.
 - Open the pen gates to greet a cow or make a chicken jump. The animals stay in their pens.
 - Cross the fish pond on the wooden bridge, or watch the fish from the bank. The banks and bridge rails keep you clear of the water.
-- Walk up the enlarged cabin's steps to the porch bench. While seated, you can look around. Use **Stand up** to move again. The front entrance is closed.
+- Walk up the cabin steps to the porch bench or front door. While seated, you can look around. Use **Stand up** to move again.
 
 Returning to Flower Garden or using **Restart area** starts a fresh visit. The basket is empty by the apple tree, fallen apples disappear, and the pens, bench, fish, and player return to their starting states. The browser remembers the last area between visits.
+
+## Wooden House
+
+Walk onto the Flower Garden cabin porch and use **Enter Wooden House** at the front door. The house is open from your first visit to the garden. In its one large room, **Make bed**, **Wash dishes**, **Straighten painting**, **Turn off TV**, and **Put away toys** in any order. Press **M** or tap the nearby interaction button. The hint tracks each completed task, and finishing all five saves the level and celebrates with stars.
+
+Use **Return to Flower Garden** at the inside door to reappear by the cabin steps. Every visit starts with a messy house, including **Restart area** and replaying through **Choose level**. Saved completion stays available. Wooden House also works offline after downloading the current release, including from `index.html?area=wooden-house`.
 
 ## Snow Basin
 
@@ -48,11 +54,11 @@ Area travel replaces the scene and opens the destination's **Explore** menu in t
 1. Export an area definition from `areas/` and register it under an ID in `game.js`. Include `title`, `heading` (the two parts of the menu title), `description`, `canvasLabel`, `themeColor`, `width`, `depth`, `spawn`, and the `music` preset if the area has music.
 2. Implement `load({ THREE, scene, viewmodel, touch, playerRadius, signal })`. Build a fresh scene and return `obstacles` and `interactions`. Supply `getGroundHeight`, `blocksGround`, or `animals` when movement needs them.
 3. Add lifecycle hooks as needed. `reset()` runs on entry and **Restart area**, `update(dt, playerPosition)` runs while the player explores, and `unload()` can release resources owned outside the scene. Bind area listeners with `{ signal }`. The manager aborts those listeners, detaches the viewmodel, and disposes the area's scene-owned resources on exit.
-4. Define each interaction with `x`, `z`, `label`, and `act(context)`. It can also specify `radius`, `anchorY`, `active`, or `reachable(playerPosition)`. Use `travel(destinationId, heardCue)` from the context when an interaction leads to another area. See `areas/ice-door.js` for the shared door used by both areas.
+4. Define each interaction with `x`, `z`, `label`, and `act(context)`. It can also specify `radius`, `anchorY`, `active`, or `reachable(playerPosition)`. Use `travel(destinationId, heardCue)` from the context to change areas. An optional third argument selects a named spawn from the destination's `arrivals`.
 
 ## Installation and offline play
 
-Open Kids World online once and wait for **Play**. The progress bar counts files after they have been verified and stored. Use the browser's install or **Add to Home Screen** command to open Kids World as a standalone app. After the first download, both areas work offline, including area travel, audio, the saved area, and mute.
+Open Kids World online once and wait for **Play**. The progress bar counts files after they have been verified and stored. Use the browser's install or **Add to Home Screen** command to open Kids World as a standalone app. After the complete download, all three areas work offline, including area travel, audio, the saved area, and mute.
 
 To test offline locally, finish the first download, enable **Offline** in the browser's Network panel, and reload. Try `index.html?area=snow` directly and use both ice doors. To test failure on a first download, use a fresh browser profile, interrupt the download, and look for **Try again**. To test updates, serve a second generated release from the same address and open a fresh tab. An existing game can keep running. When returning to it after five minutes, the game checks again and offers a reload if a newer release is ready.
 

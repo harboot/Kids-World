@@ -5,7 +5,7 @@ import { createLevelProgress } from './level-progress.js';
 import { PLAYER_RADIUS } from './movement.js';
 import { createPlayer } from './player.js';
 import { createView } from './renderer.js';
-import { areaURL, createWorldManager, resolveArea } from './world-manager.js';
+import { areaURL, createWorldManager, historyArrival, resolveArea } from './world-manager.js';
 
 const areaKey = 'kids-world-last-area';
 
@@ -157,9 +157,10 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     view.invalidate();
   }
 
-  function resetPlayer() {
+  function resetPlayer(arrival) {
     const { definition, area } = worlds.active;
-    player.reset(definition.spawn, area);
+    const spawn = arrival && Object.hasOwn(area.arrivals ?? {}, arrival) ? area.arrivals[arrival] : definition.spawn;
+    player.reset(spawn, area);
     delete game.dataset.seated;
     interactions.setItems(area.interactions ?? []);
   }
@@ -171,17 +172,20 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     menu(false);
   }
 
-  function enterArea(id, historyMode) {
+  function enterArea(id, historyMode, arrival) {
     if (levelPicker.open) levelPicker.close();
     game.dataset.state = 'traveling';
     stopPlaying();
     try {
       const { definition } = worlds.load(id);
-      resetPlayer();
+      resetPlayer(arrival);
       audio.setArea(definition.music);
       view.sceneChanged();
       showArea(id);
-      if (historyMode) history[historyMode](null, '', areaURL(new URL(location.href), id));
+      if (historyMode) {
+        const state = arrival ? { area: id, arrival } : null;
+        history[historyMode](state, '', areaURL(new URL(location.href), id));
+      }
       rememberArea(id);
       menu(false);
     } catch (error) {
@@ -190,12 +194,12 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     }
   }
 
-  function travel(id, heardCue) {
+  function travel(id, heardCue, arrival) {
     if (!playing() || id === worlds.active.id || !Object.hasOwn(areas, id)) return;
     game.dataset.state = 'traveling';
     stopPlaying();
-    if (heardCue) travelTimer = window.setTimeout(() => enterArea(id, 'pushState'), 180);
-    else enterArea(id, 'pushState');
+    if (heardCue) travelTimer = window.setTimeout(() => enterArea(id, 'pushState', arrival), 180);
+    else enterArea(id, 'pushState', arrival);
   }
 
   chooseLevel.addEventListener('click', () => {
@@ -248,8 +252,9 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
 
   function restoreArea() {
     const id = resolveArea(new URL(location.href), areas, defaultArea);
-    if (worlds.active?.id !== id) {
-      enterArea(id);
+    const arrival = historyArrival(id, history.state);
+    if (worlds.active?.id !== id || arrival) {
+      enterArea(id, null, arrival);
       return;
     }
     rememberArea(id);
@@ -276,6 +281,6 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     requestAnimationFrame(frame);
   }
 
-  enterArea(initialArea, 'replaceState');
+  enterArea(initialArea, 'replaceState', restoringHistory ? historyArrival(initialArea, history.state) : undefined);
   requestAnimationFrame(frame);
 }

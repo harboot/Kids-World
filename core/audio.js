@@ -19,6 +19,16 @@ const snow = {
   ],
 };
 
+const woodenHouse = {
+  beat: 0.57,
+  bars: [
+    { chord: [45, 52, 57, 61], melody: [[0.5, 69], [1.75, 73], [2.75, 76]] },
+    { chord: [42, 49, 57, 61], melody: [[0, 78], [1.5, 76], [2.75, 73]] },
+    { chord: [38, 45, 54, 57], melody: [[0.5, 74], [1.5, 69], [2.5, 66]] },
+    { chord: [40, 47, 56, 59], melody: [[0, 68], [1.75, 71], [2.75, 64]] },
+  ],
+};
+
 const muteKey = 'kids-world-muted';
 const minVolume = 0.0001;
 const frequency = pitch => 440 * 2 ** ((pitch - 69) / 12);
@@ -39,7 +49,7 @@ function tone(context, destination, at, pitch, { endPitch = pitch, duration, lev
   oscillator.stop(at + duration);
 }
 
-const scores = { garden, snow };
+const scores = { garden, snow, 'wooden-house': woodenHouse };
 const jumpCue = [[60, { endPitch: 77, duration: 0.17, level: 0.22, wave: 'triangle' }]];
 const interactCue = [
   [53, { endPitch: 46, duration: 0.065, level: 0.24, attack: 0.004, wave: 'triangle' }],
@@ -61,6 +71,15 @@ function renderLoop(OfflineContext, area) {
         const at = start + offset * beat;
         tone(context, output, at, pitch, { duration: 0.82 * beat, level: 0.15 });
         tone(context, output, at + 0.12, pitch + 12, { duration: 0.57 * beat, level: 0.025 });
+      });
+    } else if (area === 'wooden-house') {
+      chord.forEach((pitch, i) => {
+        tone(context, output, start + i * 0.34 * beat, pitch, {
+          duration: 2.8 * beat, attack: 0.04, level: i === 0 ? 0.13 : 0.065, wave: i === 0 ? 'sine' : 'triangle',
+        });
+      });
+      melody.forEach(([offset, pitch]) => {
+        tone(context, output, start + offset * beat, pitch, { duration: 0.98 * beat, attack: 0.025, level: 0.13 });
       });
     } else {
       tone(context, output, start, chord[0], { duration: 0.74 * beat, level: 0.15, wave: 'triangle' });

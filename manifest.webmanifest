@@ -2,7 +2,7 @@
   "id": "./",
   "name": "Kids World",
   "short_name": "Kids World",
-  "description": "Explore Flower Garden and Snow Basin online or offline.",
+  "description": "Explore Flower Garden, Snow Basin, and Wooden House online or offline.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
