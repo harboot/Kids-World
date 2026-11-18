@@ -1,5 +1,5 @@
 {
-  "version": "272c6c7d0f4859b4a87cb3f9df9dbaddfefb3aaf299a20a0eee0d3df6501a7e4",
+  "version": "f1aec13f316ed11b502765f005beeeb29cb98535e7408f86ef69c66a60bf7028",
   "files": [
     {
       "path": "./areas/flower-garden/garden-cabin.js",
@@ -19,7 +19,7 @@
     },
     {
       "path": "./areas/flower-garden/index.js",
-      "revision": "1c7451a21186d339c697f1a84475dae5e4d88c44989585864940874885dfc452"
+      "revision": "4a28b23d680f2af65c03521667a5097c99dd845b06c17e1b3ac3f432a91e97d2"
     },
     {
       "path": "./areas/ice-door.js",
@@ -27,7 +27,7 @@
     },
     {
       "path": "./areas/snow-basin.js",
-      "revision": "ca6295018acf406692d67bac1980b331c1c9202c16d7f52ba1c27c9bd5a954d4"
+      "revision": "1af1e9e604734cd7751b0624a9cb67f747c8c6cce71b4cc14d80d4f72afc5551"
     },
     {
       "path": "./areas/snow-basin/activity.js",

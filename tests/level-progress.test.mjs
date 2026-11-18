@@ -98,8 +98,22 @@ test('Garden opens its ice door when a basket holding at least five apples is pl
   worlds.reset();
   assert.equal(pickup.active, true);
   assert.equal(model.visible, true);
+  assert.equal(area.objective, 'Pick up the basket by the apple tree');
+  pickup.act();
+  assert.match(area.objective, /collect apples · 0\/5/);
+  ripenDrops();
+  for (const fruit of collect.filter(item => item.active)) fruit.act();
+  ripenDrops();
+  for (const fruit of collect.filter(item => item.active).slice(0, 2)) fruit.act();
+  assert.equal(area.objective, 'Place the basket on the cabin table');
+  table.act();
+  assert.match(area.objective, /Snow Basin is open!/);
+  assert.equal(sparkles.visible, false);
+
   worlds.load('snow');
-  assert.equal(worlds.load('garden').scene.getObjectByName('Enter Snow Basin').visible, true);
+  const replay = worlds.load('garden');
+  assert.equal(replay.scene.getObjectByName('Enter Snow Basin').visible, true);
+  assert.equal(replay.area.objective, 'Pick up the basket by the apple tree');
   assert.equal(createLevelProgress(areas, () => storage).has('garden'), true);
   worlds.unload();
 });
