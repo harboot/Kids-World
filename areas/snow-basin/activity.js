@@ -226,3 +226,7 @@ export function createSnowActivity({ width, depth, spawn, obstacles, clearSpot, 
   reset();
   return { state, missions, reset, pickUpAxe, canChop, chop, canPickUpKey, pickUpKey, canMakeBall, makeBall, throwBall, update };
 }
+
+export function snowMissionsComplete(missions) {
+  return missions.snowmen && missions.tree && missions.key;
+}

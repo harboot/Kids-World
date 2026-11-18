@@ -218,10 +218,9 @@ export function addFrozenKey(THREE, scene, kit, site) {
   };
 }
 
-export function addCastleDoor(THREE, scene, kit, { x, z, available, announce, reducedMotion }) {
+export function addCastleDoor(THREE, scene, kit, { x, z, available, reducedMotion }) {
   const { box, mesh, material, obstacles } = kit;
   const facade = new THREE.Group();
-  facade.name = 'Frozen Castle';
   facade.position.set(x, 0, z);
   facade.rotation.y = Math.PI;
 
@@ -249,7 +248,8 @@ export function addCastleDoor(THREE, scene, kit, { x, z, available, announce, re
   }
 
   return registerDoor(THREE, scene, obstacles, facade, {
-    x, z, anchorY: 2.28, radius: 2.65, label: 'Frozen Castle', available, reducedMotion, act: announce,
+    x, z, anchorY: 2.28, radius: 2.65, label: 'Enter Frozen Castle', available, reducedMotion,
+    act({ travel, heardCue }) { travel('frozen-castle', heardCue); },
     bounds: { left: x - 1.92, right: x + 1.92, front: z - 0.505, back: z + 0.505, height: 4.67 },
   });
 }

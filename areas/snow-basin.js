@@ -1,11 +1,12 @@
 import { addIceDoor } from './ice-door.js';
-import { CHOPS, CHOP_COOLDOWN, FALL_DURATION, SNOWMAN_COUNT, createSnowActivity } from './snow-basin/activity.js';
+import { CHOPS, CHOP_COOLDOWN, FALL_DURATION, SNOWMAN_COUNT, createSnowActivity, snowMissionsComplete } from './snow-basin/activity.js';
 import { addAxe, addCastleDoor, addChopTree, addFrozenKey, addSnowPlay, showSnowmen } from './snow-basin/props.js';
 import { addWinterScenery } from './snow-basin/scenery.js';
 
 const axeSite = { x: 0.9, z: 5.9 };
 const treeSite = { x: 7.5, z: -1.85 };
 const keySite = { x: 6.32, z: 0.43 };
+const castleSite = { x: -2.3, z: 13.92 };
 const treeClearance = 2.72;
 const landingBounds = { left: treeSite.x + 2.09, right: treeSite.x + 8.12, front: treeSite.z - 1.93, back: treeSite.z + 1.93 };
 const piles = [
@@ -60,10 +61,9 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
   });
   let activity;
   const castle = addCastleDoor(THREE, scene, kit, {
-    x: -2.3, z: 13.92,
+    ...castleSite,
     reducedMotion,
-    available: () => Boolean(activity?.missions.key || isLevelComplete?.('snow')),
-    announce: () => showNotice('Frozen Castle — Coming Soon'),
+    available: () => Boolean(isLevelComplete?.('snow') || (activity && snowMissionsComplete(activity.missions))),
   });
 
   const direction = new THREE.Vector3();
@@ -88,12 +88,13 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
       if (name === 'key') {
         key.model.visible = false;
         showNotice('Frozen Key collected!');
-        castle.refresh();
       }
       playCue?.(cues[name]);
-      if ((name === 'hit' || name === 'key') && missions.snowmen && missions.tree && missions.key) {
+      if ((name === 'hit' || name === 'key') && snowMissionsComplete(missions)) {
+        castle.refresh();
         completeLevel?.('snow');
         playCue?.(cues.success);
+        if (name !== 'key') showNotice('Frozen Castle unlocked!');
       }
       updateHUD();
     },
@@ -212,10 +213,11 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
 
   return {
     obstacles,
+    arrivals: { 'frozen-castle': { x: castleSite.x, z: castleSite.z - 2.6, yaw: Math.PI } },
     get objective() {
       const finished = Object.values(missions).filter(Boolean).length;
       const progress = `Snow Basin · ${finished}/3 missions`;
-      if (finished === 3) return `${progress}\nSnow Basin complete!`;
+      if (finished === 3) return `${progress}\nSnow Basin complete! Frozen Castle unlocked!`;
       const hints = [];
       if (!missions.snowmen) {
         const action = state.held ? 'Throw at a snowman' : 'Make a snowball';
@@ -226,6 +228,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
         else if (state.tree === 'falling') hints.push('Watch the pine fall');
         else hints.push(`Chop the pine from the pond side (${state.chops}/${CHOPS})`);
       } else if (!missions.key) hints.push('Find the Frozen Key');
+      if (!castle.active) hints.push('Frozen Castle is still locked');
       return `${progress}\n${hints.join(' · ')}`;
     },
     interactions: [

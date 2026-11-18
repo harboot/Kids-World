@@ -1,5 +1,5 @@
 {
-  "version": "4cc330d5e8a9c9523744647750a637a8f76698ff97209634c31c30dbeba0db78",
+  "version": "6d1ae9df2ebec2b24e22e16418ed07c1fcd68c8cb772eb0b9870ce10622643af",
   "files": [
     {
       "path": "./areas/flower-garden/garden-cabin.js",
@@ -22,20 +22,36 @@
       "revision": "d7a242261f558eae76a973bac6c5348cda0398b627fa9c9f13af46abbcddacc6"
     },
     {
+      "path": "./areas/frozen-castle/activities.js",
+      "revision": "767f53b2541d64f34b0e7cfe15368fa521f93e3db6b463d3ab87522c228424ae"
+    },
+    {
+      "path": "./areas/frozen-castle/decorations.js",
+      "revision": "2694fd88e0d146229a0e12239bbe56786f14ede447100d9a9d376e99de41fc75"
+    },
+    {
+      "path": "./areas/frozen-castle/index.js",
+      "revision": "77524fba4cfdaaeadac589a8730ccb7bab65820795fb6ccf2a1a1ca264b35680"
+    },
+    {
+      "path": "./areas/frozen-castle/palace.js",
+      "revision": "7005c7596c6031181207f3c4871893d53297117edd276d2e2ad2af39a744b0c2"
+    },
+    {
       "path": "./areas/ice-door.js",
       "revision": "046a5eb469413eb7554b2225aa31dfbb90204c84e3a0da55b7ad43fae8adb68e"
     },
     {
       "path": "./areas/snow-basin.js",
-      "revision": "c274faf16c65cc6f175ca041b6b8af0aa7515a5e5fd0914867e33aafd91787e4"
+      "revision": "f0f27dc84bbddd7a7a2d28122e209c03bf1482946d528c5ba02890e0de30e4af"
     },
     {
       "path": "./areas/snow-basin/activity.js",
-      "revision": "ec8f0c5944dfc066fc56bdcef9e0ae02738dcbbfa0de8bf8ebcaf6c2d25a6b44"
+      "revision": "24c46f78d2b27e4f5f000898f8ecf702a921b515018371271c6138a163d86703"
     },
     {
       "path": "./areas/snow-basin/props.js",
-      "revision": "0a6f241b0d0c0256bf3639f4edd6a5bb20a7a6f0d3b88d05fba562cf2903520a"
+      "revision": "d58772cf0f09f8b8ea32141e422f5a0e667696033389d488039be913a9fd5fb3"
     },
     {
       "path": "./areas/snow-basin/scenery.js",
@@ -67,7 +83,7 @@
     },
     {
       "path": "./core/audio.js",
-      "revision": "33e67cfc3d46e64850349830f3371a32ac3db6840f59a362879535f778af6661"
+      "revision": "0902e77feb10f54d176fd34b927af82c41f9d3a679d8664bcc33ba6f58322673"
     },
     {
       "path": "./core/controls.js",
@@ -103,7 +119,7 @@
     },
     {
       "path": "./game.js",
-      "revision": "f83cf48d6184cc6561a9aa426f63a47e235ff74beff7dc068110821d14f7d680"
+      "revision": "1b00eb0c89b6ac1b2ceedfddfe09bae8beda327e08fc6bd396b70de1de93909d"
     },
     {
       "path": "./index.html",
@@ -139,7 +155,7 @@
     },
     {
       "path": "./style.css",
-      "revision": "6bed16354da68cbdab473db9b558ce8ac0310e62ca7215798ca1a6264e359b79"
+      "revision": "a4da22c9984fb21df937e7e85b0c519a0283ca77b4bccd01afae0f87f43c9641"
     },
     {
       "path": "./vendor/three.LICENSE",
