@@ -226,7 +226,7 @@ kbd {
   background: #253e2950;
   touch-action: none;
 }
-[data-state="playing"][data-input="touch"] .joystick { display: grid; }
+[data-state="playing"][data-input="touch"]:not([data-seated]) .joystick { display: grid; }
 .joystick-thumb {
   width: 42%;
   aspect-ratio: 1;

@@ -19,10 +19,20 @@ const PLAYER_RADIUS = 0.34;
 const JUMP_SPEED = 6.3;
 const GRAVITY = 15;
 const WALK_SPEED = 4.6;
+const STEP_HEIGHT = 0.225;
 const INTERACTION_RADIUS = 2.35;
+const areaKey = 'kids-world-last-area';
 const touchDevice = matchMedia('(pointer: coarse)').matches ||
   (navigator.maxTouchPoints > 0 && matchMedia('(hover: none)').matches);
 game.dataset.input = touchDevice ? 'touch' : 'mouse';
+
+function rememberArea() {
+  try {
+    localStorage.setItem(areaKey, game.dataset.level);
+  } catch {
+    // Exploration still works in browsers that block local storage.
+  }
+}
 
 function showError(message) {
   game.dataset.state = 'error';
@@ -34,6 +44,17 @@ function showError(message) {
 }
 
 async function boot() {
+  const entry = new URL(window.location.href);
+  const arrivingInGarden = entry.searchParams.get('arrive') === 'garden';
+  try {
+    if (game.dataset.level === 'garden' && !arrivingInGarden && localStorage.getItem(areaKey) === 'snow') {
+      window.location.replace('./snow.html');
+      return;
+    }
+  } catch {
+    // Continue with the requested page if there is no saved area.
+  }
+
   let THREE;
   try {
     THREE = await import('https://cdn.jsdelivr.net/npm/three@0.179.1/build/three.module.js');
@@ -55,6 +76,11 @@ async function boot() {
     const level = game.dataset.level === 'snow' ? (await import('./snow.js')).snowLevel :
       (await import('./garden.js')).gardenLevel;
     explore(THREE, renderer, level);
+    rememberArea();
+    if (arrivingInGarden) {
+      entry.searchParams.delete('arrive');
+      window.history.replaceState(null, '', entry);
+    }
   } catch (error) {
     console.error(error);
     showError('This area failed to load. Reload the page to try again.');
@@ -64,9 +90,9 @@ async function boot() {
 function addPassage(THREE, scene, passage) {
   const door = new THREE.Group();
   door.position.set(passage.x, 0, passage.z);
-  const frame = new THREE.MeshLambertMaterial({ color: 0x3a6971 });
-  const plank = new THREE.MeshLambertMaterial({ color: 0x78b6ad });
-  const trim = new THREE.MeshLambertMaterial({ color: 0xf4dba2 });
+  const frame = new THREE.MeshLambertMaterial({ color: 0x589dbb });
+  const panel = new THREE.MeshLambertMaterial({ color: 0x96d7e8, emissive: 0x17404d });
+  const trim = new THREE.MeshBasicMaterial({ color: 0xe2faff });
   const geometry = new THREE.BoxGeometry(1, 1, 1);
 
   function part(x, y, z, sx, sy, sz, material) {
@@ -77,15 +103,21 @@ function addPassage(THREE, scene, passage) {
     door.add(mesh);
   }
 
-  part(0, 1.38, 0, 1.75, 2.76, 0.15, plank);
+  part(0, 1.38, 0, 1.75, 2.76, 0.15, panel);
   part(0, 2.91, 0.01, 2.37, 0.3, 0.34, frame);
   part(0, 2.92, 0.19, 0.98, 0.1, 0.04, trim);
   part(0, 0.06, 0.15, 2.36, 0.12, 0.51, frame);
   for (const side of [-1, 1]) {
     part(side * 0.99, 1.45, 0, 0.26, 2.9, 0.32, frame);
-    part(side * 0.45, 1.38, 0.09, 0.03, 2.65, 0.035, frame);
+    part(side * 0.39, 1.37, 0.092, 0.035, 1.75, 0.035, trim);
   }
-  part(0.54, 1.37, 0.14, 0.16, 0.18, 0.1, trim);
+  const shard = new THREE.OctahedronGeometry(1);
+  for (const [x, y, sx, sy] of [[-1.16, 2.64, .28, .88], [1.12, 2.49, .24, .72], [0, 1.36, .39, .62]]) {
+    const crystal = new THREE.Mesh(shard, x ? frame : trim);
+    crystal.position.set(x, y, 0.13);
+    crystal.scale.set(sx, sy, 0.2);
+    door.add(crystal);
+  }
   scene.add(door);
 }
 
@@ -93,7 +125,8 @@ function explore(THREE, renderer, level) {
   const audio = createAudio(game.dataset.level, document.querySelector('#sound'));
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(62, 1, 0.07, 115);
-  const world = level.build(THREE, scene, touchDevice, PLAYER_RADIUS);
+  scene.add(camera);
+  const world = level.build(THREE, scene, touchDevice, PLAYER_RADIUS, camera);
   const { passage } = level;
   addPassage(THREE, scene, passage);
   world.obstacles.push({
@@ -102,7 +135,7 @@ function explore(THREE, renderer, level) {
   });
   const interactions = [...(world.interactions ?? []), {
     x: passage.x, z: passage.z, label: passage.label,
-    act(heardCue) {
+    act({ heardCue }) {
       audio.setPlaying(false);
       clearInput();
       game.dataset.state = 'traveling';
@@ -123,11 +156,10 @@ function explore(THREE, renderer, level) {
   const motion = new THREE.Vector2();
   const speed = new THREE.Vector2();
   const stickAxis = new THREE.Vector2();
-  const mouseDelta = new THREE.Vector2();
   const interactionPoint = new THREE.Vector3();
   let stickPointer = null;
   let lookPointer = null;
-  let lockRequested = false;
+  let seated = null;
   let yaw = 0;
   let pitch = 0;
   let elevation = 0;
@@ -168,7 +200,6 @@ function explore(THREE, renderer, level) {
     keys.clear();
     presses.clear();
     lookPointer = null;
-    mouseDelta.set(0, 0);
     resetStick();
     interaction.hidden = true;
   }
@@ -180,6 +211,8 @@ function explore(THREE, renderer, level) {
 
   function resetWorld() {
     clearInput();
+    seated = null;
+    delete game.dataset.seated;
     yaw = 0;
     pitch = 0;
     elevation = 0;
@@ -210,44 +243,18 @@ function explore(THREE, renderer, level) {
     audio.setPlaying(true);
   }
 
-  function lockFailed() {
-    if (!lockRequested) return;
-    lockRequested = false;
-    notice.textContent = 'Pointer Lock was unavailable. Select Explore to try again.';
-  }
-
   start.addEventListener('click', event => {
     audio.unlock();
     if (game.dataset.state === 'menu' && event.pointerType) {
       game.dataset.input = event.pointerType === 'mouse' ? 'mouse' : 'touch';
     }
-    if (touchMode()) {
-      begin();
-      return;
-    }
-    lockRequested = true;
-    try {
-      canvas.requestPointerLock()?.catch(lockFailed);
-    } catch {
-      lockFailed();
-    }
+    begin();
   });
-
-  document.addEventListener('pointerlockchange', () => {
-    if (document.pointerLockElement === canvas) {
-      lockRequested = false;
-      begin();
-    } else if (playing() && !touchMode()) {
-      menu(true);
-    }
-  });
-  document.addEventListener('pointerlockerror', lockFailed);
 
   restart.addEventListener('click', () => {
     resetWorld();
     menu(false);
     notice.textContent = '';
-    if (document.pointerLockElement === canvas) document.exitPointerLock();
   });
 
   const enterFullscreen = game.requestFullscreen || game.webkitRequestFullscreen;
@@ -280,12 +287,14 @@ function explore(THREE, renderer, level) {
 
   function nearestInteraction() {
     if (!playing()) return null;
+    if (seated) return standPrompt;
     const { x, z } = camera.position;
     let nearest = null;
-    let best = INTERACTION_RADIUS;
+    let best = Infinity;
     for (const object of interactions) {
+      if (object.active === false || (object.reachable && !object.reachable(camera.position))) continue;
       const distance = Math.hypot(x - object.x, z - object.z);
-      if (distance < best) {
+      if (distance < best && distance <= (object.radius ?? INTERACTION_RADIUS)) {
         nearest = object;
         best = distance;
       }
@@ -300,11 +309,16 @@ function explore(THREE, renderer, level) {
     const glyph = touchMode() ? '↗' : 'M';
     if (interactionGlyph.textContent !== glyph) interactionGlyph.textContent = glyph;
     if (interactionLabel.textContent !== nearby.label) interactionLabel.textContent = nearby.label;
-    interactionPoint.set(nearby.x, 1.38, nearby.z).project(camera);
-    const { x, y, z } = interactionPoint;
-    const inView = z >= -1 && z <= 1 && Math.abs(x) <= 1 && Math.abs(y) <= 1;
-    const left = inView ? clamp(50 + 50 * x, 22, 78) : 50;
-    const top = inView ? clamp(50 - 50 * y, 20, 71) : 68;
+    let left = 50;
+    let top = 68;
+    if (!seated) {
+      interactionPoint.set(nearby.x, nearby.anchorY ?? 1.38, nearby.z).project(camera);
+      const { x, y, z } = interactionPoint;
+      if (z >= -1 && z <= 1 && Math.abs(x) <= 1 && Math.abs(y) <= 1) {
+        left = clamp(50 + 50 * x, 22, 78);
+        top = clamp(50 - 50 * y, 20, 71);
+      }
+    }
     interaction.style.setProperty('--interaction-x', `${left.toFixed(1)}%`);
     interaction.style.setProperty('--interaction-y', `${top.toFixed(1)}%`);
   }
@@ -312,17 +326,45 @@ function explore(THREE, renderer, level) {
   function interact() {
     const nearby = nearestInteraction();
     if (!nearby) return;
-    nearby.act(audio.effect('interact'));
+    nearby.act({ heardCue: audio.effect('interact'), sit });
     updateInteraction();
   }
 
   interaction.addEventListener('click', interact);
   window.addEventListener('pageshow', event => {
-    if (event.persisted && game.dataset.state === 'traveling') menu(true);
+    if (!event.persisted) return;
+    rememberArea();
+    if (game.dataset.state === 'traveling') menu(true);
   });
 
+  function sit(pose) {
+    seated = { standing: camera.position.clone(), elevation };
+    game.dataset.seated = 'true';
+    clearInput();
+    speed.set(0, 0);
+    verticalSpeed = 0;
+    camera.position.set(pose.x, pose.y, pose.z);
+    yaw = pose.yaw;
+    pitch = 0;
+    updateCamera();
+  }
+
+  const standPrompt = {
+    label: 'Stand up',
+    act() {
+      camera.position.copy(seated.standing);
+      elevation = seated.elevation;
+      verticalSpeed = 0;
+      grounded = true;
+      seated = null;
+      delete game.dataset.seated;
+      clearInput();
+      updateCamera();
+    },
+  };
+
   function jump() {
-    if (!grounded) return;
+    if (seated || !grounded) return;
     verticalSpeed = JUMP_SPEED;
     grounded = false;
     audio.effect('jump');
@@ -334,15 +376,9 @@ function explore(THREE, renderer, level) {
     updateCamera();
   }
 
-  window.addEventListener('mousemove', event => {
-    if (!playing() || document.pointerLockElement !== canvas) return;
-    mouseDelta.x += event.movementX;
-    mouseDelta.y += event.movementY;
-  }, { capture: true, passive: true });
-
   window.addEventListener('keydown', event => {
-    if (event.code === 'Escape' && document.pointerLockElement === canvas) {
-      document.exitPointerLock();
+    if (event.code === 'Escape' && playing()) {
+      menu(true);
       return;
     }
     if (!playing()) return;
@@ -374,7 +410,7 @@ function explore(THREE, renderer, level) {
   }
 
   joystick.addEventListener('pointerdown', event => {
-    if (!playing() || !touchMode() || stickPointer !== null) return;
+    if (!playing() || seated || !touchMode() || stickPointer !== null) return;
     event.preventDefault();
     stickPointer = event.pointerId;
     joystick.setPointerCapture(event.pointerId);
@@ -428,7 +464,6 @@ function explore(THREE, renderer, level) {
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden || !playing()) return;
     menu(true);
-    if (document.pointerLockElement === canvas) document.exitPointerLock();
   });
 
   function overlaps(obstacle, x, z) {
@@ -441,6 +476,20 @@ function explore(THREE, renderer, level) {
   function blocked(x, z) {
     return world.animals?.blocks(x, z, elevation) ||
       world.obstacles.some(obstacle => elevation < obstacle.height && overlaps(obstacle, x, z));
+  }
+
+  function walkTo(position, x, z) {
+    if (blocked(x, z)) {
+      if (!grounded || world.animals?.blocks(x, z, elevation)) return;
+      let step = elevation;
+      for (const obstacle of world.obstacles) {
+        if (overlaps(obstacle, x, z)) step = Math.max(step, obstacle.height);
+      }
+      if (step - elevation > STEP_HEIGHT) return;
+      elevation = step;
+    }
+    position.x = x;
+    position.z = z;
   }
 
   function vertical(dt, position) {
@@ -474,8 +523,8 @@ function explore(THREE, renderer, level) {
     const zLimit = level.depth / 2 - PLAYER_RADIUS;
     const x = clamp(position.x + speed.x * dt, -xLimit, xLimit);
     const z = clamp(position.z + speed.y * dt, -zLimit, zLimit);
-    if (!blocked(x, position.z)) position.x = x;
-    if (!blocked(position.x, z)) position.z = z;
+    walkTo(position, x, position.z);
+    walkTo(position, position.x, z);
     vertical(dt, position);
     camera.updateMatrixWorld();
   }
@@ -486,11 +535,10 @@ function explore(THREE, renderer, level) {
     if (playing()) {
       const horizontal = Number(keys.has('lookRight')) - Number(keys.has('lookLeft'));
       const vertical = Number(keys.has('lookDown')) - Number(keys.has('lookUp'));
-      const dx = mouseDelta.x * 0.0022 + horizontal * dt * 1.65;
-      const dy = mouseDelta.y * 0.0022 + vertical * dt * 1.65;
-      mouseDelta.set(0, 0);
+      const dx = horizontal * dt * 1.65;
+      const dy = vertical * dt * 1.65;
       if (dx || dy) look(dx, dy);
-      move(dt);
+      if (!seated) move(dt);
       world.update?.(dt, camera.position);
       updateInteraction();
     }
@@ -506,7 +554,6 @@ function explore(THREE, renderer, level) {
     event.preventDefault();
     audio.setPlaying(false);
     clearInput();
-    if (document.pointerLockElement === canvas) document.exitPointerLock();
     showError('The WebGL context was lost. Reload the page to continue exploring.');
   });
   new ResizeObserver(resize).observe(canvas);
