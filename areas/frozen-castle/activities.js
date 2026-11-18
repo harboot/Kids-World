@@ -1,5 +1,5 @@
-import { addPalaceSign } from './decorations.js';
-import { CHANNEL } from './palace.js';
+import { addPalaceSign } from './palace.js';
+import { buildStaircase, stairSite } from './staircase.js';
 
 const activationSites = [{ x: -3.45, z: 8.35 }, { x: 5.7, z: -0.45 }, { x: -3.65, z: -3.25 }];
 const musicSites = [
@@ -7,10 +7,6 @@ const musicSites = [
   { x: 10.55, z: 3.12, pitch: 81, color: 0xff8dcf },
   { x: 11.35, z: 5.85, pitch: 85, color: 0xb49bff },
 ];
-const bridgeSite = { x: -7.0, z: 1.27 };
-const deckHalfDepth = 1.13;
-const sectionCount = 3;
-const sectionLength = (CHANNEL.east - CHANNEL.west) / sectionCount;
 
 const bell = (duration = 0.38, level = 0.14) => ({ duration, level });
 const activateCue = [[77, bell(0.29)], [89, bell(0.41, 0.085), 0.055]];
@@ -19,7 +15,9 @@ const restoreCue = [[73, bell(), 0.32], [78, bell(), 0.44], [83, bell(0.55), 0.5
 const melodyCue = [[74, bell(), 0.35], [85, bell(), 0.51], [81, bell(), 0.68], [88, bell(0.67, 0.18), 0.84]];
 
 export function createCastleActivities(THREE, builder, document, { playCue, reducedMotion, isActive, onMissionComplete }) {
-  const { architecture, group, part, solid, ice, materials: { blue, deep, frost, glass, light, lilac, pearl, silver } } = builder;
+  const { architecture, group, part, solid, ice, materials: { blue, deep, glass, light, pearl, silver } } = builder;
+  const staircase = buildStaircase(THREE, builder, document);
+  const { segments } = staircase;
 
   const activation = activationSites.map((site, i) => {
     const pedestal = group('Ice crystal pedestal', site.x, 0, site.z, architecture);
@@ -58,40 +56,11 @@ export function createCastleActivities(THREE, builder, document, { playCue, redu
   addPalaceSign(THREE, document, musicSign, 'Crystal Melody', 0, 1.09, 0.064, 1.62, 0.302);
   solid(9.56, 5.95, 1.68, 0.29, 1.25);
 
-  const bridgeStand = group('Bridge pedestal', bridgeSite.x, 0, bridgeSite.z, architecture);
-  part(bridgeStand, 'drum', deep, 0, 0.11, 0, 0.54, 0.22, 0.54);
-  part(bridgeStand, 'drum', blue, 0, 0.54, 0, 0.34, 0.65, 0.34);
-  part(bridgeStand, 'gem', lilac, 0, 1, 0, 0.34, 0.37, 0.34);
-  addPalaceSign(THREE, document, bridgeStand, 'Ice Bridge', 0, 0.63, 0.345, 0.97, 0.22);
-  solid(bridgeSite.x, bridgeSite.z, 1.0, 1.0, 1.36);
-
-  const segments = Array.from({ length: sectionCount }, (_, i) => {
-    const x = CHANNEL.east - (i + 0.5) * sectionLength;
-    part(architecture, 'gem', pearl, x, -0.28, 0, 0.34, 0.12, 0.6);
-    const model = group('Ice bridge section ' + (i + 1), x, 0, 0);
-    part(model, 'box', glass, 0, -0.09, 0, sectionLength + 0.001, 0.18, 2 * (deckHalfDepth + 0.065));
-    part(model, 'box', frost, 0, -0.025, 0, sectionLength - 0.045, 0.05, (deckHalfDepth - 0.06) * 2);
-    part(model, 'box', light, 0, -0.012, 0, 0.048, 0.025, 1.56);
-    for (const side of [-1, 1]) {
-      part(model, 'box', blue, 0, 0.18, side * deckHalfDepth, sectionLength + 0.001, 0.36, 0.14);
-      part(model, 'box', pearl, 0, 0.37, side * deckHalfDepth, sectionLength - 0.015, 0.087, 0.16);
-      part(model, 'gem', silver, 0, 0.48, side * deckHalfDepth, 0.11, 0.19, 0.1);
-    }
-    return { model, growth: null };
-  });
-
   const missions = {
     get crystals() { return activation.every(crystal => crystal.active); },
-    get bridge() { return segments.every(section => section.growth === 1); },
+    get stairs() { return segments.every(section => section.growth === 1); },
     get melody() { return music.every(crystal => crystal.played); },
   };
-
-  function blocksGround(x, z, radius) {
-    if (Math.abs(z) >= CHANNEL.halfDepth + radius || x - radius >= CHANNEL.east || x + radius <= CHANNEL.west) return false;
-    if (Math.abs(z) > deckHalfDepth - 0.08 - radius) return true;
-    const firstGap = segments.findIndex(section => section.growth !== 1);
-    return firstGap !== -1 && x - radius < CHANNEL.east - firstGap * sectionLength;
-  }
 
   const interactions = [
     ...activation.map(crystal => ({
@@ -110,15 +79,16 @@ export function createCastleActivities(THREE, builder, document, { playCue, redu
       },
     })),
     {
-      ...bridgeSite, radius: 2, anchorY: 0.96, label: 'Create ice bridge', silent: true,
+      ...stairSite, radius: 2.15, anchorY: 1.12, label: 'Build ice staircase', silent: true,
+      reachable: player => player.x >= stairSite.x - 0.9 && player.y < 3.2,
       get active() { return isActive() && segments.some(section => section.growth === null); },
       act() {
         if (!this.active) return;
         const section = segments.find(item => item.growth === null);
         section.growth = reducedMotion() ? 1 : 0;
-        poseSection(section);
+        staircase.pose();
         playCue(buildCue);
-        if (missions.bridge) finishBridge();
+        if (missions.stairs) finishStairs();
       },
     },
     ...music.map(crystal => ({
@@ -139,7 +109,7 @@ export function createCastleActivities(THREE, builder, document, { playCue, redu
     })),
   ];
 
-  function finishBridge() {
+  function finishStairs() {
     playCue(restoreCue);
     onMissionComplete();
   }
@@ -160,13 +130,6 @@ export function createCastleActivities(THREE, builder, document, { playCue, redu
     });
   }
 
-  function poseSection(section) {
-    section.model.visible = section.growth !== null;
-    const eased = 1 - (1 - (section.growth ?? 0)) ** 3;
-    section.model.position.y = -0.31 * (1 - eased);
-    section.model.scale.y = 0.04 + eased * 0.96;
-  }
-
   function poseMusic(crystal, dt) {
     crystal.pulse = Math.max(0, crystal.pulse - dt);
     const pulse = reducedMotion() ? 0 : crystal.pulse / 0.5;
@@ -176,11 +139,11 @@ export function createCastleActivities(THREE, builder, document, { playCue, redu
   }
 
   return {
-    missions, interactions, blocksGround,
+    missions, interactions, staircase,
     get hints() {
       return [
         !missions.crystals && `Awaken ice crystals · ${activation.filter(crystal => crystal.active).length}/3`,
-        !missions.bridge && `Build the ice bridge · ${segments.filter(section => section.growth !== null).length}/3`,
+        !missions.stairs && `Build the ice staircase · ${segments.filter(section => section.growth !== null).length}/${segments.length}`,
         !missions.melody && `Play crystal melody · ${music.filter(crystal => crystal.played).length}/3`,
       ].filter(Boolean);
     },
@@ -189,23 +152,23 @@ export function createCastleActivities(THREE, builder, document, { playCue, redu
         Object.assign(crystal, { active: false, charge: 0, burst: 0 });
         poseCrystal(crystal, 0);
       }
-      for (const section of segments) {
-        section.growth = null;
-        poseSection(section);
-      }
+      for (const section of segments) section.growth = null;
+      staircase.pose();
       for (const crystal of music) {
         Object.assign(crystal, { played: false, pulse: 0 });
         poseMusic(crystal, 0);
       }
     },
     update(dt) {
-      const bridgeWasComplete = missions.bridge;
+      const stairsWereComplete = missions.stairs;
       for (const section of segments) {
         if (section.growth === null || section.growth === 1) continue;
-        section.growth = reducedMotion() ? 1 : Math.min(1, section.growth + dt / 0.48);
-        poseSection(section);
+        section.growth = reducedMotion() ? 1 : Math.min(1, section.growth + dt / 0.56);
       }
-      if (!bridgeWasComplete && missions.bridge) finishBridge();
+      if (!stairsWereComplete) {
+        staircase.pose();
+        if (missions.stairs) finishStairs();
+      }
       for (const crystal of activation) poseCrystal(crystal, dt);
       for (const crystal of music) poseMusic(crystal, dt);
     },

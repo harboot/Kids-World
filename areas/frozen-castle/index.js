@@ -1,12 +1,14 @@
 import { createCastleActivities } from './activities.js';
 import { buildDecorations, gatewaySite, returnSite } from './decorations.js';
-import { buildPalace, createPalaceBuilder, palaceGround, PALACE_DEPTH, PALACE_WIDTH } from './palace.js';
+import { buildPalace, createPalaceBuilder, PALACE_DEPTH, PALACE_WIDTH } from './palace.js';
+import { BALCONY_HEIGHT } from './staircase.js';
 
 const ID = 'frozen-castle';
+const villageName = 'Arendelle Village';
 const village = {
-  id: 'snowglow-village',
-  label: 'Enter Snowglow Village',
-  arrive(notify) { notify('Snowglow Village — Coming Soon'); },
+  id: 'arendelle-village',
+  label: 'Enter ' + villageName,
+  arrive(notify) { notify(villageName + ' — Coming Soon'); },
 };
 
 const unlockCue = [
@@ -20,7 +22,7 @@ export const frozenCastle = {
   id: ID,
   title: 'Frozen Castle',
   heading: ['Frozen', 'Castle'],
-  description: 'Awaken ice crystals, build a bridge and play a crystal melody. Follow the ice mosaic into the palace.',
+  description: 'Awaken ice crystals, build an ice staircase and play a crystal melody. Follow the ice mosaic into the palace.',
   canvasLabel: '3D crystal palace',
   themeColor: '#dce9fb',
   music: ID,
@@ -35,7 +37,7 @@ function loadCastle({ THREE, scene, hud, signal, playCue = () => {}, reducedMoti
   const obstacles = [];
   const builder = createPalaceBuilder(THREE, scene, obstacles);
   buildPalace(THREE, scene, builder);
-  const { throneInteraction, droplets, chandelierGlow, aurora, gatewayGlow } = buildDecorations(THREE, builder, hud?.ownerDocument);
+  const { throneInteraction, droplets, chandelierGlow, aurora, gatewayGlow } = buildDecorations(THREE, builder, hud?.ownerDocument, villageName, BALCONY_HEIGHT);
 
   let released = false;
   let recorded = isLevelComplete(ID);
@@ -60,9 +62,11 @@ function loadCastle({ THREE, scene, hud, signal, playCue = () => {}, reducedMoti
   builder.batchArchitecture();
 
   const { missions } = activity;
-  const isComplete = () => missions.crystals && missions.bridge && missions.melody;
+  const isComplete = () => missions.crystals && missions.stairs && missions.melody;
   const gateway = {
-    ...gatewaySite, radius: 2.5, anchorY: 2, label: village.label, destination: village.id, silent: true,
+    ...gatewaySite, radius: 2.5, anchorY: BALCONY_HEIGHT + 1.8, label: village.label,
+    destination: village.id, silent: true,
+    reachable: player => player.y >= BALCONY_HEIGHT + 1.2,
     get active() { return isActive() && (isComplete() || recorded || isLevelComplete(ID)); },
     act() {
       if (!this.active) return;
@@ -74,6 +78,7 @@ function loadCastle({ THREE, scene, hud, signal, playCue = () => {}, reducedMoti
   };
   const exit = {
     ...returnSite, radius: 2.05, anchorY: 2.18, label: 'Return to Snow Basin',
+    reachable: player => player.y < 3.5,
     act({ travel, heardCue }) { if (isActive()) travel('snow', heardCue, ID); },
   };
   const throne = {
@@ -113,13 +118,13 @@ function loadCastle({ THREE, scene, hud, signal, playCue = () => {}, reducedMoti
   return {
     obstacles,
     interactions: [...activity.interactions, throne, gateway, exit],
-    blocksGround: activity.blocksGround,
-    getGroundHeight: palaceGround,
+    blocksGround: activity.staircase.blocksGround,
+    getGroundHeight: activity.staircase.getGroundHeight,
     get objective() {
       const count = Object.values(missions).filter(Boolean).length;
       const progress = `Frozen Castle · ${count}/3 missions`;
       if (notice) return `${progress}\n${notice}`;
-      if (isComplete()) return `${progress}\nCastle Magic Restored!\nSnowglow Village unlocked!`;
+      if (isComplete()) return `${progress}\nCastle Magic Restored!\n${villageName} unlocked!`;
       return [progress, ...activity.hints].join('\n');
     },
     reset,

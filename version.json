@@ -1,5 +1,5 @@
 {
-  "version": "6d1ae9df2ebec2b24e22e16418ed07c1fcd68c8cb772eb0b9870ce10622643af",
+  "version": "d9ef22222e680cb4f4e45e9afeff1cb27e79e9351c88fdbb231c07e30233eab1",
   "files": [
     {
       "path": "./areas/flower-garden/garden-cabin.js",
@@ -23,19 +23,23 @@
     },
     {
       "path": "./areas/frozen-castle/activities.js",
-      "revision": "767f53b2541d64f34b0e7cfe15368fa521f93e3db6b463d3ab87522c228424ae"
+      "revision": "851c4bb8d6264ce28f0075965ff1f1fa69ecb02df28eff37b56a525b174e2a25"
     },
     {
       "path": "./areas/frozen-castle/decorations.js",
-      "revision": "2694fd88e0d146229a0e12239bbe56786f14ede447100d9a9d376e99de41fc75"
+      "revision": "88a3d31beea68e636d514848a3f50427d9bc12618867125c606878ce994cc382"
     },
     {
       "path": "./areas/frozen-castle/index.js",
-      "revision": "77524fba4cfdaaeadac589a8730ccb7bab65820795fb6ccf2a1a1ca264b35680"
+      "revision": "0f67adfc127b8b997e89b330e31c3544bc68fba60b4753a3b8027e7448fe4fb0"
     },
     {
       "path": "./areas/frozen-castle/palace.js",
-      "revision": "7005c7596c6031181207f3c4871893d53297117edd276d2e2ad2af39a744b0c2"
+      "revision": "a642ff7cafcaf631cc0b91d5e2de49bb282b78228496c047a4be1ea35a19aa31"
+    },
+    {
+      "path": "./areas/frozen-castle/staircase.js",
+      "revision": "ccbac686bc62a45ca2bc4df1990dda8cb3eaec091662457adc4e5e8dcdc17056"
     },
     {
       "path": "./areas/ice-door.js",
@@ -103,7 +107,7 @@
     },
     {
       "path": "./core/movement.js",
-      "revision": "cbe44115cfef2564f984672bcfb4b05935cae41a3b326a1df629155a87d44286"
+      "revision": "c01f5298c8485ea926c9a9a7daae53fb03a1b03ab30d02b4d528d1abecb4b56f"
     },
     {
       "path": "./core/player.js",
