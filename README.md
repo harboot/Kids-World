@@ -9,6 +9,8 @@ Kids World is a first-person exploration game made with HTML, CSS, JavaScript, a
 
 Desktop mouse look uses Pointer Lock. Press Esc to pause and release the cursor.
 
+Each area has its own looping music, with sound cues for jumping and interacting. The game generates the audio with the Web Audio API after you select **Explore**. The music-note button mutes all sound and remembers the setting between areas.
+
 ## Run locally
 
 Run `python3 -m http.server 8000` from the project directory, then open `http://localhost:8000`. The browser needs WebGL 2 and access to the Three.js CDN.

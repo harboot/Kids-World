@@ -94,6 +94,17 @@ button:focus-visible { outline: 3px solid #377b65; outline-offset: 3px; }
   font: 23px/1 system-ui, sans-serif;
 }
 .hud-button:hover:not(:disabled) { background: #fff; }
+.sound-button { position: relative; }
+.sound-button[aria-pressed="true"]::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 27%;
+  width: 46%;
+  height: 2px;
+  background: currentColor;
+  transform: rotate(-45deg);
+}
 
 .menu {
   position: absolute;

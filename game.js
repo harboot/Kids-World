@@ -1,3 +1,5 @@
+import { createAudio } from './audio.js';
+
 const game = document.querySelector('#game');
 const canvas = document.querySelector('#view');
 const start = document.querySelector('#start');
@@ -88,6 +90,7 @@ function addPassage(THREE, scene, passage) {
 }
 
 function explore(THREE, renderer, level) {
+  const audio = createAudio(game.dataset.level, document.querySelector('#sound'));
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(62, 1, 0.07, 115);
   const world = level.build(THREE, scene, touchDevice, PLAYER_RADIUS);
@@ -99,10 +102,15 @@ function explore(THREE, renderer, level) {
   });
   const interactions = [...(world.interactions ?? []), {
     x: passage.x, z: passage.z, label: passage.label,
-    act() {
+    act(heardCue) {
+      audio.setPlaying(false);
       clearInput();
       game.dataset.state = 'traveling';
-      window.location.assign(passage.href);
+      const leave = () => {
+        if (game.dataset.state === 'traveling') window.location.assign(passage.href);
+      };
+      if (heardCue) window.setTimeout(leave, 180);
+      else leave();
     },
   }];
 
@@ -185,6 +193,7 @@ function explore(THREE, renderer, level) {
   }
 
   function menu(paused) {
+    audio.setPlaying(false);
     clearInput();
     speed.set(0, 0);
     game.dataset.state = paused ? 'paused' : 'menu';
@@ -198,6 +207,7 @@ function explore(THREE, renderer, level) {
     notice.textContent = '';
     start.blur();
     game.dataset.state = 'playing';
+    audio.setPlaying(true);
   }
 
   function lockFailed() {
@@ -207,6 +217,7 @@ function explore(THREE, renderer, level) {
   }
 
   start.addEventListener('click', event => {
+    audio.unlock();
     if (game.dataset.state === 'menu' && event.pointerType) {
       game.dataset.input = event.pointerType === 'mouse' ? 'mouse' : 'touch';
     }
@@ -299,7 +310,9 @@ function explore(THREE, renderer, level) {
   }
 
   function interact() {
-    nearestInteraction()?.act();
+    const nearby = nearestInteraction();
+    if (!nearby) return;
+    nearby.act(audio.effect('interact'));
     updateInteraction();
   }
 
@@ -312,6 +325,7 @@ function explore(THREE, renderer, level) {
     if (!grounded) return;
     verticalSpeed = JUMP_SPEED;
     grounded = false;
+    audio.effect('jump');
   }
 
   function look(dx, dy) {
@@ -490,6 +504,7 @@ function explore(THREE, renderer, level) {
 
   canvas.addEventListener('webglcontextlost', event => {
     event.preventDefault();
+    audio.setPlaying(false);
     clearInput();
     if (document.pointerLockElement === canvas) document.exitPointerLock();
     showError('The WebGL context was lost. Reload the page to continue exploring.');
