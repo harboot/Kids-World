@@ -7,7 +7,7 @@ const ID = 'wooden-house';
 export const woodenHouse = {
   title: 'Wooden House',
   heading: ['Wooden', 'House'],
-  description: 'Stand on the footprints and look toward each mess. You can tidy up in any order.',
+  description: 'Look toward each mess from nearby to tidy up. You can clean in any order.',
   canvasLabel: '3D wooden house interior',
   themeColor: '#f4e5cf',
   music: ID,

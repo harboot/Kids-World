@@ -1,5 +1,4 @@
 import { addIceDoor } from './ice-door.js';
-import { addViewingZone } from './viewing-zone.js';
 import { CHOPS, CHOP_COOLDOWN, FALL_DURATION, SNOWMAN_COUNT, createSnowActivity } from './snow-basin/activity.js';
 import { addAxe, addCastleDoor, addChopTree, addFrozenKey, addSnowPlay, showSnowmen } from './snow-basin/props.js';
 import { addWinterScenery } from './snow-basin/scenery.js';
@@ -32,7 +31,7 @@ const cues = {
 export const snowBasin = {
   title: 'Snow Basin',
   heading: ['Snow', 'Basin'],
-  description: 'Throw snowballs at three snowmen and chop the pine from the footprints. Find the Frozen Key after the tree falls.',
+  description: 'Throw snowballs at three snowmen and chop the pine from the pond side. Find the Frozen Key after the tree falls.',
   canvasLabel: '3D snow basin',
   themeColor: '#e2f0f5',
   music: 'snow',
@@ -49,8 +48,6 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
   const { obstacles } = kit;
   const axe = addAxe(THREE, scene, viewmodel, kit, axeSite);
   const pine = addChopTree(THREE, scene, kit, treeSite);
-  const chopTarget = { ...treeSite, anchorY: 2.85, label: 'Chop tree' };
-  const chopZone = addViewingZone(THREE, scene, chopTarget, { x: 0.5, z: 2.2, width: 1.62, depth: 1.34 }, 0x315e76);
   const treeBoundary = new THREE.Mesh(new THREE.RingGeometry(treeClearance - 0.045, treeClearance, 48).rotateX(-Math.PI / 2),
     new THREE.MeshBasicMaterial({ color: 0x315e76, toneMapped: false }));
   treeBoundary.name = 'Pine clearance';
@@ -156,7 +153,6 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
 
   function updateModels(dt = 0) {
     axe.axe.visible = axe.ring.visible = !state.axe;
-    chopZone.marker.visible = state.axe && state.tree !== 'fallen';
     treeBoundary.visible = state.tree !== 'fallen';
     const fall = state.fallTime / FALL_DURATION;
     const swinging = state.cooldown > 0;
@@ -228,7 +224,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
       if (!missions.tree) {
         if (!state.axe) hints.push('Find the axe');
         else if (state.tree === 'falling') hints.push('Watch the pine fall');
-        else hints.push(`Chop the pine from the footprints (${state.chops}/${CHOPS})`);
+        else hints.push(`Chop the pine from the pond side (${state.chops}/${CHOPS})`);
       } else if (!missions.key) hints.push('Find the Frozen Key');
       return `${progress}\n${hints.join(' · ')}`;
     },
@@ -240,7 +236,13 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
         act: activity.pickUpAxe,
       },
       {
-        ...chopTarget, radius: chopZone.radius, reachable: chopZone.reachable, requiresView: true, silent: true,
+        ...treeSite, anchorY: 2.85, label: 'Chop tree', radius: 8.7, requiresView: true, silent: true,
+        reachable(player) {
+          const west = treeSite.x - player.x;
+          const distance = Math.hypot(west, treeSite.z - player.z);
+          // Give the camera room to see the pine and keep the landing side clear.
+          return distance >= 5.8 && west >= distance * 0.45;
+        },
         get active() { return activity.canChop(); },
         act: activity.chop,
       },

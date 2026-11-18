@@ -250,23 +250,28 @@ test('every reset populates three reachable targets that stay put through the pi
   worlds.unload();
 });
 
-test('the pine viewing zone frames the fall and clears the close boundary on landing', () => {
+test('the pine can be chopped from several positions with a clear view and a protected landing', () => {
   const { worlds, visit, camera } = buildWorld();
   const { scene, area } = visit;
   const tree = scene.getObjectByName('Marked pine');
-  const marker = scene.getObjectByName('Chop tree viewing zone');
+  assert.equal(scene.getObjectByName('Chop tree viewing zone'), undefined);
   const boundary = scene.getObjectByName('Pine clearance');
   const axe = visit.viewmodel.getObjectByName('Held axe');
   const axeHeight = axe.position.y;
   const chop = area.interactions.find(item => item.label === 'Chop tree');
-  const { x, z } = marker.position;
-  assert.equal(marker.visible, false);
+  const positions = [{ x: -0.6, z: -4.1 }, { x: 0.7, z: 3.05 }, { x: 1.55, z: -0.05 }];
+  const { x, z } = positions[0];
+  assert.equal(chop.active, false);
   assert.equal(boundary.visible, true);
   area.interactions.find(item => item.label === 'Pick up axe').act();
   worlds.update(0, { x, z });
-  assert.ok(marker.visible);
-  assert.equal(nearestInteraction(area.interactions, { x, z }), chop);
+  for (const position of positions) {
+    assert.equal(nearestInteraction(area.interactions, position), chop);
+    assert.equal(walkElevation(area, position, position.x, position.z, 0, true), 0);
+  }
   assert.equal(chop.reachable({ x: 4.67, z: -1.85 }), false);
+  assert.equal(nearestInteraction([chop], { x: -5, z: -1.85 }), null);
+  assert.equal(nearestInteraction([chop], { x: 14, z: -1.85 }), null);
   assert.ok(reachableCells(area).some(cell => chop.reachable(cell)));
 
   for (const [fov, aspect] of [[62, 16 / 9], [68, 412 / 915]]) {
@@ -295,12 +300,12 @@ test('the pine viewing zone frames the fall and clears the close boundary on lan
   assert.equal(walkElevation(area, { x, z }, 5.4, -1.85, 0, true), null);
   worlds.update(FALL_DURATION, { x, z });
   assert.equal(boundary.visible, false);
-  assert.equal(marker.visible, false);
+  assert.equal(chop.active, false);
   assert.equal(axe.position.y, axeHeight);
   assert.equal(walkElevation(area, { x, z }, 5.4, -1.85, 0, true), 0);
   worlds.reset();
   assert.ok(boundary.visible);
-  assert.equal(marker.visible, false);
+  assert.equal(chop.active, false);
   worlds.unload();
 });
 
@@ -324,7 +329,7 @@ test('doors, reset and unload keep HUD, held objects and snow controls scoped to
   assert.equal(nearestInteraction(area.interactions, { x: 0.9, y: 1.68, z: 6.5 }), pickup);
   assert.match(area.objective, /^Snow Basin · 0\/3 missions\nMake a snowball \(0\/3 snowmen\) · Find the axe$/);
   pickup.act();
-  assert.match(area.objective, /Chop the pine from the footprints \(0\/5\)/);
+  assert.match(area.objective, /Chop the pine from the pond side \(0\/5\)/);
   worlds.reset();
 
   const pile = area.interactions.find(item => item.label === 'Make snowball');

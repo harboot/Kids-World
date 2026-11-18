@@ -1,5 +1,3 @@
-import { addViewingZone, insideZone } from '../viewing-zone.js';
-
 const cues = {
   bed: [
     [58, { endPitch: 65, duration: 0.16, level: 0.1, wave: 'triangle' }],
@@ -28,10 +26,39 @@ const cues = {
   ],
 };
 
+function insideClearance({ x, z, width, depth }, px, pz) {
+  return Math.abs(px - x) <= width / 2 && Math.abs(pz - z) <= depth / 2;
+}
+
+function addClearanceOutline(THREE, scene, model, material) {
+  const { x, z, width, depth, mark } = model.clearance;
+  if (mark === false) return null;
+
+  function rectangle(path, halfWidth, halfDepth) {
+    path.moveTo(-halfWidth, -halfDepth);
+    path.lineTo(-halfWidth, halfDepth);
+    path.lineTo(halfWidth, halfDepth);
+    path.lineTo(halfWidth, -halfDepth);
+    path.closePath();
+    return path;
+  }
+
+  const shape = rectangle(new THREE.Shape(), width / 2, depth / 2);
+  shape.holes.push(rectangle(new THREE.Path(), width / 2 - 0.034, depth / 2 - 0.034));
+  const outline = new THREE.Mesh(new THREE.ShapeGeometry(shape).rotateX(-Math.PI / 2), material);
+  outline.name = `${model.label} clearance`;
+  outline.position.set(x, 0.039, z);
+  scene.add(outline);
+  return outline;
+}
+
 export function createCleaningMissions(THREE, scene, models, { playCue, reducedMotion, signal, celebrate }) {
+  const outlineMaterial = new THREE.MeshBasicMaterial({
+    color: 0x376967, opacity: 0.43, transparent: true, depthWrite: false, toneMapped: false,
+  });
   const tasks = models.map(model => ({
     model, completed: false, elapsed: null,
-    zone: addViewingZone(THREE, scene, model, model.viewingZone, 0x376967, model.clearance),
+    outline: addClearanceOutline(THREE, scene, model, outlineMaterial),
   }));
   const cleanedCount = () => tasks.reduce((count, task) => count + Number(task.completed), 0);
 
@@ -39,7 +66,7 @@ export function createCleaningMissions(THREE, scene, models, { playCue, reducedM
     task.model.render(1, false);
     task.elapsed = null;
     task.completed = true;
-    task.zone.marker.visible = false;
+    if (task.outline) task.outline.visible = false;
     if (cleanedCount() === tasks.length) {
       celebrate(task.model);
       playCue(cues.success);
@@ -53,11 +80,11 @@ export function createCleaningMissions(THREE, scene, models, { playCue, reducedM
       return count === tasks.length ? `${progress} · Great job! The house is sparkling clean!` : progress;
     },
     interactions: tasks.map(task => {
-      const { id, x, z, label, anchorY } = task.model;
-      const { radius, reachable } = task.zone;
+      const { id, x, z, label, anchorY, radius, clearance, approach } = task.model;
       const available = () => !signal.aborted && !task.completed && task.elapsed === null;
       return {
-        id, x, z, radius, label, anchorY, reachable, requiresView: true, silent: true,
+        id, x, z, radius, label, anchorY, requiresView: true, silent: true,
+        reachable: player => !insideClearance(clearance, player.x, player.z) && (!approach || approach(player)),
         get active() { return available(); },
         act() {
           if (!available()) return;
@@ -71,7 +98,7 @@ export function createCleaningMissions(THREE, scene, models, { playCue, reducedM
       };
     }),
     blocksGround(x, z) {
-      return tasks.some(task => !task.completed && insideZone(task.model.clearance, x, z));
+      return tasks.some(task => !task.completed && insideClearance(task.model.clearance, x, z));
     },
     update(dt) {
       if (signal.aborted) return;
@@ -92,7 +119,7 @@ export function createCleaningMissions(THREE, scene, models, { playCue, reducedM
       for (const task of tasks) {
         task.completed = false;
         task.elapsed = null;
-        task.zone.marker.visible = true;
+        if (task.outline) task.outline.visible = true;
         task.model.render(0, false);
         task.model.idle?.(0);
       }

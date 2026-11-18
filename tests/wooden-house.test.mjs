@@ -214,7 +214,7 @@ test('each mission makes its actual furniture tidy exactly once and only after t
   worlds.unload();
 });
 
-test('marked viewpoints guide every mission and preserve room to watch until it finishes', () => {
+test('every mission works from different positions outside its clearance while facing the object', () => {
   const { worlds, camera } = fixture();
   const { area, scene } = worlds.load(house);
   const tasks = missions(area);
@@ -225,16 +225,24 @@ test('marked viewpoints guide every mission and preserve room to watch until it 
   });
   const closePositions = { bed: [-3.13, -3.25], dishes: [2.24, -3.46], painting: [-5.62, -0.9],
     tv: [-4.98, 1.14], toys: [3.3, 2.2] };
+  const approaches = {
+    bed: [[-2.16, -4.1], [-3.45, -1.58]],
+    dishes: [[1.05, -2.8], [3.65, -2.2]],
+    painting: [[-4.5, -1.38], [-3.7, -0.27]],
+    tv: [[-3.8, 0.14], [-4.2, 3.45]],
+    toys: [[2.86, 0.24], [2.75, 4.04]],
+  };
   for (const [id, task] of Object.entries(tasks)) {
-    const marker = scene.getObjectByName(task.label + ' viewing zone');
+    assert.equal(scene.getObjectByName(task.label + ' viewing zone'), undefined);
+    const outline = scene.getObjectByName(task.label + ' clearance');
+    if (id !== 'toys') assert.ok(outline.visible);
     const [closeX, closeZ] = closePositions[id];
-    const { x, z } = marker.position;
+    const [x, z] = approaches[id][0];
     prompts.setItems([task]);
-    assert.ok(marker.visible);
-    assert.equal(walkElevation(area, { x, z }, x, z, 0, true), 0, task.label);
     assert.equal(walkElevation(area, { x, z }, closeX, closeZ, 0, true), null, task.label);
     assert.equal(walkElevation(area, { x, z }, closeX, closeZ, 1.1, false), null, task.label);
     assert.equal(nearestInteraction([task], { x: closeX, z: closeZ }), null, task.label);
+    assert.equal(nearestInteraction([task], { x: task.x + 8, z: task.z }), null, task.label);
 
     camera.position.set(x, 1.68, z);
     camera.lookAt(2 * x - task.x, 1.68, 2 * z - task.z);
@@ -243,20 +251,28 @@ test('marked viewpoints guide every mission and preserve room to watch until it 
     assert.ok(button.hidden, task.label);
     prompts.interact();
     assert.ok(task.active);
-    camera.lookAt(task.x, task.anchorY, task.z);
-    camera.updateMatrixWorld();
-    prompts.update();
-    assert.equal(button.hidden, false, task.label);
+    for (const [px, pz] of approaches[id]) {
+      assert.equal(walkElevation(area, { x: px, z: pz }, px, pz, 0, true), 0, task.label);
+      camera.position.set(px, 1.68, pz);
+      camera.lookAt(task.x, task.anchorY, task.z);
+      camera.updateMatrixWorld();
+      prompts.update();
+      assert.equal(button.hidden, false, task.label);
+    }
     prompts.interact();
-    assert.ok(marker.visible, task.label);
+    if (outline) assert.ok(outline.visible, task.label);
     assert.ok(!task.active);
     assert.equal(walkElevation(area, { x, z }, closeX, closeZ, 0, true), null);
     worlds.update(1.3);
-    assert.equal(marker.visible, false, task.label);
+    if (outline) assert.equal(outline.visible, false, task.label);
     assert.equal(walkElevation(area, { x, z }, closeX, closeZ, 0, true), 0, task.label);
   }
   worlds.reset();
-  assert.ok(Object.values(tasks).every(task => scene.getObjectByName(task.label + ' viewing zone').visible));
+  for (const [id, task] of Object.entries(tasks)) {
+    const [x, z] = closePositions[id];
+    assert.ok(area.blocksGround(x, z));
+    if (id !== 'toys') assert.ok(scene.getObjectByName(task.label + ' clearance').visible);
+  }
   worlds.unload();
 });
 
