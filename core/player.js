@@ -23,7 +23,7 @@ export function createPlayer(THREE, camera) {
 
   function reset(spawn, world) {
     seated = null;
-    yaw = 0;
+    yaw = spawn.yaw ?? 0;
     pitch = 0;
     elevation = world.getGroundHeight?.(spawn.x, spawn.z) ?? 0;
     verticalSpeed = 0;

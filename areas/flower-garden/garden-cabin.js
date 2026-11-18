@@ -26,11 +26,12 @@ export function addCabin(THREE, { scene, mesh, box, matte, obstacles, collision 
   }
   const stepDepth = 0.44;
   const steps = 5;
+  const stepX = -17.6;
   for (let i = 0; i < steps; i++) {
     const height = deck * (steps - i) / steps;
     const stepZ = deckFront + stepDepth * (i + 0.5);
-    part(paleWood, -17.6, height / 2, stepZ, 2.06, height, stepDepth);
-    obstacles.push(collision(-17.6, stepZ, 2.06, stepDepth, height));
+    part(paleWood, stepX, height / 2, stepZ, 2.06, height, stepDepth);
+    obstacles.push(collision(stepX, stepZ, 2.06, stepDepth, height));
   }
 
   const wallDepth = 3.68;
@@ -59,7 +60,6 @@ export function addCabin(THREE, { scene, mesh, box, matte, obstacles, collision 
   const door = new THREE.Group();
   door.name = 'Cabin entrance';
   door.position.set(x, deck, front + 0.08);
-  door.userData.transition = { destination: 'cabin-interior', enabled: false };
   scene.add(door);
   part(darkWood, 0, 1.12, 0, 1.52, 2.24, 0.14, door);
   part(wood, 0, 1.07, 0.09, 1.25, 2.11, 0.10, door);
@@ -93,6 +93,12 @@ export function addCabin(THREE, { scene, mesh, box, matte, obstacles, collision 
 
   return {
     table,
+    arrival: { x: stepX, z: deckFront + steps * stepDepth + 0.52, yaw: Math.PI },
+    entrance: {
+      x, z: front + 0.34, anchorY: deck + 1.28, radius: 1.52, label: 'Enter Wooden House',
+      reachable: player => onPorch(player) && player.z >= front + 0.47 && Math.abs(player.x - x) < 1.24,
+      act({ travel, heardCue }) { travel('wooden-house', heardCue); },
+    },
     bench: {
       x: benchX, z: porchZ, radius: 1.58, anchorY: deck + 0.96, label: 'Sit on bench',
       reachable: onPorch,

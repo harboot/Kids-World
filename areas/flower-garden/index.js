@@ -469,6 +469,7 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelCompl
   addGlacier(THREE, { mesh, facet, matte });
   return {
     obstacles,
+    arrivals: { cabin: cabin.arrival },
     get objective() {
       return deliveredThisVisit ? 'Snow Basin is open! Find the door by the glacier.' : orchard.objective;
     },
@@ -477,7 +478,8 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelCompl
     },
     blocksGround: blocksPondTravel,
     animals,
-    interactions: [...gates.map(gate => gate.door), ...animals.interactions, ...orchard.interactions, cabin.bench, passage],
+    interactions: [...gates.map(gate => gate.door), ...animals.interactions, ...orchard.interactions,
+      cabin.bench, cabin.entrance, passage],
     update(dt, player) {
       passage.refresh(dt);
       animals.update(dt, player);

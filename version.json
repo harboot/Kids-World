@@ -1,9 +1,9 @@
 {
-  "version": "f1aec13f316ed11b502765f005beeeb29cb98535e7408f86ef69c66a60bf7028",
+  "version": "ba5315e9d2655e35d0b1db6206d43304f54bf5178c4c5134b9a065eb3f577dc5",
   "files": [
     {
       "path": "./areas/flower-garden/garden-cabin.js",
-      "revision": "1dc137fd1865b04064e95af9708381556652d1a1c0a67d9bcc34cff336f2afcc"
+      "revision": "5e1342da95f88db32d8b246893290c4622bb72a7592a7eb65c3aefa4d4c0103e"
     },
     {
       "path": "./areas/flower-garden/garden-orchard.js",
@@ -19,7 +19,7 @@
     },
     {
       "path": "./areas/flower-garden/index.js",
-      "revision": "4a28b23d680f2af65c03521667a5097c99dd845b06c17e1b3ac3f432a91e97d2"
+      "revision": "e08b47297a2b01af0b26a016ef7df25cbc359f85f28b280515d4861ecc877b1d"
     },
     {
       "path": "./areas/ice-door.js",
@@ -42,6 +42,22 @@
       "revision": "69f360e762672c3a88fd581d2ae9124cd588f55722bd696f661c7f443c8b3c12"
     },
     {
+      "path": "./areas/wooden-house/cleaning.js",
+      "revision": "3293e512817352d270ef7cf327906994ed79b7ea4d36f7c46fd44beb449f44ee"
+    },
+    {
+      "path": "./areas/wooden-house/furniture.js",
+      "revision": "7af68ec759b8247d7aa99140eaba7263e9fec44dcf29f732fecb756ce9539203"
+    },
+    {
+      "path": "./areas/wooden-house/index.js",
+      "revision": "93ebfd00c42db57dd9584396674eea39d309bf45181b22fcd8fc10a430b48c3a"
+    },
+    {
+      "path": "./areas/wooden-house/interior.js",
+      "revision": "e50f4a0c3c29bd9aaf38086ff2c871d5042b0793b49adf1d37aa0fef22408fe2"
+    },
+    {
       "path": "./assets/icons/icon-192.png",
       "revision": "a62efd87d7dbd8f1274bd68ff8ad2a410fb7cd53d0dc17e56891997c80b6bebf"
     },
@@ -51,7 +67,7 @@
     },
     {
       "path": "./core/audio.js",
-      "revision": "1ceca1208fb49789260a7f17aff883bd8fba155ee17a7383fa1fe08e74495373"
+      "revision": "33e67cfc3d46e64850349830f3371a32ac3db6840f59a362879535f778af6661"
     },
     {
       "path": "./core/controls.js",
@@ -59,7 +75,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "76fa3a0169b47b60f359ffebd442c2f906ee65776f3c53398e6ae92d051beb79"
+      "revision": "d3fc1164826868de3d3724e6ee168b77b7b0b7bea22439f845caba492f0e9cd9"
     },
     {
       "path": "./core/interactions.js",
@@ -75,7 +91,7 @@
     },
     {
       "path": "./core/player.js",
-      "revision": "02e9f7e696ce3561cecec1ba828909f6d758eb815c60ff18a43729d4ae7362e3"
+      "revision": "da887159b8b3d552209d4f0503f4e1894dae9e7c8d986cf04a89ca3e14bad352"
     },
     {
       "path": "./core/renderer.js",
@@ -83,11 +99,11 @@
     },
     {
       "path": "./core/world-manager.js",
-      "revision": "c94c4f3c0a174dd4112482a0636cec54ed24a8a56cff4df381b33f38a5797313"
+      "revision": "51a8460d3c9f8ab36df4bbe3b25615c4034fdb8318304a9c40f0866ebb54c1d1"
     },
     {
       "path": "./game.js",
-      "revision": "a8dbdda4c320046d9b6e79249090ab4ba825ebb0845e0e55273e5a504708f4f1"
+      "revision": "f83cf48d6184cc6561a9aa426f63a47e235ff74beff7dc068110821d14f7d680"
     },
     {
       "path": "./index.html",
@@ -95,7 +111,7 @@
     },
     {
       "path": "./manifest.webmanifest",
-      "revision": "5bacf9f341aef9096d2444e486aa5ded7336d2b6d8751fc04186777e31ef9830"
+      "revision": "5ac74874a8d472d15bd8439825fa8758571a4ae3f53850be6af67367b5aa9f3d"
     },
     {
       "path": "./pwa/bootstrap.js",
@@ -123,7 +139,7 @@
     },
     {
       "path": "./style.css",
-      "revision": "e928a89cfd37ac71f9098675778dcf83e8a4eea7505ad5643ccedeb9ff1444a5"
+      "revision": "c4e6d1b52893e14d2f20f92673dafe6cf4ccd9975a2070f6cbdb0d6cb0d4aff6"
     },
     {
       "path": "./vendor/three.LICENSE",
