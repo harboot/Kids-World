@@ -1,0 +1,163 @@
+#pwa-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+  isolation: isolate;
+  padding: 16px max(18px, env(safe-area-inset-right)) 16px max(18px, env(safe-area-inset-left));
+  background:
+    radial-gradient(ellipse 85% 56% at 88% 122%, #9fc680 76%, transparent 76.4%),
+    radial-gradient(ellipse 89% 56% at 20% 127%, #85b780 77%, transparent 77.4%),
+    linear-gradient(#b5e1ed 0%, #e8f5d5 82%);
+  color: #213f32;
+}
+
+#pwa-splash[hidden], #pwa-update[hidden] { display: none; }
+
+.pwa-cloud {
+  position: absolute;
+  z-index: -1;
+  inset-block-start: 19%;
+  width: clamp(65px, 15vw, 172px);
+  aspect-ratio: 2.8;
+  border-radius: 100px;
+  background: #fafff8b8;
+  animation: pwa-drift 9s ease-in-out infinite alternate;
+}
+
+.pwa-cloud::before, .pwa-cloud::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: 16%;
+  inset-block-end: 8%;
+  width: 46%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: inherit;
+}
+
+.pwa-cloud::after { inset-inline-start: 48%; width: 36%; }
+.pwa-cloud-left { inset-inline-start: 8%; }
+.pwa-cloud-right { inset-block-start: 28%; inset-inline-end: 7%; animation-delay: -3s; }
+
+.pwa-card {
+  display: grid;
+  justify-items: center;
+  width: min(100%, 410px);
+  padding: clamp(20px, 6vw, 43px);
+  border: 1px solid #ffffffd9;
+  border-radius: 28px;
+  background: #fffcf0;
+  box-shadow: 0 18px 64px #2d654438, 0 2px 6px #2d654414;
+  text-align: center;
+  font-family: system-ui, sans-serif;
+}
+
+.pwa-mark {
+  display: grid;
+  place-items: center;
+  width: clamp(46px, 13vw, 67px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #366748;
+  transform: rotate(12deg);
+}
+
+.pwa-mark::before {
+  content: "";
+  width: 36%;
+  height: 51%;
+  border-radius: 82% 12% 78% 27%;
+  background: #e6efb1;
+  transform: rotate(22deg);
+}
+
+#pwa-title {
+  margin: 12px 0 8px;
+  color: #294f3b;
+  font-size: clamp(37px, 9vw, 59px);
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -.065em;
+}
+
+#pwa-status { min-height: 1.4em; margin: 5px 0 15px; font-size: 1rem; }
+#pwa-progress-panel { width: 100%; }
+.pwa-meter { display: flex; align-items: center; gap: 11px; }
+#pwa-percent { font-size: .91rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+#pwa-percent:empty { display: none; }
+#pwa-count { min-height: 1.2em; margin: 7px 0 0; color: #52664d; font-size: .83rem; }
+
+#pwa-progress {
+  appearance: none;
+  flex: 1;
+  width: 100%;
+  height: 13px;
+  border: 0;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #e3ebda;
+  accent-color: #568653;
+}
+
+#pwa-progress::-webkit-progress-bar { border-radius: 20px; background: #e3ebda; }
+#pwa-progress::-webkit-progress-value { border-radius: 20px; background: #568653; transition: width .25s ease; }
+#pwa-progress::-moz-progress-bar { border-radius: 20px; background: #568653; }
+#pwa-progress:indeterminate {
+  background: repeating-linear-gradient(110deg, #e3ebda 0 12px, #d4e3cb 12px 24px);
+}
+
+#pwa-play, #pwa-retry, #pwa-reload {
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 11px;
+  background: #366748;
+  color: #fffdf1;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+#pwa-play {
+  min-width: 148px;
+  min-height: 53px;
+  font-size: 1.25rem;
+}
+
+#pwa-play span { margin-inline-start: 10px; }
+#pwa-play:hover, #pwa-retry:hover, #pwa-reload:hover { background: #285337; }
+
+#pwa-update {
+  position: fixed;
+  z-index: 11;
+  inset: auto auto calc(14px + env(safe-area-inset-bottom)) 50%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: max-content;
+  max-width: calc(100% - 28px);
+  transform: translateX(-50%);
+  padding: 7px 7px 7px 13px;
+  border-radius: 14px;
+  box-shadow: 0 3px 16px #23463837;
+  background: #fffcf0;
+  font-size: .86rem;
+}
+
+@keyframes pwa-drift {
+  from { transform: translateX(-9%); }
+  to { transform: translateX(12%); }
+}
+
+@media (max-height: 450px) {
+  .pwa-card { padding: 17px 23px; }
+  .pwa-mark { width: 45px; }
+  #pwa-title { font-size: 38px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pwa-cloud { animation: none; }
+  #pwa-progress::-webkit-progress-value { transition: none; }
+}
