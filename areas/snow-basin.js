@@ -1,13 +1,20 @@
-export const snowLevel = {
+import { addIceDoor } from './ice-door.js';
+
+export const snowBasin = {
+  title: 'Snow Basin',
+  heading: ['Snow', 'Basin'],
+  description: 'Walk across the frozen pond and past snowy pines. The ice door leads back to Flower Garden.',
+  canvasLabel: '3D snow basin',
+  themeColor: '#e2f0f5',
+  music: 'snow',
   width: 18,
   depth: 20,
   spawn: { x: 0, z: 6 },
-  passage: { x: 0, z: -9.48, href: './index.html?arrive=garden', label: 'Return to Flower Garden' },
-  build: buildSnowArena,
+  load: loadSnow,
 };
 
-function buildSnowArena(THREE, scene, touch) {
-  const { width, depth } = snowLevel;
+function loadSnow({ THREE, scene, touch }) {
+  const { width, depth } = snowBasin;
   const obstacles = [];
   const box = new THREE.BoxGeometry(1, 1, 1);
   const cone = new THREE.ConeGeometry(1, 1, 5);
@@ -98,5 +105,8 @@ function buildSnowArena(THREE, scene, touch) {
     mesh(cone, frost, x, height * 0.74 - 0.7, z, span * 0.56, height * 0.52, span * 0.445).rotation.y = angle;
   }
 
-  return { obstacles };
+  const passage = addIceDoor(THREE, scene, obstacles, {
+    x: 0, z: -9.48, destination: 'garden', label: 'Return to Flower Garden',
+  });
+  return { obstacles, interactions: [passage] };
 }

@@ -5,7 +5,7 @@ export function nextBasketState(state, action) {
   return state;
 }
 
-export function addOrchard(THREE, { scene, camera, mesh, box, facet, matte, obstacles, collision, getTerrainHeight, table }) {
+export function addOrchard(THREE, { scene, viewmodel, mesh, box, facet, matte, obstacles, collision, getTerrainHeight, table }) {
   const treeX = 11.2;
   const treeZ = 8.25;
   const basketX = 8.7;
@@ -99,7 +99,7 @@ export function addOrchard(THREE, { scene, camera, mesh, box, facet, matte, obst
     if (state === basketState && action !== 'reset') return;
     basketState = state;
     if (state === 'carried') {
-      camera.add(basket);
+      viewmodel.add(basket);
       basket.position.set(0.29, -0.44, -0.77);
       basket.rotation.set(-0.09, -0.13, 0.05);
       basket.scale.setScalar(0.61);
