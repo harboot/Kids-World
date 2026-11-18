@@ -23,7 +23,7 @@ Returning to Flower Garden or using **Restart area** starts a fresh visit at 0/3
 
 Walk onto the Flower Garden cabin porch and use **Enter Wooden House** at the front door. The house is open from your first visit to the garden. In its one large room, **Make bed**, **Wash dishes**, **Straighten painting**, **Turn off TV**, and **Put away toys** in any order. Press **M** or tap the nearby interaction button. The hint tracks each completed task, and finishing all five saves the level and celebrates with stars.
 
-Stand over the footprints and look toward the object to see its prompt. Each marked space gives you room to watch the animation. After cleaning, the mark disappears and you can walk closer.
+Look toward the object from nearby to see its prompt. The boundary around each task gives you room to watch the animation. You can walk closer after cleaning.
 
 Use **Return to Flower Garden** at the inside door to reappear by the cabin steps. Every visit starts with a messy house, including **Restart area** and replaying through **Choose level**. Saved completion stays available. Wooden House also works offline after downloading the current release, including from `index.html?area=wooden-house`.
 
@@ -32,7 +32,7 @@ Use **Return to Flower Garden** at the inside door to reappear by the cabin step
 Complete all three missions to finish Snow Basin. You can start with the snowmen or the pine. The Frozen Key appears after the pine lands.
 
 - **Destroy three snowmen.** They appear in different locations each visit. Use **Make snowball** at any snow pile, then aim and throw. Each snowman breaks on the first hit.
-- **Chop the pine.** Pick up the axe by the frozen pond. Stand on the footprints, look toward the pine, and use **Chop tree** five times. Wait for the tree to finish falling.
+- **Chop the pine.** Pick up the axe and look toward the pine from the pond side. Leave enough space to see the tree, use **Chop tree** five times, and wait for it to finish falling.
 - **Collect the Frozen Key.** Look on the snow near the fallen tree. Picking up the key opens the **Frozen Castle** entrance, which displays a coming-soon message.
 
 The original ice door returns to Flower Garden.
