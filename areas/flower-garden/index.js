@@ -195,7 +195,7 @@ export const flowerGarden = {
   load: loadGarden,
 };
 
-function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelComplete, completeLevel }) {
+function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelComplete, completeLevel, reducedMotion }) {
   const { width, depth } = flowerGarden;
   const obstacles = [];
   const gates = [];
@@ -451,6 +451,7 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelCompl
   let delivered = false;
   const passage = addIceDoor(THREE, scene, obstacles, {
     x: 17.8, z: -23.35, destination: 'snow', label: 'Enter Snow Basin',
+    reducedMotion,
     available: () => delivered || Boolean(isLevelComplete?.('garden')),
   });
   const orchard = addOrchard(THREE, {
@@ -466,6 +467,7 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelCompl
   addGlacier(THREE, { mesh, facet, matte });
   return {
     obstacles,
+    get objective() { return passage.active ? 'Snow Basin is open! Find the door by the glacier.' : orchard.objective; },
     getGroundHeight(x, z) {
       return Math.max(getTerrainHeight(x, z), bridgeDeckHeight(x, z));
     },
@@ -473,7 +475,7 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelCompl
     animals,
     interactions: [...gates.map(gate => gate.door), ...animals.interactions, ...orchard.interactions, cabin.bench, passage],
     update(dt, player) {
-      passage.refresh();
+      passage.refresh(dt);
       animals.update(dt, player);
       orchard.update(dt);
       pond.update(dt);
@@ -485,6 +487,7 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelCompl
       pond.reset();
       for (const gate of gates) gate.reset();
       passage.refresh();
+      passage.resetHighlight();
     },
   };
 }

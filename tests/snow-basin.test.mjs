@@ -243,7 +243,6 @@ test('doors, reset and unload keep HUD, held objects and snow controls scoped to
   const { area, scene, viewmodel } = visit;
   const panel = hud.children[0];
   const throwButton = panel.children.find(child => child.className === 'snow-throw');
-  const progress = panel.children.find(child => child.className === 'snow-progress');
   const notice = panel.children.find(child => child.className === 'snow-notice');
   const door = area.interactions.find(item => item.label === 'Frozen Castle');
   const exit = area.interactions.find(item => item.label === 'Return to Flower Garden');
@@ -257,11 +256,16 @@ test('doors, reset and unload keep HUD, held objects and snow controls scoped to
   exit.act({ travel: id => { destination = id; } });
   assert.equal(destination, 'garden');
   assert.equal(nearestInteraction(area.interactions, { x: 0.9, y: 1.68, z: 6.5 }), pickup);
+  assert.equal(area.objective, 'Find the axe by the frozen pond');
+  pickup.act();
+  assert.equal(area.objective, 'Chop the marked pine · 0/5');
+  worlds.reset();
 
   fallInWorld(worlds);
-  assert.equal(progress.textContent, 'Snowmen: 0 / 5');
+  assert.equal(area.objective, 'Make a snowball at a snow pile · 0/5 snowmen');
   const pile = area.interactions.find(item => item.label === 'Make snowball');
   assert.ok(pile.act());
+  assert.equal(area.objective, 'Throw at a snowman · 0/5 snowmen');
   assert.equal(throwButton.hidden, false);
   camera.position.set(-5, 1.68, 8);
   throwButton.dispatchEvent(Object.assign(new Event('pointerdown', { cancelable: true }), { pointerType: 'touch' }));
@@ -269,11 +273,12 @@ test('doors, reset and unload keep HUD, held objects and snow controls scoped to
   worlds.update(0.01, camera.position);
   assert.equal(scene.children.filter(node => /^Snowball in flight/.test(node.name) && node.visible).length, 1);
   assert.equal(throwButton.hidden, true);
+  assert.equal(area.objective, 'Make a snowball at a snow pile · 0/5 snowmen');
   assert.equal(viewmodel.getObjectByName('Held snowball').visible, false);
 
   worlds.reset();
   assert.ok(pickup.active);
-  assert.equal(progress.hidden, true);
+  assert.equal(area.objective, 'Find the axe by the frozen pond');
   assert.equal(notice.textContent, '');
   assert.equal(scene.children.some(node => /^Snowball in flight/.test(node.name) && node.visible), false);
 
@@ -326,6 +331,7 @@ test('each chop deepens the same trunk mesh and restart restores the starter not
 test('Frozen Castle unlocks only after the fifth snowman and stays available on replay', () => {
   const { worlds, visit, completed, camera, target, hud } = buildWorld();
   const castle = visit.scene.getObjectByName('Frozen Castle');
+  const sparkles = castle.getObjectByName('Door unlock sparkles');
   const door = visit.area.interactions.find(item => item.label === 'Frozen Castle');
   assert.equal(castle.visible, false);
   fallInWorld(worlds);
@@ -341,6 +347,9 @@ test('Frozen Castle unlocks only after the fifth snowman and stays available on 
     worlds.update(0.05, player);
     assert.equal(door.active, i === 4);
     assert.equal(castle.visible, i === 4);
+    assert.equal(sparkles.visible, i === 4);
+    assert.equal(visit.area.objective, i === 4 ? 'The Frozen Castle door is ready near the start!' :
+      `Make a snowball at a snow pile · ${i + 1}/5 snowmen`);
     assert.equal(completed.has('snow'), i === 4);
   }
   door.act();
@@ -348,6 +357,7 @@ test('Frozen Castle unlocks only after the fifth snowman and stays available on 
   worlds.load('garden');
   const replay = worlds.load('snow');
   assert.equal(replay.scene.getObjectByName('Frozen Castle').visible, true);
+  assert.equal(replay.scene.getObjectByName('Door unlock sparkles').visible, false);
   assert.equal(replay.scene.getObjectByName('Snow Basin axe').visible, true);
   worlds.unload();
 });

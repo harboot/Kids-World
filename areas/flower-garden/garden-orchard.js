@@ -77,6 +77,7 @@ export function addOrchard(THREE, { scene, viewmodel, mesh, box, facet, matte, o
     return { mesh, velocity: 0, ready: false, floor: 0 };
   });
   let basketState = 'ground';
+  let appleCount = 0;
   let shakeTime = 0;
   let branchIndex = 0;
 
@@ -110,7 +111,7 @@ export function addOrchard(THREE, { scene, viewmodel, mesh, box, facet, matte, o
       basket.position.set(table.x, table.y + 0.004, table.z);
       basket.rotation.set(0, -0.18, 0);
       basket.scale.setScalar(1.08);
-      if (basketApples.filter(apple => apple.visible).length >= 5) deliver?.();
+      if (appleCount === basketApples.length) deliver?.();
     } else {
       basket.position.set(basketX, basketGround + 0.025, basketZ);
       basket.rotation.set(0, 0.21, 0);
@@ -138,14 +139,20 @@ export function addOrchard(THREE, { scene, viewmodel, mesh, box, facet, matte, o
       act() {
         fruit.mesh.visible = false;
         fruit.ready = false;
-        const spot = basketApples.find(apple => !apple.visible);
-        if (spot) spot.visible = true;
+        if (appleCount < basketApples.length) basketApples[appleCount++].visible = true;
       },
     })),
   ];
 
   return {
     interactions,
+    get objective() {
+      if (basketState !== 'carried') {
+        return basketState === 'ground' ? 'Pick up the basket by the apple tree' : 'Pick up your basket from the cabin table';
+      }
+      if (appleCount === basketApples.length) return 'Place the basket on the cabin table';
+      return `Shake the tree and collect apples · ${appleCount}/${basketApples.length}`;
+    },
     update(dt) {
       shakeTime = Math.max(0, shakeTime - dt);
       canopy.rotation.z = Math.sin(shakeTime * 32) * shakeTime * 0.13;
@@ -164,6 +171,7 @@ export function addOrchard(THREE, { scene, viewmodel, mesh, box, facet, matte, o
       moveBasket('reset');
       shakeTime = 0;
       branchIndex = 0;
+      appleCount = 0;
       canopy.rotation.set(0, 0, 0);
       for (const apple of basketApples) apple.visible = false;
       for (const fruit of drops) {

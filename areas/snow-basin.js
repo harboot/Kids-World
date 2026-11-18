@@ -37,7 +37,7 @@ export const snowBasin = {
 };
 
 function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlaying, playCue, playerRadius = 0.34,
-  isLevelComplete, completeLevel }) {
+  isLevelComplete, completeLevel, reducedMotion }) {
   const { width, depth } = snowBasin;
   const kit = addWinterScenery({ THREE, scene, touch, width, depth });
   const { obstacles } = kit;
@@ -50,6 +50,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
   let cleared = false;
   const castle = addCastleDoor(THREE, scene, kit, {
     x: -2.3, z: 13.92,
+    reducedMotion,
     available: () => cleared || Boolean(isLevelComplete?.('snow')),
     announce() {
       if (!panel) return;
@@ -84,7 +85,6 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
       if (name === 'hit' && state.destroyed === 5 && !cleared && !isLevelComplete?.('snow')) {
         cleared = true;
         completeLevel?.('snow');
-        castle.refresh();
       }
       playCue?.(cues[name]);
       updateHUD();
@@ -132,10 +132,6 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
 
   function updateHUD() {
     if (!panel) return;
-    const ready = state.tree === 'fallen';
-    panel.progress.textContent = ready ? `Snowmen: ${state.destroyed} / 5` : `Tree: ${state.chops} / ${CHOPS} chops`;
-    panel.progress.hidden = !state.axe;
-    panel.complete.hidden = state.destroyed !== 5;
     panel.throwButton.hidden = !state.held;
     panel.throwKey.hidden = !state.held;
   }
@@ -154,7 +150,6 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
     pine.shadow.position.x = treeSite.x + lean * 3.75;
     pine.shadow.scale.set(1.04 + lean * 3.25, 1, 0.91 + lean * 0.64);
     pine.setChops(state.chops);
-    castle.refresh();
     play.held.visible = state.held;
     showSnowmen(play.models, state.targets);
     for (let i = 0; i < play.balls.length; i++) {
@@ -179,6 +174,8 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
     noticeTime = 0;
     impactTime = Infinity;
     if (panel) panel.notice.textContent = '';
+    castle.refresh();
+    castle.resetHighlight();
     updateHUD();
     updateModels();
   }
@@ -186,6 +183,14 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
   reset();
   return {
     obstacles,
+    get objective() {
+      if (castle.active) return 'The Frozen Castle door is ready near the start!';
+      if (!state.axe) return 'Find the axe by the frozen pond';
+      if (state.tree === 'upright') return `Chop the marked pine · ${state.chops}/${CHOPS}`;
+      if (state.tree === 'falling') return 'Watch the pine fall';
+      const action = state.held ? 'Throw at a snowman' : 'Make a snowball at a snow pile';
+      return `${action} · ${state.destroyed}/${play.models.length} snowmen`;
+    },
     interactions: [
       returnDoor, castle,
       {
@@ -207,6 +212,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
     ],
     update(dt, playerPosition) {
       activity.update(dt, playerPosition);
+      castle.refresh(dt);
       if (impactTime < 0.56) impactTime += dt;
       if (noticeTime > 0) {
         noticeTime = Math.max(0, noticeTime - dt);
@@ -233,10 +239,6 @@ function addSnowHud(hud, signal, throwBall) {
     root.append(element);
     return element;
   };
-  const progress = make('p', 'snow-progress');
-  progress.setAttribute('role', 'status');
-  const complete = make('p', 'snow-complete', 'All snowmen cleared!');
-  complete.setAttribute('role', 'status');
   const notice = make('p', 'snow-notice');
   notice.setAttribute('role', 'status');
   const throwKey = make('p', 'snow-throw-key', 'F to throw');
@@ -251,5 +253,5 @@ function addSnowHud(hud, signal, throwBall) {
   }, { signal });
   throwButton.addEventListener('click', throwBall, { signal });
   hud.append(root);
-  return { root, progress, complete, notice, throwKey, throwButton };
+  return { root, notice, throwKey, throwButton };
 }

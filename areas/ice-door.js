@@ -1,15 +1,46 @@
-export function registerDoor(scene, obstacles, model, { bounds, available = () => true, ...interaction }) {
+export function registerDoor(THREE, scene, obstacles, model, { bounds, available, reducedMotion, ...interaction }) {
+  const isOpen = available ?? (() => true);
+  model.visible = isOpen();
   model.name = interaction.label;
   scene.add(model);
-  obstacles.push({ ...bounds, get height() { return available() ? bounds.height : 0; } });
-  const door = {
+  obstacles.push({ ...bounds, get height() { return isOpen() ? bounds.height : 0; } });
+  const sparkles = available ? addDoorSparkles(THREE, model, bounds) : null;
+  let remaining = 0;
+  return {
     ...interaction,
-    get active() { return available(); },
-    act(context) { if (available()) interaction.act(context); },
-    refresh() { model.visible = available(); },
+    get active() { return isOpen(); },
+    act(context) { if (isOpen()) interaction.act(context); },
+    refresh(dt = 0) {
+      const open = isOpen();
+      if (open && !model.visible) remaining = 2.4;
+      model.visible = open;
+      if (!sparkles || remaining === 0) return;
+      remaining = open ? Math.max(0, remaining - dt) : 0;
+      sparkles.visible = remaining > 0;
+      sparkles.scale.setScalar(reducedMotion?.() ? 1 : 0.85 + 0.15 * Math.cos(remaining * 9));
+    },
+    resetHighlight() {
+      remaining = 0;
+      if (sparkles) sparkles.visible = false;
+    },
   };
-  door.refresh();
-  return door;
+}
+
+function addDoorSparkles(THREE, model, bounds) {
+  const sparkles = new THREE.Group();
+  sparkles.name = 'Door unlock sparkles';
+  sparkles.position.set(0, bounds.height + 0.25, 0.48);
+  sparkles.visible = false;
+  const geometry = new THREE.OctahedronGeometry(1);
+  const material = new THREE.MeshBasicMaterial({ color: 0xfff0ae });
+  for (const [x, y, size] of [[-0.55, 0, 0.17], [0, 0.27, 0.24], [0.55, 0.06, 0.15]]) {
+    const sparkle = new THREE.Mesh(geometry, material);
+    sparkle.position.set(x, y, 0);
+    sparkle.scale.set(size * 0.62, size, size * 0.62);
+    sparkles.add(sparkle);
+  }
+  model.add(sparkles);
+  return sparkles;
 }
 
 export function addIceDoor(THREE, scene, obstacles, passage) {
@@ -43,9 +74,9 @@ export function addIceDoor(THREE, scene, obstacles, passage) {
     crystal.scale.set(sx, sy, 0.2);
     door.add(crystal);
   }
-  return registerDoor(scene, obstacles, door, {
+  return registerDoor(THREE, scene, obstacles, door, {
     x: passage.x, z: passage.z, label: passage.label,
-    available: passage.available,
+    available: passage.available, reducedMotion: passage.reducedMotion,
     bounds: {
       left: passage.x - 1.19, right: passage.x + 1.19,
       front: passage.z - 0.16, back: passage.z + 0.24, height: 3.06,
