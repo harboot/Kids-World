@@ -1,5 +1,5 @@
 {
-  "version": "c414a959b30b31d19897d5393271f0a66921475380ecf7f44eabfe15eafcf620",
+  "version": "7b24096eba3746de69b6b590a029f4df17ecb54066fdd6b898af84134fb76b02",
   "files": [
     {
       "path": "./areas/flower-garden/garden-cabin.js",
@@ -7,11 +7,11 @@
     },
     {
       "path": "./areas/flower-garden/garden-orchard.js",
-      "revision": "098e3e3510d71f5bf06046b09837fc91c257fe61888e5cd8cf18e82e8da179b1"
+      "revision": "6ee3aa30fdd03b64130988811c26c6007ddf91503bdf28d526241fbdc0032b57"
     },
     {
       "path": "./areas/flower-garden/garden-pond.js",
-      "revision": "1f776fa7381d2b91c48339adc35ed4006eed0fd26dc84cd198a74af60845cf23"
+      "revision": "2b164b66577285b083d20ea7baff720982d9fcf65cc9b453401e95f0bd84293f"
     },
     {
       "path": "./areas/flower-garden/garden-terrain.js",
@@ -19,7 +19,7 @@
     },
     {
       "path": "./areas/flower-garden/index.js",
-      "revision": "e08b47297a2b01af0b26a016ef7df25cbc359f85f28b280515d4861ecc877b1d"
+      "revision": "d7a242261f558eae76a973bac6c5348cda0398b627fa9c9f13af46abbcddacc6"
     },
     {
       "path": "./areas/ice-door.js",
@@ -27,15 +27,15 @@
     },
     {
       "path": "./areas/snow-basin.js",
-      "revision": "a1284a3472368f1751b754048c6106510b8ca7b28f004ff67d235aae54bd8169"
+      "revision": "64feb9a92b309954ed6f35a508500f75cf0b1124770e003b9f27b315619b9b3f"
     },
     {
       "path": "./areas/snow-basin/activity.js",
-      "revision": "4ca33bd27c3a1eb85d82810f39282e5661cb8abaa0cfdd6f3ab7bb6fab36d4a0"
+      "revision": "ec8f0c5944dfc066fc56bdcef9e0ae02738dcbbfa0de8bf8ebcaf6c2d25a6b44"
     },
     {
       "path": "./areas/snow-basin/props.js",
-      "revision": "1b023587acca22ec531cb10a7bd6a39225ec7d3525c81e83134deb978188d484"
+      "revision": "0a6f241b0d0c0256bf3639f4edd6a5bb20a7a6f0d3b88d05fba562cf2903520a"
     },
     {
       "path": "./areas/snow-basin/scenery.js",
@@ -143,7 +143,7 @@
     },
     {
       "path": "./style.css",
-      "revision": "c4e6d1b52893e14d2f20f92673dafe6cf4ccd9975a2070f6cbdb0d6cb0d4aff6"
+      "revision": "6bed16354da68cbdab473db9b558ce8ac0310e62ca7215798ca1a6264e359b79"
     },
     {
       "path": "./vendor/three.LICENSE",

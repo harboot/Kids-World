@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import * as THREE from '../vendor/three.module.min.js';
 import { snowBasin } from '../areas/snow-basin.js';
-import { CHOP_COOLDOWN, CHOPS, FALL_DURATION, sweepSphere, createSnowActivity } from '../areas/snow-basin/activity.js';
+import { CHOP_COOLDOWN, CHOPS, FALL_DURATION, SNOWMAN_COUNT, sweepSphere, createSnowActivity } from '../areas/snow-basin/activity.js';
 import { nearestInteraction } from '../core/interactions.js';
 import { walkElevation } from '../core/movement.js';
 import { createWorldManager } from '../core/world-manager.js';
@@ -11,24 +11,20 @@ const player = { x: 5.6, y: 1.68, z: -1.85 };
 
 function activityFixture(options = {}) {
   return createSnowActivity({
-    width: 32, depth: 30, obstacles: [], clearSpot: () => true, random: () => 0.96, ...options,
+    width: 32, depth: 30, spawn: snowBasin.spawn, obstacles: [], clearSpot: () => true, random: () => 0.96, ...options,
   });
 }
 
-function finishChops(activity, position = player) {
-  assert.ok(activity.pickUpAxe());
-  for (let i = 0; i < CHOPS; i++) {
-    assert.ok(activity.chop());
-    if (i < CHOPS - 1) activity.update(CHOP_COOLDOWN, position);
-  }
-}
-
-test('pickup and chops are gated and only a finished fifth-chop fall creates snowmen', () => {
+test('snowmen and snowballs start active, while five chops and a complete fall reveal the key', () => {
   const cues = [];
   const activity = activityFixture({ cue: cue => cues.push(cue) });
-  const { state } = activity;
+  const { state, missions } = activity;
+  const targets = state.targets;
+  assert.equal(targets.length, SNOWMAN_COUNT);
+  assert.deepEqual({ ...missions }, { snowmen: false, tree: false, key: false });
+  assert.ok(activity.canMakeBall());
   assert.equal(activity.chop(), false);
-  assert.equal(activity.makeBall(), false);
+  assert.equal(activity.pickUpKey(), false);
   assert.ok(activity.pickUpAxe());
   assert.equal(activity.pickUpAxe(), false);
 
@@ -37,32 +33,38 @@ test('pickup and chops are gated and only a finished fifth-chop fall creates sno
     assert.equal(activity.chop(), false, 'an extra key or tap during the chop is ignored');
     assert.equal(state.chops, count);
     assert.equal(state.tree, count < CHOPS ? 'upright' : 'falling');
-    assert.equal(state.targets.length, 0);
-    if (count < CHOPS) activity.update(CHOP_COOLDOWN, player);
+    assert.equal(state.targets, targets);
+    assert.equal(missions.tree, false);
+    assert.equal(activity.pickUpKey(), false);
+    if (count < CHOPS) activity.update(CHOP_COOLDOWN);
   }
-  activity.update(FALL_DURATION - 0.01, player);
+  activity.update(FALL_DURATION - 0.01);
   assert.equal(state.tree, 'falling');
-  assert.equal(activity.makeBall(), false);
-  assert.equal(state.targets.length, 0);
-  activity.update(0.02, player);
+  assert.ok(activity.canMakeBall());
+  assert.equal(missions.tree, false);
+  assert.equal(activity.pickUpKey(), false);
+  activity.update(0.02);
   assert.equal(state.tree, 'fallen');
-  assert.equal(state.targets.length, 5);
+  assert.equal(state.targets, targets);
+  assert.ok(missions.tree);
+  assert.equal(missions.key, false);
   assert.equal(activity.chop(), false);
-  assert.deepEqual(cues, ['pickup', 'chop', 'chop', 'chop', 'chop', 'chop', 'fall', 'spawn']);
+  assert.ok(activity.pickUpKey());
+  assert.equal(activity.pickUpKey(), false);
+  assert.ok(state.hasFrozenKey);
+  assert.deepEqual(cues, ['pickup', 'chop', 'chop', 'chop', 'chop', 'chop', 'fall', 'land', 'key']);
 });
 
-test('bounded jitter falls back to unique surveyed slots away from the player', () => {
+test('bounded jitter falls back to unique surveyed slots away from the starting position', () => {
   const clearSpot = (x, z) => Math.abs(x * 10 - Math.round(x * 10)) < 1e-6 &&
     Math.abs(z * 10 - Math.round(z * 10)) < 1e-6;
-  for (const position of [{ x: -12.3, z: -11.4 }, { x: 11.8, z: 11.5 }, player]) {
-    const activity = activityFixture({ clearSpot });
-    finishChops(activity, position);
-    activity.update(FALL_DURATION, position);
+  for (const spawn of [{ x: -12.3, z: -11.4 }, { x: 11.8, z: 11.5 }, snowBasin.spawn]) {
+    const activity = activityFixture({ clearSpot, spawn });
     const targets = activity.state.targets;
-    assert.equal(targets.length, 5);
+    assert.equal(targets.length, SNOWMAN_COUNT);
     for (const [i, target] of targets.entries()) {
       assert.ok(clearSpot(target.x, target.z));
-      assert.ok(Math.hypot(target.x - position.x, target.z - position.z) >= 3.2);
+      assert.ok(Math.hypot(target.x - spawn.x, target.z - spawn.z) >= 3.2);
       for (const other of targets.slice(i + 1)) {
         assert.ok(Math.hypot(target.x - other.x, target.z - other.z) >= 2.8);
       }
@@ -72,8 +74,6 @@ test('bounded jitter falls back to unique surveyed slots away from the player', 
 
 test('snowballs consume one held snowball and clear each target exactly once', () => {
   const activity = activityFixture();
-  finishChops(activity);
-  activity.update(FALL_DURATION, player);
   const { state } = activity;
   const direction = { x: 0, y: 0, z: -1 };
   for (const [i, target] of state.targets.entries()) {
@@ -83,21 +83,22 @@ test('snowballs consume one held snowball and clear each target exactly once', (
     assert.ok(activity.throwBall(origin, direction));
     assert.equal(state.held, false);
     assert.equal(activity.throwBall(origin, direction), false);
-    activity.update(0.23, player);
+    activity.update(0.23);
     assert.equal(state.destroyed, i + 1);
     assert.equal(target.intact, false);
     assert.ok(activity.makeBall());
     assert.ok(activity.throwBall(origin, direction));
-    activity.update(0.23, player);
+    activity.update(0.23);
     assert.equal(state.destroyed, i + 1, 'the broken snowman cannot score another hit');
-    activity.update(2, player);
+    activity.update(2);
   }
   assert.ok(state.targets.every(target => !target.intact));
 
   assert.ok(activity.makeBall(), 'snow piles stay reusable after completion');
   assert.ok(activity.throwBall({ x: 15.5, y: 1.7, z: 0 }, { x: 1, y: 0, z: 0 }));
-  activity.update(0.1, player);
-  assert.equal(state.destroyed, 5);
+  activity.update(0.1);
+  assert.equal(state.destroyed, SNOWMAN_COUNT);
+  assert.deepEqual({ ...activity.missions }, { snowmen: true, tree: false, key: false });
   assert.ok(state.projectiles.every(ball => !ball.active));
   activity.reset();
   assert.equal(state.axe, false);
@@ -105,8 +106,9 @@ test('snowballs consume one held snowball and clear each target exactly once', (
   assert.equal(state.chops, 0);
   assert.equal(state.tree, 'upright');
   assert.equal(state.destroyed, 0);
-  assert.deepEqual(state.targets, []);
-  assert.equal(activity.makeBall(), false);
+  assert.equal(state.targets.length, SNOWMAN_COUNT);
+  assert.ok(state.targets.every(target => target.intact));
+  assert.ok(activity.makeBall());
 });
 
 test('swept intersections detect fast hits and obstacles stop a throw before a snowman', () => {
@@ -115,13 +117,11 @@ test('swept intersections detect fast hits and obstacles stop a throw before a s
   assert.equal(sweepSphere({ x: 0, y: 1, z: 0 }, { x: 0, y: 1, z: 0 }, 0, 1, 0, 1), 0);
   const obstacles = [];
   const activity = activityFixture({ obstacles });
-  finishChops(activity);
-  activity.update(FALL_DURATION, player);
   const target = activity.state.targets[0];
   obstacles.push({ left: target.x - 1, right: target.x + 1, front: target.z + 1, back: target.z + 1.5, height: 2 });
   activity.makeBall();
   activity.throwBall({ x: target.x, y: 1.6, z: target.z + 3 }, { x: 0, y: 0, z: -1 });
-  activity.update(0.3, player);
+  activity.update(0.3);
   assert.ok(target.intact);
   assert.equal(activity.state.destroyed, 0);
   assert.ok(activity.state.projectiles.every(ball => !ball.active));
@@ -129,8 +129,6 @@ test('swept intersections detect fast hits and obstacles stop a throw before a s
 
 test('the projectile pool caps active throws and reset clears all slots', () => {
   const activity = activityFixture();
-  finishChops(activity);
-  activity.update(FALL_DURATION, player);
   const origin = { x: 0, y: 1.68, z: 0 };
   const direction = { x: 0, y: 0.8, z: -0.6 };
   for (let shot = 0; shot < 3; shot++) {
@@ -162,19 +160,25 @@ class Element extends EventTarget {
   setAttribute() {}
 }
 
-function buildWorld() {
+function buildWorld(saved = false) {
   const camera = new THREE.PerspectiveCamera();
   const target = new EventTarget();
-  const completed = new Set();
+  const completed = new Set(saved ? ['snow'] : []);
+  const completions = [];
+  const cues = [];
   const hud = new Element();
   hud.ownerDocument = { createElement: () => new Element(), defaultView: target };
   const worlds = createWorldManager(THREE, {
     areas: { snow: snowBasin, garden: { load: () => ({ obstacles: [] }) } },
     camera, touch: true, playerRadius: 0.34,
-    services: { hud, isPlaying: () => true, isLevelComplete: id => completed.has(id), completeLevel: id => completed.add(id) },
+    services: {
+      hud, isPlaying: () => true, isLevelComplete: id => completed.has(id),
+      completeLevel(id) { completions.push(id); completed.add(id); },
+      playCue: cue => cues.push(cue),
+    },
   });
   const visit = worlds.load('snow');
-  return { worlds, camera, target, hud, visit, completed };
+  return { worlds, camera, target, hud, visit, completed, completions, cues };
 }
 
 function fallInWorld(worlds, position = player) {
@@ -207,7 +211,7 @@ function reachableCells(area) {
   return queue;
 }
 
-test('the actual winter layout produces five reachable targets and replaces the trunk with a low obstacle', () => {
+test('every reset populates three reachable targets that stay put through the pine fall', () => {
   const { worlds, visit } = buildWorld();
   const { scene, area } = visit;
   const tree = scene.getObjectByName('Marked pine');
@@ -218,24 +222,31 @@ test('the actual winter layout produces five reachable targets and replaces the 
   assert.equal(walkElevation(area, player, 5.8, -1.85, 0, true), null);
   assert.equal(walkElevation(area, player, 4.7, -1.85, 0, true), 0);
 
+  const layouts = new Set();
   for (let cycle = 0; cycle < 12; cycle++) {
     worlds.reset();
     assert.equal(Math.abs(tree.rotation.z), 0);
-    assert.equal(scene.children.filter(node => /^Snowman \d/.test(node.name) && node.visible).length, 0);
-    const position = cycle % 2 ? { x: -12.3, z: -11.4 } : player;
-    fallInWorld(worlds, position);
-    const snowmen = scene.children.filter(node => /^Snowman \d/.test(node.name) && node.visible);
-    assert.equal(snowmen.length, 5);
-    assert.equal(tree.rotation.z, -Math.PI / 2);
-    assert.equal(walkElevation(area, player, 7.5, -1.85, 2.3, false), 2.3);
-    const accessible = reachableCells(area);
-    for (const model of snowmen) {
-      const { x, z } = model.position;
-      assert.ok(Math.hypot(x - position.x, z - position.z) >= 3.2);
-      assert.ok(Math.abs(x) >= 5.7 || Math.abs(z + 0.7) >= 6.0);
-      assert.ok(accessible.some(cell => Math.hypot(cell.x - x, cell.z - z) < 1.7), `snowman at ${x},${z} must be reachable`);
+    const snowmen = scene.children.filter(node => /^Snowman \d/.test(node.name));
+    assert.equal(snowmen.length, SNOWMAN_COUNT);
+    assert.ok(snowmen.every(model => model.visible));
+    const positions = snowmen.map(model => model.position.clone());
+    layouts.add(JSON.stringify(positions));
+    for (const available of [reachableCells(area), (() => {
+      fallInWorld(worlds);
+      assert.equal(tree.rotation.z, -Math.PI / 2);
+      assert.equal(walkElevation(area, player, 7.5, -1.85, 2.3, false), 2.3);
+      return reachableCells(area);
+    })()]) {
+      for (const [i, model] of snowmen.entries()) {
+        assert.ok(model.position.equals(positions[i]));
+        const { x, z } = positions[i];
+        assert.ok(Math.hypot(x - snowBasin.spawn.x, z - snowBasin.spawn.z) >= 3.2);
+        assert.ok(Math.abs(x) >= 5.7 || Math.abs(z + 0.7) >= 6.0);
+        assert.ok(available.some(cell => Math.hypot(cell.x - x, cell.z - z) < 1.7), `snowman at ${x},${z} must be reachable`);
+      }
     }
   }
+  assert.ok(layouts.size > 1);
   worlds.unload();
 });
 
@@ -311,16 +322,14 @@ test('doors, reset and unload keep HUD, held objects and snow controls scoped to
   exit.act({ travel: id => { destination = id; } });
   assert.equal(destination, 'garden');
   assert.equal(nearestInteraction(area.interactions, { x: 0.9, y: 1.68, z: 6.5 }), pickup);
-  assert.equal(area.objective, 'Find the axe by the frozen pond');
+  assert.match(area.objective, /^Snow Basin · 0\/3 missions\nMake a snowball \(0\/3 snowmen\) · Find the axe$/);
   pickup.act();
-  assert.equal(area.objective, 'Chop the marked pine · 0/5');
+  assert.match(area.objective, /Chop the pine from the footprints \(0\/5\)/);
   worlds.reset();
 
-  fallInWorld(worlds);
-  assert.equal(area.objective, 'Make a snowball at a snow pile · 0/5 snowmen');
   const pile = area.interactions.find(item => item.label === 'Make snowball');
   assert.ok(pile.act());
-  assert.equal(area.objective, 'Throw at a snowman · 0/5 snowmen');
+  assert.match(area.objective, /Throw at a snowman \(0\/3 snowmen\)/);
   assert.equal(throwButton.hidden, false);
   camera.position.set(-5, 1.68, 8);
   throwButton.dispatchEvent(Object.assign(new Event('pointerdown', { cancelable: true }), { pointerType: 'touch' }));
@@ -328,16 +337,15 @@ test('doors, reset and unload keep HUD, held objects and snow controls scoped to
   worlds.update(0.01, camera.position);
   assert.equal(scene.children.filter(node => /^Snowball in flight/.test(node.name) && node.visible).length, 1);
   assert.equal(throwButton.hidden, true);
-  assert.equal(area.objective, 'Make a snowball at a snow pile · 0/5 snowmen');
+  assert.match(area.objective, /Make a snowball \(0\/3 snowmen\)/);
   assert.equal(viewmodel.getObjectByName('Held snowball').visible, false);
 
   worlds.reset();
   assert.ok(pickup.active);
-  assert.equal(area.objective, 'Find the axe by the frozen pond');
+  assert.match(area.objective, /^Snow Basin · 0\/3 missions\nMake a snowball \(0\/3 snowmen\) · Find the axe$/);
   assert.equal(notice.textContent, '');
   assert.equal(scene.children.some(node => /^Snowball in flight/.test(node.name) && node.visible), false);
 
-  fallInWorld(worlds);
   pile.act();
   const press = () => Object.assign(new Event('keydown', { cancelable: true }), { code: 'KeyF', repeat: false });
   assert.equal(target.dispatchEvent(press()), false);
@@ -348,7 +356,7 @@ test('doors, reset and unload keep HUD, held objects and snow controls scoped to
   assert.equal(scene.children.length, 0);
   const again = worlds.load('snow');
   assert.ok(again.area.interactions.find(item => item.label === 'Pick up axe').active);
-  assert.equal(again.scene.children.some(node => /^Snowman \d/.test(node.name) && node.visible), false);
+  assert.equal(again.scene.children.filter(node => /^Snowman \d/.test(node.name) && node.visible).length, SNOWMAN_COUNT);
   assert.equal(hud.children.length, 1);
   worlds.unload();
 });
@@ -383,42 +391,120 @@ test('each chop deepens the same trunk mesh and restart restores the starter not
   worlds.unload();
 });
 
-test('Frozen Castle unlocks only after the fifth snowman and stays available on replay', () => {
-  const { worlds, visit, completed, camera, target, hud } = buildWorld();
-  const castle = visit.scene.getObjectByName('Frozen Castle');
-  const sparkles = castle.getObjectByName('Door unlock sparkles');
-  const door = visit.area.interactions.find(item => item.label === 'Frozen Castle');
-  assert.equal(castle.visible, false);
-  fallInWorld(worlds);
-  assert.equal(castle.visible, false);
+function shootSnowmen({ visit, worlds, camera, target }, onHit) {
   const pile = visit.area.interactions.find(item => item.label === 'Make snowball');
   const snowmen = visit.scene.children.filter(node => /^Snowman \d/.test(node.name));
+  const press = () => Object.assign(new Event('keydown', { cancelable: true }), { code: 'KeyF' });
   for (const [i, model] of snowmen.entries()) {
     const { x, z } = model.position;
+    const position = [[x, z + 1.07], [x, z - 1.07], [x + 1.07, z], [x - 1.07, z]]
+      .find(([sx, sz]) => walkElevation(visit.area, { x: sx, z: sz }, sx, sz, 0, true) === 0);
+    assert.ok(position, 'the snowman has a clear standing position');
     assert.ok(pile.act());
-    camera.position.set(x, 1.66, z + 1.05);
+    camera.position.set(position[0], 1.66, position[1]);
     camera.lookAt(x, 1.66, z);
-    target.dispatchEvent(Object.assign(new Event('keydown', { cancelable: true }), { code: 'KeyF' }));
-    worlds.update(0.05, player);
-    assert.equal(door.active, i === 4);
-    assert.equal(castle.visible, i === 4);
-    assert.equal(sparkles.visible, i === 4);
-    assert.equal(visit.area.objective, i === 4 ? 'The Frozen Castle door is ready near the start!' :
-      `Make a snowball at a snow pile · ${i + 1}/5 snowmen`);
-    assert.equal(completed.has('snow'), i === 4);
+    assert.equal(target.dispatchEvent(press()), false);
+    worlds.update(0.08, camera.position);
+    assert.equal(model.children[0].visible, false);
+    onHit(i + 1);
   }
-  door.act();
-  assert.equal(hud.children[0].children.find(item => item.className === 'snow-notice').textContent, 'Frozen Castle — Coming Soon');
+}
+
+function count(area, finished) {
+  assert.equal(area.objective.split('\n')[0], `Snow Basin · ${finished}/3 missions`);
+}
+
+test('tree and key can come first and the key unlocks Frozen Castle without completing the level', () => {
+  const game = buildWorld();
+  const { worlds, visit, completed, completions, hud, cues } = game;
+  const { area, scene } = visit;
+  const castle = scene.getObjectByName('Frozen Castle');
+  const sparkles = castle.getObjectByName('Door unlock sparkles');
+  const key = scene.getObjectByName('Frozen Key');
+  const door = area.interactions.find(item => item.label === 'Frozen Castle');
+  const pickup = area.interactions.find(item => item.label === 'Pick up Frozen Key');
+  const notice = hud.children[0].children.find(item => item.className === 'snow-notice');
+  assert.equal(key.visible, false);
+  assert.equal(pickup.active, false);
+  assert.equal(pickup.act(), false);
+  count(area, 0);
+  fallInWorld(worlds);
+  count(area, 1);
+  assert.equal(castle.visible, false);
+  assert.ok(key.visible && pickup.active);
+  assert.match(area.objective, /0\/3 snowmen.*Find the Frozen Key/);
+  assert.ok(reachableCells(area).some(pos => nearestInteraction([pickup], pos) === pickup));
+  assert.ok(pickup.act());
+  assert.equal(pickup.act(), false);
+  count(area, 2);
+  assert.equal(notice.textContent, 'Frozen Key collected!');
+  assert.equal(key.visible, false);
+  assert.ok(door.active && castle.visible && sparkles.visible);
+  assert.equal(completed.has('snow'), false);
+  assert.deepEqual(completions, []);
+  door.act({ travel: () => assert.fail('the placeholder never loads another area') });
+  assert.equal(notice.textContent, 'Frozen Castle — Coming Soon');
+  worlds.update(3.1, player);
+  assert.equal(notice.textContent, '');
+  assert.equal(sparkles.visible, false);
+  shootSnowmen(game, (hits) => {
+    count(area, hits === SNOWMAN_COUNT ? 3 : 2);
+    assert.equal(completed.has('snow'), hits === SNOWMAN_COUNT);
+  });
+  assert.match(area.objective, /Snow Basin complete!/);
+  assert.equal(cues.at(-1).length, 4, 'the full completion plays its own cue');
+  assert.deepEqual(completions, ['snow']);
   worlds.reset();
-  assert.equal(door.active, true);
-  assert.equal(visit.area.objective, 'Find the axe by the frozen pond');
+  count(area, 0);
+  assert.ok(door.active && castle.visible);
+  assert.equal(sparkles.visible, false);
+  assert.equal(key.visible, false);
+  assert.equal(pickup.active, false);
+  assert.equal(notice.textContent, '');
+  worlds.unload();
+});
+
+test('snowmen can be cleared first and never unlock the castle or complete the level alone', () => {
+  const game = buildWorld();
+  const { worlds, visit, completions } = game;
+  const { area, scene } = visit;
+  const door = area.interactions.find(item => item.label === 'Frozen Castle');
+  const pickup = area.interactions.find(item => item.label === 'Pick up Frozen Key');
+  shootSnowmen(game, hits => {
+    count(area, hits === SNOWMAN_COUNT ? 1 : 0);
+    assert.equal(door.active, false);
+    assert.equal(Math.abs(scene.getObjectByName('Marked pine').rotation.z), 0);
+    assert.equal(completions.length, 0);
+  });
+  assert.match(area.objective, /Find the axe/);
+  assert.doesNotMatch(area.objective, /snowmen/);
+  fallInWorld(worlds);
+  count(area, 2);
+  assert.match(area.objective, /Find the Frozen Key/);
+  assert.equal(door.active, false);
+  assert.deepEqual(completions, []);
+  assert.ok(pickup.act());
+  assert.equal(pickup.act(), false);
+  count(area, 3);
+  assert.ok(door.active);
+  assert.deepEqual(completions, ['snow']);
+  worlds.unload();
+});
+
+test('a legacy Snow Basin completion keeps Frozen Castle available on replay', () => {
+  const { worlds, visit, completed, completions } = buildWorld(true);
+  function checkVisit(areaVisit) {
+    count(areaVisit.area, 0);
+    assert.ok(areaVisit.scene.getObjectByName('Frozen Castle').visible);
+    assert.equal(areaVisit.scene.getObjectByName('Door unlock sparkles').visible, false);
+    assert.ok(areaVisit.scene.getObjectByName('Snow Basin axe').visible);
+    assert.equal(areaVisit.scene.getObjectByName('Frozen Key').visible, false);
+    assert.equal(areaVisit.scene.children.filter(node => /^Snowman \d/.test(node.name) && node.visible).length, SNOWMAN_COUNT);
+    assert.ok(completed.has('snow'));
+  }
+  checkVisit(visit);
   worlds.load('garden');
-  const replay = worlds.load('snow');
-  assert.equal(replay.scene.getObjectByName('Frozen Castle').visible, true);
-  assert.equal(replay.scene.getObjectByName('Door unlock sparkles').visible, false);
-  assert.equal(replay.scene.getObjectByName('Snow Basin axe').visible, true);
-  assert.equal(replay.area.objective, 'Find the axe by the frozen pond');
-  replay.area.interactions.find(item => item.label === 'Pick up axe').act();
-  assert.equal(replay.area.objective, 'Chop the marked pine · 0/5');
+  checkVisit(worlds.load('snow'));
+  assert.deepEqual(completions, []);
   worlds.unload();
 });

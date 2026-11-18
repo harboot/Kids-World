@@ -1,12 +1,14 @@
 import { addIceDoor } from './ice-door.js';
 import { addViewingZone } from './viewing-zone.js';
-import { CHOPS, CHOP_COOLDOWN, FALL_DURATION, createSnowActivity } from './snow-basin/activity.js';
-import { addAxe, addCastleDoor, addChopTree, addSnowPlay, showSnowmen } from './snow-basin/props.js';
+import { CHOPS, CHOP_COOLDOWN, FALL_DURATION, SNOWMAN_COUNT, createSnowActivity } from './snow-basin/activity.js';
+import { addAxe, addCastleDoor, addChopTree, addFrozenKey, addSnowPlay, showSnowmen } from './snow-basin/props.js';
 import { addWinterScenery } from './snow-basin/scenery.js';
 
 const axeSite = { x: 0.9, z: 5.9 };
 const treeSite = { x: 7.5, z: -1.85 };
+const keySite = { x: 6.32, z: 0.43 };
 const treeClearance = 2.72;
+const landingBounds = { left: treeSite.x + 2.09, right: treeSite.x + 8.12, front: treeSite.z - 1.93, back: treeSite.z + 1.93 };
 const piles = [
   { x: -5, z: 6.4 }, { x: 4.9, z: 6.8 }, { x: -4, z: -8.6 },
   { x: 4, z: -9.6 }, { x: -10, z: -1.4 },
@@ -16,9 +18,11 @@ const cues = {
   pickup: [[71, { duration: 0.14, level: 0.12 }], [79, { duration: 0.13, level: 0.10 }, 0.055]],
   chop: [[48, { duration: 0.084, endPitch: 35, attack: 0.005, level: 0.21, wave: 'triangle' }]],
   fall: [[50, { duration: 0.42, endPitch: 39, attack: 0.13, level: 0.13, wave: 'triangle' }]],
-  spawn: [[43, { duration: 0.12, level: 0.18, wave: 'triangle' }],
-    [72, { duration: 0.18, level: 0.11 }], [76, { duration: 0.16, level: 0.095 }, 0.07],
-    [81, { duration: 0.19, level: 0.085 }, 0.135]],
+  land: [[43, { duration: 0.12, level: 0.18, wave: 'triangle' }],
+    [76, { duration: 0.23, level: 0.10 }, 0.13], [81, { duration: 0.28, level: 0.08 }, 0.23]],
+  key: [[81, { duration: 0.17, level: 0.13 }], [86, { duration: 0.29, level: 0.13 }, 0.09]],
+  success: [[67, { duration: 0.25, level: 0.15 }], [71, { duration: 0.25, level: 0.13 }, 0.13],
+    [74, { duration: 0.26, level: 0.13 }, 0.26], [79, { duration: 0.42, level: 0.15 }, 0.39]],
   pack: [[65, { duration: 0.11, endPitch: 72, level: 0.105, wave: 'triangle' }]],
   throw: [[72, { duration: 0.12, endPitch: 55, level: 0.1 }]],
   hit: [[54, { duration: 0.13, endPitch: 37, level: 0.175, wave: 'triangle' }],
@@ -28,7 +32,7 @@ const cues = {
 export const snowBasin = {
   title: 'Snow Basin',
   heading: ['Snow', 'Basin'],
-  description: 'Find the axe by the frozen pond. Stand on the footprints and look at the marked pine to chop it.',
+  description: 'Throw snowballs at three snowmen and chop the pine from the footprints. Find the Frozen Key after the tree falls.',
   canvasLabel: '3D snow basin',
   themeColor: '#e2f0f5',
   music: 'snow',
@@ -40,7 +44,7 @@ export const snowBasin = {
 
 function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlaying, playCue, playerRadius = 0.34,
   isLevelComplete, completeLevel, reducedMotion }) {
-  const { width, depth } = snowBasin;
+  const { width, depth, spawn } = snowBasin;
   const kit = addWinterScenery({ THREE, scene, touch, width, depth });
   const { obstacles } = kit;
   const axe = addAxe(THREE, scene, viewmodel, kit, axeSite);
@@ -53,53 +57,51 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
   treeBoundary.position.set(treeSite.x, 0.041, treeSite.z);
   scene.add(treeBoundary);
   const play = addSnowPlay(THREE, scene, viewmodel, kit, piles);
+  const key = addFrozenKey(THREE, scene, kit, keySite);
   const returnDoor = addIceDoor(THREE, scene, obstacles, {
     x: 0, z: -14.36, destination: 'garden', label: 'Return to Flower Garden',
   });
-  let cleared = false;
+  let activity;
   const castle = addCastleDoor(THREE, scene, kit, {
     x: -2.3, z: 13.92,
     reducedMotion,
-    available: () => cleared || Boolean(isLevelComplete?.('snow')),
-    announce() {
-      if (!panel) return;
-      panel.notice.textContent = 'Frozen Castle — Coming Soon';
-      noticeTime = 3;
-    },
+    available: () => Boolean(activity?.missions.key || isLevelComplete?.('snow')),
+    announce: () => showNotice('Frozen Castle — Coming Soon'),
   });
 
   const direction = new THREE.Vector3();
   const origin = new THREE.Vector3();
   let noticeTime = 0;
   let impactTime = Infinity;
+  let keyTime = 0;
   let panel;
-  const activity = createSnowActivity({
-    width, depth, obstacles,
+  activity = createSnowActivity({
+    width, depth, spawn, obstacles,
     clearSpot(x, z) {
       if (Math.abs(x) > width / 2 - 1.4 || Math.abs(z) > depth / 2 - 1.4) return false;
       if (Math.abs(x) < 5.7 && Math.abs(z + 0.7) < 6.0) return false;
-      return !obstacles.some(obstacle => obstacle.height > 0 && Number.isFinite(obstacle.left) &&
-        x >= obstacle.left - 1.02 && x <= obstacle.right + 1.02 &&
-        z >= obstacle.front - 1.02 && z <= obstacle.back + 1.02);
+      if (Math.hypot(x - treeSite.x, z - treeSite.z) < treeClearance + 1.02 ||
+          Math.hypot(x - keySite.x, z - keySite.z) < 2.0) return false;
+      const near = ({ left, right, front, back }) =>
+        x >= left - 1.02 && x <= right + 1.02 && z >= front - 1.02 && z <= back + 1.02;
+      return !near(landingBounds) && !obstacles.some(near);
     },
     cue(name) {
-      if (name === 'spawn') {
-        impactTime = 0;
-        for (const [i, { x, z }] of state.targets.entries()) {
-          const model = play.models[i].group;
-          model.position.set(x, 0, z);
-          model.rotation.y = Math.atan2(-x, 4 - z);
-        }
-      }
-      if (name === 'hit' && state.destroyed === play.models.length && !cleared && !isLevelComplete?.('snow')) {
-        cleared = true;
-        completeLevel?.('snow');
+      if (name === 'land') impactTime = 0;
+      if (name === 'key') {
+        key.model.visible = false;
+        showNotice('Frozen Key collected!');
+        castle.refresh();
       }
       playCue?.(cues[name]);
+      if ((name === 'hit' || name === 'key') && missions.snowmen && missions.tree && missions.key) {
+        completeLevel?.('snow');
+        playCue?.(cues.success);
+      }
       updateHUD();
     },
   });
-  const { state } = activity;
+  const { state, missions } = activity;
 
   // Reserve the landing side from the final chop onward. After impact the low log replaces the upright footprint.
   obstacles.push({
@@ -115,7 +117,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
       return Math.hypot(edge, dz) < 1.05 + playerRadius;
     },
   }, {
-    left: treeSite.x + 2.09, right: treeSite.x + 8.12, front: treeSite.z - 1.93, back: treeSite.z + 1.93,
+    ...landingBounds,
     get height() { return state.tree === 'upright' ? 0 : 1.93; },
     touches(x, z) {
       const dx = Math.max(0, this.left - x, x - this.right);
@@ -140,18 +142,25 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
 
   if (hud) panel = addSnowHud(hud, signal, throwBall);
 
+  function showNotice(message) {
+    if (!panel) return;
+    panel.notice.textContent = message;
+    noticeTime = 3;
+  }
+
   function updateHUD() {
     if (!panel) return;
     panel.throwButton.hidden = !state.held;
     panel.throwKey.hidden = !state.held;
   }
 
-  function updateModels() {
+  function updateModels(dt = 0) {
     axe.axe.visible = axe.ring.visible = !state.axe;
     chopZone.marker.visible = state.axe && state.tree !== 'fallen';
     treeBoundary.visible = state.tree !== 'fallen';
     const fall = state.fallTime / FALL_DURATION;
-    axe.holder.visible = state.axe && !state.held;
+    const swinging = state.cooldown > 0;
+    axe.holder.visible = state.axe && (!state.held || swinging);
     if (axe.holder.visible) {
       axe.holder.position.x = Math.min(0.28, 0.32 * (camera?.aspect ?? 1));
       const lowered = Math.min(1, fall * 7, (1 - fall) * 10);
@@ -164,7 +173,12 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
     pine.shadow.position.x = treeSite.x + lean * 3.75;
     pine.shadow.scale.set(1.04 + lean * 3.25, 1, 0.91 + lean * 0.64);
     pine.setChops(state.chops);
-    play.held.visible = state.held;
+    play.held.visible = state.held && !swinging;
+    key.model.visible = activity.canPickUpKey();
+    if (key.model.visible) {
+      if (!reducedMotion?.()) keyTime += dt;
+      key.pose(keyTime);
+    }
     showSnowmen(play.models, state.targets);
     for (let i = 0; i < play.balls.length; i++) {
       const ball = state.projectiles[i];
@@ -185,8 +199,14 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
 
   function reset() {
     activity.reset();
+    for (const [i, { x, z }] of state.targets.entries()) {
+      const model = play.models[i].group;
+      model.position.set(x, 0, z);
+      model.rotation.y = Math.atan2(-x, 4 - z);
+    }
     noticeTime = 0;
     impactTime = Infinity;
+    keyTime = 0;
     if (panel) panel.notice.textContent = '';
     castle.refresh();
     castle.resetHighlight();
@@ -194,16 +214,23 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
     updateModels();
   }
 
-  reset();
   return {
     obstacles,
     get objective() {
-      if (state.destroyed === play.models.length) return 'The Frozen Castle door is ready near the start!';
-      if (!state.axe) return 'Find the axe by the frozen pond';
-      if (state.tree === 'upright') return `Chop the marked pine · ${state.chops}/${CHOPS}`;
-      if (state.tree === 'falling') return 'Watch the pine fall';
-      const action = state.held ? 'Throw at a snowman' : 'Make a snowball at a snow pile';
-      return `${action} · ${state.destroyed}/${play.models.length} snowmen`;
+      const finished = Object.values(missions).filter(Boolean).length;
+      const progress = `Snow Basin · ${finished}/3 missions`;
+      if (finished === 3) return `${progress}\nSnow Basin complete!`;
+      const hints = [];
+      if (!missions.snowmen) {
+        const action = state.held ? 'Throw at a snowman' : 'Make a snowball';
+        hints.push(`${action} (${state.destroyed}/${SNOWMAN_COUNT} snowmen)`);
+      }
+      if (!missions.tree) {
+        if (!state.axe) hints.push('Find the axe');
+        else if (state.tree === 'falling') hints.push('Watch the pine fall');
+        else hints.push(`Chop the pine from the footprints (${state.chops}/${CHOPS})`);
+      } else if (!missions.key) hints.push('Find the Frozen Key');
+      return `${progress}\n${hints.join(' · ')}`;
     },
     interactions: [
       returnDoor, castle,
@@ -217,25 +244,29 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
         get active() { return activity.canChop(); },
         act: activity.chop,
       },
+      {
+        ...keySite, anchorY: 0.59, radius: 1.7, label: 'Pick up Frozen Key', silent: true,
+        get active() { return activity.canPickUpKey(); },
+        act: activity.pickUpKey,
+      },
       ...piles.map(site => ({
         ...site, anchorY: 0.54, radius: 2, label: 'Make snowball', silent: true,
         get active() { return activity.canMakeBall(); },
         act: activity.makeBall,
       })),
     ],
-    update(dt, playerPosition) {
-      activity.update(dt, playerPosition);
+    update(dt) {
+      activity.update(dt);
       castle.refresh(dt);
       if (impactTime < 0.56) impactTime += dt;
       if (noticeTime > 0) {
         noticeTime = Math.max(0, noticeTime - dt);
         if (!noticeTime) panel.notice.textContent = '';
       }
-      updateModels();
+      updateModels(dt);
     },
     reset,
     unload() {
-      reset();
       panel?.root.remove();
     },
   };
