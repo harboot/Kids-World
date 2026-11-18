@@ -42,14 +42,15 @@ button:focus-visible { outline: 3px solid #377b65; outline-offset: 3px; }
   inset: 0 0 auto;
   padding: calc(16px + env(safe-area-inset-top)) calc(20px + env(safe-area-inset-right))
            0 calc(20px + env(safe-area-inset-left));
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 6px 10px;
   pointer-events: none;
 }
 .wordmark, .hud-actions { display: flex; align-items: center; gap: 8px; }
 .wordmark {
+  justify-self: start;
   padding: 7px 13px 7px 8px;
   border-radius: 50px;
   background: var(--surface);
@@ -59,6 +60,19 @@ button:focus-visible { outline: 3px solid #377b65; outline-offset: 3px; }
   line-height: 1.08;
 }
 .wordmark small { display: block; margin-top: 4px; color: var(--muted); font-size: 10px; font-weight: 750; }
+.objective {
+  grid-column: 1 / -1;
+  justify-self: start;
+  max-width: min(36ch, 100%);
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 750;
+  box-shadow: 0 2px 10px #21384f20;
+}
+#game:not([data-state="playing"]) .objective, .objective:empty { display: none; }
 .world-mark {
   width: 34px;
   height: 34px;
@@ -268,8 +282,6 @@ kbd {
   box-shadow: 0 2px 10px #21384f20;
 }
 
-.snow-progress { top: calc(72px + env(safe-area-inset-top)); left: calc(20px + env(safe-area-inset-left)); }
-.snow-complete { top: calc(105px + env(safe-area-inset-top)); left: calc(20px + env(safe-area-inset-left)); }
 .snow-notice {
   bottom: calc(20px + env(safe-area-inset-bottom));
   left: 50%;

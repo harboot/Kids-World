@@ -37,6 +37,8 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   const notice = game.querySelector('#notice');
   const heading = game.querySelector('#menu-title');
   const areaName = game.querySelector('.wordmark small');
+  const objective = game.querySelector('#objective');
+  const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
   const theme = document.querySelector('meta[name="theme-color"]');
   const touchDevice = matchMedia('(pointer: coarse)').matches ||
     (navigator.maxTouchPoints > 0 && matchMedia('(hover: none)').matches);
@@ -101,6 +103,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     areas, camera, touch: touchDevice, playerRadius: PLAYER_RADIUS,
     services: {
       hud: game, isPlaying: playing, playCue: audio.playCue,
+      reducedMotion: () => motionPreference.matches,
       isLevelComplete: progress.has,
       completeLevel(id) {
         progress.complete(id);
@@ -126,6 +129,11 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   let travelTimer;
   let previousFrame = null;
 
+  function updateObjective() {
+    const hint = worlds.active.area.objective ?? '';
+    if (objective.textContent !== hint) objective.textContent = hint;
+  }
+
   function stopPlaying() {
     window.clearTimeout(travelTimer);
     audio.setPlaying(false);
@@ -145,6 +153,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     startLabel.textContent = paused ? 'Resume exploring' : 'Explore';
     menuMessage.textContent = paused ? 'Take a break, then continue exploring.' : worlds.active.definition.description;
     notice.textContent = '';
+    objective.textContent = '';
     view.invalidate();
   }
 
@@ -233,6 +242,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     interactions.hide();
     start.blur();
     game.dataset.state = 'playing';
+    updateObjective();
     audio.setPlaying(true);
   });
 
@@ -259,6 +269,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     if (playing()) {
       player.move(dt, controls.sample(dt), worlds.active);
       worlds.update(dt, camera.position);
+      updateObjective();
       interactions.update();
     }
     view.render(worlds.active?.scene, playing());

@@ -1,5 +1,5 @@
 {
-  "version": "09817e18737b0f4963e9de5fe62c2cf17fadf886a0a258493880f9f0cae5c185",
+  "version": "272c6c7d0f4859b4a87cb3f9df9dbaddfefb3aaf299a20a0eee0d3df6501a7e4",
   "files": [
     {
       "path": "./areas/flower-garden/garden-cabin.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./areas/flower-garden/garden-orchard.js",
-      "revision": "5564f7665e0414023124b6af2a4c29836d74fa8c2e8bce2e91e7f688663209d9"
+      "revision": "098e3e3510d71f5bf06046b09837fc91c257fe61888e5cd8cf18e82e8da179b1"
     },
     {
       "path": "./areas/flower-garden/garden-pond.js",
@@ -19,15 +19,15 @@
     },
     {
       "path": "./areas/flower-garden/index.js",
-      "revision": "54efa727673227aa7fecc2cb6378e5e42a6dcdf2e3b0f7121267ba2c60ceaa56"
+      "revision": "1c7451a21186d339c697f1a84475dae5e4d88c44989585864940874885dfc452"
     },
     {
       "path": "./areas/ice-door.js",
-      "revision": "06cfeeb97c7163ed193b446d0c0c052ff5cc1b292ac601f1834506b2840e67d7"
+      "revision": "046a5eb469413eb7554b2225aa31dfbb90204c84e3a0da55b7ad43fae8adb68e"
     },
     {
       "path": "./areas/snow-basin.js",
-      "revision": "a923c27cdcef6f06378651fcefd3b639d2bea88ee0e700a3f46f4f19e2315346"
+      "revision": "ca6295018acf406692d67bac1980b331c1c9202c16d7f52ba1c27c9bd5a954d4"
     },
     {
       "path": "./areas/snow-basin/activity.js",
@@ -35,7 +35,7 @@
     },
     {
       "path": "./areas/snow-basin/props.js",
-      "revision": "70706a49966f9239ce024c89552c01ba74cd117aec66402144b86f3abab69886"
+      "revision": "1b023587acca22ec531cb10a7bd6a39225ec7d3525c81e83134deb978188d484"
     },
     {
       "path": "./areas/snow-basin/scenery.js",
@@ -59,7 +59,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "3ed4f6b7dc549193d53cc99145e8cb003475974643001075a751f4520b857f76"
+      "revision": "76fa3a0169b47b60f359ffebd442c2f906ee65776f3c53398e6ae92d051beb79"
     },
     {
       "path": "./core/interactions.js",
@@ -91,7 +91,7 @@
     },
     {
       "path": "./index.html",
-      "revision": "875096a200e560ab1f90887c9a3b758c5efd5993a636e12e0bd6adc4ad5d1bfd"
+      "revision": "084c695a7e9b0a8d0a62d2fecda5593a22ed4a50a1b740bb16f91738628033a4"
     },
     {
       "path": "./manifest.webmanifest",
@@ -123,7 +123,7 @@
     },
     {
       "path": "./style.css",
-      "revision": "e4ee015f965691b801851251226d6df45201d248001a3f0a0ff48b1d1dcf5075"
+      "revision": "e928a89cfd37ac71f9098675778dcf83e8a4eea7505ad5643ccedeb9ff1444a5"
     },
     {
       "path": "./vendor/three.LICENSE",

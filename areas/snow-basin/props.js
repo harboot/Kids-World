@@ -179,7 +179,7 @@ export function showSnowmen(models, targets) {
   }
 }
 
-export function addCastleDoor(THREE, scene, kit, { x, z, available, announce }) {
+export function addCastleDoor(THREE, scene, kit, { x, z, available, announce, reducedMotion }) {
   const { box, mesh, material, obstacles } = kit;
   const facade = new THREE.Group();
   facade.name = 'Frozen Castle';
@@ -209,8 +209,8 @@ export function addCastleDoor(THREE, scene, kit, { x, z, available, announce }) 
     part(shard, crystal, side * 0.25, 1.62, 0.46, 0.109, 0.139, 0.085);
   }
 
-  return registerDoor(scene, obstacles, facade, {
-    x, z, anchorY: 2.28, radius: 2.65, label: 'Frozen Castle', available, act: announce,
+  return registerDoor(THREE, scene, obstacles, facade, {
+    x, z, anchorY: 2.28, radius: 2.65, label: 'Frozen Castle', available, reducedMotion, act: announce,
     bounds: { left: x - 1.92, right: x + 1.92, front: z - 0.505, back: z + 0.505, height: 4.67 },
   });
 }
