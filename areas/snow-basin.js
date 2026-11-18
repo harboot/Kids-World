@@ -82,7 +82,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
           model.rotation.y = Math.atan2(-x, 4 - z);
         }
       }
-      if (name === 'hit' && state.destroyed === 5 && !cleared && !isLevelComplete?.('snow')) {
+      if (name === 'hit' && state.destroyed === play.models.length && !cleared && !isLevelComplete?.('snow')) {
         cleared = true;
         completeLevel?.('snow');
       }
@@ -184,7 +184,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
   return {
     obstacles,
     get objective() {
-      if (castle.active) return 'The Frozen Castle door is ready near the start!';
+      if (state.destroyed === play.models.length) return 'The Frozen Castle door is ready near the start!';
       if (!state.axe) return 'Find the axe by the frozen pond';
       if (state.tree === 'upright') return `Chop the marked pine · ${state.chops}/${CHOPS}`;
       if (state.tree === 'falling') return 'Watch the pine fall';

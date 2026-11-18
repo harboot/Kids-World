@@ -354,10 +354,16 @@ test('Frozen Castle unlocks only after the fifth snowman and stays available on 
   }
   door.act();
   assert.equal(hud.children[0].children.find(item => item.className === 'snow-notice').textContent, 'Frozen Castle — Coming Soon');
+  worlds.reset();
+  assert.equal(door.active, true);
+  assert.equal(visit.area.objective, 'Find the axe by the frozen pond');
   worlds.load('garden');
   const replay = worlds.load('snow');
   assert.equal(replay.scene.getObjectByName('Frozen Castle').visible, true);
   assert.equal(replay.scene.getObjectByName('Door unlock sparkles').visible, false);
   assert.equal(replay.scene.getObjectByName('Snow Basin axe').visible, true);
+  assert.equal(replay.area.objective, 'Find the axe by the frozen pond');
+  replay.area.interactions.find(item => item.label === 'Pick up axe').act();
+  assert.equal(replay.area.objective, 'Chop the marked pine · 0/5');
   worlds.unload();
 });

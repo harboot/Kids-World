@@ -2,7 +2,7 @@
 
 Kids World is a first-person exploration game made with HTML, CSS, JavaScript, and Three.js. Deliver a basket with five apples to the Flower Garden cabin to reveal the ice door to Snow Basin. The game remembers your last area and which levels you have completed in this browser.
 
-The hint below the area name shows what to do next and tracks apples, chops, or snowmen during play. A door sparkles briefly when you unlock it.
+The hint below the area name shows what to do next and tracks apples, chops, or snowmen during play. On replay, hints start at the first step even if the door is already unlocked. A door sparkles briefly when you first unlock it.
 
 - Follow the path beside the apple tree up the hill. You can walk back down the slope or jump from it.
 - Take the basket beside the apple tree, shake the tree, and collect the fallen apples. At the cabin, use **Place basket** on the porch table. **Pick up basket** returns it to you with the apples still inside.
