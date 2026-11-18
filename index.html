@@ -46,7 +46,7 @@
       </div>
       <div class="hud-actions">
         <button id="sound" class="hud-button sound-button" type="button" aria-label="Mute sound" aria-pressed="false" hidden>♪</button>
-        <button id="restart" class="hud-button" type="button" aria-label="Restart area" title="Restart area" disabled>↻</button>
+        <button id="choose-level" class="hud-button" type="button" aria-label="Choose level" title="Choose level" aria-haspopup="dialog" disabled>☷</button>
         <button id="fullscreen" class="hud-button" type="button" aria-label="Fullscreen" title="Fullscreen" hidden>⛶</button>
       </div>
     </header>
@@ -80,6 +80,15 @@
         </div>
       </div>
     </section>
+
+    <dialog id="level-picker" aria-labelledby="level-picker-title">
+      <header class="level-picker-header">
+        <h2 id="level-picker-title">Choose level</h2>
+        <form method="dialog"><button class="hud-button" aria-label="Close level picker" autofocus>×</button></form>
+      </header>
+      <div id="completed-levels" class="completed-levels"></div>
+      <button id="restart" class="restart-level" type="button" disabled>Restart area</button>
+    </dialog>
 
     <div id="joystick" class="joystick" role="group" aria-label="Movement joystick">
       <span id="joystick-thumb" class="joystick-thumb" aria-hidden="true"></span>

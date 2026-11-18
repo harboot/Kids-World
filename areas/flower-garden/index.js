@@ -184,7 +184,7 @@ function createAnimals(THREE, scene, playerRadius) {
 export const flowerGarden = {
   title: 'Flower Garden',
   heading: ['Flower', 'Garden'],
-  description: 'Take the hill trail, cross the fish pond, or bring apples to the cabin.',
+  description: 'To open Snow Basin, collect five apples and put the basket on the cabin table.',
   loadingMessage: 'Loading the garden…',
   canvasLabel: '3D flower garden',
   themeColor: '#e9eedc',
@@ -195,7 +195,7 @@ export const flowerGarden = {
   load: loadGarden,
 };
 
-function loadGarden({ THREE, scene, viewmodel, touch, playerRadius }) {
+function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelComplete, completeLevel }) {
   const { width, depth } = flowerGarden;
   const obstacles = [];
   const gates = [];
@@ -448,14 +448,22 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius }) {
 
   const animals = createAnimals(THREE, scene, playerRadius);
   const cabin = addCabin(THREE, { scene, mesh, box, matte, obstacles, collision });
+  let delivered = false;
+  const passage = addIceDoor(THREE, scene, obstacles, {
+    x: 17.8, z: -23.35, destination: 'snow', label: 'Enter Snow Basin',
+    available: () => delivered || Boolean(isLevelComplete?.('garden')),
+  });
   const orchard = addOrchard(THREE, {
     scene, viewmodel, mesh, box, facet, matte, obstacles, collision, getTerrainHeight, table: cabin.table,
+    deliver() {
+      if (delivered || isLevelComplete?.('garden')) return;
+      delivered = true;
+      completeLevel?.('garden');
+      passage.refresh();
+    },
   });
   const pond = addPond(THREE, { scene, mesh, box, facet, matte, obstacles, instances, getTerrainHeight, playerRadius });
   addGlacier(THREE, { mesh, facet, matte });
-  const passage = addIceDoor(THREE, scene, obstacles, {
-    x: 17.8, z: -23.35, destination: 'snow', label: 'Enter Snow Basin',
-  });
   return {
     obstacles,
     getGroundHeight(x, z) {
@@ -465,6 +473,7 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius }) {
     animals,
     interactions: [...gates.map(gate => gate.door), ...animals.interactions, ...orchard.interactions, cabin.bench, passage],
     update(dt, player) {
+      passage.refresh();
       animals.update(dt, player);
       orchard.update(dt);
       pond.update(dt);
@@ -475,6 +484,7 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius }) {
       orchard.reset();
       pond.reset();
       for (const gate of gates) gate.reset();
+      passage.refresh();
     },
   };
 }

@@ -1,3 +1,17 @@
+export function registerDoor(scene, obstacles, model, { bounds, available = () => true, ...interaction }) {
+  model.name = interaction.label;
+  scene.add(model);
+  obstacles.push({ ...bounds, get height() { return available() ? bounds.height : 0; } });
+  const door = {
+    ...interaction,
+    get active() { return available(); },
+    act(context) { if (available()) interaction.act(context); },
+    refresh() { model.visible = available(); },
+  };
+  door.refresh();
+  return door;
+}
+
 export function addIceDoor(THREE, scene, obstacles, passage) {
   const door = new THREE.Group();
   door.position.set(passage.x, 0, passage.z);
@@ -29,15 +43,15 @@ export function addIceDoor(THREE, scene, obstacles, passage) {
     crystal.scale.set(sx, sy, 0.2);
     door.add(crystal);
   }
-  scene.add(door);
-  obstacles.push({
-    left: passage.x - 1.19, right: passage.x + 1.19,
-    front: passage.z - 0.16, back: passage.z + 0.24, height: 3.06,
-  });
-  return {
+  return registerDoor(scene, obstacles, door, {
     x: passage.x, z: passage.z, label: passage.label,
+    available: passage.available,
+    bounds: {
+      left: passage.x - 1.19, right: passage.x + 1.19,
+      front: passage.z - 0.16, back: passage.z + 0.24, height: 3.06,
+    },
     act({ travel, heardCue }) {
       travel(passage.destination, heardCue);
     },
-  };
+  });
 }

@@ -1,6 +1,7 @@
 import { createAudio } from './audio.js';
 import { createControls } from './controls.js';
 import { createInteractions } from './interactions.js';
+import { createLevelProgress } from './level-progress.js';
 import { PLAYER_RADIUS } from './movement.js';
 import { createPlayer } from './player.js';
 import { createView } from './renderer.js';
@@ -28,6 +29,9 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   const canvas = game.querySelector('#view');
   const start = game.querySelector('#start');
   const startLabel = game.querySelector('#start-label');
+  const chooseLevel = game.querySelector('#choose-level');
+  const levelPicker = game.querySelector('#level-picker');
+  const levelList = game.querySelector('#completed-levels');
   const restart = game.querySelector('#restart');
   const menuMessage = game.querySelector('#menu-message');
   const notice = game.querySelector('#notice');
@@ -47,6 +51,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     notice.textContent = '';
     start.hidden = true;
     restart.disabled = true;
+    chooseLevel.disabled = true;
   }
 
   function showArea(id) {
@@ -91,9 +96,17 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
 
   const { camera } = view;
   const audio = createAudio(game.querySelector('#sound'));
+  const progress = createLevelProgress(areas);
   const worlds = createWorldManager(THREE, {
     areas, camera, touch: touchDevice, playerRadius: PLAYER_RADIUS,
-    services: { hud: game, isPlaying: playing, playCue: audio.playCue },
+    services: {
+      hud: game, isPlaying: playing, playCue: audio.playCue,
+      isLevelComplete: progress.has,
+      completeLevel(id) {
+        progress.complete(id);
+        view.sceneChanged();
+      },
+    },
   });
   const player = createPlayer(THREE, camera);
   const interactions = createInteractions(THREE, {
@@ -128,6 +141,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     start.hidden = false;
     start.disabled = false;
     restart.disabled = false;
+    chooseLevel.disabled = false;
     startLabel.textContent = paused ? 'Resume exploring' : 'Explore';
     menuMessage.textContent = paused ? 'Take a break, then continue exploring.' : worlds.active.definition.description;
     notice.textContent = '';
@@ -142,12 +156,14 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   }
 
   function resetArea() {
+    if (levelPicker.open) levelPicker.close();
     worlds.reset();
     resetPlayer();
     menu(false);
   }
 
   function enterArea(id, historyMode) {
+    if (levelPicker.open) levelPicker.close();
     game.dataset.state = 'traveling';
     stopPlaying();
     try {
@@ -172,6 +188,26 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     if (heardCue) travelTimer = window.setTimeout(() => enterArea(id, 'pushState'), 180);
     else enterArea(id, 'pushState');
   }
+
+  chooseLevel.addEventListener('click', () => {
+    if (levelPicker.open || !worlds.active || game.dataset.state === 'traveling') return;
+    if (playing()) menu(true);
+    progress.refresh();
+    levelList.replaceChildren();
+    for (const [id, area] of Object.entries(areas)) {
+      if (!progress.has(id)) continue;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = area.title;
+      button.addEventListener('click', () => {
+        if (id === worlds.active.id) resetArea();
+        else enterArea(id, 'pushState');
+      });
+      levelList.append(button);
+    }
+    if (!levelList.childElementCount) levelList.textContent = 'Complete a level to replay it here.';
+    levelPicker.showModal();
+  });
 
   function sit(pose, standLabel) {
     player.sit(pose);
