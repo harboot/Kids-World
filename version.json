@@ -1,5 +1,5 @@
 {
-  "version": "fedbf6089aff9e1d2f57586702a3efe5f45eca28c8d6f36671fd531c289c5239",
+  "version": "db72d87bdd77d6471bb19af711e5ace74a3b3923f600fce98635f0db173cd29c",
   "files": [
     {
       "path": "./areas/flower-garden/garden-cabin.js",
@@ -27,7 +27,19 @@
     },
     {
       "path": "./areas/snow-basin.js",
-      "revision": "1636968cbeddce2f2d5003dbbe06ba6725bab8a48c7e2f4138982502d14bc9b2"
+      "revision": "0a9566d4eb218c8a464dc4968f1988c9bcbd1542dc5f3e753f1cc6b06d516c34"
+    },
+    {
+      "path": "./areas/snow-basin/activity.js",
+      "revision": "4ca33bd27c3a1eb85d82810f39282e5661cb8abaa0cfdd6f3ab7bb6fab36d4a0"
+    },
+    {
+      "path": "./areas/snow-basin/props.js",
+      "revision": "7c3c08ebe4a1160fd5ac0132840b1e48c136f373ae35492e8fb50ee1a1c6624a"
+    },
+    {
+      "path": "./areas/snow-basin/scenery.js",
+      "revision": "69f360e762672c3a88fd581d2ae9124cd588f55722bd696f661c7f443c8b3c12"
     },
     {
       "path": "./assets/icons/icon-192.png",
@@ -39,7 +51,7 @@
     },
     {
       "path": "./core/audio.js",
-      "revision": "ea3047198df035a5efc69e42c03c698a50e1a8c3dd80c0b0b4419a8f69e87434"
+      "revision": "1ceca1208fb49789260a7f17aff883bd8fba155ee17a7383fa1fe08e74495373"
     },
     {
       "path": "./core/controls.js",
@@ -47,7 +59,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "abdf59c993d3f961a4fcd46cdccb5916a6472b7f552c4f2c28c4f3525fa12cf7"
+      "revision": "de56c6e87774711eeb6e4659a8336fa5a474844e1f11d083f30231ccdd42bb14"
     },
     {
       "path": "./core/interactions.js",
@@ -67,7 +79,7 @@
     },
     {
       "path": "./core/world-manager.js",
-      "revision": "f6e5f8a8c600fe722b12e3867467595ff577e6f933c56965931ad9f427937a3b"
+      "revision": "c94c4f3c0a174dd4112482a0636cec54ed24a8a56cff4df381b33f38a5797313"
     },
     {
       "path": "./game.js",
@@ -107,7 +119,7 @@
     },
     {
       "path": "./style.css",
-      "revision": "429f924c0a789c139954a0186f0243a239b7b624e4923bd0c46fa7f55e95b370"
+      "revision": "56b927b84857c797307ab7d15e254352915db237fba3513df0e0e8a67bbdf691"
     },
     {
       "path": "./vendor/three.LICENSE",

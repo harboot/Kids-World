@@ -1,112 +1,228 @@
 import { addIceDoor } from './ice-door.js';
+import { CHOPS, CHOP_COOLDOWN, FALL_DURATION, createSnowActivity } from './snow-basin/activity.js';
+import { addAxe, addCastleDoor, addChopTree, addSnowPlay, showSnowmen } from './snow-basin/props.js';
+import { addWinterScenery } from './snow-basin/scenery.js';
+
+const axeSite = { x: 0.9, z: 5.9 };
+const treeSite = { x: 7.5, z: -1.85 };
+const piles = [
+  { x: -5, z: 6.4 }, { x: 4.9, z: 6.8 }, { x: -4, z: -8.6 },
+  { x: 4, z: -9.6 }, { x: -10, z: -1.4 },
+];
+
+const cues = {
+  pickup: [[71, { duration: 0.14, level: 0.12 }], [79, { duration: 0.13, level: 0.10 }, 0.055]],
+  chop: [[48, { duration: 0.084, endPitch: 35, attack: 0.005, level: 0.21, wave: 'triangle' }]],
+  fall: [[50, { duration: 0.42, endPitch: 39, attack: 0.13, level: 0.13, wave: 'triangle' }]],
+  spawn: [[43, { duration: 0.12, level: 0.18, wave: 'triangle' }],
+    [72, { duration: 0.18, level: 0.11 }], [76, { duration: 0.16, level: 0.095 }, 0.07],
+    [81, { duration: 0.19, level: 0.085 }, 0.135]],
+  pack: [[65, { duration: 0.11, endPitch: 72, level: 0.105, wave: 'triangle' }]],
+  throw: [[72, { duration: 0.12, endPitch: 55, level: 0.1 }]],
+  hit: [[54, { duration: 0.13, endPitch: 37, level: 0.175, wave: 'triangle' }],
+    [84, { duration: 0.12, level: 0.075 }, 0.036]],
+};
 
 export const snowBasin = {
   title: 'Snow Basin',
   heading: ['Snow', 'Basin'],
-  description: 'Walk across the frozen pond and past snowy pines. The ice door leads back to Flower Garden.',
+  description: 'Look for the axe near the frozen pond. The marked pine has a winter surprise!',
   canvasLabel: '3D snow basin',
   themeColor: '#e2f0f5',
   music: 'snow',
-  width: 18,
-  depth: 20,
-  spawn: { x: 0, z: 6 },
+  width: 32,
+  depth: 30,
+  spawn: { x: 0, z: 9.4 },
   load: loadSnow,
 };
 
-function loadSnow({ THREE, scene, touch }) {
+function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlaying, playCue }) {
   const { width, depth } = snowBasin;
-  const obstacles = [];
-  const box = new THREE.BoxGeometry(1, 1, 1);
-  const cone = new THREE.ConeGeometry(1, 1, 5);
-  const rock = new THREE.DodecahedronGeometry(1);
-  const hemisphere = new THREE.HemisphereLight(0xe8f5ff, 0x7087a7, 1.85);
-  const sun = new THREE.DirectionalLight(0xe1efff, 2.3);
-  sun.position.set(-7, 13, -6);
-  sun.castShadow = true;
-  sun.shadow.mapSize.setScalar(touch ? 512 : 1024);
-  Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14, near: 0.5, far: 42 });
-  sun.shadow.camera.updateProjectionMatrix();
-  sun.shadow.normalBias = 0.025;
-  scene.add(hemisphere, sun);
-  scene.background = new THREE.Color(0xadc8d8);
-  scene.fog = new THREE.Fog(0xadc8d8, 16, 55);
+  const kit = addWinterScenery({ THREE, scene, touch, width, depth });
+  const { obstacles } = kit;
+  const axe = addAxe(THREE, scene, viewmodel, kit, axeSite);
+  const pine = addChopTree(THREE, scene, kit, treeSite);
+  const play = addSnowPlay(THREE, scene, viewmodel, kit, piles);
+  const returnDoor = addIceDoor(THREE, scene, obstacles, {
+    x: 0, z: -14.36, destination: 'garden', label: 'Return to Flower Garden',
+  });
+  const castle = addCastleDoor(THREE, scene, kit, { x: -2.3, z: 13.92 }, () => {
+    if (!panel) return;
+    panel.notice.textContent = 'Frozen Castle — Coming Soon';
+    noticeTime = 3;
+  });
 
-  const material = color => new THREE.MeshLambertMaterial({ color });
-  const snow = material(0xd1e3ec);
-  const frost = material(0xe4eff4);
-  const ridge = material(0x718c9e);
-  const slate = material(0x4e6a7a);
-  const pine = material(0x254d53);
-  const wood = material(0x4d5155);
-  const ice = material(0x77a8bc);
+  const direction = new THREE.Vector3();
+  const origin = new THREE.Vector3();
+  let noticeTime = 0;
+  let impactTime = Infinity;
+  let panel;
+  const activity = createSnowActivity({
+    width, depth, obstacles,
+    clearSpot(x, z) {
+      if (Math.abs(x) > width / 2 - 1.4 || Math.abs(z) > depth / 2 - 1.4) return false;
+      if (Math.abs(x) < 5.7 && Math.abs(z + 0.7) < 6.0) return false;
+      return !obstacles.some(obstacle => obstacle.height > 0 && Number.isFinite(obstacle.left) &&
+        x >= obstacle.left - 1.02 && x <= obstacle.right + 1.02 &&
+        z >= obstacle.front - 1.02 && z <= obstacle.back + 1.02);
+    },
+    cue(name) {
+      if (name === 'spawn') {
+        impactTime = 0;
+        for (const [i, { x, z }] of state.targets.entries()) {
+          const model = play.models[i].group;
+          model.position.set(x, 0, z);
+          model.rotation.y = Math.atan2(-x, 4 - z);
+        }
+      }
+      playCue?.(cues[name]);
+      updateHUD();
+    },
+  });
+  const { state } = activity;
 
-  function mesh(geometry, surface, x, y, z, sx, sy, sz, shadow = false) {
-    const object = new THREE.Mesh(geometry, surface);
-    object.position.set(x, y, z);
-    object.scale.set(sx, sy, sz);
-    object.castShadow = shadow;
-    object.receiveShadow = true;
-    scene.add(object);
-    return object;
+  // Reserve the landing side from the final chop onward. After impact the low log replaces the upright footprint.
+  obstacles.push({
+    left: treeSite.x - 0.57, front: treeSite.z - 0.6, back: treeSite.z + 0.6,
+    get right() { return treeSite.x + (state.tree === 'upright' ? 0.57 : 5.45); },
+    get height() { return state.tree === 'upright' ? 5.3 : state.tree === 'falling' ? 2.45 : 0.79; },
+  }, {
+    left: treeSite.x + 2.09, right: treeSite.x + 8.12, front: treeSite.z - 1.93, back: treeSite.z + 1.93,
+    get height() { return state.tree === 'upright' ? 0 : 1.93; },
+  });
+  for (let i = 0; i < play.models.length; i++) {
+    obstacles.push({
+      get height() { return state.targets[i]?.intact ? 1.95 : 0; },
+      touches(x, z) {
+        const target = state.targets[i];
+        return Boolean(target?.intact && Math.hypot(x - target.x, z - target.z) < 0.80);
+      },
+    });
   }
 
-  function block(x, z, sx, sz, height) {
-    obstacles.push({ left: x - sx / 2, right: x + sx / 2, front: z - sz / 2, back: z + sz / 2, height });
+  function throwBall() {
+    if (!isPlaying?.() || !state.held) return false;
+    return activity.throwBall(camera.getWorldPosition(origin), camera.getWorldDirection(direction));
   }
 
-  mesh(box, snow, 0, -0.15, 0, width, 0.3, depth);
-  // Snowbanks mark the boundary while leaving the horizon open.
-  for (const side of [-1, 1]) {
-    mesh(box, slate, side * (width / 2 + 0.3), 0.42, 0, 0.64, 0.84, depth + 1, true);
-    mesh(box, frost, side * (width / 2 + 0.29), 0.83, 0, 0.7, 0.18, depth + 1, true);
-    mesh(box, slate, 0, 0.42, side * (depth / 2 + 0.3), width, 0.84, 0.64, true);
-    mesh(box, frost, 0, 0.83, side * (depth / 2 + 0.29), width, 0.18, 0.7, true);
+  if (hud) panel = addSnowHud(hud, signal, throwBall);
+
+  function updateHUD() {
+    if (!panel) return;
+    const ready = state.tree === 'fallen';
+    panel.progress.textContent = ready ? `Snowmen: ${state.destroyed} / 5` : `Tree: ${state.chops} / ${CHOPS} chops`;
+    panel.progress.hidden = !state.axe;
+    panel.complete.hidden = state.destroyed !== 5;
+    panel.throwButton.hidden = !state.held;
+    panel.throwKey.hidden = !state.held;
   }
 
-  const pond = new THREE.CylinderGeometry(1, 1, 1, 7);
-  mesh(pond, frost, 0, 0.006, -0.7, 4.45, 0.025, 5.1).rotation.y = 0.29;
-  mesh(pond, ice, 0, 0.022, -0.7, 4.17, 0.018, 4.8).rotation.y = 0.29;
-  const cracks = new THREE.BufferGeometry();
-  cracks.setAttribute('position', new THREE.Float32BufferAttribute([
-    -3.25, 0.032, -0.2, -1.4, 0.032, -1.1, -1.4, 0.032, -1.1, 0.1, 0.032, -0.9,
-    0.1, 0.032, -0.9, 1.05, 0.032, -2.1, 1.05, 0.032, -2.1, 2.15, 0.032, -2.4,
-    0.1, 0.032, -0.9, 0.75, 0.032, 0.1, 0.75, 0.032, 0.1, 2.38, 0.032, 0.7,
-    0.75, 0.032, 0.1, 0.2, 0.032, 1.65,
-  ], 3));
-  scene.add(new THREE.LineSegments(cracks, new THREE.LineBasicMaterial({ color: 0xb6d8e4 })));
-
-  for (const [x, z, size] of [[-6.4, -5.7, 0.9], [6.6, -4.6, 0.72], [-6.2, 1.8, 1.15], [5.8, 3.2, 0.93]]) {
-    mesh(rock, slate, x, size * 0.29, z, size, size * 0.47, size * 0.73, true).rotation.y = x;
-    mesh(rock, frost, x - 0.1, size * 0.63, z, size * 0.8, size * 0.21, size * 0.65).rotation.y = x;
-    block(x, z, size * 1.55, size * 1.25, size * 0.82);
-  }
-
-  for (const [x, z, scale] of [
-    [-7.3, 5.4, 0.95], [-7.7, -1.7, 1.1], [-5.1, -4.5, 0.8], [-6.1, -8.2, 1.05], [-3.7, -8.3, 0.72],
-    [7.5, 5.4, 1.03], [7.2, 0.2, 0.86], [5.1, -5.9, 1.02], [7.5, -7.7, 1.15], [3.9, -8.6, 0.68],
-  ]) {
-    mesh(box, wood, x, 0.55 * scale, z, 0.25 * scale, 1.1 * scale, 0.25 * scale, true);
-    block(x, z, 0.27 * scale, 0.27 * scale, 1.1 * scale);
-    for (let tier = 0; tier < 3; tier++) {
-      const radius = (1.03 - tier * 0.23) * scale;
-      const y = (1.24 + tier * 0.74) * scale;
-      mesh(cone, pine, x, y, z, radius, 1.52 * scale, radius, true).rotation.y = x;
-      mesh(cone, frost, x, y + 0.26 * scale, z, radius * 0.68, 1.07 * scale, radius * 0.68).rotation.y = x;
+  function updateModels() {
+    axe.axe.visible = axe.ring.visible = !state.axe;
+    axe.holder.visible = state.axe && !state.held;
+    const swing = Math.sin(Math.PI * state.cooldown / CHOP_COOLDOWN);
+    axe.holder.rotation.set(-0.93 * swing, 0.3 * swing, -0.56 * swing);
+    const fall = state.fallTime / FALL_DURATION;
+    const lean = fall * fall * (1 + 0.65 * (1 - fall));
+    pine.tree.rotation.z = -Math.PI / 2 * lean;
+    pine.shadow.position.x = treeSite.x + lean * 3.75;
+    pine.shadow.scale.set(1.04 + lean * 3.25, 1, 0.91 + lean * 0.64);
+    for (let i = 0; i < pine.marks.length; i++) pine.marks[i].visible = i < state.chops;
+    play.held.visible = state.held;
+    showSnowmen(play.models, state.targets);
+    for (let i = 0; i < play.balls.length; i++) {
+      const ball = state.projectiles[i];
+      play.balls[i].visible = ball.active;
+      if (ball.active) play.balls[i].position.set(ball.x, ball.y, ball.z);
+    }
+    for (let i = 0; i < play.puff.length; i++) {
+      const part = play.puff[i];
+      part.visible = impactTime < 0.56;
+      if (!part.visible) continue;
+      const angle = i * 2.39996;
+      part.position.set(treeSite.x + 5.8 + Math.cos(angle) * (0.34 + impactTime * 3.8),
+        0.16 + Math.sin(impactTime / 0.56 * Math.PI) * (0.45 + i * 0.062),
+        treeSite.z + Math.sin(angle) * (0.28 + impactTime * 2.9));
+      part.scale.setScalar(0.24 * (1 - impactTime / 0.56));
     }
   }
 
-  for (const [x, z, span, height] of [
-    [-24, -27, 10, 15], [-15, -24, 8, 12], [-9, -32, 13, 18],
-    [4, -36, 12, 17], [15, -27, 10, 20], [24, -26, 9, 13],
-    [-24, 1, 9, 11], [23, 1, 9, 11], [-12, 27, 11, 15], [9, 26, 13, 13],
-  ]) {
-    const angle = x * 0.22;
-    mesh(cone, ridge, x, height / 2 - 0.8, z, span, height, span * 0.8).rotation.y = angle;
-    mesh(cone, frost, x, height * 0.74 - 0.7, z, span * 0.56, height * 0.52, span * 0.445).rotation.y = angle;
+  function reset() {
+    activity.reset();
+    noticeTime = 0;
+    impactTime = Infinity;
+    if (panel) panel.notice.textContent = '';
+    updateHUD();
+    updateModels();
   }
 
-  const passage = addIceDoor(THREE, scene, obstacles, {
-    x: 0, z: -9.48, destination: 'garden', label: 'Return to Flower Garden',
-  });
-  return { obstacles, interactions: [passage] };
+  reset();
+  return {
+    obstacles,
+    interactions: [
+      returnDoor, castle,
+      {
+        ...axeSite, anchorY: 0.46, radius: 1.85, label: 'Pick up axe', silent: true,
+        get active() { return !state.axe; },
+        act: activity.pickUpAxe,
+      },
+      {
+        ...treeSite, anchorY: 1.06, radius: 2.4, label: 'Chop tree', silent: true,
+        reachable: player => player.x < treeSite.x - 0.18,
+        get active() { return activity.canChop(); },
+        act: activity.chop,
+      },
+      ...piles.map(site => ({
+        ...site, anchorY: 0.54, radius: 2, label: 'Make snowball', silent: true,
+        get active() { return activity.canMakeBall(); },
+        act: activity.makeBall,
+      })),
+    ],
+    update(dt, playerPosition) {
+      activity.update(dt, playerPosition);
+      if (impactTime < 0.56) impactTime += dt;
+      if (noticeTime > 0) {
+        noticeTime = Math.max(0, noticeTime - dt);
+        if (!noticeTime) panel.notice.textContent = '';
+      }
+      updateModels();
+    },
+    reset,
+    unload() {
+      reset();
+      panel?.root.remove();
+    },
+  };
+}
+
+function addSnowHud(hud, signal, throwBall) {
+  const document = hud.ownerDocument;
+  const root = document.createElement('div');
+  root.className = 'snow-activity';
+  const make = (tag, className, text = '') => {
+    const element = document.createElement(tag);
+    element.className = className;
+    element.textContent = text;
+    root.append(element);
+    return element;
+  };
+  const progress = make('p', 'snow-progress');
+  progress.setAttribute('role', 'status');
+  const complete = make('p', 'snow-complete', 'All snowmen cleared!');
+  complete.setAttribute('role', 'status');
+  const notice = make('p', 'snow-notice');
+  notice.setAttribute('role', 'status');
+  const throwKey = make('p', 'snow-throw-key', 'F to throw');
+  const throwButton = make('button', 'snow-throw', 'Throw');
+  throwButton.type = 'button';
+
+  document.defaultView.addEventListener('keydown', event => {
+    if (event.code === 'KeyF' && !event.repeat && throwBall()) event.preventDefault();
+  }, { signal });
+  throwButton.addEventListener('pointerdown', event => {
+    if (event.pointerType === 'touch' && throwBall()) event.preventDefault();
+  }, { signal });
+  throwButton.addEventListener('click', throwBall, { signal });
+  hud.append(root);
+  return { root, progress, complete, notice, throwKey, throwButton };
 }

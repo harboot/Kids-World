@@ -40,6 +40,11 @@ function tone(context, destination, at, pitch, { endPitch = pitch, duration, lev
 }
 
 const scores = { garden, snow };
+const jumpCue = [[60, { endPitch: 77, duration: 0.17, level: 0.22, wave: 'triangle' }]];
+const interactCue = [
+  [53, { endPitch: 46, duration: 0.065, level: 0.24, attack: 0.004, wave: 'triangle' }],
+  [79, { duration: 0.135, level: 0.15 }, 0.035],
+];
 
 function renderLoop(OfflineContext, area) {
   const { beat, bars } = scores[area];
@@ -158,16 +163,15 @@ export function createAudio(button) {
     syncMusic();
   }
 
-  function effect(name) {
+  function playCue(notes) {
     if (muted || !master || context.state !== 'running') return false;
     const now = context.currentTime + 0.004;
-    if (name === 'jump') {
-      tone(context, master, now, 60, { endPitch: 77, duration: 0.17, level: 0.22, wave: 'triangle' });
-    } else {
-      tone(context, master, now, 53, { endPitch: 46, duration: 0.065, level: 0.24, attack: 0.004, wave: 'triangle' });
-      tone(context, master, now + 0.035, 79, { duration: 0.135, level: 0.15 });
-    }
+    for (const [pitch, note, offset = 0] of notes) tone(context, master, now + offset, pitch, note);
     return true;
+  }
+
+  function effect(name) {
+    return playCue(name === 'jump' ? jumpCue : interactCue);
   }
 
   if (AudioContext) {
@@ -187,5 +191,5 @@ export function createAudio(button) {
     });
   }
 
-  return { unlock, setArea, setPlaying, effect };
+  return { unlock, setArea, setPlaying, effect, playCue };
 }

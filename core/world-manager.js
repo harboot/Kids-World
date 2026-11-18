@@ -14,7 +14,7 @@ export function areaURL(url, id) {
   return target;
 }
 
-export function createWorldManager(THREE, { areas, camera, touch, playerRadius }) {
+export function createWorldManager(THREE, { areas, camera, touch, playerRadius, services }) {
   let active = null;
 
   function release({ area, scene, viewmodel, lifetime }) {
@@ -45,7 +45,7 @@ export function createWorldManager(THREE, { areas, camera, touch, playerRadius }
 
     try {
       // Keep the current visit available if building or resetting the next scene fails.
-      next.area = definition.load({ THREE, scene, viewmodel, touch, playerRadius, signal: lifetime.signal });
+      next.area = definition.load({ ...services, THREE, scene, camera, viewmodel, touch, playerRadius, signal: lifetime.signal });
       next.area.reset?.();
       unload();
     } catch (error) {

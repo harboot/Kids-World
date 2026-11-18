@@ -10,10 +10,16 @@ Kids World is a first-person exploration game made with HTML, CSS, JavaScript, a
 
 Returning to Flower Garden or using **Restart area** starts a fresh visit. The basket is empty by the apple tree, fallen apples disappear, and the pens, bench, fish, and player return to their starting states. The browser remembers the last area between visits.
 
-| Input | Move | Look | Jump | Interact |
-| --- | --- | --- | --- | --- |
-| Desktop | W, A, S, D | Arrow keys or click the scene to use the mouse | Space | M or click the circle when the cursor is free |
-| Touch | Left joystick | Drag the right side | Tap the scene | Tap the circle near an object |
+## Snow Basin
+
+Pick up the axe by the frozen pond. Approach the marked side of the tall pine and use **Chop tree** five times. After the pine lands, five snowmen appear in different spots within the basin. Use **Make snowball** at a snow pile, aim, and throw. Each snowman breaks into snow on the first hit. You can return to any pile for another snowball.
+
+The original ice door returns to Flower Garden. Try the larger **Frozen Castle** entrance on the opposite edge to see a coming-soon message. **Restart area** or returning from Flower Garden restores the axe, upright pine, and empty snowfield. The activity starts fresh each visit.
+
+| Input | Move | Look | Jump | Interact | Throw in Snow Basin |
+| --- | --- | --- | --- | --- | --- |
+| Desktop | W, A, S, D | Arrow keys or click the scene to use the mouse | Space | M or click the circle when the cursor is free | F |
+| Touch | Left joystick | Drag the right side | Tap the scene | Tap the circle near an object | **Throw** button |
 
 Press Esc to pause and release the cursor on desktop.
 
@@ -28,6 +34,8 @@ Run `node --test` with Node.js 22.7 or later. It checks movement and collision, 
 ## Architecture
 
 `index.html` hosts one canvas and one set of controls. `game.js` registers the areas and starts the shared lifecycle in `core/game.js`. The core owns the renderer and camera, player movement, input, interaction prompts, and Web Audio. `core/world-manager.js` gives each visit its own scene, camera-mounted viewmodel, collision data, and listener scope.
+
+`areas/snow-basin.js` composes the area and owns its controls and progress display. `areas/snow-basin/scenery.js` builds the landscape, `props.js` builds the winter activity models, and `activity.js` handles the chop sequence, snowman placement, and swept projectile collision. An area can use the shared `camera`, `hud`, `isPlaying()`, and `playCue(notes)` capabilities during its visit. It can set `silent: true` on an interaction that plays its own cue.
 
 Area travel replaces the scene and opens the destination's **Explore** menu in the same page. The URL records the area for browser Back and Forward. Opening the site without an area in the URL uses the last visited area. Existing links to `snow.html` and `index.html?arrive=garden` still resolve to their respective areas.
 
