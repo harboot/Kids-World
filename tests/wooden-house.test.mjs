@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { readFile, readdir } from 'node:fs/promises';
 import * as THREE from '../vendor/three.module.min.js';
 import { areas } from '../game.js';
-import { nearestInteraction } from '../core/interactions.js';
+import { createInteractions, nearestInteraction } from '../core/interactions.js';
 import { createLevelProgress } from '../core/level-progress.js';
 import { floorHeight, overlaps, PLAYER_RADIUS, walkElevation } from '../core/movement.js';
 import { createPlayer } from '../core/player.js';
@@ -211,6 +211,52 @@ test('each mission makes its actual furniture tidy exactly once and only after t
     }
   }
   assert.deepEqual(completions, []);
+  worlds.unload();
+});
+
+test('marked viewpoints guide every mission and preserve room to watch until it finishes', () => {
+  const { worlds, camera } = fixture();
+  const { area, scene } = worlds.load(house);
+  const tasks = missions(area);
+  const button = Object.assign(new EventTarget(), { style: { setProperty() {} } });
+  const prompts = createInteractions(THREE, {
+    button, glyph: {}, label: {}, camera, playing: () => true, touchMode: () => false,
+    runAction: item => item.act(),
+  });
+  const closePositions = { bed: [-3.13, -3.25], dishes: [2.24, -3.46], painting: [-5.62, -0.9],
+    tv: [-4.98, 1.14], toys: [3.3, 2.2] };
+  for (const [id, task] of Object.entries(tasks)) {
+    const marker = scene.getObjectByName(task.label + ' viewing zone');
+    const [closeX, closeZ] = closePositions[id];
+    const { x, z } = marker.position;
+    prompts.setItems([task]);
+    assert.ok(marker.visible);
+    assert.equal(walkElevation(area, { x, z }, x, z, 0, true), 0, task.label);
+    assert.equal(walkElevation(area, { x, z }, closeX, closeZ, 0, true), null, task.label);
+    assert.equal(walkElevation(area, { x, z }, closeX, closeZ, 1.1, false), null, task.label);
+    assert.equal(nearestInteraction([task], { x: closeX, z: closeZ }), null, task.label);
+
+    camera.position.set(x, 1.68, z);
+    camera.lookAt(2 * x - task.x, 1.68, 2 * z - task.z);
+    camera.updateMatrixWorld();
+    prompts.update();
+    assert.ok(button.hidden, task.label);
+    prompts.interact();
+    assert.ok(task.active);
+    camera.lookAt(task.x, task.anchorY, task.z);
+    camera.updateMatrixWorld();
+    prompts.update();
+    assert.equal(button.hidden, false, task.label);
+    prompts.interact();
+    assert.ok(marker.visible, task.label);
+    assert.ok(!task.active);
+    assert.equal(walkElevation(area, { x, z }, closeX, closeZ, 0, true), null);
+    worlds.update(1.3);
+    assert.equal(marker.visible, false, task.label);
+    assert.equal(walkElevation(area, { x, z }, closeX, closeZ, 0, true), 0, task.label);
+  }
+  worlds.reset();
+  assert.ok(Object.values(tasks).every(task => scene.getObjectByName(task.label + ' viewing zone').visible));
   worlds.unload();
 });
 

@@ -215,7 +215,8 @@ test('the actual winter layout produces five reachable targets and replaces the 
   assert.equal(chop.reachable({ x: 9 }), false);
   assert.equal(walkElevation(area, player, 7.5, -1.85, 2.3, false), null);
   assert.equal(walkElevation(area, player, 6.1, -1.85, 0, true), null);
-  assert.equal(walkElevation(area, player, 5.8, -1.85, 0, true), 0);
+  assert.equal(walkElevation(area, player, 5.8, -1.85, 0, true), null);
+  assert.equal(walkElevation(area, player, 4.7, -1.85, 0, true), 0);
 
   for (let cycle = 0; cycle < 12; cycle++) {
     worlds.reset();
@@ -235,6 +236,60 @@ test('the actual winter layout produces five reachable targets and replaces the 
       assert.ok(accessible.some(cell => Math.hypot(cell.x - x, cell.z - z) < 1.7), `snowman at ${x},${z} must be reachable`);
     }
   }
+  worlds.unload();
+});
+
+test('the pine viewing zone frames the fall and clears the close boundary on landing', () => {
+  const { worlds, visit, camera } = buildWorld();
+  const { scene, area } = visit;
+  const tree = scene.getObjectByName('Marked pine');
+  const marker = scene.getObjectByName('Chop tree viewing zone');
+  const boundary = scene.getObjectByName('Pine clearance');
+  const axe = visit.viewmodel.getObjectByName('Held axe');
+  const axeHeight = axe.position.y;
+  const chop = area.interactions.find(item => item.label === 'Chop tree');
+  const { x, z } = marker.position;
+  assert.equal(marker.visible, false);
+  assert.equal(boundary.visible, true);
+  area.interactions.find(item => item.label === 'Pick up axe').act();
+  worlds.update(0, { x, z });
+  assert.ok(marker.visible);
+  assert.equal(nearestInteraction(area.interactions, { x, z }), chop);
+  assert.equal(chop.reachable({ x: 4.67, z: -1.85 }), false);
+  assert.ok(reachableCells(area).some(cell => chop.reachable(cell)));
+
+  for (const [fov, aspect] of [[62, 16 / 9], [68, 412 / 915]]) {
+    camera.fov = fov;
+    camera.aspect = aspect;
+    camera.updateProjectionMatrix();
+    camera.position.set(x, 1.68, z);
+    camera.lookAt(chop.x, 3.28, chop.z);
+    camera.updateMatrixWorld();
+    for (const lean of [0, -Math.PI / 4, -Math.PI / 2]) {
+      tree.rotation.z = lean;
+      tree.updateMatrixWorld();
+      for (const height of [0, 7.92]) {
+        const screen = tree.localToWorld(new THREE.Vector3(0, height, 0)).project(camera);
+        assert.ok(Math.abs(screen.x) < 1 && Math.abs(screen.y) < 1, `Tree endpoint at ${lean} in ${aspect}`);
+      }
+    }
+  }
+
+  for (let i = 0; i < CHOPS; i++) {
+    assert.ok(chop.act());
+    worlds.update(CHOP_COOLDOWN, { x, z });
+  }
+  assert.ok(boundary.visible);
+  assert.ok(axe.position.y < axeHeight);
+  assert.equal(walkElevation(area, { x, z }, 5.4, -1.85, 0, true), null);
+  worlds.update(FALL_DURATION, { x, z });
+  assert.equal(boundary.visible, false);
+  assert.equal(marker.visible, false);
+  assert.equal(axe.position.y, axeHeight);
+  assert.equal(walkElevation(area, { x, z }, 5.4, -1.85, 0, true), 0);
+  worlds.reset();
+  assert.ok(boundary.visible);
+  assert.equal(marker.visible, false);
   worlds.unload();
 });
 

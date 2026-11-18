@@ -1,12 +1,13 @@
 const INTERACTION_RADIUS = 2.35;
 
-export function nearestInteraction(items, position) {
+export function nearestInteraction(items, position, inView) {
   let nearest = null;
   let best = Infinity;
   for (const item of items) {
     if (item.active === false || (item.reachable && !item.reachable(position))) continue;
     const distance = Math.hypot(position.x - item.x, position.z - item.z);
-    if (distance < best && distance <= (item.radius ?? INTERACTION_RADIUS)) {
+    if (distance < best && distance <= (item.radius ?? INTERACTION_RADIUS) &&
+        (!item.requiresView || !inView || inView(item))) {
       nearest = item;
       best = distance;
     }
@@ -20,8 +21,14 @@ export function createInteractions(THREE, { button, glyph, label, camera, playin
   let items = [];
   let pinned = null;
 
+  function project(item) {
+    point.set(item.x, item.anchorY ?? 1.38, item.z).project(camera);
+    const { x, y, z } = point;
+    return z >= -1 && z <= 1 && Math.abs(x) <= 1 && Math.abs(y) <= 1;
+  }
+
   function nearby() {
-    return playing() ? pinned ?? nearestInteraction(items, camera.position) : null;
+    return playing() ? pinned ?? nearestInteraction(items, camera.position, project) : null;
   }
 
   function update() {
@@ -33,13 +40,9 @@ export function createInteractions(THREE, { button, glyph, label, camera, playin
     if (label.textContent !== item.label) label.textContent = item.label;
     let left = 50;
     let top = 68;
-    if (!pinned) {
-      point.set(item.x, item.anchorY ?? 1.38, item.z).project(camera);
-      const { x, y, z } = point;
-      if (z >= -1 && z <= 1 && Math.abs(x) <= 1 && Math.abs(y) <= 1) {
-        left = clamp(50 + 50 * x, 22, 78);
-        top = clamp(50 - 50 * y, 20, 71);
-      }
+    if (!pinned && project(item)) {
+      left = clamp(50 + 50 * point.x, 22, 78);
+      top = clamp(50 - 50 * point.y, 20, 71);
     }
     button.style.setProperty('--interaction-x', `${left.toFixed(1)}%`);
     button.style.setProperty('--interaction-y', `${top.toFixed(1)}%`);

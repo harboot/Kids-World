@@ -1,5 +1,5 @@
 {
-  "version": "ba5315e9d2655e35d0b1db6206d43304f54bf5178c4c5134b9a065eb3f577dc5",
+  "version": "c414a959b30b31d19897d5393271f0a66921475380ecf7f44eabfe15eafcf620",
   "files": [
     {
       "path": "./areas/flower-garden/garden-cabin.js",
@@ -27,7 +27,7 @@
     },
     {
       "path": "./areas/snow-basin.js",
-      "revision": "1af1e9e604734cd7751b0624a9cb67f747c8c6cce71b4cc14d80d4f72afc5551"
+      "revision": "a1284a3472368f1751b754048c6106510b8ca7b28f004ff67d235aae54bd8169"
     },
     {
       "path": "./areas/snow-basin/activity.js",
@@ -42,16 +42,20 @@
       "revision": "69f360e762672c3a88fd581d2ae9124cd588f55722bd696f661c7f443c8b3c12"
     },
     {
+      "path": "./areas/viewing-zone.js",
+      "revision": "1560f4a1165d261592b8cec54a1c00b3621cafb6f984e8ab1f168dc943b77d82"
+    },
+    {
       "path": "./areas/wooden-house/cleaning.js",
-      "revision": "3293e512817352d270ef7cf327906994ed79b7ea4d36f7c46fd44beb449f44ee"
+      "revision": "62280cbe16632bfb6e7645797c21aa08c5e54ab4fb27f6e1c20400bfba6d49f9"
     },
     {
       "path": "./areas/wooden-house/furniture.js",
-      "revision": "7af68ec759b8247d7aa99140eaba7263e9fec44dcf29f732fecb756ce9539203"
+      "revision": "aa8d2d9d91d8c2ec301f0cd84be54d6afc4adfaa0094b169b5ce58a74904bfa4"
     },
     {
       "path": "./areas/wooden-house/index.js",
-      "revision": "93ebfd00c42db57dd9584396674eea39d309bf45181b22fcd8fc10a430b48c3a"
+      "revision": "0139414ba33aa25d5e46c5a307ed0b9a74008baf5ca3320fbfb3ca2c52f1ec91"
     },
     {
       "path": "./areas/wooden-house/interior.js",
@@ -79,7 +83,7 @@
     },
     {
       "path": "./core/interactions.js",
-      "revision": "f6377cf11c610efc21363e482d6369da7f93fc8734b564ac5af5899670a6bcfc"
+      "revision": "d5330bad85081bb49771473b09c30cf79b462ead0ed12e55b8efa99cb444a37e"
     },
     {
       "path": "./core/level-progress.js",

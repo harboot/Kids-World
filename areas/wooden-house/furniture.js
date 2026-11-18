@@ -99,8 +99,9 @@ export function buildFurniture(THREE, scene, builder) {
     const messyQuilt = [-0.33, 0.775, 0.48, -0.265];
     const tidyQuilt = [0, 0.745, 0.347];
     return {
-      id: 'bed', label: 'Make bed', x: -3.86, z: -2.86, anchorY: 0.85, radius: 1.65, duration: 0.75,
-      reachable: p => p.x >= -3.38 || p.z >= -1.83,
+      id: 'bed', label: 'Make bed', x, z, anchorY: 0.85, duration: 0.75,
+      viewingZone: { x: -2.24, z: -3.28, width: 1.12, depth: 1.28 },
+      clearance: { x: -4.35, z: -3.45, width: 2.7, depth: 2.83 },
       render(t) {
         pillows.forEach((pillow, i) => move(pillow, messyPillows[i], tidyPillows[i], t, 0.13));
         move(blanket, messyQuilt, tidyQuilt, t, 0.1);
@@ -204,8 +205,9 @@ export function buildFurniture(THREE, scene, builder) {
       part(kitchenware, 0xdaf4f1, 0, 1, 0, 0.08, 0.08, 0.08, 'ball', false));
 
     return {
-      id: 'dishes', label: 'Wash dishes', x, z: z + 0.54, anchorY: 1.12, radius: 1.6, duration: 1.2,
-      reachable: p => p.z > -3.93 && Math.abs(p.x - x) < 1.45,
+      id: 'dishes', label: 'Wash dishes', x: x + 0.15, z: z + 0.2, anchorY: 1.12, duration: 1.2,
+      viewingZone: { x: 2.25, z: -2.46, width: 1.34, depth: 1.02 },
+      clearance: { x: 2.2, z: -4.24, width: 2.88, depth: 1.98 },
       render(t, moving) {
         for (const [i, dish] of dishes.entries()) {
           const stage = clamp((t - 0.19 - i * 0.071) / 0.49);
@@ -244,7 +246,9 @@ export function buildFurniture(THREE, scene, builder) {
     part(frame, 0x618773, 0, -0.3, 0.139, 1.15, 0.168, 0.019, 'box', false);
     part(frame, 0xbad7c4, 0.135, -0.295, 0.159, 0.45, 0.027, 0.016).rotation.z = 0.06;
     return {
-      id: 'painting', label: 'Straighten painting', x: x + 0.08, z, anchorY: 1.84, radius: 1.43, duration: 0.52,
+      id: 'painting', label: 'Straighten painting', x: x + 0.08, z, anchorY: 1.84, duration: 0.52,
+      viewingZone: { x: -4.1, z: -0.89, width: 1.32, depth: 1.04 },
+      clearance: { x: -5.61, z: -0.89, width: 1.38, depth: 1.38 },
       render(t) { frame.rotation.z = 0.27 * (1 - smooth(t)); },
     };
   }
@@ -303,7 +307,7 @@ export function buildFurniture(THREE, scene, builder) {
     solid(-2.07, 1.65, 1.13, 2.32, FURNITURE_HEIGHT);
 
     const tableX = -3.49;
-    const tableZ = 2.02;
+    const tableZ = 2.32;
     const table = group('Coffee table', tableX, 0, tableZ);
     legs(table, 0.28, 0.53, 0.43, honey);
     part(table, oak, 0, 0.504, 0, 0.83, 0.13, 1.43);
@@ -322,8 +326,9 @@ export function buildFurniture(THREE, scene, builder) {
 
     let time = 0;
     return {
-      id: 'tv', label: 'Turn off TV', x: x + 0.38, z, anchorY: 1.2, radius: 1.5, duration: 0.52,
-      reachable: p => p.x > -5.23,
+      id: 'tv', label: 'Turn off TV', x: x + 0.12, z, anchorY: 1.2, duration: 0.52,
+      viewingZone: { x: -3.56, z: 0.81, width: 1.13, depth: 0.86 },
+      clearance: { x: -5.57, z: 1.49, width: 1.66, depth: 2.36 },
       render(t) {
         darkPanel.material.opacity = smooth(t);
         darkPanel.visible = t > 0;
@@ -369,7 +374,7 @@ export function buildFurniture(THREE, scene, builder) {
     part(lid, walnut, 0, 0.005, -0.881, 0.328, 0.061, 0.075);
 
     const scattered = [
-      [2.86, 0.129, 1.29, -0.36, blue], [3.35, 0.135, 2.81, -0.27, rose],
+      [2.86, 0.129, 1.7, -0.36, blue], [3.35, 0.135, 2.81, -0.27, rose],
       [4.41, 0.128, 1.63, 0.28, gold], [2.55, 0.126, 2.37, 0.53, sage],
     ];
     const toys = scattered.map(([tx, ty, tz, angle, tint], i) => {
@@ -403,11 +408,13 @@ export function buildFurniture(THREE, scene, builder) {
         part(car, ink, side * 0.151, 0.077, end * 0.128, 0.147, 0.065, 0.147, 'round').rotation.x = Math.PI / 2;
       }
     }
-    toys.push({ toy: car, from: [3.71, 0, 1.37, -0.81] });
+    toys.push({ toy: car, from: [3.71, 0, 1.59, -0.81] });
 
     const destinations = toys.map((_, i) => [x + (i % 3 - 1) * 0.28, i === 4 ? 0.15 : 0.26, z + (i < 3 ? -0.18 : 0.14), 0]);
     return {
-      id: 'toys', label: 'Put away toys', x: 3.81, z: 2.42, anchorY: 0.42, radius: 1.71, duration: 1.03,
+      id: 'toys', label: 'Put away toys', x: 3.81, z: 2.42, anchorY: 0.61, duration: 1.03,
+      viewingZone: { x: 0.84, z: 2.22, width: 1.18, depth: 1.62 },
+      clearance: { x: 3.83, z: 2.18, width: 3.88, depth: 3.21, mark: false },
       render(t) {
         toys.forEach(({ toy, from }, i) => {
           const p = clamp((t - i * 0.064) / 0.49);

@@ -16,11 +16,13 @@ Returning to Flower Garden or using **Restart area** starts a fresh visit. The b
 
 Walk onto the Flower Garden cabin porch and use **Enter Wooden House** at the front door. The house is open from your first visit to the garden. In its one large room, **Make bed**, **Wash dishes**, **Straighten painting**, **Turn off TV**, and **Put away toys** in any order. Press **M** or tap the nearby interaction button. The hint tracks each completed task, and finishing all five saves the level and celebrates with stars.
 
+Stand over the footprints and look toward the object to see its prompt. Each marked space gives you room to watch the animation. After cleaning, the mark disappears and you can walk closer.
+
 Use **Return to Flower Garden** at the inside door to reappear by the cabin steps. Every visit starts with a messy house, including **Restart area** and replaying through **Choose level**. Saved completion stays available. Wooden House also works offline after downloading the current release, including from `index.html?area=wooden-house`.
 
 ## Snow Basin
 
-Pick up the axe by the frozen pond. Approach the marked side of the tall pine and use **Chop tree** five times. After the pine lands, five snowmen appear in different spots within the basin. Use **Make snowball** at a snow pile, aim, and throw. Each snowman breaks into snow on the first hit. You can return to any pile for another snowball.
+Pick up the axe by the frozen pond. Stand on the footprints, look toward the tall pine, and use **Chop tree** five times. The ring around the pine keeps the space near it clear until the fall ends. After the pine lands, five snowmen appear in different spots within the basin. Use **Make snowball** at a snow pile, aim, and throw. Each snowman breaks into snow on the first hit. You can return to any pile for another snowball.
 
 The original ice door returns to Flower Garden. Clearing all five snowmen reveals the **Frozen Castle** entrance, which displays a coming-soon message.
 
