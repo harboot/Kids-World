@@ -1,3 +1,4 @@
+import { addIceDoor } from '../ice-door.js';
 import { addCabin } from './garden-cabin.js';
 import { addOrchard } from './garden-orchard.js';
 import { addPond, blocksPondTravel, bridgeDeckHeight } from './garden-pond.js';
@@ -180,16 +181,22 @@ function createAnimals(THREE, scene, playerRadius) {
 }
 
 
-export const gardenLevel = {
+export const flowerGarden = {
+  title: 'Flower Garden',
+  heading: ['Flower', 'Garden'],
+  description: 'Take the hill trail, cross the fish pond, or bring apples to the cabin.',
+  loadingMessage: 'Loading the garden…',
+  canvasLabel: '3D flower garden',
+  themeColor: '#e9eedc',
+  music: 'garden',
   width: 45,
   depth: 48,
   spawn: { x: 0, z: 9 },
-  passage: { x: 17.8, z: -23.35, href: './snow.html', label: 'Enter Snow Basin' },
-  build: buildGarden,
+  load: loadGarden,
 };
 
-function buildGarden(THREE, scene, touch, playerRadius, camera) {
-  const { width, depth } = gardenLevel;
+function loadGarden({ THREE, scene, viewmodel, touch, playerRadius }) {
+  const { width, depth } = flowerGarden;
   const obstacles = [];
   const gates = [];
   const terrain = createTerrain(width, depth);
@@ -442,10 +449,13 @@ function buildGarden(THREE, scene, touch, playerRadius, camera) {
   const animals = createAnimals(THREE, scene, playerRadius);
   const cabin = addCabin(THREE, { scene, mesh, box, matte, obstacles, collision });
   const orchard = addOrchard(THREE, {
-    scene, camera, mesh, box, facet, matte, obstacles, collision, getTerrainHeight, table: cabin.table,
+    scene, viewmodel, mesh, box, facet, matte, obstacles, collision, getTerrainHeight, table: cabin.table,
   });
   const pond = addPond(THREE, { scene, mesh, box, facet, matte, obstacles, instances, getTerrainHeight, playerRadius });
   addGlacier(THREE, { mesh, facet, matte });
+  const passage = addIceDoor(THREE, scene, obstacles, {
+    x: 17.8, z: -23.35, destination: 'snow', label: 'Enter Snow Basin',
+  });
   return {
     obstacles,
     getGroundHeight(x, z) {
@@ -453,7 +463,7 @@ function buildGarden(THREE, scene, touch, playerRadius, camera) {
     },
     blocksGround: blocksPondTravel,
     animals,
-    interactions: [...gates.map(gate => gate.door), ...animals.interactions, ...orchard.interactions, cabin.bench],
+    interactions: [...gates.map(gate => gate.door), ...animals.interactions, ...orchard.interactions, cabin.bench, passage],
     update(dt, player) {
       animals.update(dt, player);
       orchard.update(dt);

@@ -97,7 +97,7 @@ export function addCabin(THREE, { scene, mesh, box, matte, obstacles, collision 
       x: benchX, z: porchZ, radius: 1.58, anchorY: deck + 0.96, label: 'Sit on bench',
       reachable: onPorch,
       act({ sit }) {
-        sit({ x: benchX, y: deck + 1.31, z: porchZ + 0.04, yaw: Math.PI });
+        sit({ x: benchX, y: deck + 1.31, z: porchZ + 0.04, yaw: Math.PI }, 'Stand up');
       },
     },
   };

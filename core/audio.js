@@ -39,14 +39,16 @@ function tone(context, destination, at, pitch, { endPitch = pitch, duration, lev
   oscillator.stop(at + duration);
 }
 
-function renderLoop(OfflineContext, isSnow) {
-  const { beat, bars } = isSnow ? snow : garden;
+const scores = { garden, snow };
+
+function renderLoop(OfflineContext, area) {
+  const { beat, bars } = scores[area];
   const sampleRate = 24000;
   const context = new OfflineContext(1, Math.round(4 * beat * bars.length * sampleRate), sampleRate);
   const output = context.destination;
   bars.forEach(({ chord, melody }, bar) => {
     const start = bar * 4 * beat;
-    if (isSnow) {
+    if (area === 'snow') {
       chord.forEach((pitch, i) => {
         tone(context, output, start + i * 0.055, pitch, { duration: 3.8 * beat, attack: 0.28, level: 0.055 });
       });
@@ -71,7 +73,7 @@ function renderLoop(OfflineContext, isSnow) {
   return context.startRendering();
 }
 
-export function createAudio(area, button) {
+export function createAudio(button) {
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   const OfflineContext = window.OfflineAudioContext || window.webkitOfflineAudioContext;
   let muted = false;
@@ -83,7 +85,8 @@ export function createAudio(area, button) {
 
   let context;
   let master;
-  let buffer;
+  const buffers = new Map();
+  let area;
   let track;
   let playing = false;
 
@@ -107,21 +110,27 @@ export function createAudio(area, button) {
     }
   }
 
+  function stopMusic() {
+    if (!track) return;
+    const now = context.currentTime;
+    track.gain.gain.setTargetAtTime(minVolume, now, 0.01);
+    track.source.stop(now + 0.06);
+    track = null;
+  }
+
   function syncMusic() {
-    if (!playing || muted || !context || !master || !OfflineContext) {
-      if (track) {
-        const now = context.currentTime;
-        track.gain.gain.setTargetAtTime(minVolume, now, 0.01);
-        track.source.stop(now + 0.06);
-        track = null;
-      }
+    if (!playing || muted || !context || !master || !OfflineContext || !Object.hasOwn(scores, area)) {
+      stopMusic();
       return;
     }
     if (track) return;
 
-    buffer ??= Promise.resolve().then(() => renderLoop(OfflineContext, area === 'snow')).catch(() => null);
-    buffer.then(audioBuffer => {
-      if (!audioBuffer || !playing || muted || track) return;
+    const requestedArea = area;
+    if (!buffers.has(requestedArea)) {
+      buffers.set(requestedArea, Promise.resolve().then(() => renderLoop(OfflineContext, requestedArea)).catch(() => null));
+    }
+    buffers.get(requestedArea).then(audioBuffer => {
+      if (!audioBuffer || !playing || muted || track || area !== requestedArea) return;
       const gain = context.createGain();
       const source = context.createBufferSource();
       gain.gain.value = 0.55;
@@ -139,6 +148,13 @@ export function createAudio(area, button) {
 
   function setPlaying(active) {
     playing = active;
+    syncMusic();
+  }
+
+  function setArea(next) {
+    if (area === next) return;
+    stopMusic();
+    area = next;
     syncMusic();
   }
 
@@ -171,5 +187,5 @@ export function createAudio(area, button) {
     });
   }
 
-  return { unlock, setPlaying, effect };
+  return { unlock, setArea, setPlaying, effect };
 }

@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { nextBasketState } from '../garden-orchard.js';
-import { BRIDGE, blocksPondTravel, bridgeDeckHeight, fishPose } from '../garden-pond.js';
-import { createTerrain, HILL, POND, pondDistance } from '../garden-terrain.js';
-import { advanceFall, floorHeight, overlaps, PLAYER_RADIUS, walkElevation } from '../movement.js';
+import { nextBasketState } from '../areas/flower-garden/garden-orchard.js';
+import { BRIDGE, blocksPondTravel, bridgeDeckHeight, fishPose } from '../areas/flower-garden/garden-pond.js';
+import { createTerrain, HILL, POND, pondDistance } from '../areas/flower-garden/garden-terrain.js';
+import { advanceFall, floorHeight, overlaps, PLAYER_RADIUS, walkElevation } from '../core/movement.js';
 
 const terrain = createTerrain(45, 48);
 const { getTerrainHeight } = terrain;
