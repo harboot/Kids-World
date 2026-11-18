@@ -2,7 +2,7 @@ export const snowLevel = {
   width: 18,
   depth: 20,
   spawn: { x: 0, z: 6 },
-  portal: { x: 0, z: -9.48, href: './index.html', destination: 'Dustline' },
+  passage: { x: 0, z: -9.48, href: './index.html', label: 'Return to Flower Garden' },
   build: buildSnowArena,
 };
 

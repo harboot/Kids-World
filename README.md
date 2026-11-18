@@ -1,15 +1,13 @@
-# Dustline
+# Kids World
 
-Dustline is a browser-based 3D target range built with HTML, CSS, JavaScript, and Three.js. Clear each group of targets and hit 10 to record your completion time. A cow and two chickens wander around the arena and block your path.
+Kids World is a first-person exploration game made with HTML, CSS, JavaScript, and Three.js. In Flower Garden, open the wooden pen gates to visit the cows and chickens. The animals stay inside their pens even when the gates are open. The teal door at the end of the path loads Snow Basin, an 18 × 20 area with a frozen pond and a door back to the garden.
 
-The blue gate near the far wall leads to Snow Basin, an 18 × 20 arena for free exploration. Approach a gate and press **E**, or tap the gate prompt on a touch device. The gate in Snow Basin returns to Dustline. Each gate loads a fresh page.
-
-| Input | Move | Aim | Fire | Jump |
+| Input | Move | Look | Jump | Interact |
 | --- | --- | --- | --- | --- |
-| Desktop | W, A, S, D | Mouse or arrow keys | Left click or Space | — |
-| Touch | Up, left, and right on the D-pad | Drag on the right side | Tap the arena | Down on the D-pad |
+| Desktop | W, A, S, D | Mouse or arrow keys | Space | M near an object |
+| Touch | Left joystick | Drag the right side | Tap the scene | Tap the circle near an object |
 
-Desktop play uses Pointer Lock. Press Esc to pause and release the cursor. Touch play works best in landscape. The timer counts active play time and pauses with the game.
+Desktop mouse look uses Pointer Lock. Press Esc to pause and release the cursor.
 
 ## Run locally
 
@@ -17,4 +15,4 @@ Run `python3 -m http.server 8000` from the project directory, then open `http://
 
 ## GitHub Pages
 
-In the repository's **Settings → Pages**, deploy from the `main` branch and the `/ (root)` folder. GitHub Pages serves the static files directly.
+In **Settings → Pages**, deploy from the `main` branch and the `/ (root)` folder. Both areas use relative links and load as separate static pages.

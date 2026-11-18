@@ -3,72 +3,58 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#181d1c">
-  <title>Dustline — 3D Target Range</title>
+  <meta name="theme-color" content="#e9eedc">
+  <title>Kids World — Flower Garden</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="./style.css">
   <script type="module" src="./game.js"></script>
 </head>
 <body>
-  <main id="game" data-state="loading" data-input="mouse">
-    <canvas id="view" aria-label="3D target range"></canvas>
+  <main id="game" data-level="garden" data-state="loading" data-input="mouse">
+    <canvas id="view" aria-label="3D flower garden"></canvas>
 
     <header class="hud">
       <div class="wordmark">
-        <span class="range-mark" aria-hidden="true"></span>
-        <span>DUSTLINE <small>TARGET RANGE</small></span>
+        <span class="world-mark" aria-hidden="true"></span>
+        <span>Kids World <small>Flower Garden</small></span>
       </div>
-      <div class="hud-right">
-        <div class="score">
-          <span>SCORE</span>
-          <output id="score" aria-label="Score out of 10" aria-live="polite">0 / 10</output>
-        </div>
-        <button id="restart" class="hud-button" type="button" disabled>
-          <span aria-hidden="true" class="reset-mark">↻</span><span>RESTART</span>
-        </button>
-        <button id="fullscreen" class="hud-button fullscreen-button" type="button"
-                aria-label="Fullscreen" title="Fullscreen" hidden>
-          <span class="fullscreen-mark" aria-hidden="true"></span>
-        </button>
+      <div class="hud-actions">
+        <button id="restart" class="hud-button" type="button" aria-label="Restart area" title="Restart area" disabled>↻</button>
+        <button id="fullscreen" class="hud-button" type="button" aria-label="Fullscreen" title="Fullscreen" hidden>⛶</button>
       </div>
     </header>
 
-    <div class="crosshair" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b></div>
-    <div class="damage-frame" aria-hidden="true"></div>
-    <button id="travel" type="button" class="travel-button" hidden></button>
+    <button id="interaction" class="interaction" type="button" hidden>
+      <span id="interaction-glyph" class="interaction-circle" aria-hidden="true"></span>
+      <span id="interaction-label" class="interaction-label"></span>
+    </button>
 
     <section id="menu" class="menu" aria-labelledby="menu-title">
       <div class="menu-content">
-        <p class="eyebrow">3D TARGET RANGE</p>
-        <h1 id="menu-title"><span class="title-brand">DUST<span>LINE</span></span><span class="title-complete">RANGE COMPLETE</span></h1>
-        <p id="menu-message" class="menu-message">Hit 10 targets as fast as you can, or take the blue gate to Snow Basin.</p>
+        <h1 id="menu-title">Flower <span>Garden</span></h1>
+        <p id="menu-message" class="menu-message">Follow the garden paths, visit the cows and chickens, or take the teal door to Snow Basin.</p>
         <button id="start" class="start-button" type="button" disabled>
-          <span id="start-label">START GAME</span><span class="play-mark" aria-hidden="true"></span>
+          <span id="start-label">Explore</span><span aria-hidden="true">→</span>
         </button>
-        <p id="notice" class="notice" role="status">Loading the arena…</p>
+        <p id="notice" class="notice" role="status">Loading the garden…</p>
         <div class="guide desktop-guide" aria-label="Desktop controls">
-          <div><span class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><span>Move</span></div>
-          <div><span class="keys"><kbd>Mouse</kbd><kbd>← ↑ ↓ →</kbd></span><span>Aim</span></div>
-          <div><span class="keys"><kbd>Click</kbd><kbd>Space</kbd></span><span>Fire</span></div>
-          <div><span class="keys"><kbd>E</kbd></span><span>Enter gate</span></div>
-          <div><span class="keys"><kbd>Esc</kbd></span><span>Pause</span></div>
+          <div><kbd>W A S D</kbd><span>Move</span></div>
+          <div><kbd>Mouse</kbd><span>Look</span></div>
+          <div><kbd>Space</kbd><span>Jump</span></div>
+          <div><kbd>M</kbd><span>Interact</span></div>
+          <div><kbd>Esc</kbd><span>Pause</span></div>
         </div>
         <div class="guide touch-guide" aria-label="Touch controls">
-          <div><span class="keys"><kbd>↑</kbd><kbd>←</kbd><kbd>→</kbd></span><span>Move</span></div>
-          <div><span class="keys"><kbd>↓</kbd></span><span>Jump</span></div>
-          <div><span>Drag right side to aim · Tap arena to fire</span></div>
+          <div><kbd>Left stick</kbd><span>Move</span></div>
+          <div><kbd>Drag right side</kbd><span>Look</span></div>
+          <div><kbd>Tap scene</kbd><span>Jump</span></div>
+          <div><kbd>Tap circle</kbd><span>Interact</span></div>
         </div>
-        <p class="orientation">Rotate to landscape for a wider view.</p>
       </div>
     </section>
 
-    <div class="dpad" role="group" aria-label="Movement and jump controls">
-      <button type="button" data-action="forward" aria-label="Move forward"><span class="arrow"></span></button>
-      <button type="button" data-action="left" aria-label="Move left"><span class="arrow"></span></button>
-      <button type="button" data-action="right" aria-label="Move right"><span class="arrow"></span></button>
-      <button type="button" data-action="jump" aria-label="Jump">
-        <span class="arrow"></span><span class="pad-label">JUMP</span>
-      </button>
+    <div id="joystick" class="joystick" role="group" aria-label="Movement joystick">
+      <span id="joystick-thumb" class="joystick-thumb" aria-hidden="true"></span>
     </div>
   </main>
 </body>
