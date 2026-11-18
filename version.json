@@ -1,5 +1,5 @@
 {
-  "version": "e3aae52f8a8cfbd2a9ed3284e71c98b4e48be3e4360d450ff9edb3b48fc59708",
+  "version": "fedbf6089aff9e1d2f57586702a3efe5f45eca28c8d6f36671fd531c289c5239",
   "files": [
     {
       "path": "./areas/flower-garden/garden-cabin.js",
@@ -83,11 +83,11 @@
     },
     {
       "path": "./pwa/bootstrap.js",
-      "revision": "6704cc837c5051b49d4fa4215640d56f7f9c9d5f896ad97444831ebc317361d6"
+      "revision": "e9482a22de3814ee92aca4f2bf3cbeeffdac2ff6dd5bc20e3e96ae66ba5b76e8"
     },
     {
       "path": "./pwa/cache.js",
-      "revision": "15ac0dfcb8bf4bb1da0366ca7106863922b640dcaa16ad370da511fd8183dc39"
+      "revision": "802e811c898c61f83258a30f5fc5f6930036d113425a197473bad004253f526c"
     },
     {
       "path": "./pwa/loading.css",
@@ -95,11 +95,11 @@
     },
     {
       "path": "./pwa/release.js",
-      "revision": "d9244a418a23ea5718044f3823f985c17be94618ef315bf2b8655e80fad5c770"
+      "revision": "0b677e54b2021a29d4cc1a73a00ec0969adf5ea16c6426215afd732346abf093"
     },
     {
       "path": "./pwa/worker.js",
-      "revision": "c0c912257a345424d982669f8614e853a48b3c1f5f36873dd9b68ed5ba47b3cb"
+      "revision": "54a0b2ca990f6d284ef0e5f092777ba979777b3a212898bfef3be87194d977c7"
     },
     {
       "path": "./snow.html",

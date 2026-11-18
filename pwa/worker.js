@@ -1,5 +1,5 @@
 import { createReleaseCache } from './cache.js';
-import { assetBase, releaseRoute, releaseTag, validateManifest } from './release.js';
+import { assetBase, releaseRoute, releaseTag, validateManifest, withTimeout } from './release.js';
 
 const scope = new URL(self.registration.scope);
 const releases = createReleaseCache({ scope });
@@ -7,17 +7,19 @@ const publicAssets = new Set([
   'manifest.webmanifest', 'assets/icons/icon-192.png', 'assets/icons/icon-512.png',
 ]);
 const shellAssets = ['./pwa/loading.css', './pwa/bootstrap.js', './style.css'];
+const storageErrors = new Set(['QuotaExceededError', 'SecurityError', 'NotAllowedError']);
 let checking;
 let pruning;
 let progress;
 const subscribers = new Set();
+const readyReleases = () => withTimeout(releases.ready(), 5000, 'Kids World cache access timed out');
 
 function prepareResult(release, status) {
   return { tag: release?.tag, version: release?.version, status };
 }
 
 async function prepare({ offline, preferred, cachedOnly }, report) {
-  const available = await releases.ready();
+  const available = await readyReleases();
   const previous = available.find(release => release.tag === preferred) ?? available[0];
   if (offline || cachedOnly) return prepareResult(previous, offline ? 'offline' : 'ready');
 
@@ -47,7 +49,7 @@ async function prepare({ offline, preferred, cachedOnly }, report) {
     return prepareResult(release, 'ready');
   } catch (error) {
     console.warn('Kids World release download failed.', error);
-    return prepareResult(previous, 'fallback');
+    return prepareResult(previous, !previous && storageErrors.has(error?.name) ? 'storage' : 'fallback');
   }
 }
 
@@ -55,7 +57,7 @@ function sharePreparation(options, port) {
   if (options.cachedOnly || options.offline) return prepare(options, () => {});
   subscribers.add(port);
   if (progress) port.postMessage(progress);
-  checking ??= Promise.resolve(pruning).then(() => prepare(options, status => {
+  checking ??= Promise.resolve(pruning).catch(() => {}).then(() => prepare(options, status => {
     progress = status;
     for (const subscriber of subscribers) subscriber.postMessage(status);
   })).finally(() => {
@@ -67,9 +69,12 @@ function sharePreparation(options, port) {
 }
 
 async function prune(source, tag) {
-  const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-  const local = windows.filter(client => client.url.startsWith(scope.href));
-  if (local.length === 1 && local[0].id === source?.id) await releases.prune([tag]);
+  async function soleWindow() {
+    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const local = windows.filter(client => client.url.startsWith(scope.href));
+    return local.length === 1 && local[0].id === source?.id;
+  }
+  if (await soleWindow()) await releases.prune([tag], soleWindow);
 }
 
 self.addEventListener('message', event => {
@@ -114,45 +119,72 @@ async function releasedAsset(relative) {
   });
 }
 
-function offlinePage() {
+function retryPage(message) {
   return new Response(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width">
     <title>Kids World</title><body style="font:1.1rem system-ui;background:#e9eedc;color:#253e29;padding:2rem">
-    <h1>Kids World</h1><p>Connect to the internet to download your adventure.</p>
+    <h1>Kids World</h1><p>${message}</p>
     <button style="padding:.7em 1em;font:inherit" onclick="location.reload()">Try again</button></body>`,
   { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
 }
 
-async function navigate(request, url, relative) {
-  const available = await releases.ready().catch(error => {
-    console.warn('Kids World cache could not be opened.', error);
-    return [];
-  });
+async function cachedDocument(url, relative) {
+  await pruning?.catch(() => {});
+  const available = await readyReleases();
   const requested = url.searchParams.get('__kw_release');
-  const release = available.find(item => item.tag === requested) ?? available[0];
-  if (release) {
-    const document = relative === 'snow.html' ? 'snow.html' : 'index.html';
-    const cached = await releases.read(release.tag, new URL(document, scope));
-    if (cached && document === 'snow.html') return cached;
-    if (cached) {
+  const selected = available.findIndex(release => release.tag === requested);
+  if (selected > 0) available.unshift(...available.splice(selected, 1));
+  const document = relative === 'snow.html' ? 'snow.html' : 'index.html';
+  for (const release of available) {
+    try {
+      const cached = await releases.read(release.tag, new URL(document, scope));
+      if (!cached) continue;
+      if (document === 'snow.html') return cached;
       let html = await cached.text();
       const base = assetBase(scope, release.tag);
       for (const file of shellAssets) {
         html = html.replace(`="${file}"`, `="${new URL(file, base).pathname}"`);
       }
       return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    } catch (error) {
+      console.warn('Kids World cached page could not be opened.', error);
     }
   }
+}
 
+function fetchFromNetwork(request) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10000);
+  return fetch(request, { signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
+async function navigate(request, url, relative) {
   try {
-    return await fetch(request);
+    const cached = await withTimeout(cachedDocument(url, relative), 6000, 'Kids World cached page timed out');
+    if (cached) return cached;
+  } catch (error) {
+    console.warn('Kids World cache could not be opened.', error);
+  }
+  try {
+    const response = await fetchFromNetwork(request);
+    if (response.ok) return response;
+    console.warn(`Kids World page returned HTTP ${response.status}.`);
+    return retryPage('Your adventure could not open. Try again!');
   } catch {
-    return offlinePage();
+    return retryPage('Connect to the internet to download your adventure.');
   }
 }
 
 async function publicAsset(request, url) {
-  const [release] = await releases.ready().catch(() => []);
-  return (release && await releases.read(release.tag, url)) ?? fetch(request);
+  try {
+    const [release] = await readyReleases();
+    if (release) {
+      const cached = await withTimeout(releases.read(release.tag, url), 5000, 'Kids World icon cache timed out');
+      if (cached) return cached;
+    }
+  } catch (error) {
+    console.info('Kids World cached install asset unavailable.', error);
+  }
+  return fetchFromNetwork(request);
 }
 
 self.addEventListener('fetch', event => {
