@@ -29,6 +29,16 @@ const woodenHouse = {
   ],
 };
 
+const frozenCastle = {
+  beat: 0.73,
+  bars: [
+    { chord: [47, 54, 58, 61], melody: [[0.25, 78], [1.4, 85], [2.65, 82]] },
+    { chord: [44, 51, 59, 66], melody: [[0.5, 80], [2, 83], [2.8, 90]] },
+    { chord: [42, 49, 58, 63], melody: [[0.2, 87], [1.75, 82], [2.72, 85]] },
+    { chord: [49, 56, 61, 68], melody: [[0.65, 80], [1.8, 76], [2.7, 78]] },
+  ],
+};
+
 const muteKey = 'kids-world-muted';
 const minVolume = 0.0001;
 const frequency = pitch => 440 * 2 ** ((pitch - 69) / 12);
@@ -49,7 +59,7 @@ function tone(context, destination, at, pitch, { endPitch = pitch, duration, lev
   oscillator.stop(at + duration);
 }
 
-const scores = { garden, snow, 'wooden-house': woodenHouse };
+const scores = { garden, snow, 'wooden-house': woodenHouse, 'frozen-castle': frozenCastle };
 const jumpCue = [[60, { endPitch: 77, duration: 0.17, level: 0.22, wave: 'triangle' }]];
 const interactCue = [
   [53, { endPitch: 46, duration: 0.065, level: 0.24, attack: 0.004, wave: 'triangle' }],
@@ -63,14 +73,15 @@ function renderLoop(OfflineContext, area) {
   const output = context.destination;
   bars.forEach(({ chord, melody }, bar) => {
     const start = bar * 4 * beat;
-    if (area === 'snow') {
+    if (area === 'snow' || area === 'frozen-castle') {
+      const castle = area === 'frozen-castle';
       chord.forEach((pitch, i) => {
-        tone(context, output, start + i * 0.055, pitch, { duration: 3.8 * beat, attack: 0.28, level: 0.055 });
+        tone(context, output, start + i * 0.055, pitch, { duration: 3.8 * beat, attack: 0.28, level: castle ? 0.046 : 0.055 });
       });
       melody.forEach(([offset, pitch]) => {
         const at = start + offset * beat;
-        tone(context, output, at, pitch, { duration: 0.82 * beat, level: 0.15 });
-        tone(context, output, at + 0.12, pitch + 12, { duration: 0.57 * beat, level: 0.025 });
+        tone(context, output, at, pitch, { duration: (castle ? 1.12 : 0.82) * beat, level: castle ? 0.12 : 0.15 });
+        tone(context, output, at + 0.12, pitch + 12, { duration: 0.57 * beat, level: castle ? 0.035 : 0.025 });
       });
     } else if (area === 'wooden-house') {
       chord.forEach((pitch, i) => {

@@ -33,11 +33,21 @@ Complete all three missions to finish Snow Basin. You can start with the snowmen
 
 - **Destroy three snowmen.** They appear in different locations each visit. Use **Make snowball** at any snow pile, then aim and throw. Each snowman breaks on the first hit.
 - **Chop the pine.** Pick up the axe and look toward the pine from the pond side. Leave enough space to see the tree, use **Chop tree** five times, and wait for it to finish falling.
-- **Collect the Frozen Key.** Look on the snow near the fallen tree. Picking up the key opens the **Frozen Castle** entrance, which displays a coming-soon message.
+- **Collect the Frozen Key.** Look on the snow near the fallen tree.
 
-The original ice door returns to Flower Garden.
+Complete all three missions to unlock **Enter Frozen Castle** at the end of the basin opposite the original ice door. The original ice door returns to Flower Garden.
 
-Use **Choose level** in the top-right corner to replay a completed level. Activities start fresh when revisiting a level or using **Restart area**. If you completed Flower Garden or Snow Basin in an earlier release, its unlocked door is still available.
+## Frozen Castle
+
+Follow the ice mosaic into the grand hall. The staircase leads to the Ice Throne, and the balcony overlooks snowy peaks. Complete the three magical missions in any order.
+
+- **Awaken the ice crystals.** Use **Activate crystal** at the entrance, near the fountain, and by the staircase. All three illuminate the chandelier.
+- **Build the ice bridge.** Use **Create ice bridge** three times at the pedestal on the near bank. Sections become walkable as they finish forming. You can walk around the channel to reach the rest of the palace.
+- **Play the crystal melody.** Use **Play crystal** on the blue, pink, and purple crystals in the music corner. Each color counts once. Playing all three starts a short melody and lights the ceiling aurora.
+
+After the three missions, the golden gateway on the far side offers **Enter Snowglow Village**. It displays **Snowglow Village — Coming Soon** while the village is in development. Use **Return to Snow Basin** at the grand entrance to reappear outside the castle door.
+
+Use **Choose level** to replay any completed level. Revisiting an area or selecting **Restart area** resets its current missions. Saved unlocks stay available, including the Frozen Castle entrance and the Snowglow Village gateway.
 
 | Input | Move | Look | Jump | Interact | Throw in Snow Basin |
 | --- | --- | --- | --- | --- | --- |
@@ -60,6 +70,8 @@ Run `node --test` with Node.js 22.7 or later. It checks movement and collision, 
 
 `areas/snow-basin.js` composes the area and owns its controls and progress display. `areas/snow-basin/scenery.js` builds the landscape, `props.js` builds the winter activity models, and `activity.js` handles the chop sequence, snowman placement, and swept projectile collision. An area can use the shared `camera`, `hud`, `isPlaying()`, and `playCue(notes)` capabilities during its visit. It can set `silent: true` on an interaction that plays its own cue.
 
+`areas/frozen-castle/index.js` connects the castle lifecycle, mission HUD, and doors. `palace.js` builds and batches the architecture and defines its walkable elevation. `decorations.js` builds the throne, fountain, chandelier, aurora, and gateway. `activities.js` handles the crystals, bridge, and melody.
+
 Area travel replaces the scene and opens the destination's **Explore** menu in the same page. The URL records the area for browser Back and Forward. Opening the site without an area in the URL uses the last visited area. Existing links to `snow.html` and `index.html?arrive=garden` still resolve to their respective areas.
 
 ### Add an area
@@ -71,9 +83,9 @@ Area travel replaces the scene and opens the destination's **Explore** menu in t
 
 ## Installation and offline play
 
-Open Kids World online once and wait for **Play**. The progress bar counts files after they have been verified and stored. Use the browser's install or **Add to Home Screen** command to open Kids World as a standalone app. After the complete download, all three areas work offline, including area travel, audio, the saved area, and mute.
+Open Kids World online once and wait for **Play**. The progress bar counts files after they have been verified and stored. Use the browser's install or **Add to Home Screen** command to open Kids World as a standalone app. After the complete download, all four areas work offline, including area travel, audio, the saved area, and mute.
 
-To test offline locally, finish the first download, enable **Offline** in the browser's Network panel, and reload. Try `index.html?area=snow` directly and use both ice doors. To test failure on a first download, use a fresh browser profile, interrupt the download, and look for **Try again**. To test updates, serve a second generated release from the same address and open a fresh tab. An existing game can keep running. When returning to it after five minutes, the game checks again and offers a reload if a newer release is ready.
+To test offline locally, finish the first download, enable **Offline** in the browser's Network panel, and reload. Try `index.html?area=frozen-castle` directly and use **Return to Snow Basin**. To test failure on a first download, use a fresh browser profile, interrupt the download, and look for **Try again**. To test updates, serve a second generated release from the same address and open a fresh tab. An existing game can keep running. When returning to it after five minutes, the game checks again and offers a reload if a newer release is ready.
 
 ### Physical-device checklist
 
