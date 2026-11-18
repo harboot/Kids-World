@@ -8,10 +8,18 @@ const menuMessage = document.querySelector('#menu-message');
 const notice = document.querySelector('#notice');
 const scoreOutput = document.querySelector('#score');
 const crosshair = document.querySelector('.crosshair');
+const travel = document.querySelector('#travel');
 const padButtons = [...document.querySelectorAll('.dpad button')];
 
 const RANGE = { width: 45, depth: 48, eye: 1.68, radius: 0.34 };
 const SPAWN = { x: 0, z: 10 };
+const desertLevel = {
+  width: RANGE.width,
+  depth: RANGE.depth,
+  spawn: SPAWN,
+  build: buildArena,
+  portal: { x: 5.8, z: -23.55, href: './snow.html', destination: 'Snow Basin' },
+};
 const GOAL = 10;
 const WAVE_SIZE = 3;
 const FIRE_INTERVAL = 0.2;
@@ -52,7 +60,17 @@ async function boot() {
     return;
   }
 
-  playRange(THREE, renderer);
+  let level = desertLevel;
+  if (game.dataset.level === 'snow') {
+    try {
+      ({ snowLevel: level } = await import('./snow.js'));
+    } catch (error) {
+      console.error(error);
+      showError('Snow Basin failed to load. Reload the page to try again.');
+      return;
+    }
+  }
+  playRange(THREE, renderer, level);
 }
 
 function buildArena(THREE, scene, touch) {
@@ -357,41 +375,110 @@ function createAnimals(THREE, scene) {
     }
   }
 
-  function animal(name, build, x, z, rx, rz, pace, offset, width, depth) {
+  function animal(name, build, x, z, rx, rz, pace, offset, width, depth, height, front) {
     const root = new THREE.Group();
     root.name = name;
     const body = new THREE.Group();
     const shadow = new THREE.Mesh(shadowShape, shadowMaterial);
-    shadow.position.y = 0.016;
+    shadow.position.set(0, 0.016, front);
     shadow.scale.set(width, 1, depth);
     const legs = [];
     build(body, legs);
     root.add(body, shadow);
     scene.add(root);
-    return { root, body, legs, x, z, rx, rz, pace, offset };
+    return { root, body, legs, x, z, rx, rz, pace, offset, width, depth, height, front, time: 0 };
   }
 
   // Small walking loops stay clear of the central lane and static obstacles.
   const animals = [
-    animal('Cow', cow, -5.2, -10.8, 0.72, 1.65, 0.43, 1.9, 0.66, 0.92),
+    animal('Cow', cow, -5.2, -10.8, 0.72, 1.65, 0.43, 1.9, 0.45, 1.14, 1.5, 0.24),
     animal('White chicken', (body, legs) => chicken(body, legs, 'cream', 'cream'),
-      -3.22, 4.45, 0.88, 0.72, 1.1, 0.6, 0.25, 0.34),
+      -3.22, 4.45, 0.88, 0.72, 1.1, 0.6, 0.19, 0.32, 0.62, 0.035),
     animal('Brown chicken', (body, legs) => chicken(body, legs, 'buff', 'wing'),
-      3.6, 4.65, 0.84, 0.82, -1.04, 2.5, 0.25, 0.34),
+      3.6, 4.65, 0.84, 0.82, -1.04, 2.5, 0.19, 0.32, 0.62, 0.035),
   ];
 
-  return function updateAnimals(time) {
-    for (const animal of animals) {
-      const angle = time * animal.pace + animal.offset;
-      const sin = Math.sin(angle);
-      const cos = Math.cos(angle);
-      animal.root.position.set(animal.x + cos * animal.rx, 0, animal.z + sin * animal.rz);
-      animal.root.rotation.y = Math.atan2(-sin * animal.rx * animal.pace, cos * animal.rz * animal.pace);
-      const stride = (time * Math.abs(animal.pace) + animal.offset) * 10;
-      animal.body.position.y = 0.016 + Math.abs(Math.sin(stride)) * 0.025;
-      for (const { joint, phase } of animal.legs) joint.rotation.x = Math.sin(stride) * phase * 0.45;
-    }
+  function overlaps(animal, x, z, yaw, playerX, playerZ) {
+    const dx = playerX - x;
+    const dz = playerZ - z;
+    const sin = Math.sin(yaw);
+    const cos = Math.cos(yaw);
+    const localX = cos * dx - sin * dz;
+    const localZ = sin * dx + cos * dz - animal.front;
+    const edgeX = Math.max(0, Math.abs(localX) - animal.width);
+    const edgeZ = Math.max(0, Math.abs(localZ) - animal.depth);
+    return edgeX * edgeX + edgeZ * edgeZ < RANGE.radius * RANGE.radius;
+  }
+
+  function place(animal, time, player) {
+    const angle = time * animal.pace + animal.offset;
+    const sin = Math.sin(angle);
+    const cos = Math.cos(angle);
+    const x = animal.x + cos * animal.rx;
+    const z = animal.z + sin * animal.rz;
+    const yaw = Math.atan2(-sin * animal.rx * animal.pace, cos * animal.rz * animal.pace);
+    if (player && overlaps(animal, x, z, yaw, player.x, player.z)) return;
+
+    animal.time = time;
+    animal.root.position.set(x, 0, z);
+    animal.root.rotation.y = yaw;
+    const stride = Math.sin((time * Math.abs(animal.pace) + animal.offset) * 10);
+    animal.body.position.y = 0.016 + Math.abs(stride) * 0.025;
+    for (const { joint, phase } of animal.legs) joint.rotation.x = stride * phase * 0.45;
+  }
+
+  function touching(animal, x, z) {
+    const { position, rotation } = animal.root;
+    return overlaps(animal, position.x, position.z, rotation.y, x, z);
+  }
+
+  return {
+    reset() {
+      for (const animal of animals) place(animal, 0);
+    },
+    update(dt, player) {
+      for (const animal of animals) place(animal, animal.time + dt, player);
+    },
+    blocks(x, z, feet) {
+      return animals.some(animal => feet < animal.height && touching(animal, x, z));
+    },
+    surface(x, z, feet) {
+      let top = 0;
+      for (const animal of animals) {
+        if (feet >= animal.height && touching(animal, x, z)) top = Math.max(top, animal.height);
+      }
+      return top;
+    },
   };
+}
+
+function addPortal(THREE, scene, portal) {
+  const gate = new THREE.Group();
+  gate.position.set(portal.x, 0, portal.z);
+  const frame = new THREE.MeshLambertMaterial({ color: 0x293d43 });
+  const light = new THREE.MeshBasicMaterial({ color: 0x8ee5f4, toneMapped: false });
+  const panel = new THREE.MeshLambertMaterial({ color: 0x365665, emissive: 0x10282e });
+  const geometry = new THREE.BoxGeometry(1, 1, 1);
+
+  function part(x, y, z, sx, sy, sz, material) {
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(x, y, z);
+    mesh.scale.set(sx, sy, sz);
+    gate.add(mesh);
+  }
+
+  part(0, 1.46, 0, 2.0, 2.9, 0.14, panel);
+  part(0, 3.04, 0.05, 2.55, 0.28, 0.28, frame);
+  part(0, 3.05, 0.21, 1.03, 0.095, 0.04, light);
+  part(0, 0.06, 0.14, 2.45, 0.12, 0.47, frame);
+  for (const side of [-1, 1]) {
+    part(side * 1.12, 1.46, 0.05, 0.27, 2.9, 0.28, frame);
+    part(side * 0.95, 1.48, 0.105, 0.055, 2.7, 0.06, light);
+    for (const y of [0.66, 1.46, 2.26]) {
+      part(side * 0.43, y, 0.085, 0.79, 0.055, 0.04, frame);
+    }
+  }
+  scene.add(gate);
 }
 
 function createTargets(THREE, scene) {
@@ -624,17 +711,26 @@ function createEffects(THREE, scene) {
   return { fire, spark, update, advanceBullets, reset };
 }
 
-function playRange(THREE, renderer) {
+function playRange(THREE, renderer, level) {
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(62, 1, 0.07, 115);
-  const weaponScene = new THREE.Scene();
-  const weaponCamera = new THREE.PerspectiveCamera(62, 1, 0.03, 5);
-  const arena = buildArena(THREE, scene, touchDevice);
-  const updateAnimals = createAnimals(THREE, scene);
-  const range = createTargets(THREE, scene);
-  const { weapon, muzzle } = createWeapon(THREE, weaponScene);
-  const effects = createEffects(THREE, scene);
-  const raycaster = new THREE.Raycaster();
+  const exploring = level !== desertLevel;
+  const weaponScene = exploring ? null : new THREE.Scene();
+  const weaponCamera = exploring ? null : new THREE.PerspectiveCamera(62, 1, 0.03, 5);
+  const arena = level.build(THREE, scene, touchDevice);
+  const animals = exploring ? null : createAnimals(THREE, scene);
+  const range = exploring ? null : createTargets(THREE, scene);
+  const { weapon, muzzle } = exploring ? {} : createWeapon(THREE, weaponScene);
+  const effects = exploring ? null : createEffects(THREE, scene);
+  const raycaster = exploring ? null : new THREE.Raycaster();
+  const { portal } = level;
+  addPortal(THREE, scene, portal);
+  arena.obstacles.push({
+    left: portal.x - 1.26, right: portal.x + 1.26,
+    front: portal.z - 0.09, back: portal.z + 0.2, height: 3.18,
+  });
+  const defaultMessage = menuMessage.textContent;
+  const defaultStartLabel = startLabel.textContent;
   const center = new THREE.Vector2(0, 0);
   const movement = new THREE.Vector2();
   const speed = new THREE.Vector2();
@@ -683,6 +779,7 @@ function playRange(THREE, renderer) {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, touchDevice ? 1.35 : 1.75));
     renderer.setSize(width, height, false);
     for (const view of [camera, weaponCamera]) {
+      if (!view) continue;
       view.aspect = width / height;
       view.fov = view.aspect < 1 ? 68 : 62;
       view.updateProjectionMatrix();
@@ -702,6 +799,7 @@ function playRange(THREE, renderer) {
     mouseLook.set(0, 0);
     aimPointer = null;
     mouseHeld = false;
+    travel.hidden = true;
     padButtons.forEach(button => button.classList.remove('held'));
   }
 
@@ -723,15 +821,17 @@ function playRange(THREE, renderer) {
     yaw = 0;
     pitch = 0;
     speed.set(0, 0);
-    camera.position.set(SPAWN.x, RANGE.eye, SPAWN.z);
+    camera.position.set(level.spawn.x, RANGE.eye, level.spawn.z);
     updateCamera();
-    range.reset();
-    range.update(camera, time);
-    updateAnimals(time);
-    effects.reset();
-    animateWeapon(0);
+    animals?.reset();
+    if (range) {
+      range.reset();
+      range.update(camera, time);
+      effects.reset();
+      animateWeapon(0);
+      setScore(0);
+    }
     renderPending = true;
-    setScore(0);
   }
 
   function showMenu(paused) {
@@ -740,16 +840,19 @@ function playRange(THREE, renderer) {
     speed.set(0, 0);
     renderPending = true;
     game.dataset.state = paused ? 'paused' : 'menu';
-    startLabel.textContent = paused ? 'RESUME GAME' : 'START GAME';
-    menuMessage.textContent = paused ? 'Game paused. Resume to return to the range.' :
-      'Hit 10 targets as fast as you can.';
+    if (paused) {
+      startLabel.textContent = exploring ? 'RESUME EXPLORING' : 'RESUME GAME';
+    } else {
+      startLabel.textContent = defaultStartLabel;
+    }
+    menuMessage.textContent = paused ? 'Paused. Resume to return to the arena.' : defaultMessage;
   }
 
   function begin() {
     clearInput();
     notice.textContent = '';
     start.blur();
-    startedAt = performance.now();
+    if (range) startedAt = performance.now();
     game.dataset.state = 'playing';
   }
 
@@ -816,6 +919,31 @@ function playRange(THREE, renderer) {
     if (document.pointerLockElement === canvas) document.exitPointerLock();
   });
 
+  function nearPortal() {
+    const { x, z } = camera.position;
+    return Math.hypot(x - portal.x, z - portal.z) < 2.5;
+  }
+
+  function updateTravel() {
+    travel.hidden = !isPlaying() || !nearPortal();
+    if (!travel.hidden) {
+      const label = `${isTouch() ? '' : 'E · '}Enter ${portal.destination}`;
+      if (travel.textContent !== label) travel.textContent = label;
+    }
+  }
+
+  function enterPortal() {
+    if (!isPlaying() || !nearPortal()) return;
+    stopClock();
+    clearInput();
+    game.dataset.state = 'traveling';
+    window.location.assign(portal.href);
+  }
+  travel.addEventListener('click', enterPortal);
+  window.addEventListener('pageshow', event => {
+    if (event.persisted && game.dataset.state === 'traveling') showMenu(true);
+  });
+
   const getFullscreen = () => document.fullscreenElement || document.webkitFullscreenElement;
   const enterFullscreen = game.requestFullscreen || game.webkitRequestFullscreen;
   if (enterFullscreen && (document.fullscreenEnabled || document.webkitFullscreenEnabled)) {
@@ -879,8 +1007,12 @@ function playRange(THREE, renderer) {
       document.exitPointerLock();
       return;
     }
+    if (event.code === 'KeyE' && isPlaying() && nearPortal()) {
+      enterPortal();
+      return;
+    }
     const action = arrowActions[event.key] || keyActions[event.key.toLowerCase()];
-    if (!isPlaying() || isTouch() || !action) return;
+    if (!isPlaying() || isTouch() || !action || (exploring && action === 'fire')) return;
     event.preventDefault();
     keysHeld.add(action);
     if (action === 'fire' && !event.repeat) {
@@ -894,7 +1026,7 @@ function playRange(THREE, renderer) {
   });
 
   canvas.addEventListener('mousedown', event => {
-    if (!isPlaying() || isTouch() || event.button !== 0) return;
+    if (exploring || !isPlaying() || isTouch() || event.button !== 0) return;
     mouseHeld = true;
     aimDesktop(0);
     shoot();
@@ -979,11 +1111,12 @@ function playRange(THREE, renderer) {
   }
 
   function blocked(x, z) {
-    return arena.obstacles.some(obstacle => elevation < obstacle.height && overlaps(obstacle, x, z));
+    return animals?.blocks(x, z, elevation) ||
+      arena.obstacles.some(obstacle => elevation < obstacle.height && overlaps(obstacle, x, z));
   }
 
   function moveVertical(dt, position) {
-    let surface = 0;
+    let surface = animals?.surface(position.x, position.z, elevation) ?? 0;
     for (const obstacle of arena.obstacles) {
       if (obstacle.height <= elevation && overlaps(obstacle, position.x, position.z)) {
         surface = Math.max(surface, obstacle.height);
@@ -1004,8 +1137,8 @@ function playRange(THREE, renderer) {
     movement.rotateAround(center, -yaw).multiplyScalar(4.6);
     speed.lerp(movement, 1 - Math.exp(-15 * dt));
 
-    const xLimit = RANGE.width / 2 - RANGE.radius;
-    const zLimit = RANGE.depth / 2 - RANGE.radius;
+    const xLimit = level.width / 2 - RANGE.radius;
+    const zLimit = level.depth / 2 - RANGE.radius;
     const { position } = camera;
     const x = clamp(position.x + speed.x * dt, -xLimit, xLimit);
     const z = clamp(position.z + speed.y * dt, -zLimit, zLimit);
@@ -1016,7 +1149,7 @@ function playRange(THREE, renderer) {
   }
 
   function shoot() {
-    if (!isPlaying() || time < nextFire) return;
+    if (exploring || !isPlaying() || time < nextFire) return;
     nextFire = time + FIRE_INTERVAL;
     recoil = 1;
 
@@ -1071,18 +1204,21 @@ function playRange(THREE, renderer) {
       time += dt;
       if (!isTouch()) aimDesktop(dt);
       move(dt);
-      range.update(camera, time);
-      updateAnimals(time);
-      animateWeapon(dt);
-      effects.advanceBullets(dt);
-      effects.update(dt);
-      if (actionHeld('fire')) shoot();
+      animals?.update(dt, camera.position);
+      if (range) {
+        range.update(camera, time);
+        animateWeapon(dt);
+        effects.advanceBullets(dt);
+        effects.update(dt);
+        if (actionHeld('fire')) shoot();
+      }
+      updateTravel();
     }
 
     if (playing || renderPending) {
       renderer.clear();
       renderer.render(scene, camera);
-      if (playing) {
+      if (playing && weaponScene) {
         renderer.clearDepth();
         renderer.render(weaponScene, weaponCamera);
       }

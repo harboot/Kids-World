@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#182c38">
+  <title>Dustline — Snow Basin</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./game.js"></script>
+</head>
+<body>
+  <main id="game" data-level="snow" data-state="loading" data-input="mouse">
+    <canvas id="view" aria-label="3D snow arena"></canvas>
+
+    <header class="hud">
+      <div class="wordmark">
+        <span class="range-mark" aria-hidden="true"></span>
+        <span>DUSTLINE <small>SNOW BASIN</small></span>
+      </div>
+      <div class="hud-right">
+        <button id="restart" class="hud-button" type="button" disabled>
+          <span aria-hidden="true" class="reset-mark">↻</span><span>RESTART</span>
+        </button>
+        <button id="fullscreen" class="hud-button fullscreen-button" type="button"
+                aria-label="Fullscreen" title="Fullscreen" hidden>
+          <span class="fullscreen-mark" aria-hidden="true"></span>
+        </button>
+      </div>
+    </header>
+
+    <button id="travel" type="button" class="travel-button" hidden></button>
+
+    <section id="menu" class="menu" aria-labelledby="menu-title">
+      <div class="menu-content">
+        <p class="eyebrow">FREE EXPLORE</p>
+        <h1 id="menu-title"><span class="title-brand">SNOW <span>BASIN</span></span></h1>
+        <p id="menu-message" class="menu-message">Explore the frozen basin. The blue gate leads back to Dustline.</p>
+        <button id="start" class="start-button" type="button" disabled>
+          <span id="start-label">EXPLORE</span><span class="play-mark" aria-hidden="true"></span>
+        </button>
+        <p id="notice" class="notice" role="status">Loading the arena…</p>
+        <div class="guide desktop-guide" aria-label="Desktop controls">
+          <div><span class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><span>Move</span></div>
+          <div><span class="keys"><kbd>Mouse</kbd><kbd>← ↑ ↓ →</kbd></span><span>Look</span></div>
+          <div><span class="keys"><kbd>E</kbd></span><span>Enter gate</span></div>
+          <div><span class="keys"><kbd>Esc</kbd></span><span>Pause</span></div>
+        </div>
+        <div class="guide touch-guide" aria-label="Touch controls">
+          <div><span class="keys"><kbd>↑</kbd><kbd>←</kbd><kbd>→</kbd></span><span>Move</span></div>
+          <div><span class="keys"><kbd>↓</kbd></span><span>Jump</span></div>
+          <div><span>Drag right side to look · Tap the gate prompt to travel</span></div>
+        </div>
+        <p class="orientation">Rotate to landscape for a wider view.</p>
+      </div>
+    </section>
+
+    <div class="dpad" role="group" aria-label="Movement and jump controls">
+      <button type="button" data-action="forward" aria-label="Move forward"><span class="arrow"></span></button>
+      <button type="button" data-action="left" aria-label="Move left"><span class="arrow"></span></button>
+      <button type="button" data-action="right" aria-label="Move right"><span class="arrow"></span></button>
+      <button type="button" data-action="jump" aria-label="Jump">
+        <span class="arrow"></span><span class="pad-label">JUMP</span>
+      </button>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,6 +1,8 @@
 # Dustline
 
-Dustline is a browser-based 3D target range built with HTML, CSS, JavaScript, and Three.js. Clear each group of targets and hit 10 to record your completion time. A cow and two chickens wander around the arena as scenery.
+Dustline is a browser-based 3D target range built with HTML, CSS, JavaScript, and Three.js. Clear each group of targets and hit 10 to record your completion time. A cow and two chickens wander around the arena and block your path.
+
+The blue gate near the far wall leads to Snow Basin, an 18 × 20 arena for free exploration. Approach a gate and press **E**, or tap the gate prompt on a touch device. The gate in Snow Basin returns to Dustline. Each gate loads a fresh page.
 
 | Input | Move | Aim | Fire | Jump |
 | --- | --- | --- | --- | --- |

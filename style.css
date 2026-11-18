@@ -238,6 +238,38 @@ kbd {
 #game[data-state="playing"].hit .damage-frame { opacity: 1; }
 [data-state="playing"] .crosshair { display: block; }
 
+.travel-button {
+  position: absolute;
+  z-index: 2;
+  top: calc(50% + 28px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid #8ee5f4;
+  background: #162830ed;
+  color: #c0f3ff;
+  font: 700 12px/1.25 ui-monospace, monospace;
+  white-space: nowrap;
+  touch-action: manipulation;
+}
+.travel-button:hover, .travel-button:focus-visible { background: #274b56; }
+
+#game[data-level="snow"] {
+  --paper: #eef7fa;
+  --subtle: #d2e3ea;
+  --accent: #a3e6f4;
+  background: radial-gradient(ellipse at 72% 44%, #5d7c8c, #182c38 68%);
+}
+[data-level="snow"] .menu {
+  background: linear-gradient(90deg, #11222ff2, #172e3ac7 35%, #213c4838 78%),
+              linear-gradient(0deg, #11222fa1, transparent 48%);
+}
+[data-level="snow"] h1 { font-size: clamp(40px, 8vw, 112px); }
+[data-level="snow"] .range-mark { border-color: #a3e6f47d; }
+[data-level="snow"] .start-button:hover:not(:disabled) { background: #c0f3ff; }
+[data-level="snow"] .dpad button[data-action="jump"]:not(.held) { background: #19323ce5; }
+
 .dpad {
   --key-size: clamp(44px, 12.8vh, 59px);
   position: absolute;
