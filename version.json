@@ -1,0 +1,125 @@
+{
+  "version": "e3aae52f8a8cfbd2a9ed3284e71c98b4e48be3e4360d450ff9edb3b48fc59708",
+  "files": [
+    {
+      "path": "./areas/flower-garden/garden-cabin.js",
+      "revision": "1dc137fd1865b04064e95af9708381556652d1a1c0a67d9bcc34cff336f2afcc"
+    },
+    {
+      "path": "./areas/flower-garden/garden-orchard.js",
+      "revision": "242aee296cf993efff5cc2959abe3a3125d7561a2ca3b449f4e732c4f9771d62"
+    },
+    {
+      "path": "./areas/flower-garden/garden-pond.js",
+      "revision": "1f776fa7381d2b91c48339adc35ed4006eed0fd26dc84cd198a74af60845cf23"
+    },
+    {
+      "path": "./areas/flower-garden/garden-terrain.js",
+      "revision": "e1bed6bcde0c53dd08e358b002736db7fd39096c92dcbbfcc3c3eead29951357"
+    },
+    {
+      "path": "./areas/flower-garden/index.js",
+      "revision": "9084d2f5cf477f9f48998077e954f3d40919ced1192fd87a4277706c9b64cb60"
+    },
+    {
+      "path": "./areas/ice-door.js",
+      "revision": "0916eb90762fe58668f755fdebad03d0b35393c5ddae9e3209cee14557664199"
+    },
+    {
+      "path": "./areas/snow-basin.js",
+      "revision": "1636968cbeddce2f2d5003dbbe06ba6725bab8a48c7e2f4138982502d14bc9b2"
+    },
+    {
+      "path": "./assets/icons/icon-192.png",
+      "revision": "a62efd87d7dbd8f1274bd68ff8ad2a410fb7cd53d0dc17e56891997c80b6bebf"
+    },
+    {
+      "path": "./assets/icons/icon-512.png",
+      "revision": "b27df2db398c99e96cdd44cb6e307c720bda68b5d734da43d0dc53507440f0d7"
+    },
+    {
+      "path": "./core/audio.js",
+      "revision": "ea3047198df035a5efc69e42c03c698a50e1a8c3dd80c0b0b4419a8f69e87434"
+    },
+    {
+      "path": "./core/controls.js",
+      "revision": "6149fa3b8e0d96c557a6f796b4bfb1d5a3f10e89e30f417cbbe302e44cc843df"
+    },
+    {
+      "path": "./core/game.js",
+      "revision": "abdf59c993d3f961a4fcd46cdccb5916a6472b7f552c4f2c28c4f3525fa12cf7"
+    },
+    {
+      "path": "./core/interactions.js",
+      "revision": "f6377cf11c610efc21363e482d6369da7f93fc8734b564ac5af5899670a6bcfc"
+    },
+    {
+      "path": "./core/movement.js",
+      "revision": "cbe44115cfef2564f984672bcfb4b05935cae41a3b326a1df629155a87d44286"
+    },
+    {
+      "path": "./core/player.js",
+      "revision": "02e9f7e696ce3561cecec1ba828909f6d758eb815c60ff18a43729d4ae7362e3"
+    },
+    {
+      "path": "./core/renderer.js",
+      "revision": "a99358b8afdad40bdb3b6410eadfde165cc95bc73790b5441ac8170c538593dd"
+    },
+    {
+      "path": "./core/world-manager.js",
+      "revision": "f6e5f8a8c600fe722b12e3867467595ff577e6f933c56965931ad9f427937a3b"
+    },
+    {
+      "path": "./game.js",
+      "revision": "a8dbdda4c320046d9b6e79249090ab4ba825ebb0845e0e55273e5a504708f4f1"
+    },
+    {
+      "path": "./index.html",
+      "revision": "99a6c3177d5c8afd967c966355320df92725009fa4e76cbcb1b879eb0d1aa1d9"
+    },
+    {
+      "path": "./manifest.webmanifest",
+      "revision": "5bacf9f341aef9096d2444e486aa5ded7336d2b6d8751fc04186777e31ef9830"
+    },
+    {
+      "path": "./pwa/bootstrap.js",
+      "revision": "6704cc837c5051b49d4fa4215640d56f7f9c9d5f896ad97444831ebc317361d6"
+    },
+    {
+      "path": "./pwa/cache.js",
+      "revision": "15ac0dfcb8bf4bb1da0366ca7106863922b640dcaa16ad370da511fd8183dc39"
+    },
+    {
+      "path": "./pwa/loading.css",
+      "revision": "5caf6b5fed3b6be7dbc14cf05f790bd8c0490919a8256fca8eb48bfb3a6ef85f"
+    },
+    {
+      "path": "./pwa/release.js",
+      "revision": "d9244a418a23ea5718044f3823f985c17be94618ef315bf2b8655e80fad5c770"
+    },
+    {
+      "path": "./pwa/worker.js",
+      "revision": "c0c912257a345424d982669f8614e853a48b3c1f5f36873dd9b68ed5ba47b3cb"
+    },
+    {
+      "path": "./snow.html",
+      "revision": "38e9d3babb9853e143f6c888725b870ab4fc19ad05e311737937460368fd7fda"
+    },
+    {
+      "path": "./style.css",
+      "revision": "429f924c0a789c139954a0186f0243a239b7b624e4923bd0c46fa7f55e95b370"
+    },
+    {
+      "path": "./vendor/three.LICENSE",
+      "revision": "bfe119ea4fd413f5f7ca3fcd63adb0c4a073ed39daa2fe7d3e6b769e21272601"
+    },
+    {
+      "path": "./vendor/three.core.min.js",
+      "revision": "79f2b4f58d3e99a9948a4d3b7f6d5c2daf705bdefe9fb82ebec715623966551c"
+    },
+    {
+      "path": "./vendor/three.module.min.js",
+      "revision": "06552c54e4071fbc7305117aafe6765d92c5d2a2a83507d4f05b9bf4f3d4d463"
+    }
+  ]
+}

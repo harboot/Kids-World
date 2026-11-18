@@ -21,9 +21,9 @@ Each area has its own looping music, with sound cues for jumping and interacting
 
 ## Run locally
 
-Run `python3 -m http.server 8000` from the project directory, then open `http://localhost:8000`. The browser needs WebGL 2 and access to the Three.js CDN.
+Run `python3 -m http.server 8000` from the project directory, then open `http://localhost:8000`. The browser needs WebGL 2. Three.js r179 (0.179.1) is served from `vendor/`, with its MIT license.
 
-Run `node --test` with Node.js 22.7 or later to check movement and collision, bridge access, fish paths, basket transitions, area lifecycle and cleanup, and URL routing.
+Run `node --test` with Node.js 22.7 or later. It checks movement and collision, bridge access, fish paths, basket transitions, area lifecycle and cleanup, routing, release metadata, download integrity, and fallback behavior.
 
 ## Architecture
 
@@ -38,6 +38,32 @@ Area travel replaces the scene and opens the destination's **Explore** menu in t
 3. Add lifecycle hooks as needed. `reset()` runs on entry and **Restart area**, `update(dt, playerPosition)` runs while the player explores, and `unload()` can release resources owned outside the scene. Bind area listeners with `{ signal }`. The manager aborts those listeners, detaches the viewmodel, and disposes the area's scene-owned resources on exit.
 4. Define each interaction with `x`, `z`, `label`, and `act(context)`. It can also specify `radius`, `anchorY`, `active`, or `reachable(playerPosition)`. Use `travel(destinationId, heardCue)` from the context when an interaction leads to another area. See `areas/ice-door.js` for the shared door used by both areas.
 
+## Installation and offline play
+
+Open Kids World online once and wait for **Play**. The progress bar counts files after they have been verified and stored. Use the browser's install or **Add to Home Screen** command to open Kids World as a standalone app. After the first download, both areas work offline, including area travel, audio, the saved area, and mute.
+
+To test offline locally, finish the first download, enable **Offline** in the browser's Network panel, and reload. Try `index.html?area=snow` directly and use both ice doors. To test failure on a first download, use a fresh browser profile, interrupt the download, and look for **Try again**. To test updates, serve a second generated release from the same address and open a fresh tab. An existing game can keep running. When returning to it after five minutes, the game checks again and offers a reload if a newer release is ready.
+
+### PWA architecture
+
+`index.html` contains the splash and the game markup. `pwa/bootstrap.js` asks the service worker for a complete release before importing the game. The worker checks `version.json` from the network with a deadline. It verifies each file's SHA-256 hash and writes a completion marker only after every file is available. A new release has its own staging cache and can reuse verified files with matching hashes. An interrupted or invalid release leaves the last complete release available offline.
+
+Each game session requests its shell assets and modules through versioned service-worker URLs. A published release can be downloaded in another tab while the running session keeps its files and renderer. The worker leaves other sessions' caches in place while multiple windows are open. During a single-window startup, it keeps the selected release and the two most recently completed releases. Cache names include the app's scope. The browser activates worker code updates when it can release the old worker's clients.
+
+### Publish a release
+
+1. Add area code under `areas/`, assets under `assets/`, and runtime modules under `core/` or `pwa/`. The manifest generator scans those directories and `vendor/` recursively.
+2. Run `node scripts/generate-pwa-manifest.mjs`, then `node --test`. Commit the changed files together with `version.json` and `sw.js`.
+3. Publish that commit through GitHub Pages. The release ID comes from the manifest's file hashes. The generated `sw.js` entry point changes with the release ID, so the browser detects a worker update even if its logic stayed the same. `node scripts/generate-pwa-manifest.mjs --check` checks both generated files.
+
+`version.json` and the generated `sw.js` entry point are published metadata. The manifest hashes the runtime payload, including the worker implementation, without hashing the generated metadata into itself.
+
+### Troubleshooting
+
+- If the first download fails, reconnect and select **Try again**. The browser console identifies failed requests, hash mismatches, and storage errors.
+- If an update fails, the app uses the saved complete release. Check that Pages published `version.json`, `sw.js`, and their matching runtime files from one commit.
+- Offline play requires a completed download in the same browser profile and site. Browsers can evict cached files when storage is low. Reconnect to repair the download. Browsers without Service Worker support can play online.
+
 ## GitHub Pages
 
-In **Settings → Pages**, deploy from the `main` branch and the `/ (root)` folder. Relative module paths and area URLs work under the repository's Pages subdirectory.
+In **Settings → Pages**, deploy from the `main` branch and the `/ (root)` folder. Keep the site on HTTPS for installation and offline play. The relative start URL, Service Worker scope, and file URLs work under `/Kids-World/` or at a custom domain root. `localhost` works for local testing.
