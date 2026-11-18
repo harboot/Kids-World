@@ -4,7 +4,7 @@ import { addOrchard } from './garden-orchard.js';
 import { addPond, blocksPondTravel, bridgeDeckHeight } from './garden-pond.js';
 import { addHillPath, createTerrain, drawTerrain } from './garden-terrain.js';
 
-function createAnimals(THREE, scene, playerRadius) {
+function createAnimals(THREE, scene, playerRadius, greetCow) {
   const block = new THREE.BoxGeometry(1, 1, 1);
   const shadowShape = new THREE.CircleGeometry(1, 14).rotateX(-Math.PI / 2);
   const shadowMaterial = new THREE.MeshBasicMaterial({
@@ -140,8 +140,10 @@ function createAnimals(THREE, scene, playerRadius) {
       anchorY: animal.head ? 1.7 : 0.7,
       radius: animal.head ? 1.85 : 1.3,
       act() {
+        if (animal.reaction) return;
         animal.reaction = animal.head ? 1.25 : 0.92;
         for (const { joint } of animal.legs) joint.rotation.x = 0;
+        if (animal.head) greetCow();
       },
     })),
     reset() {
@@ -184,7 +186,7 @@ function createAnimals(THREE, scene, playerRadius) {
 export const flowerGarden = {
   title: 'Flower Garden',
   heading: ['Flower', 'Garden'],
-  description: 'To open Snow Basin, collect five apples and put the basket on the cabin table.',
+  description: 'Deliver at least three apples, feed the pond fish, and greet a cow to open Snow Basin.',
   loadingMessage: 'Loading the garden…',
   canvasLabel: '3D flower garden',
   themeColor: '#e9eedc',
@@ -195,7 +197,7 @@ export const flowerGarden = {
   load: loadGarden,
 };
 
-function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelComplete, completeLevel, reducedMotion }) {
+function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelComplete, completeLevel, reducedMotion, playCue }) {
   const { width, depth } = flowerGarden;
   const obstacles = [];
   const gates = [];
@@ -446,32 +448,46 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelCompl
     mesh(facet, cloud, x + 2.1, y + 0.5, z, 2.65, 1.57, 1.3);
   }
 
-  const animals = createAnimals(THREE, scene, playerRadius);
   const cabin = addCabin(THREE, { scene, mesh, box, matte, obstacles, collision });
   let unlocked = false;
-  let deliveredThisVisit = false;
+  const missions = { apples: false, fish: false, cow: false };
   const passage = addIceDoor(THREE, scene, obstacles, {
     x: 17.8, z: -23.35, destination: 'snow', label: 'Enter Snow Basin',
     reducedMotion,
     available: () => unlocked || Boolean(isLevelComplete?.('garden')),
   });
+
+  function finishMission(id) {
+    if (missions[id]) return;
+    missions[id] = true;
+    if (!Object.values(missions).every(Boolean)) return;
+    unlocked = true;
+    completeLevel?.('garden');
+    passage.refresh();
+  }
+
+  const animals = createAnimals(THREE, scene, playerRadius, () => finishMission('cow'));
   const orchard = addOrchard(THREE, {
     scene, viewmodel, mesh, box, facet, matte, obstacles, collision, getTerrainHeight, table: cabin.table,
-    deliver() {
-      deliveredThisVisit = true;
-      if (passage.active) return;
-      unlocked = true;
-      completeLevel?.('garden');
-      passage.refresh();
-    },
+    deliver: () => finishMission('apples'),
   });
-  const pond = addPond(THREE, { scene, mesh, box, facet, matte, obstacles, instances, getTerrainHeight, playerRadius });
+  const pond = addPond(THREE, {
+    scene, mesh, box, facet, matte, obstacles, instances, getTerrainHeight, playerRadius, playCue,
+    feedFish: () => finishMission('fish'),
+  });
   addGlacier(THREE, { mesh, facet, matte });
   return {
     obstacles,
     arrivals: { cabin: cabin.arrival },
     get objective() {
-      return deliveredThisVisit ? 'Snow Basin is open! Find the door by the glacier.' : orchard.objective;
+      const finished = Object.values(missions).filter(Boolean).length;
+      const progress = `Flower Garden · ${finished}/3 missions`;
+      if (finished === 3) return `${progress}\nFlower Garden complete! Snow Basin is unlocked!`;
+      const hints = [];
+      if (!missions.apples) hints.push(orchard.objective);
+      if (!missions.fish) hints.push('Feed the fish');
+      if (!missions.cow) hints.push('Greet a cow');
+      return `${progress}\n${hints.join(' · ')}`;
     },
     getGroundHeight(x, z) {
       return Math.max(getTerrainHeight(x, z), bridgeDeckHeight(x, z));
@@ -479,7 +495,7 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelCompl
     blocksGround: blocksPondTravel,
     animals,
     interactions: [...gates.map(gate => gate.door), ...animals.interactions, ...orchard.interactions,
-      cabin.bench, cabin.entrance, passage],
+      pond.feedingSpot, cabin.bench, cabin.entrance, passage],
     update(dt, player) {
       passage.refresh(dt);
       animals.update(dt, player);
@@ -488,7 +504,7 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelCompl
       for (const gate of gates) gate.update(dt, player);
     },
     reset() {
-      deliveredThisVisit = false;
+      Object.assign(missions, { apples: false, fish: false, cow: false });
       animals.reset();
       orchard.reset();
       pond.reset();

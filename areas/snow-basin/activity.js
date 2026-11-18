@@ -3,13 +3,13 @@ export const CHOP_COOLDOWN = 0.32;
 export const FALL_DURATION = 1.45;
 export const BREAK_DURATION = 0.62;
 export const BALL_RADIUS = 0.15;
+export const SNOWMAN_COUNT = 3;
 export const SNOWMAN_SPHERES = [
   { y: 0.48, radius: 0.48 },
   { y: 1.15, radius: 0.37 },
   { y: 1.68, radius: 0.29 },
 ];
 
-const TARGET_COUNT = 5;
 const MIN_PLAYER_DISTANCE = 3.2;
 const MIN_TARGET_SPACING = 2.8;
 const BALL_SPEED = 18;
@@ -37,11 +37,11 @@ function chooseTargets(player, clearSpot, random) {
       if (Math.hypot(player.x - tx, player.z - tz) < MIN_PLAYER_DISTANCE || !clearSpot(tx, tz)) continue;
       if (targets.some(target => Math.hypot(target.x - tx, target.z - tz) < MIN_TARGET_SPACING)) continue;
       targets.push({ x: tx, z: tz, intact: true, breakTime: 0 });
-      if (targets.length === TARGET_COUNT) return targets;
+      if (targets.length === SNOWMAN_COUNT) return targets;
       break;
     }
   }
-  throw new Error('Snow Basin requires five clear snowman spawn slots.');
+  throw new Error(`Snow Basin requires ${SNOWMAN_COUNT} clear snowman spawn slots.`);
 }
 
 // Returns the first intersection along a normalized segment, or Infinity on a miss.
@@ -85,16 +85,25 @@ function sweepBox(start, end, obstacle) {
   return first;
 }
 
-export function createSnowActivity({ width, depth, obstacles, clearSpot, random = Math.random, cue = () => {} }) {
+export function createSnowActivity({ width, depth, spawn, obstacles, clearSpot, random = Math.random, cue = () => {} }) {
   const projectiles = Array.from({ length: 3 }, () => ({ active: false }));
-  const state = { projectiles };
+  const state = {
+    projectiles,
+    get destroyed() { return this.targets.reduce((total, target) => total + Number(!target.intact), 0); },
+  };
+  const missions = {
+    get snowmen() { return state.destroyed === SNOWMAN_COUNT; },
+    get tree() { return state.tree === 'fallen'; },
+    get key() { return state.hasFrozenKey; },
+  };
   const next = { x: 0, y: 0, z: 0 };
 
   function reset() {
     Object.assign(state, {
       axe: false, held: false, chops: 0, cooldown: 0,
-      tree: 'upright', fallTime: 0, targets: [], destroyed: 0,
+      tree: 'upright', fallTime: 0, hasFrozenKey: false,
     });
+    state.targets = chooseTargets(spawn, clearSpot, random);
     for (const ball of projectiles) ball.active = false;
   }
 
@@ -122,7 +131,18 @@ export function createSnowActivity({ width, depth, obstacles, clearSpot, random 
   }
 
   function canMakeBall() {
-    return state.tree === 'fallen' && !state.held;
+    return !state.held;
+  }
+
+  function canPickUpKey() {
+    return missions.tree && !missions.key;
+  }
+
+  function pickUpKey() {
+    if (!canPickUpKey()) return false;
+    state.hasFrozenKey = true;
+    cue('key');
+    return true;
   }
 
   function makeBall() {
@@ -175,7 +195,6 @@ export function createSnowActivity({ width, depth, obstacles, clearSpot, random 
     if (hit) {
       hit.intact = false;
       hit.breakTime = 0;
-      state.destroyed++;
       cue('hit');
     }
     ball.age += dt;
@@ -189,14 +208,13 @@ export function createSnowActivity({ width, depth, obstacles, clearSpot, random 
     ball.vy -= BALL_GRAVITY * dt;
   }
 
-  function update(dt, player) {
+  function update(dt) {
     state.cooldown = Math.max(0, state.cooldown - dt);
     if (state.tree === 'falling') {
       state.fallTime = Math.min(FALL_DURATION, state.fallTime + dt);
       if (state.fallTime === FALL_DURATION) {
         state.tree = 'fallen';
-        state.targets = chooseTargets(player, clearSpot, random);
-        cue('spawn');
+        cue('land');
       }
     }
     for (const target of state.targets) {
@@ -206,5 +224,5 @@ export function createSnowActivity({ width, depth, obstacles, clearSpot, random 
   }
 
   reset();
-  return { state, reset, pickUpAxe, canChop, chop, canMakeBall, makeBall, throwBall, update };
+  return { state, missions, reset, pickUpAxe, canChop, chop, canPickUpKey, pickUpKey, canMakeBall, makeBall, throwBall, update };
 }

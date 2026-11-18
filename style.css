@@ -81,6 +81,7 @@ button:focus-visible { outline: 3px solid #377b65; outline-offset: 3px; }
   font-weight: 750;
   box-shadow: 0 2px 10px #21384f20;
 }
+#game:is([data-level="garden"], [data-level="snow"]) .objective { white-space: pre-line; }
 #game:not([data-state="playing"]) .objective, .objective:empty { display: none; }
 .world-mark {
   width: 34px;

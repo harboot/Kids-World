@@ -1,3 +1,5 @@
+const APPLES_TO_DELIVER = 3;
+
 export function nextBasketState(state, action) {
   if (action === 'reset') return 'ground';
   if (action === 'pickUp' && (state === 'ground' || state === 'placed')) return 'carried';
@@ -111,7 +113,7 @@ export function addOrchard(THREE, { scene, viewmodel, mesh, box, facet, matte, o
       basket.position.set(table.x, table.y + 0.004, table.z);
       basket.rotation.set(0, -0.18, 0);
       basket.scale.setScalar(1.08);
-      if (appleCount === basketApples.length) deliver?.();
+      if (appleCount >= APPLES_TO_DELIVER) deliver();
     } else {
       basket.position.set(basketX, basketGround + 0.025, basketZ);
       basket.rotation.set(0, 0.21, 0);
@@ -133,13 +135,14 @@ export function addOrchard(THREE, { scene, viewmodel, mesh, box, facet, matte, o
     ...drops.map(fruit => ({
       get x() { return fruit.mesh.position.x; },
       get z() { return fruit.mesh.position.z; },
-      get active() { return basketState === 'carried' && fruit.mesh.visible && fruit.ready; },
+      get active() { return basketState === 'carried' && appleCount < basketApples.length && fruit.mesh.visible && fruit.ready; },
       get anchorY() { return fruit.floor + 0.225; },
       label: 'Collect apple', radius: 1.15,
       act() {
+        if (!this.active) return;
         fruit.mesh.visible = false;
         fruit.ready = false;
-        if (appleCount < basketApples.length) basketApples[appleCount++].visible = true;
+        basketApples[appleCount++].visible = true;
       },
     })),
   ];
@@ -148,10 +151,10 @@ export function addOrchard(THREE, { scene, viewmodel, mesh, box, facet, matte, o
     interactions,
     get objective() {
       if (basketState !== 'carried') {
-        return basketState === 'ground' ? 'Pick up the basket by the apple tree' : 'Pick up your basket from the cabin table';
+        return basketState === 'ground' ? 'Pick up the basket by the apple tree' : 'Pick up your basket for more apples';
       }
-      if (appleCount === basketApples.length) return 'Place the basket on the cabin table';
-      return `Shake the tree and collect apples · ${appleCount}/${basketApples.length}`;
+      if (appleCount >= APPLES_TO_DELIVER) return 'Place the basket on the cabin table';
+      return `Shake the tree and collect apples (${appleCount}/${APPLES_TO_DELIVER})`;
     },
     update(dt) {
       shakeTime = Math.max(0, shakeTime - dt);

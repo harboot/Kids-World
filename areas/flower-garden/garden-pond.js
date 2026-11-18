@@ -2,6 +2,11 @@ import { POND, pondDistance, shoreRadius } from './garden-terrain.js';
 
 export const BRIDGE = { x: POND.x, start: 5.0, end: 22.1, halfWidth: 1.37, railX: 1.26, peak: 1.08 };
 const shoreMargin = 1.015;
+const food = { x: -9.66, z: 13.46 };
+const FEED_DURATION = 3.6;
+const feedCue = [[74, { duration: 0.18, level: 0.10 }],
+  [81, { duration: 0.22, level: 0.13, wave: 'triangle' }, 0.13],
+  [78, { duration: 0.24, level: 0.08 }, 0.3]];
 
 export function bridgeHeight(z) {
   const t = (z - BRIDGE.start) / (BRIDGE.end - BRIDGE.start);
@@ -43,7 +48,8 @@ export function fishPose(index, time, pose) {
   pose.tail = Math.sin(time * (9 + index * 0.47) + index) * 0.48;
 }
 
-export function addPond(THREE, { scene, mesh, box, facet, matte, obstacles, instances, getTerrainHeight, playerRadius }) {
+export function addPond(THREE, { scene, mesh, box, facet, matte, obstacles, instances, getTerrainHeight, playerRadius,
+  feedFish, playCue }) {
   addWater(THREE, scene);
   addBridge(THREE, { box, matte, instances });
 
@@ -114,12 +120,42 @@ export function addPond(THREE, { scene, mesh, box, facet, matte, obstacles, inst
     return { group, tail };
   });
   const pose = { x: 0, y: 0, z: 0, yaw: 0, tail: 0 };
+  const feeder = addFishFeeder(THREE, { scene, mesh, box, facet, matte, getTerrainHeight });
+  const { lerp, smoothstep } = THREE.MathUtils;
   let time = 0;
+  let feedTime = FEED_DURATION;
+  let gathering = [];
+
+  function feed() {
+    if (feedTime < FEED_DURATION) return false;
+    gathering = fish.map(({ group }, index) => ({ index, distance: Math.hypot(group.position.x - food.x, group.position.z - food.z) }))
+      .sort((a, b) => a.distance - b.distance).slice(0, 3).map(({ index }) => index);
+    feedTime = 0;
+    feeder.update(feedTime);
+    playCue?.(feedCue);
+    feedFish();
+    return true;
+  }
 
   function update(dt) {
     time += dt;
+    if (feedTime < FEED_DURATION) {
+      feedTime = Math.min(FEED_DURATION, feedTime + dt);
+      feeder.update(feedTime);
+    }
+    const attraction = smoothstep(feedTime, 0.38, 1.68) * (1 - smoothstep(feedTime, 2.25, FEED_DURATION));
     for (let index = 0; index < fish.length; index++) {
       fishPose(index, time, pose);
+      const group = attraction > 0 ? gathering.indexOf(index) : -1;
+      if (group >= 0) {
+        const angle = group * Math.PI * 2 / 3 + feedTime * 1.75;
+        const x = food.x - 0.36 + 0.31 * Math.cos(angle);
+        const z = food.z + 0.53 * Math.sin(angle);
+        const turn = Math.atan2(x - pose.x, z - pose.z) - pose.yaw;
+        pose.yaw += Math.atan2(Math.sin(turn), Math.cos(turn)) * attraction;
+        pose.x = lerp(pose.x, x, attraction);
+        pose.z = lerp(pose.z, z, attraction);
+      }
       fish[index].group.position.set(pose.x, pose.y, pose.z);
       fish[index].group.rotation.y = pose.yaw;
       fish[index].tail.rotation.y = pose.tail;
@@ -127,10 +163,82 @@ export function addPond(THREE, { scene, mesh, box, facet, matte, obstacles, inst
   }
 
   return {
+    feedingSpot: {
+      ...feeder.site, anchorY: 0.85, label: 'Feed fish', radius: 1.47, silent: true,
+      reachable: player => !blocksPondTravel(player.x, player.z, playerRadius) &&
+        getTerrainHeight(player.x, player.z) > POND.waterY + 0.04,
+      get active() { return feedTime === FEED_DURATION; },
+      act: feed,
+    },
     update,
     reset() {
       time = 0;
+      feedTime = FEED_DURATION;
+      gathering = [];
+      feeder.update(feedTime);
       update(0);
+    },
+  };
+}
+
+function addFishFeeder(THREE, { scene, mesh, box, facet, matte, getTerrainHeight }) {
+  const site = { x: -7.29, z: 13.46 };
+  const ground = getTerrainHeight(site.x, site.z);
+  const stand = new THREE.Group();
+  stand.name = 'Fish feeding sign';
+  stand.position.set(site.x, ground, site.z - 0.32);
+  stand.rotation.y = Math.PI / 2;
+  scene.add(stand);
+  const wood = matte(0x906747);
+  const board = matte(0xe3ba79);
+  const teal = matte(0x3c7e7d);
+  mesh(box, wood, 0, 0.39, 0, 0.12, 0.8, 0.13, stand);
+  mesh(box, board, 0, 0.8, 0.022, 0.68, 0.36, 0.13, stand);
+  const circle = new THREE.CircleGeometry(1, 12);
+  mesh(circle, teal, 0.055, 0.8, 0.091, 0.175, 0.095, 1, stand);
+  const tail = new THREE.Shape().moveTo(-0.08, 0).lineTo(-0.22, 0.08).lineTo(-0.22, -0.08).closePath();
+  mesh(new THREE.ShapeGeometry(tail), teal, 0, 0.8, 0.093, 1, 1, 1, stand);
+  mesh(circle, board, 0.151, 0.821, 0.094, 0.022, 0.022, 1, stand);
+
+  const bucketZ = site.z + 0.36;
+  mesh(new THREE.CylinderGeometry(0.23, 0.17, 0.31, 9), wood, site.x, ground + 0.155, bucketZ, 1, 1, 1);
+  mesh(new THREE.TorusGeometry(0.219, 0.027, 5, 12), teal, site.x, ground + 0.308, bucketZ, 1, 1, 1).rotation.x = -Math.PI / 2;
+  mesh(new THREE.CylinderGeometry(0.198, 0.198, 0.035, 9), matte(0xb38751), site.x, ground + 0.283, bucketZ, 1, 1, 1);
+
+  const pelletColor = matte(0xeab85d);
+  const pellets = Array.from({ length: 6 }, (_, index) => {
+    const part = mesh(facet, pelletColor, site.x, ground + 0.58, site.z, 0.072, 0.061, 0.077);
+    part.name = 'Fish food pellet';
+    return { part, x: food.x + 0.24 * Math.cos(index * 2.4), z: food.z + 0.44 * Math.sin(index * 2.4) };
+  });
+  const rippleShape = new THREE.RingGeometry(0.83, 1, 20).rotateX(-Math.PI / 2);
+  const ripples = pellets.slice(0, 3).map(({ x, z }) => {
+    const material = new THREE.MeshBasicMaterial({ color: 0xd8fff1, transparent: true, depthWrite: false });
+    const ring = mesh(rippleShape, material, x, POND.waterY + 0.018, z, 1, 1, 1);
+    ring.name = 'Fish feeding ripple';
+    ring.renderOrder = 1;
+    return ring;
+  });
+
+  return {
+    site,
+    update(time) {
+      for (const [i, { part, x, z }] of pellets.entries()) {
+        const duration = 0.56 + i * 0.065;
+        const age = time - i * 0.065;
+        part.visible = age >= 0 && age < duration;
+        if (!part.visible) continue;
+        const t = age / duration;
+        part.position.set(THREE.MathUtils.lerp(site.x, x, t),
+          THREE.MathUtils.lerp(ground + 0.58, POND.waterY, t) + 1.55 * t * (1 - t), THREE.MathUtils.lerp(site.z, z, t));
+      }
+      for (const [i, ring] of ripples.entries()) {
+        const t = (time - 0.56 - i * 0.13) / 1.1;
+        ring.visible = t >= 0 && t < 1;
+        if (!ring.visible) continue;
+        ring.scale.setScalar(0.14 + 0.62 * t);
+        ring.material.opacity = 0.52 * (1 - t);
+      }
     },
   };
 }

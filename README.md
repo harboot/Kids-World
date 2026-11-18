@@ -1,16 +1,23 @@
 # Kids World
 
-Kids World is a first-person exploration game made with HTML, CSS, JavaScript, and Three.js. Deliver a basket with five apples to the Flower Garden cabin to reveal the ice door to Snow Basin. The game remembers your last area and which levels you have completed in this browser.
+Kids World is a first-person exploration game made with HTML, CSS, JavaScript, and Three.js. The game remembers your last area and which levels you have completed in this browser.
 
-The hint below the area name shows what to do next and tracks progress during play. On replay, hints start at the first step even if a door is already unlocked. A door sparkles briefly when you first unlock it.
+The hint below the area name tracks missions and lists unfinished activities. A door sparkles briefly when you first unlock it. Replaying an area resets its missions and keeps access earned through saved level completion.
+
+## Flower Garden
+
+Complete any of these three missions first. Finishing all three reveals the ice door to Snow Basin by the glacier.
+
+- **Deliver at least three apples.** Pick up the basket, shake the apple tree, and collect fallen apples. Use **Place basket** on the cabin porch table. You can pick the basket up again and add more apples if you delivered too few. It holds up to five.
+- **Feed fish.** Look for the fish sign on the east bank of the pond and use **Feed fish** from dry ground. Watch the fish swim toward the pellets.
+- **Greet one cow.** Open the pen gate and use **Greet cow** near either cow.
 
 - Follow the path beside the apple tree up the hill. You can walk back down the slope or jump from it.
-- Take the basket beside the apple tree, shake the tree, and collect the fallen apples. At the cabin, use **Place basket** on the porch table. **Pick up basket** returns it to you with the apples still inside.
-- Open the pen gates to greet a cow or make a chicken jump. The animals stay in their pens.
+- Open the chicken pen to make a chicken jump. The animals stay in their pens.
 - Cross the fish pond on the wooden bridge, or watch the fish from the bank. The banks and bridge rails keep you clear of the water.
 - Walk up the cabin steps to the porch bench or front door. While seated, you can look around. Use **Stand up** to move again.
 
-Returning to Flower Garden or using **Restart area** starts a fresh visit. The basket is empty by the apple tree, fallen apples disappear, and the pens, bench, fish, and player return to their starting states. The browser remembers the last area between visits.
+Returning to Flower Garden or using **Restart area** starts a fresh visit at 0/3 missions with the empty basket back by the apple tree.
 
 ## Wooden House
 
@@ -22,11 +29,15 @@ Use **Return to Flower Garden** at the inside door to reappear by the cabin step
 
 ## Snow Basin
 
-Pick up the axe by the frozen pond. Stand on the footprints, look toward the tall pine, and use **Chop tree** five times. The ring around the pine keeps the space near it clear until the fall ends. After the pine lands, five snowmen appear in different spots within the basin. Use **Make snowball** at a snow pile, aim, and throw. Each snowman breaks into snow on the first hit. You can return to any pile for another snowball.
+Complete all three missions to finish Snow Basin. You can start with the snowmen or the pine. The Frozen Key appears after the pine lands.
 
-The original ice door returns to Flower Garden. Clearing all five snowmen reveals the **Frozen Castle** entrance, which displays a coming-soon message.
+- **Destroy three snowmen.** They appear in different locations each visit. Use **Make snowball** at any snow pile, then aim and throw. Each snowman breaks on the first hit.
+- **Chop the pine.** Pick up the axe by the frozen pond. Stand on the footprints, look toward the pine, and use **Chop tree** five times. Wait for the tree to finish falling.
+- **Collect the Frozen Key.** Look on the snow near the fallen tree. Picking up the key opens the **Frozen Castle** entrance, which displays a coming-soon message.
 
-Use **Choose level** in the top-right corner to replay a completed level. Play activities start fresh when revisiting a level or using **Restart area** in the level picker. Previously opened doors stay available.
+The original ice door returns to Flower Garden.
+
+Use **Choose level** in the top-right corner to replay a completed level. Activities start fresh when revisiting a level or using **Restart area**. If you completed Flower Garden or Snow Basin in an earlier release, its unlocked door is still available.
 
 | Input | Move | Look | Jump | Interact | Throw in Snow Basin |
 | --- | --- | --- | --- | --- | --- |

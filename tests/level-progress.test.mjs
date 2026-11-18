@@ -2,6 +2,9 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import * as THREE from '../vendor/three.module.min.js';
 import { flowerGarden } from '../areas/flower-garden/index.js';
+import { fishPose } from '../areas/flower-garden/garden-pond.js';
+import { createTerrain, POND, pondDistance } from '../areas/flower-garden/garden-terrain.js';
+import { nearestInteraction } from '../core/interactions.js';
 import { createLevelProgress } from '../core/level-progress.js';
 import { createWorldManager } from '../core/world-manager.js';
 import { walkElevation } from '../core/movement.js';
@@ -35,85 +38,221 @@ test('completion is independent of the last area and survives reopening', () => 
   assert.equal(initial.has('snow'), true);
 });
 
-test('Garden opens its ice door when a basket holding at least five apples is placed on the table', () => {
+function gardenFixture(saved = false) {
   const storage = storageFixture();
   const progress = createLevelProgress(areas, () => storage);
+  if (saved) progress.complete('garden');
   const camera = new THREE.PerspectiveCamera();
+  const completions = [];
+  const cues = [];
   const worlds = createWorldManager(THREE, {
     areas, camera, playerRadius: 0.34,
-    services: { isLevelComplete: progress.has, completeLevel: progress.complete },
+    services: {
+      isLevelComplete: progress.has,
+      completeLevel(id) {
+        completions.push(id);
+        progress.complete(id);
+      },
+      playCue: cue => cues.push(cue),
+    },
   });
-  const visit = worlds.load('garden');
-  const { area } = visit;
-  const door = area.interactions.find(item => item.label === 'Enter Snow Basin');
-  const model = visit.scene.getObjectByName('Enter Snow Basin');
-  const sparkles = model.getObjectByName('Door unlock sparkles');
-  const pickup = area.interactions.find(item => item.label === 'Pick up basket');
-  const shake = area.interactions.find(item => item.label === 'Shake tree');
-  const collect = area.interactions.filter(item => item.label === 'Collect apple');
-  function ripenDrops() {
-    assert.equal(shake.active, true);
-    shake.act();
-    for (let step = 0; step < 65; step++) worlds.update(0.05, camera.position);
+  const { area, scene } = worlds.load('garden');
+  const find = label => area.interactions.find(item => item.label === label);
+  const basket = find('Pick up basket');
+  const shake = find('Shake tree');
+  const feed = find('Feed fish');
+  const cows = area.interactions.filter(item => item.label === 'Greet cow');
+  const door = find('Enter Snow Basin');
+  const model = scene.getObjectByName('Enter Snow Basin');
+  const basketModel = scene.getObjectByName('Apple basket');
+  const visibleApples = () => basketModel.children.filter(child => child.name === 'Basket apple' && child.visible).length;
+  const fruit = area.interactions.filter(item => item.label === 'Collect apple');
+  function collect(amount) {
+    for (let i = 0; i < amount; i++) {
+      if (!fruit.some(item => item.active)) {
+        assert.ok(shake.active);
+        shake.act();
+        for (let step = 0; step < 65; step++) worlds.update(0.05, camera.position);
+      }
+      fruit.find(item => item.active).act();
+    }
   }
+  return {
+    worlds, scene, area, camera, progress, storage, completions, cues, find, basket, feed, cows, door, model,
+    sparkles: model.getObjectByName('Door unlock sparkles'), collect, visibleApples,
+  };
+}
 
-  let destination;
-  door.act({ travel: id => { destination = id; } });
-  assert.equal(destination, undefined);
-  assert.equal(door.active, false);
-  assert.equal(model.visible, false);
-  assert.equal(area.objective, 'Pick up the basket by the apple tree');
-  assert.equal(sparkles.visible, false);
-  assert.equal(walkElevation(area, camera.position, door.x, door.z, 0, true), 0);
-  pickup.act();
-  assert.match(area.objective, /collect apples · 0\/5/);
-  const table = area.interactions.find(item => item.label === 'Place basket');
-  ripenDrops();
-  for (const fruit of collect.filter(item => item.active).slice(0, 3)) fruit.act();
-  ripenDrops();
-  collect.find(item => item.active).act();
-  assert.match(area.objective, /collect apples · 4\/5/);
-  table.act();
-  assert.equal(door.active, false);
-  assert.equal(model.visible, false);
+function count(area, finished) {
+  assert.equal(area.objective.split('\n')[0], `Flower Garden · ${finished}/3 missions`);
+}
+
+test('only placing a basket with at least three apples completes delivery', () => {
+  const game = gardenFixture();
+  const { worlds, area, door, basket, find, collect, visibleApples, progress, completions } = game;
+  for (const apples of [0, 1, 2, 3, 4, 5]) {
+    worlds.reset();
+    assert.ok(basket.active);
+    assert.equal(visibleApples(), 0);
+    count(area, 0);
+    basket.act();
+    assert.match(area.objective, /collect apples \(0\/3\)/);
+    collect(apples);
+    count(area, 0);
+    assert.equal(visibleApples(), apples);
+    assert.equal(door.active, false);
+    if (apples >= 3) assert.match(area.objective, /Place the basket on the cabin table/);
+    const table = find('Place basket');
+    table.act();
+    count(area, apples >= 3 ? 1 : 0);
+    assert.equal(door.active, false);
+    table.act();
+    if (apples === 2) {
+      collect(1);
+      count(area, 0);
+      table.act();
+      count(area, 1);
+    } else if (apples === 3) {
+      collect(2);
+      assert.equal(visibleApples(), 5);
+      table.act();
+      count(area, 1);
+    }
+  }
   assert.equal(progress.has('garden'), false);
-  assert.equal(area.objective, 'Pick up your basket from the cabin table');
-  table.act();
-  collect.find(item => item.active).act();
-  assert.equal(area.objective, 'Place the basket on the cabin table');
-  assert.equal(door.active, false, 'five apples in a carried basket are not a delivery yet');
-  table.act();
-  assert.equal(door.active, true);
-  assert.equal(model.visible, true);
-  assert.match(area.objective, /Snow Basin is open!/);
-  assert.equal(sparkles.visible, true);
-  assert.equal(walkElevation(area, camera.position, door.x, door.z, 0, true), null);
-  door.act({ travel: id => { destination = id; } });
-  assert.equal(destination, 'snow');
-  assert.equal(progress.has('garden'), true);
-  assert.equal(progress.has('snow'), false);
-  for (let step = 0; step < 50; step++) worlds.update(0.05, camera.position);
-  assert.equal(sparkles.visible, false);
+  assert.deepEqual(completions, []);
+  worlds.unload();
+});
 
+test('the dry shore feeding spot animates pellets, ripples and fish and stays reusable', () => {
+  const { worlds, area, scene, camera, feed, cues } = gardenFixture();
+  const approach = { x: feed.x + 0.75, z: feed.z, y: 1.68 };
+  assert.equal(nearestInteraction(area.interactions, approach), feed);
+  assert.notEqual(walkElevation(area, approach, approach.x - 0.2, approach.z, 0, true), null);
+  assert.equal(nearestInteraction([feed], { x: feed.x - 1, z: feed.z }), null, 'cannot feed while in the pond');
+  assert.equal(nearestInteraction([feed], { x: POND.x - POND.radiusX - 1, z: feed.z }), null);
+  const fish = scene.children.filter(node => /^Pond fish \d/.test(node.name));
+  const pellets = scene.children.filter(node => node.name === 'Fish food pellet');
+  const ripples = scene.children.filter(node => node.name === 'Fish feeding ripple');
+  assert.ok(pellets.length > 0 && ripples.length > 0);
+  assert.ok(pellets.every(node => !node.visible));
+  const start = fish.map(node => node.position.clone());
+  count(area, 0);
+  assert.equal(feed.act(), true);
+  assert.equal(feed.act(), false);
+  count(area, 1);
+  assert.equal(cues.length, 1);
+  assert.ok(pellets.some(node => node.visible));
+  let sawRipples = false;
+  const pose = {};
+  const { getTerrainHeight } = createTerrain(flowerGarden.width, flowerGarden.depth);
+  for (let step = 1; step <= 40; step++) {
+    worlds.update(0.1, camera.position);
+    sawRipples ||= ripples.some(node => node.visible);
+    if (step === 20) {
+      const gathering = fish.filter((node, i) => {
+        fishPose(i, 2, pose);
+        return Math.hypot(node.position.x - pose.x, node.position.z - pose.z) > 0.2;
+      });
+      assert.equal(gathering.length, 3);
+    }
+    for (const { position } of fish) {
+      assert.ok(pondDistance(position.x, position.z) < 0.9);
+      assert.ok(position.y < POND.waterY);
+      assert.ok(position.y > getTerrainHeight(position.x, position.z) + 0.03);
+    }
+  }
+  assert.ok(sawRipples);
+  assert.ok(pellets.concat(ripples).every(node => !node.visible));
+  assert.ok(feed.active);
+  assert.ok(feed.act());
+  count(area, 1);
+  assert.equal(cues.length, 2);
   worlds.reset();
-  assert.equal(pickup.active, true);
-  assert.equal(model.visible, true);
-  assert.equal(area.objective, 'Pick up the basket by the apple tree');
-  pickup.act();
-  assert.match(area.objective, /collect apples · 0\/5/);
-  ripenDrops();
-  for (const fruit of collect.filter(item => item.active)) fruit.act();
-  ripenDrops();
-  for (const fruit of collect.filter(item => item.active).slice(0, 2)) fruit.act();
-  assert.equal(area.objective, 'Place the basket on the cabin table');
-  table.act();
-  assert.match(area.objective, /Snow Basin is open!/);
-  assert.equal(sparkles.visible, false);
+  count(area, 0);
+  assert.ok(feed.active);
+  assert.ok(pellets.concat(ripples).every(node => !node.visible));
+  assert.ok(fish.every((node, i) => node.position.equals(start[i])));
+  worlds.unload();
+});
 
+test('either cow can complete the greeting, while chickens and repeated greetings add no progress', () => {
+  const { worlds, area, scene, camera, cows, find } = gardenFixture();
+  assert.equal(cows.length, 2);
+  for (const [i, cow] of cows.entries()) {
+    worlds.reset();
+    const model = scene.getObjectByName(`Cow ${i + 1}`);
+    const chicken = find('Make chicken jump');
+    assert.ok(area.animals.blocks(cow.x, cow.z, 0));
+    chicken.act();
+    worlds.update(0.25, camera.position);
+    assert.ok(!chicken.active);
+    count(area, 0);
+    cow.act();
+    count(area, 1);
+    worlds.update(0.25, camera.position);
+    assert.notEqual(model.getObjectByName('Cow head').rotation.x, 0);
+    assert.ok(!cow.active);
+    cow.act();
+    cows[1 - i].act();
+    count(area, 1);
+    worlds.update(2, camera.position);
+    assert.ok(cow.active);
+    cow.act();
+    count(area, 1);
+  }
+  worlds.unload();
+});
+
+test('all three missions unlock Snow Basin in different orders and survive replay as saved access', () => {
+  const { worlds, area, scene, camera, completions, progress, storage, find, basket, collect, cows, feed, door, model,
+    sparkles } = gardenFixture();
+  const tasks = {
+    apples() {
+      basket.act();
+      collect(3);
+      find('Place basket').act();
+    },
+    fish: feed.act,
+    cow() { cows[0].act(); },
+  };
+  for (const [visit, order] of [['fish', 'cow', 'apples'], ['cow', 'apples', 'fish'], ['apples', 'fish', 'cow']].entries()) {
+    count(area, 0);
+    assert.equal(sparkles.visible, false);
+    assert.equal(door.active, visit > 0);
+    assert.equal(model.visible, visit > 0);
+    if (visit === 0) assert.equal(walkElevation(area, camera.position, door.x, door.z, 0, true), 0);
+    for (const [index, id] of order.entries()) {
+      tasks[id]();
+      count(area, index + 1);
+      assert.equal(door.active, visit > 0 || index === 2);
+      assert.equal(progress.has('garden'), visit > 0 || index === 2);
+    }
+    assert.match(area.objective, /Flower Garden complete! Snow Basin is unlocked!/);
+    assert.equal(sparkles.visible, visit === 0);
+    assert.equal(walkElevation(area, camera.position, door.x, door.z, 0, true), null);
+    let destination;
+    door.act({ travel: id => { destination = id; } });
+    assert.equal(destination, 'snow');
+    assert.equal(completions.length, visit + 1);
+    worlds.update(4, camera.position);
+    assert.equal(sparkles.visible, false);
+    worlds.reset();
+  }
+  assert.equal(progress.has('snow'), false);
   worlds.load('snow');
   const replay = worlds.load('garden');
   assert.equal(replay.scene.getObjectByName('Enter Snow Basin').visible, true);
-  assert.equal(replay.area.objective, 'Pick up the basket by the apple tree');
+  count(replay.area, 0);
   assert.equal(createLevelProgress(areas, () => storage).has('garden'), true);
+  worlds.unload();
+});
+
+test('a legacy Garden completion preserves Snow Basin access on a fresh visit', () => {
+  const { worlds, area, door, sparkles } = gardenFixture(true);
+  count(area, 0);
+  assert.ok(door.active);
+  assert.equal(sparkles.visible, false);
+  assert.ok(area.interactions.find(item => item.label === 'Enter Wooden House'));
   worlds.unload();
 });
