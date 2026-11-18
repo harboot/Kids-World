@@ -1,10 +1,12 @@
 import { addIceDoor } from './ice-door.js';
+import { addViewingZone } from './viewing-zone.js';
 import { CHOPS, CHOP_COOLDOWN, FALL_DURATION, createSnowActivity } from './snow-basin/activity.js';
 import { addAxe, addCastleDoor, addChopTree, addSnowPlay, showSnowmen } from './snow-basin/props.js';
 import { addWinterScenery } from './snow-basin/scenery.js';
 
 const axeSite = { x: 0.9, z: 5.9 };
 const treeSite = { x: 7.5, z: -1.85 };
+const treeClearance = 2.72;
 const piles = [
   { x: -5, z: 6.4 }, { x: 4.9, z: 6.8 }, { x: -4, z: -8.6 },
   { x: 4, z: -9.6 }, { x: -10, z: -1.4 },
@@ -26,7 +28,7 @@ const cues = {
 export const snowBasin = {
   title: 'Snow Basin',
   heading: ['Snow', 'Basin'],
-  description: 'Look for the axe near the frozen pond. The marked pine has a winter surprise!',
+  description: 'Find the axe by the frozen pond. Stand on the footprints and look at the marked pine to chop it.',
   canvasLabel: '3D snow basin',
   themeColor: '#e2f0f5',
   music: 'snow',
@@ -43,6 +45,13 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
   const { obstacles } = kit;
   const axe = addAxe(THREE, scene, viewmodel, kit, axeSite);
   const pine = addChopTree(THREE, scene, kit, treeSite);
+  const chopTarget = { ...treeSite, anchorY: 2.85, label: 'Chop tree' };
+  const chopZone = addViewingZone(THREE, scene, chopTarget, { x: 0.5, z: 2.2, width: 1.62, depth: 1.34 }, 0x315e76);
+  const treeBoundary = new THREE.Mesh(new THREE.RingGeometry(treeClearance - 0.045, treeClearance, 48).rotateX(-Math.PI / 2),
+    new THREE.MeshBasicMaterial({ color: 0x315e76, toneMapped: false }));
+  treeBoundary.name = 'Pine clearance';
+  treeBoundary.position.set(treeSite.x, 0.041, treeSite.z);
+  scene.add(treeBoundary);
   const play = addSnowPlay(THREE, scene, viewmodel, kit, piles);
   const returnDoor = addIceDoor(THREE, scene, obstacles, {
     x: 0, z: -14.36, destination: 'garden', label: 'Return to Flower Garden',
@@ -100,7 +109,8 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
     touches(x, z) {
       const dx = x - treeSite.x;
       const dz = z - treeSite.z;
-      if (state.tree === 'upright') return Math.hypot(dx, dz) < 1.22 + playerRadius;
+      if (state.tree !== 'fallen' && Math.hypot(dx, dz) < treeClearance) return true;
+      if (state.tree === 'upright') return false;
       const edge = Math.max(0, -dx, dx - 5.45);
       return Math.hypot(edge, dz) < 1.05 + playerRadius;
     },
@@ -138,13 +148,17 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
 
   function updateModels() {
     axe.axe.visible = axe.ring.visible = !state.axe;
+    chopZone.marker.visible = state.axe && state.tree !== 'fallen';
+    treeBoundary.visible = state.tree !== 'fallen';
+    const fall = state.fallTime / FALL_DURATION;
     axe.holder.visible = state.axe && !state.held;
     if (axe.holder.visible) {
       axe.holder.position.x = Math.min(0.28, 0.32 * (camera?.aspect ?? 1));
+      const lowered = Math.min(1, fall * 7, (1 - fall) * 10);
+      axe.holder.position.y = -0.37 - 0.56 * lowered;
     }
     const swing = Math.sin(Math.PI * state.cooldown / CHOP_COOLDOWN);
     axe.holder.rotation.set(-0.93 * swing, 0.3 * swing, -0.56 * swing);
-    const fall = state.fallTime / FALL_DURATION;
     const lean = fall * fall * (1 + 0.65 * (1 - fall));
     pine.tree.rotation.z = -Math.PI / 2 * lean;
     pine.shadow.position.x = treeSite.x + lean * 3.75;
@@ -199,8 +213,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
         act: activity.pickUpAxe,
       },
       {
-        ...treeSite, anchorY: 1.06, radius: 2.4, label: 'Chop tree', silent: true,
-        reachable: player => player.x < treeSite.x - 0.18,
+        ...chopTarget, radius: chopZone.radius, reachable: chopZone.reachable, requiresView: true, silent: true,
         get active() { return activity.canChop(); },
         act: activity.chop,
       },

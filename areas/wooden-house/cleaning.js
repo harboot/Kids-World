@@ -1,3 +1,5 @@
+import { addViewingZone, insideZone } from '../viewing-zone.js';
+
 const cues = {
   bed: [
     [58, { endPitch: 65, duration: 0.16, level: 0.1, wave: 'triangle' }],
@@ -26,14 +28,18 @@ const cues = {
   ],
 };
 
-export function createCleaningMissions(models, { playCue, reducedMotion, signal, celebrate }) {
-  const tasks = models.map(model => ({ model, completed: false, elapsed: null }));
+export function createCleaningMissions(THREE, scene, models, { playCue, reducedMotion, signal, celebrate }) {
+  const tasks = models.map(model => ({
+    model, completed: false, elapsed: null,
+    zone: addViewingZone(THREE, scene, model, model.viewingZone, 0x376967, model.clearance),
+  }));
   const cleanedCount = () => tasks.reduce((count, task) => count + Number(task.completed), 0);
 
   function finish(task) {
     task.model.render(1, false);
     task.elapsed = null;
     task.completed = true;
+    task.zone.marker.visible = false;
     if (cleanedCount() === tasks.length) {
       celebrate(task.model);
       playCue(cues.success);
@@ -47,10 +53,11 @@ export function createCleaningMissions(models, { playCue, reducedMotion, signal,
       return count === tasks.length ? `${progress} · Great job! The house is sparkling clean!` : progress;
     },
     interactions: tasks.map(task => {
-      const { id, x, z, radius, label, anchorY, reachable } = task.model;
+      const { id, x, z, label, anchorY } = task.model;
+      const { radius, reachable } = task.zone;
       const available = () => !signal.aborted && !task.completed && task.elapsed === null;
       return {
-        id, x, z, radius, label, anchorY, reachable, silent: true,
+        id, x, z, radius, label, anchorY, reachable, requiresView: true, silent: true,
         get active() { return available(); },
         act() {
           if (!available()) return;
@@ -63,6 +70,9 @@ export function createCleaningMissions(models, { playCue, reducedMotion, signal,
         },
       };
     }),
+    blocksGround(x, z) {
+      return tasks.some(task => !task.completed && insideZone(task.model.clearance, x, z));
+    },
     update(dt) {
       if (signal.aborted) return;
       const still = reducedMotion();
@@ -82,6 +92,7 @@ export function createCleaningMissions(models, { playCue, reducedMotion, signal,
       for (const task of tasks) {
         task.completed = false;
         task.elapsed = null;
+        task.zone.marker.visible = true;
         task.model.render(0, false);
         task.model.idle?.(0);
       }
