@@ -1,4 +1,5 @@
 import { createAudio } from './audio.js';
+import { advanceFall, floorHeight, PLAYER_RADIUS, walkElevation } from './movement.js';
 
 const game = document.querySelector('#game');
 const canvas = document.querySelector('#view');
@@ -15,11 +16,8 @@ const joystick = document.querySelector('#joystick');
 const thumb = document.querySelector('#joystick-thumb');
 
 const EYE_HEIGHT = 1.68;
-const PLAYER_RADIUS = 0.34;
 const JUMP_SPEED = 6.3;
-const GRAVITY = 15;
 const WALK_SPEED = 4.6;
-const STEP_HEIGHT = 0.225;
 const INTERACTION_RADIUS = 2.35;
 const areaKey = 'kids-world-last-area';
 const touchDevice = matchMedia('(pointer: coarse)').matches ||
@@ -46,8 +44,10 @@ function showError(message) {
 async function boot() {
   const entry = new URL(window.location.href);
   const arrivingInGarden = entry.searchParams.get('arrive') === 'garden';
+  const restoringHistory = performance.getEntriesByType('navigation')[0]?.type === 'back_forward';
   try {
-    if (game.dataset.level === 'garden' && !arrivingInGarden && localStorage.getItem(areaKey) === 'snow') {
+    if (game.dataset.level === 'garden' && !arrivingInGarden && !restoringHistory &&
+        localStorage.getItem(areaKey) === 'snow') {
       window.location.replace('./snow.html');
       return;
     }
@@ -157,6 +157,7 @@ function explore(THREE, renderer, level) {
   const speed = new THREE.Vector2();
   const stickAxis = new THREE.Vector2();
   const interactionPoint = new THREE.Vector3();
+  const falling = { feet: 0, speed: 0, grounded: true };
   let stickPointer = null;
   let lookPointer = null;
   let seated = null;
@@ -215,11 +216,11 @@ function explore(THREE, renderer, level) {
     delete game.dataset.seated;
     yaw = 0;
     pitch = 0;
-    elevation = 0;
+    elevation = world.getGroundHeight?.(level.spawn.x, level.spawn.z) ?? 0;
     verticalSpeed = 0;
     grounded = true;
     speed.set(0, 0);
-    camera.position.set(level.spawn.x, EYE_HEIGHT, level.spawn.z);
+    camera.position.set(level.spawn.x, EYE_HEIGHT + elevation, level.spawn.z);
     updateCamera();
     world.reset?.();
     renderPending = true;
@@ -334,7 +335,12 @@ function explore(THREE, renderer, level) {
   window.addEventListener('pageshow', event => {
     if (!event.persisted) return;
     rememberArea();
-    if (game.dataset.state === 'traveling') menu(true);
+    resetWorld();
+    menu(false);
+  });
+  window.addEventListener('pagehide', () => {
+    audio.setPlaying(false);
+    clearInput();
   });
 
   function sit(pose) {
@@ -466,43 +472,20 @@ function explore(THREE, renderer, level) {
     menu(true);
   });
 
-  function overlaps(obstacle, x, z) {
-    if (obstacle.touches) return obstacle.touches(x, z);
-    const dx = x - clamp(x, obstacle.left, obstacle.right);
-    const dz = z - clamp(z, obstacle.front, obstacle.back);
-    return dx * dx + dz * dz < PLAYER_RADIUS * PLAYER_RADIUS;
-  }
-
-  function blocked(x, z) {
-    return world.animals?.blocks(x, z, elevation) ||
-      world.obstacles.some(obstacle => elevation < obstacle.height && overlaps(obstacle, x, z));
-  }
-
   function walkTo(position, x, z) {
-    if (blocked(x, z)) {
-      if (!grounded || world.animals?.blocks(x, z, elevation)) return;
-      let step = elevation;
-      for (const obstacle of world.obstacles) {
-        if (overlaps(obstacle, x, z)) step = Math.max(step, obstacle.height);
-      }
-      if (step - elevation > STEP_HEIGHT) return;
-      elevation = step;
-    }
+    const next = walkElevation(world, position, x, z, elevation, grounded);
+    if (next === null) return;
+    elevation = next;
     position.x = x;
     position.z = z;
   }
 
   function vertical(dt, position) {
-    let surface = world.animals?.surface(position.x, position.z, elevation) ?? 0;
-    for (const obstacle of world.obstacles) {
-      if (obstacle.height <= elevation && overlaps(obstacle, position.x, position.z)) {
-        surface = Math.max(surface, obstacle.height);
-      }
-    }
-    verticalSpeed -= GRAVITY * dt;
-    elevation = Math.max(surface, elevation + verticalSpeed * dt);
-    grounded = elevation === surface && verticalSpeed <= 0;
-    if (grounded) verticalSpeed = 0;
+    const floor = floorHeight(world, position.x, position.z, elevation);
+    advanceFall(elevation, verticalSpeed, floor, dt, falling);
+    elevation = falling.feet;
+    grounded = falling.grounded;
+    verticalSpeed = falling.speed;
     position.y = EYE_HEIGHT + elevation;
   }
 
