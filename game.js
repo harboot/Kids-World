@@ -297,6 +297,103 @@ function addSky(THREE, scene) {
   scene.add(sky);
 }
 
+function createAnimals(THREE, scene) {
+  const block = new THREE.BoxGeometry(1, 1, 1);
+  const shadowShape = new THREE.CircleGeometry(1, 14).rotateX(-Math.PI / 2);
+  const shadowMaterial = new THREE.MeshBasicMaterial({
+    color: 0x161811, transparent: true, opacity: 0.24, depthWrite: false,
+  });
+  const palette = Object.fromEntries(Object.entries({
+    cream: 0xece2c9, dark: 0x352c29, pink: 0xd59a92,
+    red: 0xc5442e, gold: 0xe9a447, buff: 0xb97749, wing: 0x8f573b,
+  }).map(([name, color]) => [name, new THREE.MeshLambertMaterial({ color })]));
+
+  function part(parent, color, x, y, z, width, height, depth) {
+    const mesh = new THREE.Mesh(block, palette[color]);
+    mesh.position.set(x, y, z);
+    mesh.scale.set(width, height, depth);
+    parent.add(mesh);
+    return mesh;
+  }
+
+  function leg(parent, x, y, z, length, width, color, footColor) {
+    const joint = new THREE.Group();
+    joint.position.set(x, y, z);
+    part(joint, color, 0, -length / 2, 0, width, length, width);
+    part(joint, footColor, 0, -length + width / 3, width / 3, width, width * 2 / 3, width * 1.55);
+    parent.add(joint);
+    return joint;
+  }
+
+  function cow(body, legs) {
+    part(body, 'cream', 0, 0.93, 0, 0.83, 0.68, 1.42);
+    part(body, 'dark', 0, 1, -0.38, 0.845, 0.58, 0.43);
+    part(body, 'dark', 0.42, 0.88, 0.3, 0.03, 0.29, 0.43);
+    part(body, 'cream', 0, 1.09, 0.64, 0.41, 0.55, 0.53);
+    part(body, 'cream', 0, 1.22, 0.93, 0.47, 0.48, 0.51);
+    part(body, 'pink', 0, 1.08, 1.21, 0.49, 0.23, 0.24);
+    part(body, 'dark', 0, 0.84, -0.78, 0.08, 0.55, 0.09).rotation.x = 0.34;
+    for (const side of [-1, 1]) {
+      part(body, 'dark', side * 0.238, 1.29, 1.03, 0.025, 0.078, 0.08);
+      part(body, 'pink', side * 0.29, 1.43, 0.88, 0.23, 0.10, 0.16).rotation.z = side * 0.3;
+      part(body, 'cream', side * 0.15, 1.53, 0.86, 0.08, 0.19, 0.09).rotation.z = -side * 0.38;
+      for (const end of [-1, 1]) {
+        legs.push({ joint: leg(body, side * 0.28, 0.63, end * 0.48, 0.63, 0.13, 'cream', 'dark'), phase: side * end });
+      }
+    }
+  }
+
+  function chicken(body, legs, feathers, wing) {
+    part(body, feathers, 0, 0.29, 0, 0.28, 0.29, 0.39);
+    part(body, feathers, 0, 0.443, 0.15, 0.18, 0.26, 0.17);
+    part(body, 'red', 0, 0.583, 0.15, 0.068, 0.08, 0.12);
+    part(body, 'red', 0, 0.40, 0.223, 0.07, 0.084, 0.046);
+    part(body, 'gold', 0, 0.457, 0.268, 0.10, 0.07, 0.11);
+    part(body, wing, 0, 0.39, -0.20, 0.16, 0.09, 0.19).rotation.x = 0.58;
+    for (const side of [-1, 1]) {
+      part(body, wing, side * 0.144, 0.29, -0.028, 0.05, 0.15, 0.24);
+      part(body, 'dark', side * 0.092, 0.493, 0.19, 0.018, 0.033, 0.032);
+      legs.push({ joint: leg(body, side * 0.077, 0.17, 0, 0.17, 0.031, 'gold', 'gold'), phase: side });
+    }
+  }
+
+  function animal(name, build, x, z, rx, rz, pace, offset, width, depth) {
+    const root = new THREE.Group();
+    root.name = name;
+    const body = new THREE.Group();
+    const shadow = new THREE.Mesh(shadowShape, shadowMaterial);
+    shadow.position.y = 0.016;
+    shadow.scale.set(width, 1, depth);
+    const legs = [];
+    build(body, legs);
+    root.add(body, shadow);
+    scene.add(root);
+    return { root, body, legs, x, z, rx, rz, pace, offset };
+  }
+
+  // Small walking loops stay clear of the central lane and static obstacles.
+  const animals = [
+    animal('Cow', cow, -5.2, -10.8, 0.72, 1.65, 0.43, 1.9, 0.66, 0.92),
+    animal('White chicken', (body, legs) => chicken(body, legs, 'cream', 'cream'),
+      -3.22, 4.45, 0.88, 0.72, 1.1, 0.6, 0.25, 0.34),
+    animal('Brown chicken', (body, legs) => chicken(body, legs, 'buff', 'wing'),
+      3.6, 4.65, 0.84, 0.82, -1.04, 2.5, 0.25, 0.34),
+  ];
+
+  return function updateAnimals(time) {
+    for (const animal of animals) {
+      const angle = time * animal.pace + animal.offset;
+      const sin = Math.sin(angle);
+      const cos = Math.cos(angle);
+      animal.root.position.set(animal.x + cos * animal.rx, 0, animal.z + sin * animal.rz);
+      animal.root.rotation.y = Math.atan2(-sin * animal.rx * animal.pace, cos * animal.rz * animal.pace);
+      const stride = (time * Math.abs(animal.pace) + animal.offset) * 10;
+      animal.body.position.y = 0.016 + Math.abs(Math.sin(stride)) * 0.025;
+      for (const { joint, phase } of animal.legs) joint.rotation.x = Math.sin(stride) * phase * 0.45;
+    }
+  };
+}
+
 function createTargets(THREE, scene) {
   const spots = [
     [0, 1.68, 0], [-4.2, 1.72, -1.7], [4.5, 1.72, -0.6],
@@ -533,6 +630,7 @@ function playRange(THREE, renderer) {
   const weaponScene = new THREE.Scene();
   const weaponCamera = new THREE.PerspectiveCamera(62, 1, 0.03, 5);
   const arena = buildArena(THREE, scene, touchDevice);
+  const updateAnimals = createAnimals(THREE, scene);
   const range = createTargets(THREE, scene);
   const { weapon, muzzle } = createWeapon(THREE, weaponScene);
   const effects = createEffects(THREE, scene);
@@ -629,6 +727,7 @@ function playRange(THREE, renderer) {
     updateCamera();
     range.reset();
     range.update(camera, time);
+    updateAnimals(time);
     effects.reset();
     animateWeapon(0);
     renderPending = true;
@@ -973,6 +1072,7 @@ function playRange(THREE, renderer) {
       if (!isTouch()) aimDesktop(dt);
       move(dt);
       range.update(camera, time);
+      updateAnimals(time);
       animateWeapon(dt);
       effects.advanceBullets(dt);
       effects.update(dt);

@@ -1,6 +1,6 @@
 # Dustline
 
-Dustline is a browser-based 3D target range built with HTML, CSS, JavaScript, and Three.js. Clear each group of targets and hit 10 to record your completion time.
+Dustline is a browser-based 3D target range built with HTML, CSS, JavaScript, and Three.js. Clear each group of targets and hit 10 to record your completion time. A cow and two chickens wander around the arena as scenery.
 
 | Input | Move | Aim | Fire | Jump |
 | --- | --- | --- | --- | --- |
