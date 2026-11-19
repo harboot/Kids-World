@@ -1,6 +1,7 @@
 import { SURFACE_GAP } from '../../core/geometry.js';
+import { createApartmentDamage } from './cinematic.js';
 import { HALL } from './corridor.js';
-import { COLORS, ceilingLight, pointLight, tileFloor, wallX, wallZ } from './geometry.js';
+import { COLORS, ceilingLight, lighterProp, pointLight, tileFloor, wallX, wallZ } from './geometry.js';
 
 const LEFT = 0.8;
 const RIGHT = 10.68;
@@ -188,7 +189,13 @@ function kitchen(THREE, architecture, b, stone) {
     b.part(0x4c4b49, x - 0.447, 0.758, z, 0.07, 0.075, 0.075, { shape: 'cylinder', roll: Math.PI / 2 });
   }
   architecture.sign(b.root, ['12:00'], x - 0.458, 0.758, rangeZ, 0.23, 0.067, { yaw: -Math.PI / 2, color: '#e0d6ad' });
-  architecture.group(b.root, 'Oven front', x - 0.52, 0.49, rangeZ);
+  const oven = architecture.group(b.root, 'Oven front', x - 0.52, 0.49, rangeZ);
+  const control = architecture.group(b.root, 'Fictional prop control', RIGHT - 0.165, 1.39, rangeZ + 0.62, -Math.PI / 2);
+  const plate = architecture.builder(control);
+  plate.part(0x503c66, 0, 0, 0, 0.37, 0.29, 0.065);
+  plate.part(0xaa87de, 0, 0, 0.041, 0.142, 0.142, 0.019, { roll: Math.PI / 4 });
+  plate.part(0xf7d6ff, 0, 0, 0.058, 0.059, 0.059, 0.012, { roll: Math.PI / 4, glow: true });
+  plate.finish({ independentMaterials: true });
 
   const sinkZ = 1.59;
   b.part(0xafb7b7, x - 0.042, 0.954, sinkZ, 0.63, 0.026, 0.71);
@@ -209,6 +216,7 @@ function kitchen(THREE, architecture, b, stone) {
   for (const y of [0.982, 1.47]) b.part(0x727772, x - 0.557, y, fridgeZ + 0.29, 0.053, 0.292, 0.043);
   b.part(0xdbb576, x - 0.55, 1.70, fridgeZ - 0.19, 0.016, 0.18, 0.13);
   b.part(0x7b8874, x - 0.563, 1.798, fridgeZ - 0.17, 0.018, 0.044, 0.06);
+  return { control, oven };
 }
 
 function windowView(THREE, architecture, b) {
@@ -251,12 +259,22 @@ function windowView(THREE, architecture, b) {
   }
 }
 
-export function buildUnit17E(THREE, architecture, { b }) {
+export function buildUnit17E(THREE, architecture, { root, solids }, { entryX, entryWidth }) {
+  const interior = architecture.group(root, 'Unit 17E interior');
+  const b = architecture.builder(interior, solids);
   const front = HALL.south;
   const longest = BACK - front;
   const midpoint = (LEFT + RIGHT) / 2;
   tileFloor(b, midpoint, (front + BACK) / 2, RIGHT - LEFT, longest, 0.77,
     [0xe4d4ba, 0xe9d9c3, 0xe2d4bd, 0xe7d7bd, 0xe7dcca]);
+  const entryLeft = entryX - entryWidth / 2;
+  const entryRight = entryX + entryWidth / 2;
+  const facing = front + 0.12 + SURFACE_GAP.detail;
+  // Cover the back of the corridor wall without tinting its hallway face.
+  for (const [left, right] of [[LEFT + 0.12, entryLeft], [entryRight, DIVIDER]]) {
+    b.part(COLORS.ivory, (left + right) / 2, CEILING / 2, facing, right - left, CEILING, 0.021);
+  }
+  b.part(COLORS.ivory, entryX, (CEILING + 2.34) / 2, facing, entryWidth, CEILING - 2.34, 0.021);
   wallZ(b, COLORS.ivory, LEFT, front, BACK, CEILING);
   wallZ(b, COLORS.ivory, RIGHT, front, BACK, CEILING);
   wallX(b, COLORS.ivory, LEFT, RIGHT, BACK, CEILING);
@@ -274,12 +292,14 @@ export function buildUnit17E(THREE, architecture, { b }) {
     ceilingLight(b, x, z, 0.31, 0.31, CEILING - 0.11);
   }
   for (const z of [-3.2, 0.55, 2.07]) ceilingLight(b, 8.59, z, 0.32, 0.32, CEILING);
-  pointLight(THREE, b.root, 3.85, 2.57, 0.29, 0xffe1b3, 21, 6.2);
-  pointLight(THREE, b.root, 8.87, 2.50, -0.9, 0xffe6c6, 20, 5.8);
+  const lights = [
+    pointLight(THREE, b.root, 3.85, 2.57, 0.29, 0xffe1b3, 21, 6.2),
+    pointLight(THREE, b.root, 8.87, 2.50, -0.9, 0xffe6c6, 20, 5.8),
+  ];
 
   const stone = marble(THREE, architecture);
   livingRoom(THREE, architecture, b, stone);
-  kitchen(THREE, architecture, b, stone);
+  const { control, oven } = kitchen(THREE, architecture, b, stone);
   windowView(THREE, architecture, b);
 
   const serviceDoor = architecture.group(b.root, 'Closed interior door', LEFT + 0.128, 0, -3.75, Math.PI / 2);
@@ -287,7 +307,48 @@ export function buildUnit17E(THREE, architecture, { b }) {
   door.part(COLORS.walnut, 0, 1.19, 0.013, 1.12, 2.37, 0.085);
   door.part(0x704b38, 0, 1.14, 0.065, 0.89, 2.1, 0.031);
   door.part(COLORS.brass, 0.39, 0.97, 0.106, 0.15, 0.043, 0.062);
-  door.finish();
+  door.finish({ independentMaterials: true });
+  b.finish({ independentMaterials: true });
+
+  const surface = SURFACE_GAP.detail;
+  const damage = createApartmentDamage(THREE, architecture, interior, lights, [
+    [8.96, CEILING - surface, -0.60, 3.1, 3.6, 0, Math.PI / 2, 0.17],
+    [8.01, CEILING - SURFACE_GAP.trim, -2.85, 1.62, 1.34, 0, Math.PI / 2, 0.09],
+    [3.92, CEILING - 0.11 - surface, 0.42, 3.3, 2.76, 0, Math.PI / 2, 0.11],
+    [LEFT + 0.12 + surface, 1.95, 1.52, 2.98, 1.72, Math.PI / 2],
+    [5.82, 1.51, BACK - 0.12 - surface, 0.93, 1.9, Math.PI],
+    [RIGHT - 0.12 - 2 * surface, 1.30, -0.72, 1.62, 0.52, -Math.PI / 2],
+    [9.988, 2.18, -0.56, 2.03, 0.68, -Math.PI / 2],
+    [9.779, 0.46, 0.34, 1.15, 0.53, -Math.PI / 2],
+    [9.779, 0.44, -1.58, 0.91, 0.51, -Math.PI / 2, 0, 0.10],
+    [10.15, 0.947 + surface, -0.04, 0.55, 0.71, 0, -Math.PI / 2],
+    [oven.position.x - surface, 0.442, oven.position.z, 0.60, 0.33, -Math.PI / 2],
+    [2.10, 0.82 + surface, 1.51, 0.91, 0.25, 0, -Math.PI / 2],
+    [2.02, 0.58 + surface, 0.08, 0.90, 0.70, 0, -Math.PI / 2],
+  ]);
+  const readyLight = architecture.group(control, 'Prop ready indicator');
+  const readyParts = architecture.builder(readyLight);
+  readyParts.part(0xaefff2, 0, 0, 0.069, 0.085, 0.085, 0.015, { roll: Math.PI / 4, glow: true });
+  readyParts.finish();
+  const ovenGlow = architecture.group(oven, 'Stylized oven glow');
+  const glow = architecture.builder(ovenGlow);
+  glow.part(0x5b43a9, 0.012, -0.084, 0, 0.019, 0.218, 0.47, { glow: true });
+  for (let i = 0; i < 3; i++) {
+    glow.part(i === 1 ? 0xcffff6 : 0xa1bfff, -0.004, -0.081, (i - 1) * 0.14,
+      0.01, i === 1 ? 0.094 : 0.057, i === 1 ? 0.094 : 0.057, { pitch: Math.PI / 4, glow: true });
+  }
+  glow.finish();
+  lighterProp(architecture, ovenGlow, 'Lighter in prop oven', -0.045, -0.145, 0.01, Math.PI / 2);
+  return {
+    control, oven,
+    ...damage,
+    insideKitchen: (x, z) => x > DIVIDER + 0.12 && x < RIGHT && z > -4.71 && z < BACK,
+    contains: (x, z) => x > LEFT && x < RIGHT && z > front + 0.1 && z < BACK,
+    showPuzzle(ready, counting) {
+      readyLight.visible = ready || counting;
+      ovenGlow.visible = counting;
+    },
+  };
 }
 
 export function unitCeiling(x, z) {

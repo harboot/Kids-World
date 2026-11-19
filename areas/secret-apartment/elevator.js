@@ -81,7 +81,7 @@ function buildCabin(THREE, architecture, zone, doorMaterial, lampMaterial) {
 }
 
 export function createElevator(THREE, architecture, zones, {
-  onArrival, reducedMotion, canAccess = () => true,
+  onArrival, reducedMotion, accessMessage, notify, onDepart, enabled,
 }) {
   const doorMaterial = new THREE.MeshStandardMaterial({ color: 0x979d9e, metalness: 0.31, roughness: 0.42 });
   const lampMaterial = new THREE.MeshBasicMaterial({ color: 0xffae47 });
@@ -106,19 +106,25 @@ export function createElevator(THREE, architecture, zones, {
       x: zone.x + cabin.call.x, z: cabin.call.z, anchorY: cabin.call.y, radius: 2.25,
       label: 'Call elevator',
       reachable: position => position.z > zone.doorZ + 0.16,
-      get active() { return stop === id && state === 'closed'; },
+      get active() { return enabled() && stop === id && state === 'closed'; },
       act() { if (this.active) begin('opening'); },
     }, ...cabin.buttons.map(destination => ({
       x: zone.x + destination.x, z: destination.z, anchorY: BUTTON_Y, radius: 2.5, aimRadius: 0.35,
       label: 'Go to ' + destination.label,
       reachable: cabin.inCabin,
       get active() {
-        return stop === id && state === 'open' && destination.id !== id && canAccess(destination.id);
+        return enabled() && stop === id && state === 'open' && destination.id !== id;
       },
       act({ relocate }) {
         if (!this.active) return;
-        pending = { id: destination.id, relocate };
+        const denial = accessMessage(destination.id);
+        if (denial) {
+          notify(denial);
+          return;
+        }
+        pending = { id: destination.id, label: destination.label, relocate };
         begin('closing');
+        onDepart();
       },
     }))];
   });
@@ -162,7 +168,6 @@ export function createElevator(THREE, architecture, zones, {
       cabins[stop].pose(state === 'opening' ? eased : 1 - eased);
       if (progress === 1) begin(state === 'opening' ? 'open' : 'traveling');
     },
-    get moving() { return state === 'closing' || state === 'traveling'; },
-    inCabin(position) { return cabins[stop].inCabin(position); },
+    get destination() { return pending?.label; },
   };
 }

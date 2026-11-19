@@ -1,6 +1,7 @@
 import { overlaps } from '../../core/movement.js';
 import { buildCorridor, HALL } from './corridor.js';
-import { COLORS } from './geometry.js';
+import { COLORS, lighterProp } from './geometry.js';
+import { STEP } from './missions.js';
 import { buildPool } from './pool.js';
 
 const GLASS_WIDTH = 3.8;
@@ -64,7 +65,7 @@ function terraceDoors(THREE, architecture, { b, x: offset }, reducedMotion) {
   };
 }
 
-export function buildFloor8(THREE, architecture, zone, reducedMotion) {
+export function buildFloor8(THREE, architecture, zone, reducedMotion, mission) {
   buildCorridor(THREE, architecture, zone, 8, [
     { x: -7.95, width: 1.27, number: '8E' },
     { x: -4.5, width: 1.27, number: '8F' },
@@ -73,8 +74,21 @@ export function buildFloor8(THREE, architecture, zone, reducedMotion) {
   ]);
   const doors = terraceDoors(THREE, architecture, zone, reducedMotion);
   const pool = buildPool(THREE, architecture, zone);
+  const table = pool.gazeboTable;
+  const lighter = lighterProp(architecture, table, 'Collectible lighter', 0.10, 0.026, -0.23, 0.36);
+  const syncLighter = () => { lighter.visible = mission.step < STEP.FLOOR_17; };
+
   return {
-    interactions: [doors.interaction],
+    interactions: [doors.interaction, {
+      x: zone.x + table.position.x + lighter.position.x, z: table.position.z + lighter.position.z,
+      anchorY: 0.84, radius: 1.66, label: 'Pick Up Lighter', silent: true,
+      reachable: position => pool.insideGazebo(position.x - zone.x, position.z),
+      get active() { return mission.ready(STEP.GAZEBO); },
+      act() {
+        mission.takeLighter();
+        syncLighter();
+      },
+    }],
     blocks: (x, z) => doors.blocks(x, z) || pool.blocks(x, z),
     ceiling(x, z) {
       if (Math.abs(x) < GLASS_WIDTH / 2 + 0.16 && Math.abs(z - HALL.south) < 0.3) return 2.50;
@@ -83,6 +97,7 @@ export function buildFloor8(THREE, architecture, zone, reducedMotion) {
     reset() {
       doors.reset();
       pool.reset();
+      syncLighter();
     },
     update(dt) {
       doors.update(dt);

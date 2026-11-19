@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import * as THREE from '../vendor/three.module.min.js';
 import { areas } from '../game.js';
+import { createApartmentMission, STEP } from '../areas/secret-apartment/missions.js';
 import { nearestInteraction } from '../core/interactions.js';
 import { createLevelProgress } from '../core/level-progress.js';
 import { walkElevation } from '../core/movement.js';
@@ -34,7 +35,23 @@ test('the hidden area can only be resolved by an explicit area URL and never ent
 function fixture(reducedMotion = false) {
   const camera = new THREE.PerspectiveCamera();
   const player = createPlayer(THREE, camera);
-  const worlds = createWorldManager(THREE, { areas, camera, services: { reducedMotion: () => reducedMotion } });
+  const cues = [];
+  const elements = new Set();
+  function createElement() {
+    const el = {
+      style: {}, children: [], textContent: '',
+      setAttribute() {},
+      append(...nodes) { this.children.push(...nodes); },
+      remove() { elements.delete(el); },
+    };
+    elements.add(el);
+    return el;
+  }
+  const hud = { ownerDocument: { createElement }, append(node) { this.overlay = node; } };
+  const worlds = createWorldManager(THREE, {
+    areas, camera,
+    services: { reducedMotion: () => reducedMotion, playCue: cue => cues.push(cue), hud },
+  });
   const { area, scene, definition, lifetime } = worlds.load(ID);
   const { position } = camera;
   const arrivals = [];
@@ -58,21 +75,149 @@ function fixture(reducedMotion = false) {
     }
   }
 
+  const find = label => area.interactions.find(item => item.label === label);
+  const prompt = label => nearestInteraction(area.interactions, position, item => item.label === label);
+
   function act(label) {
-    const prompt = nearestInteraction(area.interactions, position, item => item.label === label);
-    assert.equal(prompt?.label, label);
-    prompt.act(action);
+    const item = prompt(label);
+    assert.equal(item?.label, label);
+    item.act(action);
+    return item;
   }
 
   function update(seconds) {
     for (let i = 0; i < Math.ceil(seconds / 0.05); i++) worlds.update(0.05, position);
   }
 
-  return { area, scene, position, definition, player, worlds, lifetime, arrivals, move, act, update };
+  function approachCar() {
+    move(-86.35, 6.28);
+    move(-81.05, 6.28);
+    move(-80.60, 5.37);
+  }
+
+  function takeCard() {
+    approachCar();
+    act('Open Car Door');
+    update(0.65);
+    move(-80.36, 5.32);
+    act('Take Access Card');
+  }
+
+  function approachElevator() {
+    move(-81.05, 6.28);
+    move(-86.35, 6.28);
+    move(-86.36, -8.31);
+  }
+
+  function enterElevator() {
+    approachElevator();
+    act('Call elevator');
+    update(0.75);
+    move(-88, -8.65);
+    move(-88, -11.18);
+  }
+
+  function collectLighter() {
+    move(0, -6.7);
+    assert.equal(area.blocksGround(0, -5.35), true);
+    act('Open terrace doors');
+    update(0.75);
+    move(0, -3.0);
+    move(-15.6, -3.0);
+    move(-15.6, 16.0);
+    move(-15.7, 23.0);
+    move(-17.1, 26.7);
+    act('Pick Up Lighter');
+    move(-15.7, 23.0);
+    move(-15.6, 16.0);
+    move(-15.6, -3.0);
+    move(0, -3.0);
+    move(0, -12);
+  }
+
+  function kitchen() {
+    takeCard();
+    enterElevator();
+    act('Go to Floor 8');
+    update(2);
+    collectLighter();
+    act('Go to Floor 17');
+    update(2);
+    move(88, -7.7);
+    move(92.75, -7.05);
+    assert.equal(area.blocksGround(92.75, -5.35), true);
+    act('Open Unit 17E');
+    update(0.60);
+    move(92.75, -2.74);
+    move(91.34, -1.37);
+    assert.equal(area.blocksGround(89.94, 0.08), true, 'the sofa is solid');
+    move(91.34, -2.74);
+    move(96.25, -2.74);
+    move(97.15, -0.62);
+  }
+
+  return {
+    area, scene, position, definition, player, worlds, lifetime, arrivals, move, act, update,
+    find, prompt, cues, hud, elements, action, approachCar, takeCard, approachElevator, enterElevator, collectLighter, kitchen,
+  };
 }
 
-test('the elevator opens, seals the doorway during transit, and connects all three landings', () => {
-  const { area, scene, position, player, arrivals, move, act, update, worlds } = fixture();
+test('mission state enforces order and emits one countdown and one ending', () => {
+  const cues = [];
+  const mission = createApartmentMission(cue => cues.push(cue));
+  assert.equal(mission.step, STEP.CAR);
+  assert.equal(mission.accessMessage('basement'), '');
+  assert.equal(mission.accessMessage('floor17'), 'Access Card Required');
+  mission.visit('floor17');
+  mission.takeLighter();
+  mission.activateControl();
+  mission.startCountdown();
+  assert.equal(mission.step, STEP.CAR);
+  assert.deepEqual(cues, []);
+
+  mission.openCar();
+  mission.openCar();
+  mission.takeCard();
+  mission.takeCard();
+  assert.equal(cues.length, 1);
+  assert.equal(mission.accessMessage('floor8'), '');
+  assert.equal(mission.accessMessage('floor17'), 'Floor 17 Locked');
+  mission.takeLighter();
+  assert.equal(mission.step, STEP.FLOOR_8);
+  mission.visit('floor8');
+  mission.takeLighter();
+  mission.takeLighter();
+  assert.equal(cues.length, 2);
+  assert.equal(mission.accessMessage('floor17'), '');
+  mission.visit('floor8');
+  mission.visit('floor17');
+  mission.openUnit();
+  mission.startCountdown();
+  assert.equal(mission.step, STEP.CONTROL);
+  mission.activateControl();
+  mission.startCountdown();
+  mission.update(0.5);
+  mission.startCountdown();
+  mission.update(0.5);
+  const announcements = ['5', mission.announcement];
+  for (let second = 0; second < 4; second++) {
+    mission.update(1);
+    announcements.push(mission.announcement);
+  }
+  assert.deepEqual(announcements, ['5', '4', '3', '2', '1', 'BOOM!']);
+  assert.equal(mission.damaged, true);
+  assert.equal(cues.length, 5);
+  mission.update(3);
+  mission.startCountdown();
+  mission.update(10);
+  assert.equal(cues.length, 5);
+  assert.equal(mission.cinematic, false);
+  assert.equal(mission.step, STEP.COMPLETE);
+});
+
+test('the elevator calls without a card, rejects locked floors, and seals during allowed travel', () => {
+  const game = fixture();
+  const { area, scene, position, player, arrivals, move, act, update, worlds, action, cues } = game;
   const first = scene.getObjectByName('basement');
   const panel = first.getObjectByName('Sliding elevator door');
   const closedX = panel.position.x;
@@ -91,10 +236,29 @@ test('the elevator opens, seals the doorway during transit, and connects all thr
   update(0.25);
   assert.notEqual(panel.position.x, closedX);
   update(0.55);
-  assert.equal(area.blocksGround(-88, -9.75), false);
   move(-88, -8.65);
   move(-88, -11.18);
   act('Go to Floor 8');
+  assert.match(area.objective, /Access Card Required/);
+  act('Go to Floor 17');
+  assert.match(area.objective, /Access Card Required/);
+  update(2);
+  assert.equal(arrivals.length, 0);
+  assert.equal(cues.length, 0);
+  assert.equal(area.blocksGround(-88, -9.75), false);
+
+  move(-88, -8.65);
+  move(-86.35, -8.2);
+  game.takeCard();
+  game.approachElevator();
+  move(-88, -8.65);
+  move(-88, -11.18);
+  act('Go to Floor 17');
+  assert.match(area.objective, /Floor 17 Locked/);
+  const floor8 = act('Go to Floor 8');
+  floor8.act(action);
+  assert.match(area.objective, /Elevator in transit · Floor 8/);
+  assert.equal(cues.length, 2);
   assert.equal(area.blocksGround(-88, -9.75), true);
   update(0.95);
   assert.equal(arrivals.length, 0);
@@ -104,6 +268,7 @@ test('the elevator opens, seals the doorway during transit, and connects all thr
   assert.equal(area.blocksGround(position.x, position.z), false);
   assert.equal(first.visible, false);
   assert.equal(scene.getObjectByName('floor8').visible, true);
+  assert.match(area.objective, /Search the poolside gazebo/);
   assert.ok(player.jump());
   const idle = new THREE.Vector2();
   for (let i = 0; i < 30; i++) {
@@ -112,92 +277,199 @@ test('the elevator opens, seals the doorway during transit, and connects all thr
   }
   assert.equal(position.y, 1.68);
   update(0.75);
-  move(0, -8.5);
-  move(0, -12.0);
   act('Go to Floor 17');
-  update(2);
-  assert.deepEqual(position.toArray(), [88, 1.68, -12.275]);
-  assert.equal(scene.getObjectByName('floor17').visible, true);
-  act('Go to Basement');
-  update(2);
-  assert.deepEqual(position.toArray(), [-88, 1.68, -11.375]);
-  assert.equal(first.visible, true);
-  assert.equal(arrivals.length, 3);
+  assert.match(area.objective, /Floor 17 Locked/);
   worlds.unload();
 });
 
-test('the terrace doors, pool deck, gazebo, apartment and kitchen have connected walking routes', () => {
-  const { area, scene, position, move, act, update, worlds } = fixture(true);
-  move(-87.5, -8.25);
-  act('Call elevator');
-  update(0.05);
-  move(-88, -11.2);
-  act('Go to Floor 8');
-  update(0.85);
-  move(0, -6.7);
-  assert.equal(area.blocksGround(0, -5.35), true);
-  act('Open terrace doors');
-  update(0.05);
-  move(0, -3.0);
-  move(-15.6, -3.0);
-  move(-15.6, 16.0);
-  move(-15.7, 23.0);
-  move(-17.1, 26.7);
-  assert.ok(scene.getObjectByName('Gazebo table surface'));
-  assert.equal(area.blocksGround(-4.5, 14.1), true);
-  assert.equal(area.blocksGround(11.6, 18.3), true);
-  const pool = scene.getObjectByName('Main swimming pool');
-  assert.equal(pool.material.uniforms.time.value, 0);
-  move(-15.7, 23.0);
-  move(-15.6, 16.0);
-  move(-15.6, -3.0);
-  move(0, -3.0);
-  move(0, -12);
-  act('Go to Floor 17');
-  update(0.85);
-  assert.equal(position.x, 88);
-  move(88, -7.7);
-  move(92.75, -7.05);
-  assert.equal(area.blocksGround(92.75, -5.35), true);
-  act('Open Unit 17E');
-  update(0.05);
-  move(92.75, -2.74);
-  move(91.34, -1.37);
-  assert.equal(area.blocksGround(89.94, 0.08), true, 'the sofa is solid');
-  move(91.34, -2.74);
-  move(96.25, -2.74);
-  move(97.15, -0.62);
+test('only the illuminated car offers a safe one-way door and a single access card', () => {
+  const { area, scene, move, act, update, worlds, find, prompt, cues, approachCar } = fixture();
+  const car = scene.getObjectByName('Sedan with illuminated cabin');
+  const door = car.getObjectByName('Driver door');
+  const card = car.getObjectByName('Access card');
+  assert.ok(car.children.some(child => child.isPointLight && child.intensity > 0));
+  assert.equal(card.visible, false);
+  assert.equal(area.objective, 'Find the car with the cabin light on.');
+  move(-93.3, 5.32);
+  assert.notEqual(prompt('Open Car Door')?.label, 'Open Car Door');
+
+  approachCar();
+  move(-79.55, 5.43);
+  act('Open Car Door');
+  assert.match(area.objective, /Step back to give the door room/);
+  assert.equal(door.rotation.y, 0);
+  move(-80.60, 5.37);
+  const open = act('Open Car Door');
+  open.act();
+  assert.equal(find('Take Access Card').active, false);
+  update(0.3);
+  assert.ok(door.rotation.y < 0 && door.rotation.y > -1.31);
+  update(0.35);
+  const openAngle = door.rotation.y;
+  assert.ok(openAngle < -1.2);
+  assert.equal(area.blocksGround(-79.73, 5.49), true, 'the open door remains solid');
+  assert.equal(card.visible, true);
+  move(-80.36, 5.32);
+  const collect = act('Take Access Card');
+  collect.act();
+  open.act();
+  assert.equal(card.visible, false);
+  assert.equal(cues.length, 1);
+  assert.match(area.objective, /Use the access card to reach Floor 8/);
+  assert.match(area.objective, /Inventory · Access card/);
+  assert.match(area.objective, /Access card acquired/);
+  update(3);
+  assert.doesNotMatch(area.objective, /acquired/);
+  assert.equal(door.rotation.y, openAngle);
+  worlds.unload();
+});
+
+test('the gazebo and kitchen routes remain walkable and the ending is confined to Unit 17E', () => {
+  const game = fixture();
+  const { area, scene, position, move, act, update, worlds, find, cues, hud, action } = game;
+  const unit = scene.getObjectByName('Unit 17E interior');
+  const material = unit.getObjectByName('White marble television feature wall').material;
+  const intactColor = material.color.clone();
+  const lights = unit.children.filter(child => child.isPointLight);
+  const intactIntensity = lights[0].intensity;
+  const corridor = scene.getObjectByName('floor17').children.find(child => child.isInstancedMesh);
+  const corridorColor = corridor.material.color.clone();
+  const [flash, title] = hud.overlay.children;
+  const lighter = scene.getObjectByName('Collectible lighter');
   const oven = scene.getObjectByName('Oven front');
-  assert.ok(oven);
+  const ovenGlow = oven.getObjectByName('Stylized oven glow');
+  const smoke = scene.getObjectByName('Cinematic smoke');
+  const marks = scene.getObjectByName('Scorch marks');
+  assert.equal(lighter.visible, true);
+  assert.equal(find('Activate Prop Control').active, false);
+  assert.equal(find('Place Lighter in Oven').active, false);
+  assert.ok(scene.getObjectByName('Gazebo table surface'));
+
+  game.kitchen();
+  find('Pick Up Lighter').act();
+  assert.equal(lighter.visible, false);
+  assert.equal(position.x, 97.15);
   assert.equal(area.blocksGround(88 + oven.position.x + 0.24, oven.position.z), true);
   assert.equal(area.blocksGround(92.6, -10.65), true, '17C remains closed');
+  assert.equal(find('Open Unit 17E').active, false);
+  assert.match(area.objective, /Explore the kitchen/);
+  assert.match(area.objective, /Inventory · Access card · Lighter/);
+  assert.equal(scene.getObjectByName('Unit 17E entry door').rotation.y, -1.67);
+  assert.equal(find('Place Lighter in Oven').active, false);
+  find('Place Lighter in Oven').act();
+  assert.equal(title.textContent, '');
+
+  const control = act('Activate Prop Control');
+  control.act();
+  const start = act('Place Lighter in Oven');
+  update(0.05);
+  assert.equal(ovenGlow.visible, true);
+  assert.doesNotMatch(area.objective, /· Lighter/);
+  const sequence = [title.textContent];
+  for (let second = 0; second < 5; second++) {
+    start.act();
+    update(1);
+    sequence.push(title.textContent);
+  }
+  assert.deepEqual(sequence, ['5', '4', '3', '2', '1', 'BOOM!']);
+  assert.equal(find('Go to Basement').active, false);
+  assert.equal(marks.visible, true);
+  assert.equal(smoke.visible, true);
+  assert.ok(Number(flash.style.opacity) > 0);
+  assert.equal(ovenGlow.visible, false);
+  assert.ok(lights[0].intensity < intactIntensity);
+  assert.ok(!material.color.equals(intactColor));
+  assert.ok(corridor.material.color.equals(corridorColor));
+  update(3);
+  assert.equal(smoke.visible, false);
+  assert.equal(title.textContent, '');
+  assert.match(area.objective, /Secret Apartment — Mission Complete/);
+  assert.equal(cues.length, 7);
+  start.act(action);
+  update(6);
+  assert.equal(cues.length, 7);
+
+  move(96.25, -2.74);
+  move(92.75, -2.74);
+  move(92.75, -7.2);
+  move(88, -7.7);
+  move(88, -12);
+  act('Go to Floor 8');
+  update(2);
+  assert.equal(area.blocksGround(-4.5, 14.1), true);
+  assert.equal(area.blocksGround(11.6, 18.3), true);
+  act('Go to Floor 17');
+  update(2);
+  assert.equal(marks.visible, true);
+  assert.match(area.objective, /Mission Complete/);
+  worlds.reset();
+  assert.equal(marks.visible, false);
+  assert.equal(lighter.visible, true);
+  assert.ok(material.color.equals(intactColor));
+  assert.equal(lights[0].intensity, intactIntensity);
+  assert.equal(scene.getObjectByName('Unit 17E entry door').rotation.y, 0);
   worlds.unload();
+  assert.equal(game.elements.has(hud.overlay), false);
 });
 
-test('restart cancels a trip, closes the doors, and returns the visit to baseline', () => {
-  const { area, scene, definition, player, position, worlds, lifetime, arrivals, move, act, update } = fixture();
-  move(-87.4, -8.35);
-  act('Call elevator');
-  update(0.8);
-  move(-88, -11.2);
+test('restart cancels transit and countdown and restores both items, doors and access rules', () => {
+  const game = fixture(true);
+  const { area, scene, definition, player, position, worlds, lifetime, arrivals, move, act, update, hud, cues } = game;
+  game.takeCard();
+  game.enterElevator();
   act('Go to Floor 8');
-  update(0.7);
+  update(0.3);
   let disposed = 0;
   scene.getObjectByName('Main swimming pool').material.addEventListener('dispose', () => disposed++);
   worlds.reset();
   player.reset(definition.spawn, area);
-  update(2.5);
+  update(3);
   assert.equal(arrivals.length, 0);
-  assert.equal(area.objective, 'Basement · Parking');
+  assert.equal(area.objective, 'Find the car with the cabin light on.');
   assert.equal(position.z, definition.spawn.z);
   assert.equal(area.blocksGround(-88, -9.75), true);
+  assert.equal(scene.getObjectByName('Driver door').rotation.y, 0);
+  assert.equal(scene.getObjectByName('Access card').visible, false);
   assert.equal(scene.getObjectByName('floor8').visible, false);
+
+  game.kitchen();
+  act('Activate Prop Control');
+  act('Place Lighter in Oven');
+  update(1.5);
+  assert.equal(hud.overlay.children[1].textContent, '4');
+  const cueCount = cues.length;
+  worlds.reset();
+  player.reset(definition.spawn, area);
+  update(8);
+  assert.equal(cues.length, cueCount);
+  assert.equal(hud.overlay.children[1].textContent, '');
+  assert.equal(scene.getObjectByName('Scorch marks').visible, false);
+  assert.equal(scene.getObjectByName('Collectible lighter').visible, true);
   move(-87.4, -8.35);
   act('Call elevator');
-  update(0.8);
-  assert.equal(area.blocksGround(-88, -9.75), false);
+  update(0.1);
+  move(-88, -8.65);
+  move(-88, -11.18);
+  act('Go to Floor 8');
+  assert.match(area.objective, /Access Card Required/);
   worlds.unload();
   assert.equal(lifetime.signal.aborted, true);
   assert.equal(disposed, 1);
   assert.equal(scene.children.length, 0);
+});
+
+test('reduced motion retains countdown and damage at a low frame rate with no flash or smoke', () => {
+  const { area, act, update, scene, hud, worlds, position, kitchen } = fixture(true);
+  kitchen();
+  assert.equal(scene.getObjectByName('Main swimming pool').material.uniforms.time.value, 0);
+  act('Activate Prop Control');
+  act('Place Lighter in Oven');
+  for (let i = 0; i < 25; i++) worlds.update(0.05, position, 0.2);
+  assert.equal(hud.overlay.children[1].textContent, 'BOOM!');
+  assert.equal(Number(hud.overlay.children[0].style.opacity), 0);
+  assert.equal(scene.getObjectByName('Cinematic smoke').visible, false);
+  assert.equal(scene.getObjectByName('Scorch marks').visible, true);
+  update(3);
+  assert.match(area.objective, /Mission Complete/);
+  worlds.unload();
 });

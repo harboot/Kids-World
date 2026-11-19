@@ -1,12 +1,13 @@
 import { overlaps } from '../../core/movement.js';
 import { buildCorridor, HALL } from './corridor.js';
 import { COLORS } from './geometry.js';
+import { STEP } from './missions.js';
 import { buildUnit17E, unitCeiling } from './unit17e.js';
 
 export const ENTRY_X = 4.75;
 export const ENTRY_WIDTH = 1.43;
 
-export function buildFloor17(THREE, architecture, zone, reducedMotion) {
+export function buildFloor17(THREE, architecture, zone, reducedMotion, mission) {
   const { b, x: offset } = zone;
   buildCorridor(THREE, architecture, zone, 17, [
     { x: -7.9, width: 1.27, number: '17F' },
@@ -26,26 +27,36 @@ export function buildFloor17(THREE, architecture, zone, reducedMotion) {
   }
   p.finish();
   architecture.sign(b.root, ['17E'], ENTRY_X, 2.63, z + 0.156, 0.66, 0.26, { background: '#493226' });
-  buildUnit17E(THREE, architecture, zone);
-
+  const unit = buildUnit17E(THREE, architecture, zone, { entryX: ENTRY_X, entryWidth: ENTRY_WIDTH });
   let openness = 0;
-  let opening = false;
+
+  function kitchenInteraction(model, label, step, act) {
+    return {
+      x: offset + model.position.x, z: model.position.z, anchorY: model.position.y + 0.16,
+      label, radius: 1.97, silent: true, requiresView: true,
+      reachable: position => unit.insideKitchen(position.x - offset, position.z),
+      get active() { return mission.ready(step); },
+      act,
+    };
+  }
 
   return {
+    unit,
     interactions: [{
       x: offset + ENTRY_X, z: z - 0.18, anchorY: 1.27, radius: 2.20, label: 'Open Unit 17E',
       reachable: position => position.z < z - 0.27,
-      get active() { return !opening; },
-      act() { opening = true; },
-    }],
+      get active() { return mission.ready(STEP.UNIT); },
+      act() { mission.openUnit(); },
+    }, kitchenInteraction(unit.control, 'Activate Prop Control', STEP.CONTROL, mission.activateControl),
+    kitchenInteraction(unit.oven, 'Place Lighter in Oven', STEP.OVEN, mission.startCountdown)],
     ceiling(x, pz) {
       if (Math.abs(x - ENTRY_X) < ENTRY_WIDTH / 2 && Math.abs(pz - z) < 0.29) return 2.34;
       return unitCeiling(x, pz);
     },
     reset() {
-      opening = false;
       openness = 0;
       door.rotation.y = 0;
+      unit.showPuzzle(false, false);
     },
     blocks(x, pz) {
       const sin = Math.sin(door.rotation.y);
@@ -56,9 +67,11 @@ export function buildFloor17(THREE, architecture, zone, reducedMotion) {
         cos * dx - sin * dz, sin * dx + cos * dz);
     },
     update(dt) {
-      if (!opening || openness === 1) return;
-      openness = reducedMotion() ? 1 : Math.min(1, openness + dt / 0.52);
-      door.rotation.y = -1.67 * openness;
+      if (mission.step > STEP.UNIT && openness < 1) {
+        openness = reducedMotion() ? 1 : Math.min(1, openness + dt / 0.52);
+        door.rotation.y = -1.67 * openness;
+      }
+      unit.showPuzzle(mission.ready(STEP.OVEN), mission.ready(STEP.COUNTDOWN));
     },
   };
 }

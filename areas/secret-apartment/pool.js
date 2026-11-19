@@ -352,15 +352,16 @@ function gazebo(architecture, b) {
     for (const dz of [-0.244, 0.244]) b.part(wood, x + side * 0.463, 0.36, z + 1.23 + dz, 0.105, 0.66, 0.105);
   }
   b.part(0xc3a075, x, 0.753, z + 1.23, 1.21, 0.086, 0.75);
-  architecture.group(b.root, 'Gazebo table surface', x, 0.8, z + 1.23);
+  const table = architecture.group(b.root, 'Gazebo table surface', x, 0.8, z + 1.23);
   architecture.sign(b.root, ['PENDOPO'], x, 2.45, z - 2.061, 0.94, 0.21, { yaw: Math.PI, background: '#4a3125' });
+  return table;
 }
 
 export function buildPool(THREE, architecture, { b }) {
   const basins = buildBasins(THREE, architecture, b);
   landscaping(architecture, b);
   loungeChairs(architecture, b);
-  gazebo(architecture, b);
+  const gazeboTable = gazebo(architecture, b);
   for (const towerInfo of [
     { x: -16.5, z: 40.2, facing: Math.PI, width: 15.7, floors: 14, variant: 0 },
     { x: 0.3, z: 40.8, facing: Math.PI, width: 15.1, floors: 16, variant: 1 },
@@ -388,7 +389,8 @@ export function buildPool(THREE, architecture, { b }) {
   architecture.sign(b.root, ['POOL TERRACE', 'MAIN POOL    ·    SHALLOW POOL'], 2.94, 1.36, -0.27, 2.46, 0.75, { yaw: Math.PI });
   b.block(0x82694b, 2.94, 0.83, -0.20, 2.48, 1.66, 0.10);
   return {
-    ...basins,
+    ...basins, gazeboTable,
+    insideGazebo: (x, z) => Math.abs(x - GAZEBO.x) < 1.86 && Math.abs(z - GAZEBO.z) < 1.87,
     ceiling(x, z) {
       const underGazebo = Math.abs(x - GAZEBO.x) < 2.4 && Math.abs(z - GAZEBO.z) < 2.38;
       return underGazebo ? 2.30 : Infinity;

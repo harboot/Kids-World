@@ -1,3 +1,4 @@
+import { buildCarDoor } from './car-door.js';
 import { SURFACE_GAP } from '../../core/geometry.js';
 import { COLORS, ceilingLight, pointLight, wallX, wallZ } from './geometry.js';
 
@@ -6,31 +7,40 @@ const FRONT = -13.5;
 const BACK = 13;
 const HEIGHT = 3.85;
 
-function sedan(THREE, architecture, b, x, z, yaw, paint, special) {
+function sedan(THREE, architecture, b, x, z, yaw, paint, { special, offset, mission, playerPosition }) {
   const body = architecture.group(b.root, special ? 'Sedan with illuminated cabin' : 'Parked sedan', x, 0, z, yaw);
   const p = architecture.builder(body);
   const glass = special ? 0xd9a46c : 0x354852;
   const chrome = 0xb8babe;
   const dark = 0x262b2e;
-  // The cabin tapers toward the roof and the windshields follow the slope.
-  const profile = new THREE.Shape();
-  profile.moveTo(-1.43, 0);
-  profile.lineTo(1.12, 0);
-  profile.lineTo(0.74, 0.51);
-  profile.lineTo(-0.86, 0.51);
-  profile.lineTo(-1.43, 0);
-  const cabin = new THREE.Mesh(
-    new THREE.ExtrudeGeometry(profile, { depth: 1.59, bevelEnabled: false }),
-    new THREE.MeshStandardMaterial({ color: glass, roughness: 0.37,
-      emissive: special ? 0xe0a052 : 0x141c25, emissiveIntensity: special ? 0.34 : 0.16,
-      transparent: special, opacity: special ? 0.46 : 1, depthWrite: !special }),
-  );
-  cabin.rotation.y = -Math.PI / 2;
-  cabin.position.set(0.795, 0.87, 0);
-  body.add(cabin);
-
+  const glazing = new THREE.MeshStandardMaterial({
+    color: glass, roughness: 0.37, emissive: special ? 0xe0a052 : 0x141c25,
+    emissiveIntensity: special ? 0.26 : 0.16,
+    transparent: special, opacity: special ? 0.42 : 1, depthWrite: !special,
+    side: special ? THREE.DoubleSide : THREE.FrontSide,
+  });
+  let driverDoor;
+  if (special) {
+    driverDoor = buildCarDoor(THREE, architecture, body, paint, glazing, offset, mission, playerPosition);
+    p.part(paint, 0.077, 0.615, 0, 1.706, 0.485, 4.47);
+    p.part(paint, -0.847, 0.615, -1.691, 0.154, 0.485, 1.085);
+    p.part(paint, -0.847, 0.615, 1.113, 0.154, 0.485, 2.244);
+    p.part(dark, -0.845, 0.381, -0.57, 0.15, 0.12, 1.10);
+    p.part(0x9c7753, -0.50, 0.899, -0.4, 0.47, 0.11, 0.49);
+  } else {
+    const profile = new THREE.Shape();
+    profile.moveTo(-1.43, 0);
+    profile.lineTo(1.12, 0);
+    profile.lineTo(0.74, 0.51);
+    profile.lineTo(-0.86, 0.51);
+    profile.closePath();
+    const cabin = new THREE.Mesh(new THREE.ExtrudeGeometry(profile, { depth: 1.59, bevelEnabled: false }), glazing);
+    cabin.rotation.y = -Math.PI / 2;
+    cabin.position.set(0.795, 0.87, 0);
+    body.add(cabin);
+    p.part(paint, 0, 0.615, 0, 1.86, 0.485, 4.47);
+  }
   p.part(dark, 0, 0.31, 0, 1.7, 0.23, 4.37);
-  p.part(paint, 0, 0.615, 0, 1.86, 0.485, 4.47);
   p.part(paint, 0, 0.855, -1.72, 1.77, 0.18, 1.04, { pitch: -0.09 });
   p.part(paint, 0, 0.839, 1.72, 1.75, 0.15, 0.98, { pitch: 0.08 });
   p.part(paint, 0, 1.383, -0.06, 1.61, 0.085, 1.62);
@@ -44,12 +54,13 @@ function sedan(THREE, architecture, b, x, z, yaw, paint, special) {
   for (const side of [-1, 1]) {
     const edge = side * 0.934;
     p.part(0x45444a, side * 0.802, 1.115, 0.08, 0.045, 0.48, 0.08);
-    p.part(chrome, side * 0.812, 0.906, -0.14, 0.045, 0.032, 2.43);
+    const driverSide = special && side < 0;
+    p.part(chrome, side * 0.812, 0.906, driverSide ? 0.56 : -0.14, 0.045, 0.032, driverSide ? 1.11 : 2.43);
     p.part(paint, side * 0.998, 0.99, -0.94, 0.24, 0.124, 0.21, { shape: 'oval' });
     p.part(0x728289, side * 1.008, 0.989, -0.844, 0.145, 0.064, 0.025);
     p.part(COLORS.whiteLight, side * 0.66, 0.745, -2.25, 0.36, 0.132, 0.066);
     p.part(0xb3433a, side * 0.71, 0.744, 2.25, 0.31, 0.128, 0.057);
-    for (const dz of [-0.56, 0.61]) {
+    for (const dz of driverSide ? [0.61] : [-0.56, 0.61]) {
       p.part(paint, edge, 0.65, dz, 0.032, 0.35, 1.12);
       p.part(chrome, edge + side * 0.029, 0.782, dz + 0.31, 0.055, 0.037, 0.17);
     }
@@ -72,6 +83,7 @@ function sedan(THREE, architecture, b, x, z, yaw, paint, special) {
   }
   p.finish();
   b.solid(x, z, 4.58, 2.07);
+  return driverDoor;
 }
 
 function concreteFloor(THREE, architecture, parent) {
@@ -107,7 +119,7 @@ function concreteFloor(THREE, architecture, parent) {
   parent.add(surface);
 }
 
-export function buildBasement(THREE, architecture, { b, doorZ }) {
+export function buildBasement(THREE, architecture, { b, doorZ, x: offset }, mission, reducedMotion, playerPosition) {
   const concrete = 0x828683;
   const lineY = SURFACE_GAP.detail;
   const yellow = 0xd4ac50;
@@ -147,11 +159,15 @@ export function buildBasement(THREE, architecture, { b, doorZ }) {
       b.solid(side * 12.67, z, 0.24, 1.9);
     }
   }
+  let driverDoor;
   for (const [x, z, color, special] of [
     [-9.25, -5.85, 0x8b293b, false], [-9.25, 0.55, 0xc8cfd5, false],
     [-9.25, 6.95, 0x266460, false], [9.25, -2.65, 0x465a8b, false],
     [9.25, 3.75, 0xb3723b, true], [9.25, 10.15, 0x666874, false],
-  ]) sedan(THREE, architecture, b, x, z, Math.sign(x) * Math.PI / 2, color, special);
+  ]) {
+    const door = sedan(THREE, architecture, b, x, z, Math.sign(x) * Math.PI / 2, color, { special, offset, mission, playerPosition });
+    if (door) driverDoor = door;
+  }
 
   for (const [x, z, direction] of [[-1.47, 6.1, 1], [1.47, 5.35, -1], [-1.47, -4.3, 1], [1.47, -4.3, -1]]) {
     b.part(0xd9d2b4, x, lineY, z, 0.17, 0.005, 1.85);
@@ -179,4 +195,8 @@ export function buildBasement(THREE, architecture, { b, doorZ }) {
   architecture.sign(b.root, ['PARKING  ·  B'], 15.842, 1.91, 2.8, 2.42, 0.6, { yaw: -Math.PI / 2 });
   pointLight(THREE, b.root, 0, 3.15, -7.1, 0xffe4ac, 36, 12);
   pointLight(THREE, b.root, -4.4, 3.18, 3.2, 0xe0ebf9, 28, 12);
+  return {
+    ...driverDoor,
+    update(dt) { driverDoor.update(dt, reducedMotion()); },
+  };
 }
