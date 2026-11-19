@@ -6,11 +6,7 @@ import { blocksSummitEdge, buildSummit, SUMMIT_SIZE } from './summit.js';
 
 const ID = 'frozen-castle';
 const villageName = 'Arendelle Village';
-const village = {
-  id: 'arendelle-village',
-  label: 'Enter ' + villageName,
-  arrive(notify) { notify(villageName + ' — Coming Soon'); },
-};
+const VILLAGE_ID = 'arendelle-village';
 
 const unlockCue = [
   [66, { duration: 0.34, level: 0.13 }, 1.1],
@@ -46,8 +42,6 @@ function loadCastle({ THREE, scene, hud, signal, playCue = () => {}, reducedMoti
   let elapsed = 0;
   let celebration = 0;
   let chandelier = 0;
-  let notice = '';
-  let noticeTime = 0;
 
   const isActive = () => !released && !signal?.aborted;
   const activity = createCastleActivities(THREE, builder, hud?.ownerDocument, {
@@ -66,16 +60,12 @@ function loadCastle({ THREE, scene, hud, signal, playCue = () => {}, reducedMoti
   const { missions } = activity;
   const isComplete = () => missions.crystals && missions.stairs && missions.melody;
   const gateway = {
-    ...gatewaySite, radius: 2.5, anchorY: BALCONY_HEIGHT + 1.8, label: village.label,
-    destination: village.id, silent: true,
+    ...gatewaySite, radius: 2.5, anchorY: BALCONY_HEIGHT + 1.8, label: 'Enter ' + villageName,
+    destination: VILLAGE_ID,
     reachable: player => player.y >= BALCONY_HEIGHT + 1.2,
     get active() { return isActive() && (isComplete() || recorded || isLevelComplete(ID)); },
-    act() {
-      if (!this.active) return;
-      village.arrive(message => {
-        notice = message;
-        noticeTime = 3.2;
-      });
+    act(context) {
+      if (this.active) context.travel(VILLAGE_ID, context.heardCue);
     },
   };
   const exit = {
@@ -111,14 +101,13 @@ function loadCastle({ THREE, scene, hud, signal, playCue = () => {}, reducedMoti
     elapsed = 0;
     celebration = 0;
     chandelier = 0;
-    notice = '';
-    noticeTime = 0;
     activity.reset();
     pose(0);
   }
 
   return {
     obstacles,
+    arrivals: { [VILLAGE_ID]: { x: 0, z: 9.5 } },
     interactions: [...activity.interactions, throne, gateway, exit],
     blocksGround(x, z, radius, feet, from) {
       return blocksSummitEdge(x, z, radius) || activity.staircase.blocksGround(x, z, radius, feet, from);
@@ -126,16 +115,13 @@ function loadCastle({ THREE, scene, hud, signal, playCue = () => {}, reducedMoti
     getGroundHeight: activity.staircase.getGroundHeight,
     get objective() {
       const lines = activity.missionProgress;
-      if (notice) lines.push(notice);
-      else if (isComplete()) lines.push('Castle Magic Restored!', `${villageName} unlocked!`);
+      if (isComplete()) lines.push('Castle Magic Restored!', `${villageName} unlocked!`);
       return lines.join('\n');
     },
     reset,
     update(dt) {
       if (!isActive()) return;
       celebration = Math.max(0, celebration - dt);
-      noticeTime = Math.max(0, noticeTime - dt);
-      if (!noticeTime) notice = '';
       activity.update(dt);
       pose(dt);
     },

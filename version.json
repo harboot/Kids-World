@@ -1,6 +1,34 @@
 {
-  "version": "54ec4a9c4dc73edf65dfcd6f1a3d0821a7f4b006ac48ea7d43a93a59d4c442a4",
+  "version": "f7db6461dd48428a0952f2aed7e578043ccead24167abc836e113f24f1478dcf",
   "files": [
+    {
+      "path": "./areas/arendelle-village/buildings.js",
+      "revision": "15100b06feb2f1978d9af93a01aa934050008a58c12c536da4f0ca31e3743782"
+    },
+    {
+      "path": "./areas/arendelle-village/decorations.js",
+      "revision": "770f331fc4882b4a8df93f8393f41e8c707a11b2c41089bf0003f02dbb2f1163"
+    },
+    {
+      "path": "./areas/arendelle-village/harbor.js",
+      "revision": "487828248300f1c153ce6a2bc740e92ce8c9c49235d44251dda366afdbd90de5"
+    },
+    {
+      "path": "./areas/arendelle-village/index.js",
+      "revision": "ae4de9cc9f28d0eca315e7f245d3951367ff046678fc43c466980b64967fb6c5"
+    },
+    {
+      "path": "./areas/arendelle-village/interactions.js",
+      "revision": "d0cdb10e8d75539cdbb53d89231257e2429719b48b0130f337dcd0af27741df6"
+    },
+    {
+      "path": "./areas/arendelle-village/scenery.js",
+      "revision": "797c5298d9871dfef0b80eb955d74fb0c3f13819a81938faea61d9f1707a5fc3"
+    },
+    {
+      "path": "./areas/arendelle-village/terrain.js",
+      "revision": "6d00943c2e334281fcc6b3825bff0cbea09cc61eaec4195cc6d23236fe7a412d"
+    },
     {
       "path": "./areas/flower-garden/garden-cabin.js",
       "revision": "5e1342da95f88db32d8b246893290c4622bb72a7592a7eb65c3aefa4d4c0103e"
@@ -31,7 +59,7 @@
     },
     {
       "path": "./areas/frozen-castle/index.js",
-      "revision": "c54d2863794fdeecc0a4b88169cb3302ed9204c724f97e47da910149ceece82e"
+      "revision": "fdcdfd41e774851244122b55f31f95c00111c3acc03253c1da935d560c05b6b9"
     },
     {
       "path": "./areas/frozen-castle/palace.js",
@@ -127,7 +155,7 @@
     },
     {
       "path": "./game.js",
-      "revision": "1b00eb0c89b6ac1b2ceedfddfe09bae8beda327e08fc6bd396b70de1de93909d"
+      "revision": "601644462b4f2730a67759afc9c665a04171b88dc7caa29949dbe560d60e2ab0"
     },
     {
       "path": "./index.html",
@@ -163,7 +191,7 @@
     },
     {
       "path": "./style.css",
-      "revision": "13b25887848a4fa450a84b29726f5dda76f1dda809233de1108d00436ccbca8c"
+      "revision": "0f004f6bfd4297caf076bf5dd740ff3f7a426aaa7fd78dd78c8bab0278c64a32"
     },
     {
       "path": "./vendor/three.LICENSE",

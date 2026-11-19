@@ -52,6 +52,15 @@ button:focus-visible { outline: 3px solid #377b65; outline-offset: 3px; }
   --line: #cfdbf2;
   background: #b1c7eb;
 }
+#game[data-level="arendelle-village"] {
+  color: #383b2f;
+  --surface: #fff1d9;
+  --muted: #575e48;
+  --accent: #3c685c;
+  --accent-strong: #2d5148;
+  --line: #e5d6b6;
+  background: #c4dedc;
+}
 #view { width: 100%; height: 100%; display: block; touch-action: none; }
 
 .hud {
@@ -115,7 +124,7 @@ button:focus-visible { outline: 3px solid #377b65; outline-offset: 3px; }
   border-radius: 3px;
   transform: rotate(45deg);
 }
-[data-level="wooden-house"] .world-mark::before {
+:is([data-level="wooden-house"], [data-level="arendelle-village"]) .world-mark::before {
   width: 19px;
   height: 18px;
   background: #ffdfac;

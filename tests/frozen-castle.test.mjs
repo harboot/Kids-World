@@ -90,7 +90,7 @@ test('the castle route, safe entrance spawn and named Snow Basin arrival use the
   assert.equal(castle.id, ID);
   assert.equal(castle.title, 'Frozen Castle');
   assert.equal(gateway.destination, 'arendelle-village');
-  assert.equal(Object.hasOwn(areas, gateway.destination), false);
+  assert.equal(areas[gateway.destination].title, 'Arendelle Village');
   const url = areaURL(new URL('https://example.test/Kids-World/index.html?area=snow#explore'), ID);
   assert.equal(url.href, 'https://example.test/Kids-World/index.html?area=frozen-castle#explore');
   assert.equal(resolveArea(url, areas, 'garden', 'snow'), ID);
@@ -341,7 +341,7 @@ test('the blue, pink and purple tuning crystals play distinct notes and can be r
   worlds.unload();
 });
 
-test('all mission orders unlock the same placeholder and completion is saved only once', () => {
+test('all mission orders unlock travel to the village and completion is saved only once', () => {
   for (const order of [
     ['crystals', 'stairs', 'melody'], ['crystals', 'melody', 'stairs'],
     ['stairs', 'crystals', 'melody'], ['stairs', 'melody', 'crystals'],
@@ -349,7 +349,8 @@ test('all mission orders unlock the same placeholder and completion is saved onl
   ]) {
     const game = fixture({ saved: ['snow'] });
     const { worlds, area, gateway, recorded, writes, getStorage } = game;
-    const travel = () => assert.fail('the future village never calls travel');
+    const trips = [];
+    const travel = (...trip) => trips.push(trip);
     const totals = { crystals: 4, stairs: 3, melody: 3 };
     const completed = {};
     saveCheck(false);
@@ -359,11 +360,8 @@ test('all mission orders unlock the same placeholder and completion is saved onl
       assertProgress(area, completed, index === 2 ? completionNotice : []);
       saveCheck(index === 2);
     });
-    gateway.act({ travel });
-    assertProgress(area, totals, ['Arendelle Village — Coming Soon']);
-    worlds.update(3.3);
-    assertProgress(area, totals, completionNotice);
-    assert.equal(worlds.active.id, ID);
+    gateway.act({ travel, heardCue: true });
+    assert.deepEqual(trips, [['arendelle-village', true]]);
     for (const item of [...game.crystals, game.stairs, ...game.music]) item.act();
     assertProgress(area, totals, completionNotice);
     assert.deepEqual(recorded, [ID]);
@@ -376,7 +374,7 @@ test('all mission orders unlock the same placeholder and completion is saved onl
       assert.equal(gateway.active, open);
       if (!open) {
         gateway.act({ travel });
-        assert.doesNotMatch(area.objective, /Coming Soon/);
+        assert.deepEqual(trips, []);
         assert.deepEqual(recorded, []);
       }
     }
@@ -399,10 +397,8 @@ test('restart and replay restore temporary states, keep access, and release scen
   assert.ok(fountain.position.equals(originalPosition));
   assert.equal(sparkles.visible, false);
   assert.ok(models.every(model => model.position.y === 0));
-  gateway.act();
   worlds.reset();
   assertProgress(area);
-  assert.doesNotMatch(area.objective, /Coming Soon/);
   assert.equal(chandelier.emissiveIntensity, originalGlow);
   assert.equal(aurora.visible, false);
   assert.ok(models.every(model => !model.visible));

@@ -34,8 +34,8 @@ Players explore connected worlds, interact with objects, and complete simple mis
 - Build the ice staircase.
 - Play the crystal melody.
 
-### Coming Soon
-**Arendelle Village** — A new world waiting to be developed.
+### Arendelle Village — Exploration
+Explore the village square, market streets, stables, and fishing harbor after completing Frozen Castle. Village missions are coming in Phase 2.
 
 ## Built for Expansion
 
