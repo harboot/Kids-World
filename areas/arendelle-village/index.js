@@ -2,6 +2,7 @@ import { buildBuildings } from './buildings.js';
 import { decorateVillage } from './decorations.js';
 import { buildHarbor } from './harbor.js';
 import { villageInteractions } from './interactions.js';
+import { createVillageMissions } from './missions.js';
 import { createScenery } from './scenery.js';
 import { buildTerrain } from './terrain.js';
 
@@ -9,7 +10,7 @@ export const arendelleVillage = {
   id: 'arendelle-village',
   title: 'Arendelle Village',
   heading: ['Arendelle', 'Village'],
-  description: 'Explore the clock tower square, follow the cobblestone lanes to the market, or stroll down to the harbor.',
+  description: 'Catch fish for the Fish Shop, bring the lost reindeer home, and find three gears to fix the Clock Tower.',
   canvasLabel: '3D medieval harbor village with timber houses, a clock tower, and wooden piers',
   themeColor: '#e9dabf',
   music: 'garden',
@@ -19,7 +20,8 @@ export const arendelleVillage = {
   load: loadVillage,
 };
 
-function loadVillage({ THREE, scene, hud, signal, touch, reducedMotion = () => false }) {
+function loadVillage({ THREE, scene, viewmodel, hud, signal, touch, reducedMotion = () => false,
+  playCue = () => {}, isLevelComplete = () => false, completeLevel = () => {} }) {
   const sky = 0xc4dedc;
   scene.background = new THREE.Color(sky);
   scene.fog = new THREE.Fog(sky, 28, 105);
@@ -37,32 +39,41 @@ function loadVillage({ THREE, scene, hud, signal, touch, reducedMotion = () => f
   const obstacles = [];
   const kit = createScenery(THREE, scene, hud?.ownerDocument, obstacles);
   const terrain = buildTerrain(THREE, scene, kit);
-  buildBuildings(kit, terrain.getGroundHeight);
+  const clock = buildBuildings(kit, terrain.getGroundHeight);
   decorateVillage(kit, terrain.getGroundHeight);
   const poseHarbor = buildHarbor(THREE, scene, kit);
-  kit.finish();
 
   let elapsed = 0;
   let message = '';
   let timeLeft = 0;
   const isActive = () => !signal?.aborted;
-  const interactions = villageInteractions(isActive, text => {
+  function notify(text) {
     message = text;
     timeLeft = 3.2;
-  });
+  }
+  const missions = createVillageMissions({
+    THREE, scene, viewmodel, kit, terrain: { ...terrain, obstacles }, clock, isActive, notify, playCue,
+  }, { id: arendelleVillage.id, isLevelComplete, completeLevel });
+  const interactions = [...villageInteractions(isActive, notify), ...missions.interactions];
+  kit.finish();
 
   return {
     ...terrain,
     obstacles,
     interactions,
-    get objective() { return message; },
+    get objective() {
+      const lines = missions.progress;
+      if (message) lines.push(message);
+      return lines.join('\n');
+    },
     reset() {
       elapsed = 0;
       message = '';
       timeLeft = 0;
       poseHarbor(0);
+      missions.reset();
     },
-    update(dt) {
+    update(dt, player) {
       if (!isActive()) return;
       const still = reducedMotion();
       if (!still) elapsed += dt;
@@ -71,6 +82,7 @@ function loadVillage({ THREE, scene, hud, signal, touch, reducedMotion = () => f
         timeLeft = Math.max(0, timeLeft - dt);
         if (!timeLeft) message = '';
       }
+      missions.update(dt, player, elapsed, still);
     },
   };
 }

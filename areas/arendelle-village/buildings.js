@@ -47,7 +47,7 @@ export function buildBuildings(kit, getGroundHeight) {
   }
 
   const tower = group('Clock tower', 0, 0, -13.75);
-  clockTower(kit, tower);
+  return clockTower(kit, tower);
 }
 
 function frame(kit, house, { width, depth, height, rise, wall, roof }) {
@@ -268,6 +268,7 @@ function clockTower(kit, tower) {
   beam(tower, wood, [0, 13.24, 0], [0, 14.33, 0], 0.058);
   part(tower, 'banner', 0xa53a39, 0.43, 14.03, 0, 0.85, 0.47, 1);
 
+  const hands = [];
   for (let side = 0; side < 4; side++) {
     const face = group('', 0, 0, 0, side * Math.PI / 2, tower);
     const z = (side % 2 ? width : depth) / 2;
@@ -286,7 +287,7 @@ function clockTower(kit, tower) {
     const markerDepth = 0.027;
     const markerZ = dialZ + SURFACE_GAP.detail - markerDepth / 2;
     const hourZ = markerZ + markerDepth / 2 + SURFACE_GAP.detail;
-    const minuteZ = hourZ + SURFACE_GAP.detail;
+    const minuteZ = hourZ + 0.043 + SURFACE_GAP.detail;
     part(face, 'drum', wood, 0, y, backingZ, 1.21, backingDepth, 1.21, { rotation: [Math.PI / 2, 0, 0] });
     part(face, 'disk', pale, 0, y, dialZ, 1.06, 1.06, 1);
     part(face, 'ring', 0xc19752, 0, y, dialZ + 0.005, 1.02, 1.02, 0.30);
@@ -296,8 +297,11 @@ function clockTower(kit, tower) {
       box(face, wood, -Math.sin(angle) * 0.84, y + Math.cos(angle) * 0.84, markerZ,
         major ? 0.103 : 0.061, major ? 0.225 : 0.107, markerDepth, { rotation: [0, 0, angle] });
     }
-    beam(face, 0x263f3d, [0, y, hourZ], [-0.51, y + 0.42, hourZ], 0.11, 0.043);
-    beam(face, 0x263f3d, [0, y, minuteZ], [0.43, y + 0.69, minuteZ], 0.079, 0.043);
+    const hourHand = group('Clock hour hand', 0, y, hourZ, 0, face);
+    const minuteHand = group('Clock minute hand', 0, y, minuteZ, 0, face);
+    beam(hourHand, 0x263f3d, [0, 0, 0], [-0.51, 0.42, 0], 0.11, 0.043, { batch: hourHand });
+    beam(minuteHand, 0x263f3d, [0, 0, 0], [0.43, 0.69, 0], 0.079, 0.043, { batch: minuteHand });
+    hands.push({ hourHand, minuteHand });
     part(face, 'gem', 0xb58747, 0, y, minuteZ + 0.04, 0.13, 0.13, 0.055);
     window(kit, face, -0.72, 8.39, z * 0.81, 0.49, 0.84, false);
     window(kit, face, 0.72, 8.39, z * 0.81, 0.49, 0.84, false);
@@ -305,4 +309,5 @@ function clockTower(kit, tower) {
   door(kit, tower, 0, depth / 2 + 0.05, 1.33, 2.33, 0x51736a);
   sign(tower, 'Clock Tower', 0, 2.72, depth / 2 + 0.14, 1.91, 0.34);
   solid(tower, width + 0.3, depth + 0.31, 13.5);
+  return { hands, repairSite: { x: 1.46, z: tower.position.z + depth / 2 + 0.52 } };
 }

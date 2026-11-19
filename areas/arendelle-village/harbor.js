@@ -2,6 +2,7 @@ import { SURFACE_GAP } from '../../core/geometry.js';
 import { CITY_PIER, FISHING_PIER, QUAY, shorelineX } from './terrain.js';
 import { randomFrom } from './scenery.js';
 
+export const SEA_LEVEL = -0.48;
 export const CITY_SIGN = { x: 30.7, z: 17.25 };
 const timber = 0x866045;
 const oak = 0x604333;
@@ -115,8 +116,7 @@ function pier({ group, box, part, solid }, name, { left, right, front, back }) {
 }
 
 function buildSea(THREE, scene, { group, part }) {
-  const seaLevel = -0.48;
-  const sea = new THREE.PlaneGeometry(165, 225, 24, 20).rotateX(-Math.PI / 2).translate(55, seaLevel, -14);
+  const sea = new THREE.PlaneGeometry(165, 225, 24, 20).rotateX(-Math.PI / 2).translate(55, SEA_LEVEL, -14);
   const points = sea.getAttribute('position');
   const colors = [];
   const deep = new THREE.Color(0x478d99);
@@ -151,7 +151,7 @@ function buildSea(THREE, scene, { group, part }) {
     if (placed.some(other => Math.abs(x - other.x) < reachX + other.reachX &&
         Math.abs(z - other.z) < reachZ + other.reachZ)) continue;
     placed.push({ x, z, reachX, reachZ });
-    part(waves, 'disk', color, x, seaLevel + SURFACE_GAP.detail, z, size, width, 1,
+    part(waves, 'disk', color, x, SEA_LEVEL + SURFACE_GAP.detail, z, size, width, 1,
       { batch: waves, rotation: [-Math.PI / 2, 0, angle] });
   }
   return waves;
