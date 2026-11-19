@@ -1,4 +1,5 @@
 import { insideClearance } from '../../core/interaction-clearance.js';
+import { SURFACE_GAP } from '../../core/geometry.js';
 
 const balcony = { x: -23.1, z: -12.5, width: 5.8, depth: 1.92 };
 const stairs = { x: -17.45, z: -12.5, width: 5.5, depth: 1.72 };
@@ -19,8 +20,10 @@ export function buildHouseBalcony(kit) {
   }
   const west = balcony.x - balcony.width / 2;
   const south = balcony.z + balcony.depth / 2;
-  railing(kit, terrace, [west, top, balcony.z - balcony.depth / 2], [west, top, south], 3, cap, rail);
-  railing(kit, terrace, [west, top, south], [stairs.x - stairs.width / 2, top, south], 9, cap, rail);
+  railing(kit, terrace, [
+    [[west, top, balcony.z - balcony.depth / 2], [west, top, south], 3],
+    [[west, top, south], [stairs.x - stairs.width / 2, top, south], 9],
+  ], cap, rail);
 
   const steps = 15;
   for (let i = 0; i < steps; i++) {
@@ -32,7 +35,7 @@ export function buildHouseBalcony(kit) {
   for (const side of [-1, 1]) {
     const z = stairs.z + side * stairs.depth / 2;
     beam(flight, rail, [stairEnd, -0.055, z], [stairs.x - stairs.width / 2, top - 0.16, z], 0.22, 0.16);
-    railing(kit, flight, [stairEnd, 0, z], [stairs.x - stairs.width / 2, top, z], 8, cap, rail);
+    railing(kit, flight, [[[stairEnd, 0, z], [stairs.x - stairs.width / 2, top, z], 8]], cap, rail);
   }
 
   function surface(x, z, feet = 0) {
@@ -55,16 +58,31 @@ export function buildHouseBalcony(kit) {
   return { surface, blocks };
 }
 
-export function railing({ box, beam }, node, a, b, sections, topColor, postColor) {
-  const [x1, y1, z1] = a;
-  const [x2, y2, z2] = b;
-  const at = (t, height) => [
-    x1 + (x2 - x1) * t, y1 + (y2 - y1) * t + height, z1 + (z2 - z1) * t,
-  ];
-  for (const height of [0.39, 1.02]) {
-    beam(node, height > 0.5 ? topColor : postColor, at(0, height), at(1, height), 0.115, 0.14);
+export function railing({ box, beam }, node, spans, topColor, postColor) {
+  const ends = new Map();
+  const topRail = 1.02;
+  const railDepth = 0.14;
+  const postWidth = 0.105;
+
+  function post([x, y, z], height, width) {
+    box(node, postColor, x, y + height / 2, z, width, height, width);
   }
-  for (let i = 0; i <= sections; i++) {
-    box(node, postColor, ...at(i / sections, 0.51), 0.105, 1.02, 0.105);
+
+  for (const [a, b, sections] of spans) {
+    const raise = ([x, y, z], height) => [x, y + height, z];
+    beam(node, postColor, raise(a, 0.39), raise(b, 0.39), 0.115, railDepth);
+    beam(node, topColor, raise(a, topRail), raise(b, topRail), 0.115, railDepth);
+    for (let i = 1; i < sections; i++) {
+      post(a.map((start, axis) => start + (b[axis] - start) * i / sections), topRail, postWidth);
+    }
+    for (const point of [a, b]) {
+      const key = point.join(',');
+      ends.set(key, { point, shared: ends.has(key) });
+    }
+  }
+  for (const { point, shared } of ends.values()) {
+    // One larger post covers the ends of both rails at a corner.
+    post(point, shared ? topRail + railDepth / 2 + SURFACE_GAP.detail : topRail,
+      shared ? railDepth + 2 * SURFACE_GAP.detail : postWidth);
   }
 }

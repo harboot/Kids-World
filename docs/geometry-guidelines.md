@@ -1,6 +1,6 @@
 # 3D Geometry Guidelines
 
-- Give each visible surface its own plane wherever materials, colors, or decorative roles overlap. Adjacent faces may share an edge. Fit connected pieces to common edges and remove duplicate internal faces where practical.
+- Give each visible surface its own plane wherever materials, colors, or decorative roles overlap. Adjacent faces may share an edge. For an inset on a level floor, fit the border around it and stop the supporting slab below both. Use one post where two railing spans share a corner.
 - Measure from the base surface to the visible face of the detail. Use the local outward normal. Floor details usually move up, wall details project away from the wall, and roof details follow the pitch. Place a label on each outside face of a two-sided sign and orient each label toward its reader.
 - Start with `SURFACE_GAP` in [core/geometry.js](../core/geometry.js). The values are 0.012 world units for small details, 0.025 for trim, and 0.04 for roof relief. Use the smallest separation that holds up at the intended camera distances. Seat solid trim against its base so the joint stays closed.
 - Place details in the same local space as the surface and check the final parent or instance transform. Sample the full width of an overlay on uneven ground. Where practical, assign different materials to neighboring terrain triangles instead of layering another surface over them.
