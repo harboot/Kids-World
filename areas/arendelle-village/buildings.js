@@ -1,3 +1,5 @@
+import { SURFACE_GAP } from '../../core/geometry.js';
+
 export const SHOPS = {
   bakery: { name: 'Bakery', x: 7.4, z: 12.45, width: 5.7, depth: 5.7, yaw: Math.PI, wall: 0xf1b967, roof: 0x9b493e, accent: 0xa43c35 },
   fruit: { name: 'Fruit Shop', x: 14.2, z: 12.5, width: 5.25, depth: 5.5, yaw: Math.PI, wall: 0xb4ca89, roof: 0x4e6c5e, accent: 0x426d47 },
@@ -54,7 +56,7 @@ function frame(kit, house, { width, depth, height, rise, wall, roof }) {
   const front = depth / 2;
   box(house, stone, 0, 0.085, 0, width + 0.15, 0.58, depth + 0.15, shadow);
   box(house, wall, 0, height / 2 + 0.16, 0, width, height - 0.32, depth, shadow);
-  part(house, 'gable', wall, 0, height - 0.05, 0, width, rise + 0.04, depth, shadow);
+  part(house, 'gable', wall, 0, height, 0, width, rise - 0.01, depth, shadow);
   gabledRoof(kit, house, width, depth, height, rise, roof);
 
   for (const side of [-1, 1]) {
@@ -78,7 +80,8 @@ function frame(kit, house, { width, depth, height, rise, wall, roof }) {
   const chimney = width * 0.21;
   box(house, 0xa16f57, chimney, height + rise * 0.74, -depth * 0.21, 0.64, 1.65, 0.59, shadow);
   for (let i = 0; i < 4; i++) {
-    box(house, 0x8e5946, chimney, height + rise * 0.74 + i * 0.25, -depth * 0.21, 0.65, 0.036, 0.60);
+    box(house, 0x8e5946, chimney, height + rise * 0.74 + i * 0.25, -depth * 0.21,
+      0.64 + 2 * SURFACE_GAP.detail, 0.036, 0.59 + 2 * SURFACE_GAP.detail);
   }
   box(house, wood, chimney, height + rise * 0.74 + 0.84, -depth * 0.21, 0.81, 0.18, 0.75);
   solid(house, width + 0.17, depth + 0.17, height + rise);
@@ -89,8 +92,13 @@ export function gabledRoof({ box, beam }, house, width, depth, height, rise, roo
   const roofDepth = depth + 0.64;
   const eave = height - 0.17;
   const peak = height + rise + 0.065;
+  const roofThickness = 0.22;
+  const fall = peak - eave;
+  const slope = Math.atan2(fall, span);
+  // The strip underside seats against the sloped panel's outer face.
+  const stripOffset = (roofThickness + SURFACE_GAP.roof) / 2;
   for (const side of [-1, 1]) {
-    beam(house, roof, [side * span, eave, 0], [0, peak, 0], 0.22, roofDepth, shadow);
+    beam(house, roof, [side * span, eave, 0], [0, peak, 0], roofThickness, roofDepth, shadow);
     box(house, wood, side * span, eave, 0, 0.19, 0.22, roofDepth + 0.08);
     for (const face of [-1, 1]) {
       const z = face * (roofDepth / 2 + 0.025);
@@ -98,7 +106,9 @@ export function gabledRoof({ box, beam }, house, width, depth, height, rise, roo
     }
     for (let i = 1; i <= 8; i++) {
       const t = i / 9;
-      box(house, roof, side * t * span, peak - t * (peak - eave) + 0.14, 0, 0.11, 0.08, roofDepth);
+      box(house, roof, side * (t * span + Math.sin(slope) * stripOffset),
+        peak - t * fall + Math.cos(slope) * stripOffset, 0, 0.11, SURFACE_GAP.roof, roofDepth,
+        { rotation: [0, 0, -side * slope] });
     }
   }
   box(house, wood, 0, peak + 0.065, 0, 0.22, 0.18, roofDepth + 0.12);
@@ -110,11 +120,12 @@ export function gabledRoof({ box, beam }, house, width, depth, height, rise, roo
 function window({ box }, node, x, y, z, width, height, shutters = true) {
   box(node, wood, x, y, z, width + 0.15, height + 0.15, 0.08);
   box(node, glass, x, y, z + 0.048, width, height, 0.05);
-  box(node, 0x7c9a9c, x, y + height * 0.23, z + 0.077, width * 0.84, height * 0.44, 0.014);
+  box(node, 0x7c9a9c, x, y + height * 0.23, z + 0.073 + SURFACE_GAP.detail / 2,
+    width * 0.84, height * 0.44, SURFACE_GAP.detail);
   for (const offset of [-0.5, 0, 0.5]) {
     box(node, pale, x + offset * width, y, z + 0.09, 0.05, height + 0.06, 0.055);
   }
-  box(node, pale, x, y + height * 0.09, z + 0.092, width + 0.03, 0.055, 0.06);
+  box(node, pale, x, y + height * 0.09, z + 0.1175 + SURFACE_GAP.detail - 0.03, width + 0.03, 0.055, 0.06);
   box(node, trim, x, y - height / 2 - 0.05, z + 0.13, width + 0.23, 0.12, 0.29);
   if (!shutters) return;
   for (const side of [-1, 1]) {
@@ -181,15 +192,17 @@ function storefront(kit, shop, kind, { width, depth, name, accent }) {
     window(kit, shop, side * width * 0.274, 1.54, front, 1.37, 1.18, false);
     window(kit, shop, side * width * 0.235, 3.28, front, 0.77, 0.86);
   }
-  sign(shop, name, 0, 3.97, front + 0.12, 2.42, 0.45, kind === 'bakery' ? '#742f29' : '#275449');
+  sign(shop, name, 0, 3.97, front + 0.12, 2.42, 0.45, { background: kind === 'bakery' ? '#742f29' : '#275449' });
   if (kind === 'fish') fish(kit, shop, 0, 4.9, front + 0.15, 1.85, 0xe1d098);
   else {
     const tilt = 0.22;
-    const stripe = width * 0.91 / 12;
-    for (let i = 0; i < 12; i++) {
-      box(shop, i % 2 ? pale : accent, stripe * (i - 5.5), 2.51, front + 0.54, stripe + 0.006, 0.095, 1.08,
+    const stripes = 12;
+    const stripe = (width * 0.91 + 0.006) / stripes;
+    for (let i = 0; i < stripes; i++) {
+      const x = stripe * (i + 0.5 - stripes / 2);
+      box(shop, i % 2 ? pale : accent, x, 2.51, front + 0.54, stripe, 0.095, 1.08,
         { rotation: [tilt, 0, 0] });
-      box(shop, i % 2 ? pale : accent, stripe * (i - 5.5), 2.34, front + 1.06, stripe + 0.006, 0.21, 0.09);
+      box(shop, i % 2 ? pale : accent, x, 2.34, front + 1.06, stripe, 0.21, 0.09);
     }
   }
 
@@ -266,18 +279,25 @@ function clockTower(kit, tower) {
       }
     }
     const y = 5.15;
-    part(face, 'drum', wood, 0, y, z + 0.064, 1.21, 0.19, 1.21, { rotation: [Math.PI / 2, 0, 0] });
-    part(face, 'disk', pale, 0, y, z + 0.165, 1.06, 1.06, 1);
-    part(face, 'ring', 0xc19752, 0, y, z + 0.17, 1.02, 1.02, 0.30);
+    const backingDepth = 0.19;
+    const backingZ = z + 0.064;
+    const dialZ = backingZ + backingDepth / 2 + SURFACE_GAP.detail;
+    const markerDepth = 0.027;
+    const markerZ = dialZ + SURFACE_GAP.detail - markerDepth / 2;
+    const hourZ = markerZ + markerDepth / 2 + SURFACE_GAP.detail;
+    const minuteZ = hourZ + SURFACE_GAP.detail;
+    part(face, 'drum', wood, 0, y, backingZ, 1.21, backingDepth, 1.21, { rotation: [Math.PI / 2, 0, 0] });
+    part(face, 'disk', pale, 0, y, dialZ, 1.06, 1.06, 1);
+    part(face, 'ring', 0xc19752, 0, y, dialZ + 0.005, 1.02, 1.02, 0.30);
     for (let hour = 0; hour < 12; hour++) {
       const angle = hour * Math.PI / 6;
       const major = hour % 3 === 0;
-      box(face, wood, -Math.sin(angle) * 0.84, y + Math.cos(angle) * 0.84, z + 0.204,
-        major ? 0.103 : 0.061, major ? 0.225 : 0.107, 0.027, { rotation: [0, 0, angle] });
+      box(face, wood, -Math.sin(angle) * 0.84, y + Math.cos(angle) * 0.84, markerZ,
+        major ? 0.103 : 0.061, major ? 0.225 : 0.107, markerDepth, { rotation: [0, 0, angle] });
     }
-    beam(face, 0x263f3d, [0, y, z + 0.23], [-0.51, y + 0.42, z + 0.23], 0.11, 0.043);
-    beam(face, 0x263f3d, [0, y, z + 0.23], [0.43, y + 0.69, z + 0.23], 0.079, 0.043);
-    part(face, 'gem', 0xb58747, 0, y, z + 0.27, 0.13, 0.13, 0.055);
+    beam(face, 0x263f3d, [0, y, hourZ], [-0.51, y + 0.42, hourZ], 0.11, 0.043);
+    beam(face, 0x263f3d, [0, y, minuteZ], [0.43, y + 0.69, minuteZ], 0.079, 0.043);
+    part(face, 'gem', 0xb58747, 0, y, minuteZ + 0.04, 0.13, 0.13, 0.055);
     window(kit, face, -0.72, 8.39, z * 0.81, 0.49, 0.84, false);
     window(kit, face, 0.72, 8.39, z * 0.81, 0.49, 0.84, false);
   }

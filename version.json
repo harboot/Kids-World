@@ -1,17 +1,17 @@
 {
-  "version": "f7db6461dd48428a0952f2aed7e578043ccead24167abc836e113f24f1478dcf",
+  "version": "de764ded37a2fb9662906b16d9b1d35338a4636cbcdaf31df4aaac0bb6c302e1",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
-      "revision": "15100b06feb2f1978d9af93a01aa934050008a58c12c536da4f0ca31e3743782"
+      "revision": "14e0c6576f3fab3cd87620205c74fb4ca296a56a8ad01df5ef0ff171abd7c674"
     },
     {
       "path": "./areas/arendelle-village/decorations.js",
-      "revision": "770f331fc4882b4a8df93f8393f41e8c707a11b2c41089bf0003f02dbb2f1163"
+      "revision": "66f5f57f963b3f8c43418c5068aec712b384e7dd2107194844dd4b207e5ec0ef"
     },
     {
       "path": "./areas/arendelle-village/harbor.js",
-      "revision": "487828248300f1c153ce6a2bc740e92ce8c9c49235d44251dda366afdbd90de5"
+      "revision": "0b82abf50b59314bec95f440dfea2569b60689aa16a4d54eb6eb8c88526ea768"
     },
     {
       "path": "./areas/arendelle-village/index.js",
@@ -23,15 +23,15 @@
     },
     {
       "path": "./areas/arendelle-village/scenery.js",
-      "revision": "797c5298d9871dfef0b80eb955d74fb0c3f13819a81938faea61d9f1707a5fc3"
+      "revision": "837920af319f465c85868545cb4e22ccc3e2361cc54806b95ed8c5aa2cc34b1d"
     },
     {
       "path": "./areas/arendelle-village/terrain.js",
-      "revision": "6d00943c2e334281fcc6b3825bff0cbea09cc61eaec4195cc6d23236fe7a412d"
+      "revision": "cd93578174d0a44b3de20e9f1ddbd2c60f8cfbb747986379ed636bf1ab799727"
     },
     {
       "path": "./areas/flower-garden/garden-cabin.js",
-      "revision": "5e1342da95f88db32d8b246893290c4622bb72a7592a7eb65c3aefa4d4c0103e"
+      "revision": "8dbe6a9007159690b1320f669bd62f6ffbe30a2202094f0b3add134b32d91661"
     },
     {
       "path": "./areas/flower-garden/garden-orchard.js",
@@ -39,11 +39,11 @@
     },
     {
       "path": "./areas/flower-garden/garden-pond.js",
-      "revision": "2b164b66577285b083d20ea7baff720982d9fcf65cc9b453401e95f0bd84293f"
+      "revision": "2559bb9c63f71f6d26d69264b816a5a825e864de363191b0d853396c171525a3"
     },
     {
       "path": "./areas/flower-garden/garden-terrain.js",
-      "revision": "e1bed6bcde0c53dd08e358b002736db7fd39096c92dcbbfcc3c3eead29951357"
+      "revision": "ecc187ac91536c7f7b994d79cf2ec5e67342fad2e8d0a1d8930d5a06c8a69fe5"
     },
     {
       "path": "./areas/flower-garden/index.js",
@@ -51,11 +51,11 @@
     },
     {
       "path": "./areas/frozen-castle/activities.js",
-      "revision": "b59e0e5e72240b04d05c1d12c300b2054dfe105d17888a96c2e7d603c2e8c3c7"
+      "revision": "66246eb549c14ae7f7e53cb7cedf032ca8215e6dbacc02ba1770580637ea4239"
     },
     {
       "path": "./areas/frozen-castle/decorations.js",
-      "revision": "88a3d31beea68e636d514848a3f50427d9bc12618867125c606878ce994cc382"
+      "revision": "718c8cacbe08461d738f67a7db313671d4971c7ef2cc679f3e9efb64e2a4699c"
     },
     {
       "path": "./areas/frozen-castle/index.js",
@@ -63,15 +63,15 @@
     },
     {
       "path": "./areas/frozen-castle/palace.js",
-      "revision": "d3f95de88d645d46b92141a73be7a0e294199cf6bb6c6c33801823c9501db81d"
+      "revision": "bfbceb3ac915f979041e663dac6a8805735e00997df3a2a7a087d91fe3b07bf8"
     },
     {
       "path": "./areas/frozen-castle/staircase.js",
-      "revision": "ccbac686bc62a45ca2bc4df1990dda8cb3eaec091662457adc4e5e8dcdc17056"
+      "revision": "baf932fe8f0d81e2e7a0f40a1c9ef43f32372c0d01131b912fab209a19d9cc68"
     },
     {
       "path": "./areas/frozen-castle/summit.js",
-      "revision": "e260bf67e088710b7db883925f9a314fa34c05da9416ec7199a2189e87db5031"
+      "revision": "cf5cc7ccd4a26a36f73206e00e35a954f484352bdf2c1999a1c85e09bbcc6529"
     },
     {
       "path": "./areas/ice-door.js",
@@ -87,19 +87,19 @@
     },
     {
       "path": "./areas/snow-basin/props.js",
-      "revision": "d58772cf0f09f8b8ea32141e422f5a0e667696033389d488039be913a9fd5fb3"
+      "revision": "00cf0997c9da1a3e85fc591d91548d5acd6cfe58545ba205d40ab34ee484dda8"
     },
     {
       "path": "./areas/snow-basin/scenery.js",
-      "revision": "69f360e762672c3a88fd581d2ae9124cd588f55722bd696f661c7f443c8b3c12"
+      "revision": "823d59d5d80b9c74bb389c4a2ed18ed7c4fd7a7a189078b7ba17e013997f860e"
     },
     {
       "path": "./areas/wooden-house/cleaning.js",
-      "revision": "3e052cbdf1ccb9ce91403310306e50721a190ea98365d51be9824ea588f3d316"
+      "revision": "6bef09e325cae99e696737f721277c32bcbcfeb0ba96ffdd6d1f28f73e50045d"
     },
     {
       "path": "./areas/wooden-house/furniture.js",
-      "revision": "aac6747e4bc8cc147ee33f131808ed968252777f3a98bfd2fd36a85c829f00e3"
+      "revision": "7d6bc31f110f71fe74b67e4d25e3bcd5948c3bfabd720b8307fab89d1b56b37e"
     },
     {
       "path": "./areas/wooden-house/index.js",
@@ -128,6 +128,10 @@
     {
       "path": "./core/game.js",
       "revision": "d3fc1164826868de3d3724e6ee168b77b7b0b7bea22439f845caba492f0e9cd9"
+    },
+    {
+      "path": "./core/geometry.js",
+      "revision": "504cfb8d9104e31d4dd20a961b9721a4a7abbe656c50168979d2600ca6e55734"
     },
     {
       "path": "./core/interactions.js",

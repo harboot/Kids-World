@@ -1,3 +1,5 @@
+import { SURFACE_GAP } from '../../core/geometry.js';
+
 export function addWinterScenery({ THREE, scene, touch, width, depth }) {
   const obstacles = [];
   const box = new THREE.BoxGeometry(1, 1, 1);
@@ -43,19 +45,22 @@ export function addWinterScenery({ THREE, scene, touch, width, depth }) {
   for (const side of [-1, 1]) {
     mesh(box, slate, side * (width / 2 + 0.3), 0.42, 0, 0.64, 0.84, depth + 1, true);
     mesh(box, frost, side * (width / 2 + 0.29), 0.83, 0, 0.7, 0.18, depth + 1, true);
-    mesh(box, slate, 0, 0.42, side * (depth / 2 + 0.3), width, 0.84, 0.64, true);
-    mesh(box, frost, 0, 0.83, side * (depth / 2 + 0.29), width, 0.18, 0.7, true);
+    mesh(box, slate, 0, 0.42, side * (depth / 2 + 0.3), width - 0.04, 0.84, 0.64, true);
+    mesh(box, frost, 0, 0.83, side * (depth / 2 + 0.29), width - 0.12, 0.18, 0.7, true);
   }
 
   const pond = new THREE.CylinderGeometry(1, 1, 1, 7);
   mesh(pond, frost, 0, 0.006, -0.7, 4.45, 0.025, 5.1).rotation.y = 0.29;
-  mesh(pond, ice, 0, 0.022, -0.7, 4.17, 0.018, 4.8).rotation.y = 0.29;
+  const pondY = 0.022;
+  const iceThickness = 0.018;
+  mesh(pond, ice, 0, pondY, -0.7, 4.17, iceThickness, 4.8).rotation.y = 0.29;
+  const crackY = pondY + iceThickness / 2 + SURFACE_GAP.detail;
   const cracks = new THREE.BufferGeometry();
   cracks.setAttribute('position', new THREE.Float32BufferAttribute([
-    -3.25, 0.032, -0.2, -1.4, 0.032, -1.1, -1.4, 0.032, -1.1, 0.1, 0.032, -0.9,
-    0.1, 0.032, -0.9, 1.05, 0.032, -2.1, 1.05, 0.032, -2.1, 2.15, 0.032, -2.4,
-    0.1, 0.032, -0.9, 0.75, 0.032, 0.1, 0.75, 0.032, 0.1, 2.38, 0.032, 0.7,
-    0.75, 0.032, 0.1, 0.2, 0.032, 1.65,
+    -3.25, crackY, -0.2, -1.4, crackY, -1.1, -1.4, crackY, -1.1, 0.1, crackY, -0.9,
+    0.1, crackY, -0.9, 1.05, crackY, -2.1, 1.05, crackY, -2.1, 2.15, crackY, -2.4,
+    0.1, crackY, -0.9, 0.75, crackY, 0.1, 0.75, crackY, 0.1, 2.38, crackY, 0.7,
+    0.75, crackY, 0.1, 0.2, crackY, 1.65,
   ], 3));
   scene.add(new THREE.LineSegments(cracks, new THREE.LineBasicMaterial({ color: 0xb6d8e4 })));
 
@@ -75,8 +80,14 @@ export function addWinterScenery({ THREE, scene, touch, width, depth }) {
     for (let tier = 0; tier < 3; tier++) {
       const radius = (1.03 - tier * 0.23) * scale;
       const y = (1.24 + tier * 0.74) * scale;
-      mesh(cone, pine, x, y, z, radius, 1.52 * scale, radius, true).rotation.y = x;
-      mesh(cone, frost, x, y + 0.26 * scale, z, radius * 0.68, 1.07 * scale, radius * 0.68).rotation.y = x;
+      const tierHeight = 1.52 * scale;
+      const capHeight = 1.07 * scale;
+      const capY = y + 0.26 * scale;
+      const capBase = capY - capHeight / 2;
+      const radiusAtCapBase = radius * (y + tierHeight / 2 - capBase) / tierHeight;
+      const capRadius = radiusAtCapBase + SURFACE_GAP.trim;
+      mesh(cone, pine, x, y, z, radius, tierHeight, radius, true).rotation.y = x;
+      mesh(cone, frost, x, capY, z, capRadius, capHeight, capRadius, true).rotation.y = x;
     }
   }
 

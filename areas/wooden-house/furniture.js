@@ -1,3 +1,4 @@
+import { SURFACE_GAP } from '../../core/geometry.js';
 import { colors, rug } from './interior.js';
 
 const { cream, linen, honey, walnut, oak, gold, rose, brick, mint, sage, teal, blue, plum, ink, leaf } = colors;
@@ -55,7 +56,9 @@ export function buildFurniture(THREE, scene, builder) {
     rug(builder, -4.22, -2.91, 3.03, 3.38, brick, 0xe2a693);
     legs(bed, 0.82, 1.16, 0.31);
     part(bed, honey, 0, 0.37, 0, 1.86, 0.25, 2.6);
-    part(bed, cream, 0, 0.565, 0, 1.74, 0.24, 2.48);
+    const mattressY = 0.565;
+    const mattressThickness = 0.24;
+    part(bed, cream, 0, mattressY, 0, 1.74, mattressThickness, 2.48);
     part(bed, oak, 0, 0.77, -1.26, 1.91, 1.35, 0.13);
     part(bed, honey, 0, 1.445, -1.26, 2.01, 0.105, 0.18);
     part(bed, honey, 0, 0.34, 1.26, 1.91, 0.49, 0.14);
@@ -80,7 +83,8 @@ export function buildFurniture(THREE, scene, builder) {
       return pillow;
     });
     const blanket = group('Quilt', 0, 0, 0, textiles);
-    part(blanket, teal, 0, 0, 0, 1.68, 0.105, 1.69);
+    const quiltThickness = 0.105;
+    part(blanket, teal, 0, 0, 0, 1.68, quiltThickness, 1.69);
     part(blanket, mint, 0, 0.027, -0.734, 1.67, 0.098, 0.224);
     for (const side of [-1, 1]) {
       part(blanket, teal, side * 0.817, -0.116, 0.03, 0.067, 0.17, 1.61);
@@ -97,7 +101,7 @@ export function buildFurniture(THREE, scene, builder) {
     const messyPillows = [[-0.42, 0.77, -0.56, 0.48], [0.26, 0.77, -0.2, -0.79]];
     const tidyPillows = [[-0.43, 0.77, -0.92], [0.43, 0.77, -0.92]];
     const messyQuilt = [-0.33, 0.775, 0.48, -0.265];
-    const tidyQuilt = [0, 0.745, 0.347];
+    const tidyQuilt = [0, mattressY + (mattressThickness + quiltThickness) / 2, 0.347];
     return {
       id: 'bed', label: 'Make bed', x, z, anchorY: 0.85, radius: 3, duration: 0.75,
       clearance: { x: -4.35, z: -3.45, width: 2.7, depth: 2.83 },
@@ -117,16 +121,26 @@ export function buildFurniture(THREE, scene, builder) {
     const kitchen = group('Kitchen', x, 0, z);
     for (const cx of [-1.02, 0, 1.06]) {
       const cabinetHeight = cx === 0 ? 0.79 : 0.94;
-      part(kitchen, sage, cx, cabinetHeight / 2, 0, 1.04, cabinetHeight, 0.935);
+      part(kitchen, sage, cx, cabinetHeight / 2, 0, 1, cabinetHeight, 0.935);
       part(kitchen, mint, cx, 0.456, 0.493, 0.918, 0.68, 0.054);
       part(kitchen, walnut, cx, 0.707, 0.535, 0.23, 0.038, 0.055);
     }
-    for (const cx of [-1.032, 1.052]) part(kitchen, linen, cx, 0.965, 0, 1.057, 0.09, 1.02);
-    for (const edge of [-1, 1]) part(kitchen, linen, 0.007, 0.965, edge * 0.432, 1.02, 0.09, 0.156);
+    const counterLeft = -1.032;
+    const counterRight = 1.052;
+    const counterWidth = 1.057;
+    for (const cx of [counterLeft, counterRight]) part(kitchen, linen, cx, 0.965, 0, counterWidth, 0.09, 1.02);
+    for (const edge of [-1, 1]) {
+      part(kitchen, linen, (counterLeft + counterRight) / 2, 0.965, edge * 0.432,
+        counterRight - counterLeft - counterWidth, 0.09, 0.156);
+    }
     part(kitchen, 0x8ea5a4, 0, 0.84, 0.006, 1.038, 0.149, 0.74);
     part(kitchen, 0x617c80, 0, 0.919, 0.006, 0.87, 0.014, 0.61);
-    for (const side of [-1, 1]) part(kitchen, 0xb5cece, side * 0.488, 1.011, 0, 0.065, 0.033, 0.75);
-    for (const end of [-1, 1]) part(kitchen, 0xb5cece, 0, 1.011, end * 0.373, 0.99, 0.033, 0.063);
+    const rimX = 0.488;
+    const rimZ = 0.373;
+    const rimWidth = 0.065;
+    const rimDepth = 0.063;
+    for (const side of [-1, 1]) part(kitchen, 0xb5cece, side * rimX, 1.011, 0, rimWidth, 0.033, 2 * rimZ + rimDepth);
+    for (const end of [-1, 1]) part(kitchen, 0xb5cece, 0, 1.011, end * rimZ, 2 * rimX - rimWidth, 0.033, rimDepth);
     part(kitchen, 0xb6cecb, 0, 1.188, -0.36, 0.072, 0.36, 0.072, 'round');
     part(kitchen, 0xa2babc, 0, 1.344, -0.203, 0.075, 0.079, 0.355);
     part(kitchen, 0xb6cecb, 0, 1.304, -0.047, 0.082, 0.11, 0.086, 'round');
@@ -144,7 +158,7 @@ export function buildFurniture(THREE, scene, builder) {
     for (const dx of [-0.25, 0.25]) {
       for (const dz of [-0.24, 0.24]) {
         part(kitchen, ink, 2.18 + dx, 1.014, dz, 0.38, 0.036, 0.38, 'round');
-        part(kitchen, walnut, 2.18 + dx, 1.033, dz, 0.2, 0.009, 0.2, 'round');
+        part(kitchen, walnut, 2.18 + dx, 1.032 + SURFACE_GAP.detail / 2, dz, 0.2, SURFACE_GAP.detail, 0.2, 'round');
       }
     }
     solid(x + 2.18, z, 1.12, 0.985, FURNITURE_HEIGHT);
@@ -273,8 +287,9 @@ export function buildFurniture(THREE, scene, builder) {
     const display = group('TV display', x + 0.118, 1.185, z, scene);
     display.rotation.y = Math.PI / 2;
     const program = group('TV program', 0, 0, 0, display);
-    part(program, 0xc38cae, 0, 0, 0, 1.474, 0.682, 0.024, 'box', false);
-    part(program, 0xeab6a1, 0, -0.12, 0.016, 1.474, 0.442, 0.015, 'box', false);
+    const screenWidth = 1.474;
+    part(program, 0xc38cae, 0, 0, 0, screenWidth, 0.682, 0.024, 'box', false);
+    part(program, 0xeab6a1, 0, -0.12, 0.0195, screenWidth, 0.442, 0.015, 'box', false);
     part(program, 0xffdb87, -0.29, 0.012, 0.031, 0.371, 0.371, 0.012, 'ball', false);
     const cloud = part(program, 0xf8e6d8, 0.29, 0.192, 0.043, 0.34, 0.062, 0.012, 'ball', false);
     const littleCloud = part(program, 0xf3d0bc, -0.22, 0.246, 0.052, 0.2, 0.036, 0.012, 'ball', false);
@@ -296,7 +311,7 @@ export function buildFurniture(THREE, scene, builder) {
     sofa.rotation.y = -Math.PI / 2;
     legs(sofa, 0.98, 0.43, 0.22, honey);
     part(sofa, teal, 0, 0.333, 0, 2.27, 0.319, 1.105);
-    part(sofa, sage, 0, 0.8, -0.42, 2.27, 0.8, 0.302);
+    part(sofa, sage, 0, 0.8, -0.42, 2.27 - 2 * SURFACE_GAP.detail, 0.8, 0.302);
     for (const side of [-1, 1]) {
       part(sofa, mint, side * 0.467, 0.548, 0.064, 0.919, 0.168, 0.787);
       part(sofa, sage, side * 1.03, 0.646, 0.072, 0.263, 0.38, 0.991);
@@ -360,16 +375,18 @@ export function buildFurniture(THREE, scene, builder) {
     const z = 3.09;
     const chest = group('Toy box', x, 0, z);
     part(chest, walnut, 0, 0.076, 0, 1.32, 0.149, 0.79);
+    const sideX = 0.666;
+    const sideWidth = 0.106;
     for (const end of [-1, 1]) {
-      part(chest, end < 0 ? teal : sage, 0, 0.353, end * 0.38, 1.37, 0.52, 0.095);
-      part(chest, mint, end * 0.666, 0.353, 0, 0.106, 0.52, 0.841);
+      part(chest, end < 0 ? teal : sage, 0, 0.353, end * 0.38, 2 * sideX - sideWidth, 0.52, 0.095);
+      part(chest, mint, end * sideX, 0.353, 0, sideWidth, 0.52, 0.841);
     }
     part(chest, gold, 0, 0.354, -0.442, 0.224, 0.235, 0.061).rotation.z = Math.PI / 4;
     part(chest, cream, 0, 0.354, -0.479, 0.1, 0.1, 0.034, 'ball');
     solid(x, z, 1.438, 0.857, FURNITURE_HEIGHT);
     const lid = group('Toy box lid', x, 0.63, z + 0.4, scene);
     part(lid, mint, 0, 0.013, -0.407, 1.426, 0.116, 0.89);
-    part(lid, oak, 0, 0.006, -0.803, 1.427, 0.129, 0.088);
+    part(lid, oak, 0, 0.013, -0.803, 1.426 + 2 * SURFACE_GAP.detail, 0.116 + 2 * SURFACE_GAP.detail, 0.088);
     part(lid, walnut, 0, 0.005, -0.881, 0.328, 0.061, 0.075);
 
     const scattered = [

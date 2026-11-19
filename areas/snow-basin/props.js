@@ -1,3 +1,4 @@
+import { SURFACE_GAP } from '../../core/geometry.js';
 import { BALL_RADIUS, BREAK_DURATION, CHOPS, SNOWMAN_COUNT, SNOWMAN_SPHERES } from './activity.js';
 import { registerDoor } from '../ice-door.js';
 
@@ -18,7 +19,7 @@ export function addAxe(THREE, scene, viewmodel, kit, site) {
     .lineTo(0.48, 0.48).lineTo(0.15, 0.43).lineTo(0.03, 0.38).closePath();
   const head = new THREE.ExtrudeGeometry(edge, { depth: 0.11, bevelEnabled: false });
   part(head, iron, 0, 0, -0.055, 1, 1, 1);
-  part(box, blade, 0.45, 0.308, 0, 0.045, 0.33, 0.113).rotation.z = -0.20;
+  part(box, blade, 0.45, 0.308, 0, 0.045, 0.33, 0.11 + 2 * SURFACE_GAP.detail).rotation.z = -0.20;
 
   const holder = new THREE.Group();
   holder.name = 'Held axe';
@@ -192,10 +193,12 @@ export function addFrozenKey(THREE, scene, kit, site) {
   model.add(key);
   const bow = new THREE.TorusGeometry(0.225, 0.069, 6, 14);
   mesh(bow, ice, -0.32, 0.055, 0, 1, 1, 1, false, key);
-  mesh(box, gold, 0.219, 0.039, 0, 0.64, 0.126, 0.124, false, key);
+  const shaftDepth = 0.124;
+  const toothDepth = shaftDepth + 2 * SURFACE_GAP.detail;
+  mesh(box, gold, 0.219, 0.039, 0, 0.64, 0.126, shaftDepth, false, key);
   mesh(box, ice, -0.038, 0.038, 0, 0.14, 0.179, 0.147, false, key);
-  mesh(box, gold, 0.295, -0.083, 0, 0.122, 0.173, 0.128, false, key);
-  mesh(box, gold, 0.49, -0.116, 0, 0.123, 0.238, 0.126, false, key);
+  mesh(box, gold, 0.295, -0.083, 0, 0.122, 0.173, toothDepth, false, key);
+  mesh(box, gold, 0.49, -0.116, 0, 0.123, 0.238, toothDepth, false, key);
 
   const light = new THREE.MeshBasicMaterial({ color: 0xc2f5ff, toneMapped: false });
   const ring = new THREE.RingGeometry(0.48, 0.54, 20).rotateX(-Math.PI / 2);

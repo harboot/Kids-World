@@ -1,3 +1,4 @@
+import { SURFACE_GAP } from '../../core/geometry.js';
 import { POND, pondDistance, shoreRadius } from './garden-terrain.js';
 
 export const BRIDGE = { x: POND.x, start: 5.0, end: 22.1, halfWidth: 1.37, railX: 1.26, peak: 1.08 };
@@ -193,11 +194,14 @@ function addFishFeeder(THREE, { scene, mesh, box, facet, matte, getTerrainHeight
   const board = matte(0xe3ba79);
   const teal = matte(0x3c7e7d);
   mesh(box, wood, 0, 0.39, 0, 0.12, 0.8, 0.13, stand);
-  mesh(box, board, 0, 0.8, 0.022, 0.68, 0.36, 0.13, stand);
+  const boardZ = 0.022;
+  const boardDepth = 0.13;
+  const badgeZ = boardZ + boardDepth / 2 + SURFACE_GAP.detail;
+  mesh(box, board, 0, 0.8, boardZ, 0.68, 0.36, boardDepth, stand);
   const circle = new THREE.CircleGeometry(1, 12);
-  mesh(circle, teal, 0.055, 0.8, 0.091, 0.175, 0.095, 1, stand);
+  mesh(circle, teal, 0.055, 0.8, badgeZ, 0.175, 0.095, 1, stand);
   const tail = new THREE.Shape().moveTo(-0.08, 0).lineTo(-0.22, 0.08).lineTo(-0.22, -0.08).closePath();
-  mesh(new THREE.ShapeGeometry(tail), teal, 0, 0.8, 0.093, 1, 1, 1, stand);
+  mesh(new THREE.ShapeGeometry(tail), teal, 0, 0.8, badgeZ + SURFACE_GAP.detail, 1, 1, 1, stand);
   mesh(circle, board, 0.151, 0.821, 0.094, 0.022, 0.022, 1, stand);
 
   const bucketZ = site.z + 0.36;

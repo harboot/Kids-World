@@ -1,3 +1,4 @@
+import { SURFACE_GAP } from '../../core/geometry.js';
 import { addPalaceSign, arch, snowflake } from './palace.js';
 
 export const returnSite = { x: 0, z: 13.29 };
@@ -103,8 +104,10 @@ function buildGateway(THREE, builder, document, villageName, gatewayHeight) {
   arch(builder, gate, gold, 3.55, 3.34, 0.96, 0.09, 0.62);
   part(gate, 'box', bronze, 0, 1.65, -0.22, 3.56, 3.33, 0.24);
   part(gate, 'gem', lilac, 0, 4.77, 0.23, 0.44, 0.67, 0.27);
-  part(gate, 'box', deep, 0, 3.63, 0.35, 3.05, 0.55, 0.21);
-  addPalaceSign(THREE, document, gate, villageName, 0, 3.63, 0.46, 2.86, 0.42);
+  const boardZ = 0.35;
+  const boardDepth = 0.21;
+  part(gate, 'box', deep, 0, 3.63, boardZ, 3.05, 0.55, boardDepth);
+  addPalaceSign(THREE, document, gate, villageName, 0, 3.63, boardZ + boardDepth / 2 + SURFACE_GAP.detail, 2.86, 0.42);
 
   for (const side of [-1, 1]) {
     part(gate, 'box', gold, side * 2.56, 0.98, 0.12, 0.15, 1.96, 0.18);

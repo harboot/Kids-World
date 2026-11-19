@@ -105,16 +105,20 @@ export function addHillPath(THREE, { scene, getTerrainHeight, instances, matte }
   const indices = [];
   const tufts = [];
   const segments = 52;
+  // Sample across the full path so wide triangles cannot cut through the hill.
+  const strips = 4;
+  const stride = strips + 1;
   for (let i = 0; i <= segments; i++) {
     const t = i / segments;
     const point = curve.getPoint(t);
     const tangent = curve.getTangent(t);
     const width = 0.57 + 0.16 * Math.sin(Math.PI * t);
-    for (const side of [-1, 1]) {
+    for (let j = 0; j <= strips; j++) {
+      const side = 2 * j / strips - 1;
       const x = point.x + side * tangent.z * width;
       const z = point.z - side * tangent.x * width;
       positions.push(x, getTerrainHeight(x, z) + 0.038, z);
-      if (i >= 4 && i % 3 === 1) {
+      if ((j === 0 || j === strips) && i >= 4 && i % 3 === 1) {
         const offset = side * (0.42 + 1.03 * (0.5 + 0.5 * Math.sin(i * 1.7 + side)));
         const grassX = x + offset * tangent.z;
         const grassZ = z - offset * tangent.x;
@@ -122,9 +126,10 @@ export function addHillPath(THREE, { scene, getTerrainHeight, instances, matte }
         tufts.push([grassX, getTerrainHeight(grassX, grassZ), grassZ, scale, scale, scale, i * 1.6]);
       }
     }
-    if (i < segments) {
-      const a = i * 2;
-      indices.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
+    if (i === segments) continue;
+    for (let j = 0; j < strips; j++) {
+      const a = i * stride + j;
+      indices.push(a, a + 1, a + stride, a + 1, a + stride + 1, a + stride);
     }
   }
   const geometry = new THREE.BufferGeometry();
