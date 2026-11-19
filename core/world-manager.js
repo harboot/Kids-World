@@ -1,6 +1,12 @@
+export function isPublicArea(areas, id) {
+  return Object.hasOwn(areas, id) && !areas[id].hidden;
+}
+
 export function resolveArea(url, areas, defaultArea, savedArea) {
-  for (const id of [url.searchParams.get('area'), url.searchParams.get('arrive'), savedArea]) {
-    if (id && Object.hasOwn(areas, id)) return id;
+  const explicit = url.searchParams.get('area');
+  if (explicit && Object.hasOwn(areas, explicit)) return explicit;
+  for (const id of [url.searchParams.get('arrive'), savedArea]) {
+    if (id && isPublicArea(areas, id)) return id;
   }
   return defaultArea;
 }
