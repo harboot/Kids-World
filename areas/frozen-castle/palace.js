@@ -1,3 +1,5 @@
+import { SURFACE_GAP } from '../../core/geometry.js';
+
 export const PALACE_WIDTH = 28;
 export const PALACE_DEPTH = 28;
 
@@ -103,14 +105,18 @@ export function buildPalace(THREE, scene, builder, document) {
     }
   }
 
-  box(blue, 0, 0.006, 4.65, 4.1, 0.012, 18.2);
-  box(deep, 0, 0.012, 4.65, 3.65, 0.012, 18.2);
-  for (const side of [-1, 1]) box(light, side * 1.93, 0.018, 4.65, 0.045, 0.012, 18.2);
+  const runnerTop = SURFACE_GAP.detail;
+  const insetTop = runnerTop + SURFACE_GAP.detail;
+  const mosaicTop = insetTop + SURFACE_GAP.detail;
+  box(blue, 0, runnerTop / 2, 4.65, 4.1, runnerTop, 18.2);
+  const insetY = (runnerTop + insetTop) / 2;
+  box(deep, 0, insetY, 4.65, 3.65, SURFACE_GAP.detail, 18.2);
+  for (const side of [-1, 1]) box(light, side * 1.93, insetY, 4.65, 0.045, SURFACE_GAP.detail, 18.2);
   for (const z of [1.05, 5.45, 9.85]) {
-    const inlay = group('Ice mosaic', 0, 0.028, z, architecture);
+    const inlay = group('Ice mosaic', 0, mosaicTop, z, architecture);
     inlay.rotation.x = -Math.PI / 2;
     snowflake(builder, inlay, light, 0, 0, 0, z === 5.45 ? 1.29 : 0.65);
-    const border = part(inlay, 'box', blue, 0, 0, -0.014, 1.93, 1.93, 0.012);
+    const border = part(inlay, 'box', blue, 0, 0, -SURFACE_GAP.detail, 1.93, 1.93, 2 * SURFACE_GAP.detail);
     border.rotation.z = Math.PI / 4;
   }
 
@@ -212,11 +218,16 @@ export function buildPalace(THREE, scene, builder, document) {
   for (let i = 0; i < stair.steps; i++) {
     const y = stair.rise * (i + 1) / stair.steps;
     const z = stair.foot - (i + 0.5) * tread;
-    box(i % 2 ? pearl : frost, 0, y / 2, z, stair.halfWidth * 2, y, tread + 0.004);
-    box(glass, 0, y - 0.06, z + tread / 2, stair.halfWidth * 2, 0.072, 0.022);
+    box(i % 2 ? pearl : frost, 0, y / 2, z, stair.halfWidth * 2, y, tread);
+    box(glass, 0, y - 0.06, z + tread / 2, (stair.halfWidth - SURFACE_GAP.detail) * 2, 0.072, 0.022);
   }
-  box(blue, 0, stair.rise / 2, -11.23, stair.halfWidth * 2, stair.rise, 5.1);
-  box(frost, 0, stair.rise - 0.03, -11.23, stair.halfWidth * 2, 0.06, 5.1);
+  const platformBack = -13.78;
+  const platformDepth = stair.top - platformBack;
+  const platformZ = (stair.top + platformBack) / 2;
+  const platformCap = 0.06;
+  const platformBase = stair.rise - platformCap;
+  box(blue, 0, platformBase / 2, platformZ, stair.halfWidth * 2, platformBase, platformDepth);
+  box(frost, 0, stair.rise - platformCap / 2, platformZ, stair.halfWidth * 2, platformCap, platformDepth);
   for (const side of [-1, 1]) {
     const x = side * stair.halfWidth;
     const rail = [stair.foot, stair.top, -13.61];

@@ -1,3 +1,4 @@
+import { SURFACE_GAP } from '../../core/geometry.js';
 import { CITY_PIER, FISHING_PIER, QUAY, shorelineX } from './terrain.js';
 import { randomFrom } from './scenery.js';
 
@@ -45,8 +46,10 @@ export function buildHarbor(THREE, scene, kit) {
   fishingNet(kit, fishing, 27.4, -0.31);
 
   const citySign = group('City pier boarding sign', CITY_SIGN.x + 0.84, 0, CITY_SIGN.z - 1.5);
-  box(citySign, oak, 0, 0.82, 0, 0.17, 1.62, 0.17);
-  sign(citySign, 'To The City', -0.12, 1.54, 0, 1.8, 0.42, '#35545b', -Math.PI / 2);
+  const postHeight = 1.31;
+  box(citySign, oak, 0, postHeight / 2, 0, 0.17, postHeight, 0.17);
+  sign(citySign, 'To The City', -0.12, 1.54, 0, 1.8, 0.42,
+    { background: '#35545b', yaw: -Math.PI / 2, bothSides: true });
   solid(citySign, 0.23, 0.23, 1.6);
   box(city, timber, 28.6, 0.46, 19, 1.66, 0.15, 0.57);
   for (const x of [28.05, 29.15]) box(city, oak, x, 0.23, 19, 0.15, 0.46, 0.43);
@@ -112,7 +115,8 @@ function pier({ group, box, part, solid }, name, { left, right, front, back }) {
 }
 
 function buildSea(THREE, scene, { group, part }) {
-  const sea = new THREE.PlaneGeometry(165, 225, 24, 20).rotateX(-Math.PI / 2).translate(55, -0.48, -14);
+  const seaLevel = -0.48;
+  const sea = new THREE.PlaneGeometry(165, 225, 24, 20).rotateX(-Math.PI / 2).translate(55, seaLevel, -14);
   const points = sea.getAttribute('position');
   const colors = [];
   const deep = new THREE.Color(0x478d99);
@@ -133,13 +137,22 @@ function buildSea(THREE, scene, { group, part }) {
   scene.add(water);
   const waves = group('Water ripples', 0, 0, 0);
   const random = randomFrom(761);
+  const placed = [];
   for (let i = 0; i < 252; i++) {
     const x = 22.9 + random() * (i < 145 ? 26 : 85);
     const z = (random() - 0.53) * (i < 145 ? 64 : 155);
     const size = 0.23 + random() * (i < 145 ? 0.73 : 1.1);
     const color = [0x8bbdb1, 0x7eb2aa, 0x9cc7bb, 0x76aaa5][i % 4];
-    part(waves, 'disk', color, x, -0.467, z, size, 0.035 + random() * 0.026, 1,
-      { batch: waves, rotation: [-Math.PI / 2, 0, -0.13 + random() * 0.27] });
+    const width = 0.035 + random() * 0.026;
+    const angle = -0.13 + random() * 0.27;
+    // Keep coplanar ripple decals apart as the entire batch drifts together.
+    const reachX = Math.hypot(size * Math.cos(angle), width * Math.sin(angle));
+    const reachZ = Math.hypot(size * Math.sin(angle), width * Math.cos(angle));
+    if (placed.some(other => Math.abs(x - other.x) < reachX + other.reachX &&
+        Math.abs(z - other.z) < reachZ + other.reachZ)) continue;
+    placed.push({ x, z, reachX, reachZ });
+    part(waves, 'disk', color, x, seaLevel + SURFACE_GAP.detail, z, size, width, 1,
+      { batch: waves, rotation: [-Math.PI / 2, 0, angle] });
   }
   return waves;
 }

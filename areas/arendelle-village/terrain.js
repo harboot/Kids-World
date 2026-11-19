@@ -1,3 +1,4 @@
+import { SURFACE_GAP } from '../../core/geometry.js';
 import { randomFrom } from './scenery.js';
 
 export const QUAY = 23;
@@ -104,7 +105,7 @@ export function buildTerrain(THREE, scene, kit) {
   buildShore(THREE, scene);
   const creek = kit.group('Mill creek', CREEK, 0, 21.75);
   kit.box(creek, 0x448d85, 0, WATER_HEIGHT, 0, 3.3, 0.035, 23);
-  buildBridge(kit);
+  buildBridge(THREE, kit);
   buildHorizon(THREE, kit);
 
   function getGroundHeight(x, z) {
@@ -194,35 +195,66 @@ function cobbles(THREE, kit) {
   return map;
 }
 
-function buildBridge({ group, box, beam, solid }) {
+function buildBridge(THREE, { group, box, solid }) {
   const bridge = group('Stone bridge', 0, 0, 0);
   const { left, right, front, back } = BRIDGE;
   const segments = 18;
   const width = (right - left) / segments;
-  for (let i = 0; i < segments; i++) {
-    const x = left + i * width;
-    const end = x + width;
-    const y = bridgeHeight(x) + 0.017;
-    const next = bridgeHeight(end) + 0.017;
-    const tilt = Math.atan2(next - y, width);
-    const deck = { rotation: [0, 0, tilt] };
-    for (let row = 0; row < 8; row++) {
-      const color = [0xb8aa92, 0xa59b8e, 0xc5b39a, 0xab9f90][(i * 3 + row * 7) % 4];
-      box(bridge, color, x + width / 2, (y + next) / 2 - 0.11, front + (row + 0.5) * (back - front) / 8,
-        width + 0.006, 0.22, (back - front) / 8 - 0.024, deck);
-    }
-    for (const z of [front, back]) {
-      box(bridge, 0x8f8275, x + width / 2, (y + next) / 2 + 0.22, z, width + 0.012, 1.22, 0.34, deck);
-      beam(bridge, 0xcabb9d, [x, y + 0.86, z], [end, next + 0.86, z], 0.19, 0.50);
+  const positions = [];
+  const colors = [];
+  const tint = new THREE.Color();
+
+  function quad(a, b, c, d) {
+    for (const point of [a, b, c, a, c, d]) {
+      positions.push(...point);
+      colors.push(tint.r, tint.g, tint.b);
     }
   }
+
+  // All segments end at the same cross sections, so the colored stones meet
+  // at edges and the rail has continuous sides through the changes in slope.
+  function course(z0, z1, bottom, top, color) {
+    function section(i) {
+      const x = left + i * width;
+      const y = bridgeHeight(x) + SURFACE_GAP.trim;
+      return [[x, y + top, z0], [x, y + top, z1], [x, y + bottom, z1], [x, y + bottom, z0]];
+    }
+    let start = section(0);
+    for (let i = 0; i < segments; i++) {
+      const end = section(i + 1);
+      tint.setHex(color(i));
+      for (let side = 0; side < start.length; side++) {
+        const next = (side + 1) % start.length;
+        quad(start[side], start[next], end[next], end[side]);
+      }
+      if (i === 0) quad(...start.toReversed());
+      if (i === segments - 1) quad(...end);
+      start = end;
+    }
+  }
+
+  const stones = [0xb8aa92, 0xa59b8e, 0xc5b39a, 0xab9f90];
+  const rowWidth = (back - front) / 8;
+  for (let row = 0; row < 8; row++) {
+    const z = front + row * rowWidth;
+    course(z + 0.012, z + rowWidth - 0.012, -0.22, 0, i => stones[(i * 3 + row * 7) % stones.length]);
+  }
   for (const z of [front, back]) {
+    course(z - 0.17, z + 0.17, -0.39, 0.81, () => 0x8f8275);
+    course(z - 0.25, z + 0.25, 0.765, 0.955, () => 0xcabb9d);
     solid(bridge, right - left, 0.34, 2, (left + right) / 2, z);
     for (const x of [left, right]) {
       box(bridge, 0x9a8774, x, 0.51, z, 0.52, 1.04, 0.52);
       box(bridge, 0xd3be9b, x, 1.02, z, 0.66, 0.16, 0.67);
     }
   }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  geometry.computeVertexNormals();
+  const stonework = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({ vertexColors: true }));
+  stonework.receiveShadow = true;
+  bridge.add(stonework);
 }
 
 function buildHorizon(THREE, { group, part }) {

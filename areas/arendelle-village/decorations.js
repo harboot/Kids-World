@@ -1,3 +1,4 @@
+import { SURFACE_GAP } from '../../core/geometry.js';
 import { gabledRoof } from './buildings.js';
 import { randomFrom } from './scenery.js';
 
@@ -59,7 +60,7 @@ export function decorateVillage(kit, height) {
   for (const [x, z, yaw, label] of [[-4.28, 10.0, 0, 'Village Square ↑'], [-13.93, 15.35, Math.PI, 'Stables →'],
     [16.9, 6.35, -Math.PI / 2, 'Harbor ↑'], [-8.54, 8.26, 0, '← West Lane']]) {
     const post = group('Village directions', x, height(x, z), z, yaw);
-    box(post, oak, 0, 0.8, 0, 0.18, 1.6, 0.18);
+    box(post, oak, 0, 0.75, 0, 0.18, 1.5, 0.18);
     kit.sign(post, label, 0, 1.68, 0, 1.71, 0.32);
   }
 }
@@ -85,11 +86,13 @@ function entrance(kit, height) {
   }
   for (let i = 0; i < 12; i++) {
     const point = n => [3.18 * Math.cos(n * Math.PI / 12), 3.62 + 1.78 * Math.sin(n * Math.PI / 12), 0];
-    beam(gate, i % 2 ? 0xb7a389 : 0xc2ad91, point(i), point(i + 1), 0.58, 1.06, { shadow: true });
+    // Recess alternating stones on both sides where the angled joints overlap.
+    const depth = i % 2 ? 1.06 - 2 * SURFACE_GAP.trim : 1.06;
+    beam(gate, i % 2 ? 0xb7a389 : 0xc2ad91, point(i), point(i + 1), 0.58, depth, { shadow: true });
   }
   part(gate, 'gem', 0xe7c78e, 0, 5.82, 0, 0.29, 0.4, 0.27);
-  sign(gate, 'Arendelle Village', 0, 4.72, 0.63, 3.42, 0.62, '#2b5049');
-  sign(gate, 'Frozen Castle', 0, 4.72, -0.63, 2.9, 0.59, '#304a59', Math.PI);
+  sign(gate, 'Arendelle Village', 0, 4.72, 0.63, 3.42, 0.62, { background: '#2b5049' });
+  sign(gate, 'Frozen Castle', 0, 4.72, -0.63, 2.9, 0.59, { background: '#304a59', yaw: Math.PI });
 }
 
 function square(kit, height) {

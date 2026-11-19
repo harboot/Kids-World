@@ -62,6 +62,8 @@ To contribute a world:
 
 The shared engine handles rendering, player controls, world transitions, and resource cleanup.
 
+See the [3D geometry guidelines](docs/geometry-guidelines.md) when building a world.
+
 **Focus on creating the adventure — not rebuilding the engine.**
 
 ## Run Locally

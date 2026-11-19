@@ -1,3 +1,4 @@
+import { SURFACE_GAP } from '../../core/geometry.js';
 import { PALACE_WIDTH, PALACE_DEPTH } from './palace.js';
 
 export const SUMMIT_SIZE = 40;
@@ -48,11 +49,17 @@ function buildTerrace(builder) {
     const yaw = side * Math.PI / 2;
     const rim = group('Summit railing', Math.sin(yaw) * railLine, 0, Math.cos(yaw) * railLine, architecture);
     rim.rotation.y = yaw;
-    box(rim, deep, 0, -0.37, 0.13, length + 0.85, 0.74, 0.54);
-    box(rim, glass, 0, 0.08, 0, length + 0.24, 0.16, railWidth);
-    box(rim, frost, 0, 1.19, 0, length + 0.22, 0.13, 0.22);
-    box(rim, light, 0, 1.246, -0.02, length + 0.17, 0.027, 0.089);
-    box(rim, blue, 0, 0.29, 0, length + 0.1, 0.089, 0.17);
+    function rail(material, y, z, height, depth) {
+      // One pair runs through the corners, and the other meets its inside edges.
+      const span = 2 * (railLine + z) + (side % 2 ? -depth : depth);
+      box(rim, material, 0, y, z, span, height, depth);
+    }
+    rail(deep, -0.37, 0.13, 0.74, 0.54);
+    rail(glass, 0.08, 0, 0.16, railWidth);
+    const capTop = 1.255;
+    rail(frost, capTop - 0.065, 0, 0.13, 0.22);
+    rail(light, capTop, -0.02, 2 * SURFACE_GAP.detail, 0.089);
+    rail(blue, 0.29, 0, 0.089, 0.17);
     box(rim, light, 0, 0.01, -1.06, length - 2.12, 0.021, 0.067);
 
     const bays = 20;

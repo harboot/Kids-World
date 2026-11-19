@@ -1,3 +1,4 @@
+import { SURFACE_GAP } from '../../core/geometry.js';
 import { addPalaceSign } from './palace.js';
 import { buildStaircase, stairSite } from './staircase.js';
 import { SUMMIT_SIZE } from './summit.js';
@@ -71,8 +72,9 @@ export function createCastleActivities(THREE, builder, document, { playCue, redu
   });
   const musicSign = group('Crystal melody sign', 9.56, 0, 5.95, architecture);
   part(musicSign, 'box', blue, 0, 0.54, 0, 0.15, 1.08, 0.14);
-  part(musicSign, 'box', deep, 0, 1.09, 0, 1.68, 0.31, 0.12);
-  addPalaceSign(THREE, document, musicSign, 'Crystal Melody', 0, 1.09, 0.064, 1.62, 0.302);
+  const boardDepth = 0.12;
+  part(musicSign, 'box', deep, 0, 1.09, 0, 1.68, 0.31, boardDepth);
+  addPalaceSign(THREE, document, musicSign, 'Crystal Melody', 0, 1.09, boardDepth / 2 + SURFACE_GAP.detail, 1.62, 0.302);
   solid(9.56, 5.95, 1.68, 0.29, 1.25);
 
   const missions = {

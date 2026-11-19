@@ -1,3 +1,5 @@
+import { SURFACE_GAP } from '../../core/geometry.js';
+
 const cues = {
   bed: [
     [58, { endPitch: 65, duration: 0.16, level: 0.1, wave: 'triangle' }],
@@ -47,7 +49,7 @@ function addClearanceOutline(THREE, scene, model, material) {
   shape.holes.push(rectangle(new THREE.Path(), width / 2 - 0.034, depth / 2 - 0.034));
   const outline = new THREE.Mesh(new THREE.ShapeGeometry(shape).rotateX(-Math.PI / 2), material);
   outline.name = `${model.label} clearance`;
-  outline.position.set(x, 0.039, z);
+  outline.position.set(x, 0.036 + SURFACE_GAP.detail, z);
   scene.add(outline);
   return outline;
 }

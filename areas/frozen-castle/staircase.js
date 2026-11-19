@@ -57,8 +57,11 @@ export function buildStaircase(THREE, builder, document) {
   const width = balcony.right - balcony.left;
   const zCenter = (balcony.front + balcony.back) / 2;
   const xCenter = (balcony.left + balcony.right) / 2;
-  part(landing, 'box', glass, xCenter, -0.2, zCenter, width, 0.4, halfWidth * 2);
-  part(landing, 'box', frost, xCenter, -0.055, zCenter, width, 0.11, halfWidth * 2);
+  const landingDepth = 0.4;
+  const landingCap = 0.11;
+  part(landing, 'box', glass, xCenter, -(landingDepth + landingCap) / 2, zCenter,
+    width, landingDepth - landingCap, halfWidth * 2);
+  part(landing, 'box', frost, xCenter, -landingCap / 2, zCenter, width, landingCap, halfWidth * 2);
   part(landing, 'box', silver, xCenter, -0.23, balcony.front, width, 0.095, 0.14);
   for (let x = balcony.left; x < balcony.right - 0.5; x += width / 9) {
     part(landing, 'gem', pearl, x + 0.5, -0.42, balcony.front + 0.02, 0.25, 0.37, 0.15);
@@ -74,7 +77,7 @@ export function buildStaircase(THREE, builder, document) {
     }
   }
 
-  const treadMaterial = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true, side: THREE.DoubleSide });
+  const treadMaterial = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
   const segments = Array.from({ length: layers }, (_, layer) => {
     const model = group('Ice staircase section ' + (layer + 1));
     const first = layer * treadsPerLayer;

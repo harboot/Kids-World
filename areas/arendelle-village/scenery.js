@@ -1,3 +1,5 @@
+import { SURFACE_GAP } from '../../core/geometry.js';
+
 // Shared unit meshes keep the village's static architecture and props in a few instance batches.
 export function createScenery(THREE, scene, document, obstacles) {
   const gable = new THREE.Shape();
@@ -96,9 +98,10 @@ export function createScenery(THREE, scene, document, obstacles) {
     return texture;
   }
 
-  function sign(node, text, x, y, z, width, height, background = '#263f3d', yaw = 0) {
+  function sign(node, text, x, y, z, width, height, { background = '#263f3d', yaw = 0, bothSides = false } = {}) {
     const board = group(text + ' sign', x, y, z, yaw, node);
-    box(board, 0x57382a, 0, 0, 0, width + 0.10, height + 0.1, 0.13);
+    const boardDepth = 0.13;
+    box(board, 0x57382a, 0, 0, 0, width + 0.10, height + 0.1, boardDepth);
     const map = paintedTexture(512, 112, ink => {
       ink.fillStyle = background;
       ink.fillRect(0, 0, 512, 112);
@@ -112,8 +115,25 @@ export function createScenery(THREE, scene, document, obstacles) {
       ink.fillText(text, 256, 57, 456);
     });
     if (map) {
-      const label = new THREE.Mesh(new THREE.PlaneGeometry(width, height), new THREE.MeshBasicMaterial({ map }));
-      label.position.z = 0.069;
+      const offset = boardDepth / 2 + SURFACE_GAP.detail;
+      const positions = [];
+      const uvs = [];
+      const indices = [];
+      // Reverse the back quad's winding and horizontal axis so the text reads
+      // correctly from either side. Keep both faces in the same draw call.
+      for (const side of bothSides ? [1, -1] : [1]) {
+        const base = positions.length / 3;
+        for (const [u, v] of [[0, 0], [1, 0], [1, 1], [0, 1]]) {
+          positions.push(side * (u - 0.5) * width, (v - 0.5) * height, side * offset);
+          uvs.push(u, v);
+        }
+        indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
+      }
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+      geometry.setIndex(indices);
+      const label = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ map }));
       board.add(label);
     }
   }

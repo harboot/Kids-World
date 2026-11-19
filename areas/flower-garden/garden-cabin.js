@@ -64,7 +64,9 @@ export function addCabin(THREE, { scene, mesh, box, matte, obstacles, collision 
   part(darkWood, 0, 1.12, 0, 1.52, 2.24, 0.14, door);
   part(wood, 0, 1.07, 0.09, 1.25, 2.11, 0.10, door);
   for (const side of [-1, 1]) {
-    part(paleWood, side * 0.68, 1.12, 0.149, 0.12, 2.25, 0.18, door);
+    const thresholdTop = 0.14;
+    const headerBottom = 2.23 - 0.15 / 2;
+    part(paleWood, side * 0.68, (thresholdTop + headerBottom) / 2, 0.149, 0.12, headerBottom - thresholdTop, 0.18, door);
   }
   part(paleWood, 0, 2.23, 0.149, 1.55, 0.15, 0.18, door);
   part(darkWood, 0, 0.07, 0.149, 1.60, 0.14, 0.18, door);
