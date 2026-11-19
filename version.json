@@ -1,9 +1,9 @@
 {
-  "version": "de764ded37a2fb9662906b16d9b1d35338a4636cbcdaf31df4aaac0bb6c302e1",
+  "version": "1efe41904a10e1a8c8fe4eecf6a42a319e867d1c39e3b2d81b92087502a926bf",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
-      "revision": "14e0c6576f3fab3cd87620205c74fb4ca296a56a8ad01df5ef0ff171abd7c674"
+      "revision": "a2849c40e28d569cc657de22f5b74d908a3be6a8a7eebeea827477bf44aa8854"
     },
     {
       "path": "./areas/arendelle-village/decorations.js",

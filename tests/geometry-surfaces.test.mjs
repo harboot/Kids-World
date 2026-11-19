@@ -24,9 +24,9 @@ test('village roof strips follow both slopes and seat on the roof after batching
     kit.finish();
     scene.updateMatrixWorld(true);
 
-    const boxes = scene.children.filter(node => node.isInstancedMesh);
-    const panels = boxes.find(mesh => mesh.castShadow);
-    const details = boxes.find(mesh => !mesh.castShadow);
+    const batches = scene.children.filter(node => node.isInstancedMesh);
+    const panels = batches.find(mesh => mesh.castShadow);
+    const details = batches.find(mesh => mesh.geometry.type === 'ExtrudeGeometry');
     const toHouse = house.matrixWorld.clone().invert();
     const panelFaces = Array.from({ length: panels.count }, (_, index) => {
       const matrix = instanceMatrix(panels, index).premultiply(toHouse);
@@ -39,18 +39,16 @@ test('village roof strips follow both slopes and seat on the roof after batching
     let strips = 0;
     for (let index = 0; index < details.count; index++) {
       const matrix = instanceMatrix(details, index).premultiply(toHouse);
-      const size = new THREE.Vector3().setFromMatrixScale(matrix);
-      if (Math.abs(size.z - (depth + 0.64)) > tolerance) continue;
       strips++;
       const normal = new THREE.Vector3(0, 1, 0).transformDirection(matrix);
       const panel = panelFaces.find(face => face.normal.x * normal.x > 0);
       assert.ok(panel.normal.dot(normal) > 1 - tolerance);
       for (const x of [-0.5, 0.5]) {
-        const underside = new THREE.Vector3(x, -0.5, 0).applyMatrix4(matrix);
-        const top = new THREE.Vector3(x, 0.5, 0).applyMatrix4(matrix);
+        const underside = new THREE.Vector3(x, 0, 0).applyMatrix4(matrix);
         assert.ok(Math.abs(panel.plane.distanceToPoint(underside)) < tolerance);
-        assert.ok(panel.plane.distanceToPoint(top) >= SURFACE_GAP.roof - tolerance);
       }
+      const top = new THREE.Vector3(0, 1, 0).applyMatrix4(matrix);
+      assert.ok(panel.plane.distanceToPoint(top) >= SURFACE_GAP.roof - tolerance);
     }
     assert.equal(strips, 16);
   }

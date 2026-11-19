@@ -87,7 +87,7 @@ function frame(kit, house, { width, depth, height, rise, wall, roof }) {
   solid(house, width + 0.17, depth + 0.17, height + rise);
 }
 
-export function gabledRoof({ box, beam }, house, width, depth, height, rise, roof) {
+export function gabledRoof({ box, beam, part }, house, width, depth, height, rise, roof) {
   const span = width / 2 + 0.27;
   const roofDepth = depth + 0.64;
   const eave = height - 0.17;
@@ -95,8 +95,7 @@ export function gabledRoof({ box, beam }, house, width, depth, height, rise, roo
   const roofThickness = 0.22;
   const fall = peak - eave;
   const slope = Math.atan2(fall, span);
-  // The strip underside seats against the sloped panel's outer face.
-  const stripOffset = (roofThickness + SURFACE_GAP.roof) / 2;
+  const panelFace = roofThickness / 2;
   for (const side of [-1, 1]) {
     beam(house, roof, [side * span, eave, 0], [0, peak, 0], roofThickness, roofDepth, shadow);
     box(house, wood, side * span, eave, 0, 0.19, 0.22, roofDepth + 0.08);
@@ -106,8 +105,10 @@ export function gabledRoof({ box, beam }, house, width, depth, height, rise, roo
     }
     for (let i = 1; i <= 8; i++) {
       const t = i / 9;
-      box(house, roof, side * (t * span + Math.sin(slope) * stripOffset),
-        peak - t * fall + Math.cos(slope) * stripOffset, 0, 0.11, SURFACE_GAP.roof, roofDepth,
+      // Reuse the triangular prism for a flush base and a broad, sloped
+      // highlight that stays readable in the low-resolution touch renderer.
+      part(house, 'gable', roof, side * (t * span + Math.sin(slope) * panelFace),
+        peak - t * fall + Math.cos(slope) * panelFace, 0, 0.20, SURFACE_GAP.roof, roofDepth,
         { rotation: [0, 0, -side * slope] });
     }
   }
