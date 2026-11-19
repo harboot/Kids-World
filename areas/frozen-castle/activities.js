@@ -1,7 +1,12 @@
 import { addPalaceSign } from './palace.js';
 import { buildStaircase, stairSite } from './staircase.js';
+import { SUMMIT_SIZE } from './summit.js';
 
-const activationSites = [{ x: -3.45, z: 8.35 }, { x: 5.7, z: -0.45 }, { x: -3.65, z: -3.25 }];
+const corner = SUMMIT_SIZE / 2 - 2.35;
+const activationSites = [
+  { x: corner, z: corner }, { x: -corner, z: corner },
+  { x: -corner, z: -corner }, { x: corner, z: -corner },
+];
 const musicSites = [
   { x: 8.15, z: 4.55, pitch: 74, color: 0x70d7ff },
   { x: 10.55, z: 3.12, pitch: 81, color: 0xff8dcf },
@@ -18,20 +23,34 @@ export function createCastleActivities(THREE, builder, document, { playCue, redu
   const { architecture, group, part, solid, ice, materials: { blue, deep, glass, light, pearl, silver } } = builder;
   const staircase = buildStaircase(THREE, builder, document);
   const { segments } = staircase;
+  const crystalGeometry = createCrystalGeometry(THREE);
 
   const activation = activationSites.map((site, i) => {
+    const yaw = Math.atan2(-site.x, -site.z);
     const pedestal = group('Ice crystal pedestal', site.x, 0, site.z, architecture);
-    part(pedestal, 'drum', deep, 0, 0.16, 0, 0.58, 0.32, 0.58);
-    part(pedestal, 'drum', pearl, 0, 0.42, 0, 0.45, 0.2, 0.45);
-    for (const side of [-1, 1]) {
-      part(pedestal, 'gem', glass, side * 0.34, 0.8, 0, 0.18, 0.53, 0.22).rotation.z = -side * 0.28;
-    }
-    const model = group('Activation crystal ' + (i + 1), site.x, 1.26, site.z);
+    pedestal.rotation.y = yaw;
+    part(pedestal, 'drum', deep, 0, 0.17, 0, 1.35, 0.34, 1.35);
+    part(pedestal, 'drum', glass, 0, 0.37, 0, 1.31, 0.14, 1.31);
+    part(pedestal, 'drum', pearl, 0, 0.51, 0, 1.22, 0.17, 1.22);
+    part(pedestal, 'gem', silver, 0, 0.35, 1.25, 0.25, 0.19, 0.12);
+
+    const model = group('Activation crystal ' + (i + 1), site.x, 0, site.z);
+    model.rotation.y = yaw;
     const material = ice(0x5c859e, 0x1b5c69);
-    part(model, 'gem', material, 0, 0, 0, 0.38, 0.84, 0.38).rotation.y = Math.PI / 4;
+    for (const [x, y, z, width, height, tilt] of [
+      [0, 0.59, 0, 1.19, 7.45, 0],
+      [0.69, 0.55, 0.11, 0.49, 4.2, -0.18],
+      [-0.66, 0.53, 0.16, 0.44, 3.4, 0.19],
+    ]) {
+      const shard = new THREE.Mesh(crystalGeometry, material);
+      shard.position.set(x, y, z);
+      shard.scale.set(width, height, width);
+      shard.rotation.z = tilt;
+      model.add(shard);
+    }
     const sparkles = group('Crystal sparkles', 0, 0, 0, model);
-    for (let j = 0; j < 6; j++) part(sparkles, 'gem', light, 0, 0, 0, 0.065, 0.115, 0.065);
-    solid(site.x, site.z, 1.11, 1.11, 1.9);
+    for (let j = 0; j < 6; j++) part(sparkles, 'gem', light, 0, 0, 0, 0.12, 0.22, 0.12);
+    solid(site.x, site.z, 2.7, 2.7, 8);
     return { site, material, sparkles, active: false, charge: 0, burst: 0 };
   });
 
@@ -64,7 +83,7 @@ export function createCastleActivities(THREE, builder, document, { playCue, redu
 
   const interactions = [
     ...activation.map(crystal => ({
-      ...crystal.site, radius: 2, anchorY: 1.37, label: 'Activate crystal', silent: true,
+      ...crystal.site, radius: 2.85, anchorY: 1.6, label: 'Activate crystal', silent: true,
       get active() { return isActive() && !crystal.active; },
       act() {
         if (!this.active) return;
@@ -125,8 +144,8 @@ export function createCastleActivities(THREE, builder, document, { playCue, redu
     const phase = 1 - crystal.burst / 0.7;
     crystal.sparkles.children.forEach((sparkle, i) => {
       const angle = i * Math.PI / 3 + phase * 0.55;
-      const radius = 0.43 + phase * 0.37;
-      sparkle.position.set(Math.cos(angle) * radius, -0.33 + phase * 0.85 + i % 2 * 0.38, Math.sin(angle) * radius);
+      const radius = 1.16 + phase * 0.48;
+      sparkle.position.set(Math.cos(angle) * radius, 1.5 + phase * 3.1 + i % 3 * 0.84, Math.sin(angle) * radius);
     });
   }
 
@@ -140,12 +159,12 @@ export function createCastleActivities(THREE, builder, document, { playCue, redu
 
   return {
     missions, interactions, staircase,
-    get hints() {
+    get missionProgress() {
       return [
-        !missions.crystals && `Awaken ice crystals · ${activation.filter(crystal => crystal.active).length}/3`,
-        !missions.stairs && `Build the ice staircase · ${segments.filter(section => section.growth !== null).length}/${segments.length}`,
-        !missions.melody && `Play crystal melody · ${music.filter(crystal => crystal.played).length}/3`,
-      ].filter(Boolean);
+        `Activate ice crystals · ${activation.filter(crystal => crystal.active).length}/${activation.length}`,
+        `Build the ice staircase · ${segments.filter(section => section.growth !== null).length}/${segments.length}`,
+        `Play crystal melody · ${music.filter(crystal => crystal.played).length}/${music.length}`,
+      ];
     },
     reset() {
       for (const crystal of activation) {
@@ -173,4 +192,34 @@ export function createCastleActivities(THREE, builder, document, { playCue, redu
       for (const crystal of music) poseMusic(crystal, dt);
     },
   };
+}
+
+function createCrystalGeometry(THREE) {
+  const sides = 6;
+  const rings = [[0, 0.54], [0.17, 1], [0.69, 0.87]];
+  const positions = [];
+  const indices = [];
+  for (const [y, radius] of rings) {
+    for (let i = 0; i < sides; i++) {
+      const angle = i * 2 * Math.PI / sides;
+      positions.push(Math.cos(angle) * radius, y, Math.sin(angle) * radius);
+    }
+  }
+  const tip = positions.length / 3;
+  const base = tip + 1;
+  positions.push(0.07, 1, -0.04, 0, 0, 0);
+  for (let i = 0; i < sides; i++) {
+    const next = (i + 1) % sides;
+    indices.push(i, next, base, i + 2 * sides, tip, next + 2 * sides);
+    for (let band = 0; band < rings.length - 1; band++) {
+      const lower = band * sides;
+      const upper = lower + sides;
+      indices.push(lower + i, upper + i, lower + next, lower + next, upper + i, upper + next);
+    }
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
 }

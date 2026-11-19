@@ -23,7 +23,7 @@ export const frozenCastle = {
   id: ID,
   title: 'Frozen Castle',
   heading: ['Frozen', 'Castle'],
-  description: 'Explore the crystal palace and its mountain terrace. Awaken ice crystals, build an ice staircase and play a crystal melody.',
+  description: 'Explore the palace and its mountain terrace. Activate four corner crystals, build an ice staircase and play a crystal melody.',
   canvasLabel: '3D crystal palace and mountaintop terrace',
   themeColor: '#dce9fb',
   music: ID,
@@ -125,11 +125,10 @@ function loadCastle({ THREE, scene, hud, signal, playCue = () => {}, reducedMoti
     },
     getGroundHeight: activity.staircase.getGroundHeight,
     get objective() {
-      const count = Object.values(missions).filter(Boolean).length;
-      const progress = `Frozen Castle · ${count}/3 missions`;
-      if (notice) return `${progress}\n${notice}`;
-      if (isComplete()) return `${progress}\nCastle Magic Restored!\n${villageName} unlocked!`;
-      return [progress, ...activity.hints].join('\n');
+      const lines = activity.missionProgress;
+      if (notice) lines.push(notice);
+      else if (isComplete()) lines.push('Castle Magic Restored!', `${villageName} unlocked!`);
+      return lines.join('\n');
     },
     reset,
     update(dt) {
