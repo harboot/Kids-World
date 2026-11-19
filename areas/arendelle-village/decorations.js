@@ -96,29 +96,10 @@ function entrance(kit, height) {
 }
 
 function square(kit, height) {
-  const { group, part, box, solid, beam } = kit;
+  const { group, part, box, solid } = kit;
   const square = group('Village Square', 0, 0, 0);
-  const fountain = group('Village fountain', 0, 0, 1.4, 0, square);
-  part(fountain, 'drum', 0x887d70, 0, 0.16, 0, 2.20, 0.32, 2.20, { shadow: true });
-  part(fountain, 'drum', 0xbca988, 0, 0.43, 0, 2.04, 0.4, 2.04, { shadow: true });
-  part(fountain, 'ring', 0xd4c098, 0, 0.665, 0, 1.93, 1.93, 2.12, { rotation: [-Math.PI / 2, 0, 0] });
-  part(fountain, 'drum', 0x518e89, 0, 0.62, 0, 1.86, 0.055, 1.86);
-  part(fountain, 'drum', 0xb6a288, 0, 1.07, 0, 0.28, 1.25, 0.28);
-  part(fountain, 'bowl', 0xdcc49a, 0, 1.64, 0, 0.81, 0.32, 0.81);
-  part(fountain, 'drum', 0x6da5a1, 0, 1.81, 0, 0.73, 0.05, 0.73);
-  part(fountain, 'gem', 0xd1b97c, 0, 2.04, 0, 0.22, 0.30, 0.22);
-  for (let i = 0; i < 8; i++) {
-    const angle = i * Math.PI / 4;
-    const x = Math.cos(angle);
-    const z = Math.sin(angle);
-    beam(fountain, 0xadd4cf, [0.72 * x, 1.78, 0.72 * z], [0.91 * x, 1.43, 0.91 * z], 0.039);
-    beam(fountain, 0xadd4cf, [0.91 * x, 1.43, 0.91 * z], [1.06 * x, 0.69, 1.06 * z], 0.034);
-  }
-  solid(fountain, 3.25, 4.25, 1.65);
-  solid(fountain, 4.25, 3.25, 1.65);
-
   for (const [x, z, yaw] of [[-5.95, 1, Math.PI / 2], [5.95, 1, -Math.PI / 2], [4.9, -5.85, 0]]) {
-    const bench = group('Square bench', x, 0, z, yaw);
+    const bench = group('Square bench', x, 0, z, yaw, square);
     box(bench, oak, 0, 0.48, 0, 1.89, 0.15, 0.58);
     for (const y of [0.76, 0.93]) box(bench, cream, 0, y, -0.27, 1.92, 0.13, 0.10);
     for (const side of [-1, 1]) {
@@ -129,7 +110,7 @@ function square(kit, height) {
   }
 
   for (const [x, z] of [[-5.9, -6.1], [5.75, 8.67], [-5.6, 7.8], [6.78, -4.98]]) {
-    const banner = group('Village pennant', x, 0, z);
+    const banner = group('Village pennant', x, 0, z, 0, square);
     box(banner, bronze, 0, 1.98, 0, 0.14, 3.96, 0.14);
     part(banner, 'gem', 0xe0af66, 0, 4.02, 0, 0.145, 0.16, 0.145);
     box(banner, cream, 0, 3.73, 0, 1.12, 0.08, 0.08);

@@ -1,10 +1,13 @@
+import { addClearanceOutline, clearanceMaterial } from '../../core/interaction-clearance.js';
 import { buildBuildings } from './buildings.js';
 import { decorateVillage } from './decorations.js';
+import { buildFountain } from './fountain.js';
 import { buildHarbor } from './harbor.js';
-import { villageInteractions } from './interactions.js';
+import { clockDoors, villageInteractions } from './interactions.js';
 import { createVillageMissions } from './missions.js';
 import { createScenery } from './scenery.js';
 import { buildTerrain } from './terrain.js';
+import { buildBystanders } from './villager.js';
 
 export const arendelleVillage = {
   id: 'arendelle-village',
@@ -39,7 +42,7 @@ function loadVillage({ THREE, scene, viewmodel, hud, signal, touch, reducedMotio
   const obstacles = [];
   const kit = createScenery(THREE, scene, hud?.ownerDocument, obstacles);
   const terrain = buildTerrain(THREE, scene, kit);
-  const clock = buildBuildings(kit, terrain.getGroundHeight);
+  const { clock, lookout, balcony } = buildBuildings(kit, terrain.getGroundHeight);
   decorateVillage(kit, terrain.getGroundHeight);
   const poseHarbor = buildHarbor(THREE, scene, kit);
 
@@ -47,18 +50,33 @@ function loadVillage({ THREE, scene, viewmodel, hud, signal, touch, reducedMotio
   let message = '';
   let timeLeft = 0;
   const isActive = () => !signal?.aborted;
+  const outlineMaterial = clearanceMaterial(THREE);
+  function mark(label, footprint, elevation = terrain.getGroundHeight(footprint.x, footprint.z)) {
+    return addClearanceOutline(THREE, scene, label, footprint, outlineMaterial, elevation);
+  }
+  const fountain = buildFountain(THREE, kit, mark, isActive);
+  const poseBystanders = buildBystanders(kit, terrain.getGroundHeight);
   function notify(text) {
     message = text;
     timeLeft = 3.2;
   }
   const missions = createVillageMissions({
-    THREE, scene, viewmodel, kit, terrain: { ...terrain, obstacles }, clock, isActive, notify, playCue,
+    THREE, scene, viewmodel, kit, terrain: { ...terrain, obstacles }, clock, mark, isActive, notify, playCue,
   }, { id: arendelleVillage.id, isLevelComplete, completeLevel });
-  const interactions = [...villageInteractions(isActive, notify), ...missions.interactions];
+  const interactions = [
+    ...villageInteractions(isActive, notify), ...clockDoors(clock, lookout, isActive, mark),
+    fountain.interaction, ...missions.interactions,
+  ];
   kit.finish();
 
   return {
-    ...terrain,
+    getGroundHeight(x, z, feet) {
+      return lookout.surface(x, z, feet) ?? balcony.surface(x, z, feet) ?? terrain.getGroundHeight(x, z);
+    },
+    blocksGround(x, z, radius, feet = 0, from) {
+      if (terrain.blocksGround(x, z, radius) || missions.blocksGround(x, z, feet)) return true;
+      return Boolean(from && (lookout.blocks(x, z, radius, feet, from) || balcony.blocks(x, z, radius, feet, from)));
+    },
     obstacles,
     interactions,
     get objective() {
@@ -71,6 +89,8 @@ function loadVillage({ THREE, scene, viewmodel, hud, signal, touch, reducedMotio
       message = '';
       timeLeft = 0;
       poseHarbor(0);
+      poseBystanders(0, true);
+      fountain.reset();
       missions.reset();
     },
     update(dt, player) {
@@ -78,6 +98,8 @@ function loadVillage({ THREE, scene, viewmodel, hud, signal, touch, reducedMotio
       const still = reducedMotion();
       if (!still) elapsed += dt;
       poseHarbor(still ? 0 : elapsed);
+      poseBystanders(elapsed, still);
+      fountain.update(elapsed, still);
       if (timeLeft > 0) {
         timeLeft = Math.max(0, timeLeft - dt);
         if (!timeLeft) message = '';

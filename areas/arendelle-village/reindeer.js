@@ -2,9 +2,10 @@ import { walkElevation } from '../../core/movement.js';
 import { buildVillager } from './villager.js';
 
 const lostSite = { x: -11.9, z: -6.0 };
-const keeperSite = { x: -24.7, z: 22.76 };
+const keeperSite = { x: -29.25, z: 26.02 };
 const stableSite = { x: -28.25, z: 23.3 };
-const gap = 1.55;
+const gap = 2.65;
+const personalSpace = 2.10;
 const stride = 0.32;
 const speed = 4.35;
 const happyCue = [[69, { duration: 0.25, level: 0.13 }], [76, { duration: 0.3, level: 0.10 }, 0.12],
@@ -14,7 +15,7 @@ const distance = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 export function createReindeer({ kit, terrain, isActive, notify, playCue, onComplete }) {
   const ground = terrain.getGroundHeight;
   const poseKeeper = buildVillager(kit, keeperSite, ground,
-    { name: 'Stable keeper', yaw: Math.PI / 3, coat: 0xa55d44, apron: 0x748458, hair: 0xa8814d });
+    { name: 'Stable keeper', yaw: Math.PI, coat: 0xa55d44, apron: 0x748458, hair: 0xa8814d });
   const { deer, body, head, tail, legs } = buildReindeer(kit);
   const trail = [];
   let lastMark;
@@ -69,56 +70,90 @@ export function createReindeer({ kit, terrain, isActive, notify, playCue, onComp
     }
   }
 
-  function follow(dt, player) {
+  function walkDirection(angle, length, dt) {
     const from = deer.position;
-    const insidePen = distance(player, stableSite) <= 2.65;
-    const returning = insidePen && distance(from, stableSite) <= 3.2 && clearSegment(from, stableSite);
-    if (returning && distance(from, stableSite) < 0.13) {
-      state = 'returned';
-      happiness = 1.35;
-      trail.length = 0;
-      notify('Stable keeper: Thank you for bringing our reindeer home!');
-      playCue(happyCue);
-      onComplete();
-      return false;
-    }
+    const x = from.x + Math.sin(angle) * length;
+    const z = from.z + Math.cos(angle) * length;
+    if (!stepIsClear(from, x, z)) return false;
+    deer.rotation.y += Math.atan2(Math.sin(angle - deer.rotation.y), Math.cos(angle - deer.rotation.y)) * Math.min(1, dt * 13);
+    from.set(x, ground(x, z), z);
+    walked += length;
+    return true;
+  }
 
-    const nearPlayer = distance(from, player) < gap;
+  function leaveSpace(dt, player, distanceToPlayer) {
+    const from = deer.position;
+    const away = distanceToPlayer > 0.001
+      ? Math.atan2(from.x - player.x, from.z - player.z)
+      : deer.rotation.y + Math.PI;
+    const length = Math.min(2.6 * dt, personalSpace - distanceToPlayer);
+    for (const turn of [0, 0.65, -0.65, 1.15, -1.15]) {
+      if (!walkDirection(away + turn, length, dt)) continue;
+      trail.length = 0;
+      lastMark = null;
+      return true;
+    }
+    return false;
+  }
+
+  function follow(dt, player) {
+    if (player.y > ground(player.x, player.z) + 3.15) return false;
+    const from = deer.position;
+    const distanceToPlayer = distance(from, player);
+    if (distanceToPlayer < personalSpace) return leaveSpace(dt, player, distanceToPlayer);
+
+    const nearPlayer = distanceToPlayer < gap;
     if ((!lastMark || distance(player, lastMark) >= stride) && stepIsClear(player, player.x, player.z)) {
       lastMark = { x: player.x, z: player.z };
       if (nearPlayer && clearSegment(from, lastMark)) trail.length = 0;
       trail.push(lastMark);
     }
-    if (!returning && nearPlayer) return false;
+    if (nearPlayer) return false;
 
     while (trail.length && distance(from, trail[0]) < 0.09) trail.shift();
-    const target = returning ? stableSite : trail[0];
+    const target = trail[0];
     if (!target) return false;
-    const length = Math.min(speed * dt, distance(from, target));
+    const length = Math.min(speed * dt, distance(from, target), distanceToPlayer - gap);
     if (length < 1e-6) return false;
     const angle = Math.atan2(target.x - from.x, target.z - from.z);
-    const x = from.x + Math.sin(angle) * length;
-    const z = from.z + Math.cos(angle) * length;
-    if (!stepIsClear(from, x, z)) {
-      blockedFor += dt;
-      retryIn -= dt;
-      if (retryIn <= 0) {
-        repairTrail();
-        retryIn = 0.45;
-      }
-      if (blockedFor >= 3.2) {
-        state = 'waiting';
-        trail.length = 0;
-        notify('Your reindeer is waiting. Return to it and choose a clear path together.');
-      }
-      return false;
+    if (walkDirection(angle, length, dt)) {
+      blockedFor = retryIn = 0;
+      return true;
     }
 
-    blockedFor = retryIn = 0;
-    deer.rotation.y += Math.atan2(Math.sin(angle - deer.rotation.y), Math.cos(angle - deer.rotation.y)) * Math.min(1, dt * 13);
-    from.set(x, ground(x, z), z);
-    walked += length;
-    return true;
+    blockedFor += dt;
+    retryIn -= dt;
+    if (retryIn <= 0) {
+      repairTrail();
+      retryIn = 0.45;
+    }
+    if (blockedFor >= 3.2) {
+      state = 'waiting';
+      trail.length = 0;
+      notify('Your reindeer is waiting. Return to it and choose a clear path together.');
+    }
+    return false;
+  }
+
+  function canHandOver() {
+    const from = deer.position;
+    return (state === 'following' || state === 'waiting') &&
+      distance(from, stableSite) <= 4.65 && clearSegment(from, stableSite);
+  }
+
+  function returnToTrough(dt) {
+    const from = deer.position;
+    const remaining = distance(from, stableSite);
+    if (remaining > 0.12) {
+      const angle = Math.atan2(stableSite.x - from.x, stableSite.z - from.z);
+      return walkDirection(angle, Math.min(2.5 * dt, remaining), dt);
+    }
+    state = 'returned';
+    happiness = 1.35;
+    notify('Stable keeper: Thank you for bringing our reindeer home!');
+    playCue(happyCue);
+    onComplete();
+    return false;
   }
 
   function pose(elapsed, still, moving) {
@@ -138,12 +173,20 @@ export function createReindeer({ kit, terrain, isActive, notify, playCue, onComp
 
   return {
     interactions: [{
-      ...keeperSite, label: 'Talk to Stable Keeper', radius: 1.7, anchorY: 1.35,
-      get active() { return isActive() && state !== 'returned'; },
+      ...keeperSite, radius: 1.85, anchorY: 1.35,
+      get label() { return canHandOver() ? 'Return Reindeer' : 'Talk to Stable Keeper'; },
+      get active() { return isActive() && state !== 'returning' && state !== 'returned'; },
       act() {
         if (!this.active) return;
-        notify(state === 'following' ? 'Stable keeper: Lead the reindeer through the gate and up to the feeding trough.' :
-          'Stable keeper: Our reindeer wandered into the west lanes. Can you bring it home?');
+        if (canHandOver()) {
+          state = 'returning';
+          trail.length = 0;
+          notify('Stable keeper: I’ll take the reindeer to its feeding spot.');
+        } else {
+          notify(state === 'following' || state === 'waiting'
+            ? 'Stable keeper: Bring the reindeer through the gate, then come talk to me.'
+            : 'Stable keeper: Our reindeer wandered into the west lanes. Can you bring it home?');
+        }
       },
     }, {
       get x() { return deer.position.x; },
@@ -157,7 +200,7 @@ export function createReindeer({ kit, terrain, isActive, notify, playCue, onComp
         trail.length = 0;
         lastMark = null;
         blockedFor = retryIn = 0;
-        notify('The reindeer is following you. Lead it over the bridge to the feeding trough.');
+        notify('The reindeer is following you. Lead it over the bridge and talk to the stable keeper.');
       },
     }],
     get complete() { return state === 'returned'; },
@@ -172,7 +215,7 @@ export function createReindeer({ kit, terrain, isActive, notify, playCue, onComp
       pose(0, true, false);
     },
     update(dt, player, elapsed, still) {
-      const moving = state === 'following' && player && follow(dt, player);
+      const moving = state === 'returning' ? returnToTrough(dt) : state === 'following' && player && follow(dt, player);
       happiness = Math.max(0, happiness - dt);
       pose(elapsed, still, moving);
     },

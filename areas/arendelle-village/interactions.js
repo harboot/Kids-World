@@ -41,3 +41,24 @@ export function villageInteractions(isActive, notify) {
     comingSoon({ ...CITY_SIGN, anchorY: 1.35, radius: 2.05 }, 'To The City', 'City Adventure — Coming Soon'),
   ];
 }
+
+export function clockDoors(clock, lookout, isActive, mark) {
+  const { lowerDoor } = clock;
+  const { upperDoor, elevation } = lookout;
+  const doors = [
+    { site: lowerDoor, height: 0, label: 'Go Up Clock Tower',
+      reachable: player => player.y < 3.3 && player.z >= lowerDoor.z,
+      destination: { x: 0, z: -8.95, yaw: Math.PI, elevation } },
+    { site: upperDoor, height: elevation, label: 'Go Down Clock Tower',
+      reachable: player => player.y >= elevation && player.z >= upperDoor.z,
+      destination: { x: lowerDoor.x, z: lowerDoor.z + 2.9, yaw: Math.PI } },
+  ];
+  return doors.map(({ site, height, label, reachable, destination }) => {
+    mark(label, { ...site, z: site.z + 0.36, width: 1.58, depth: 0.79 }, height);
+    return {
+      ...site, label, reachable, radius: 1.75, anchorY: height + 1.28,
+      get active() { return isActive(); },
+      act({ relocate }) { if (isActive()) relocate(destination); },
+    };
+  });
+}
