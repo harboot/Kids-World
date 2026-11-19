@@ -1,3 +1,5 @@
+import { buildHouseBalcony, railing } from './terraces.js';
+import { insideClearance } from '../../core/interaction-clearance.js';
 import { SURFACE_GAP } from '../../core/geometry.js';
 
 export const SHOPS = {
@@ -12,8 +14,7 @@ const houses = [
   [-7.9, -2.35, 5.0, 6.2, 5.2, 2.8, Math.PI / 2, 0xe7b6a4, 0x814e5d, 'balcony'],
   [-8.0, -15.9, 5.2, 4.9, 4.65, 3.0, 0, 0xa9c5ab, 0x556a63, 'cottage'],
   [-18.5, -1.2, 5.6, 6.0, 4.0, 2.5, Math.PI / 2, 0xe6c480, 0x916048, 'cottage'],
-  [-18.4, -16.3, 5.2, 5.1, 5.6, 2.8, 0, 0xc4d5d3, 0x526e82, 'balcony'],
-  [-24.3, -16.8, 4.8, 6.3, 4.0, 2.9, 0, 0xd9a88f, 0x8d5946, 'cottage'],
+  [-21.35, -16.55, 10.4, 5.65, 5.5, 3.45, 0, 0xd9a88f, 0x526e82, 'hall'],
   [-24.1, -1.2, 4.5, 5.45, 4.8, 2.5, -Math.PI / 2, 0xd5c6a3, 0x536e77, 'balcony'],
   [-24.15, 10.9, 5.8, 5.15, 3.75, 3.15, Math.PI, 0x9cbbb7, 0x6b625e, 'cottage'],
   [-8.8, -27.35, 6.35, 4.2, 4.85, 3.1, 0, 0xe4bc84, 0x88544d, 'balcony'],
@@ -35,9 +36,13 @@ export function buildBuildings(kit, getGroundHeight) {
   const { group } = kit;
   for (const [i, site] of houses.entries()) {
     const [x, z, width, depth, height, rise, yaw, wall, roof, style] = site;
-    const house = group('Village house ' + (i + 1), x, getGroundHeight(x, z), z, yaw);
+    const house = group(style === 'hall' ? 'Timber Hall' : 'Village house ' + (i + 1), x, getGroundHeight(x, z), z, yaw);
     frame(kit, house, { width, depth, height, rise, wall, roof });
     residence(kit, house, width, depth, height, style, i);
+    if (style === 'hall') {
+      door(kit, group('Balcony door frame', -1.07, 2.4, 0, 0, house), 0, depth / 2 + 0.06, 0.90, 1.80, 0x557261);
+      kit.sign(house, 'Timber Hall', 0.8, 2.9, depth / 2 + 0.10, 1.55, 0.3);
+    }
   }
 
   for (const [kind, site] of Object.entries(SHOPS)) {
@@ -46,8 +51,11 @@ export function buildBuildings(kit, getGroundHeight) {
     storefront(kit, shop, kind, site);
   }
 
-  const tower = group('Clock tower', 0, 0, -13.75);
-  return clockTower(kit, tower);
+  const tower = group('Clock tower', 0, 0, -14);
+  tower.scale.set(1.16, 1.42, 1.08);
+  const clock = clockTower(kit, tower);
+  const lookout = buildClockLookout(kit, clock);
+  return { clock, lookout, balcony: buildHouseBalcony(kit) };
 }
 
 function frame(kit, house, { width, depth, height, rise, wall, roof }) {
@@ -306,8 +314,52 @@ function clockTower(kit, tower) {
     window(kit, face, -0.72, 8.39, z * 0.81, 0.49, 0.84, false);
     window(kit, face, 0.72, 8.39, z * 0.81, 0.49, 0.84, false);
   }
-  door(kit, tower, 0, depth / 2 + 0.05, 1.33, 2.33, 0x51736a);
-  sign(tower, 'Clock Tower', 0, 2.72, depth / 2 + 0.14, 1.91, 0.34);
-  solid(tower, width + 0.3, depth + 0.31, 13.5);
-  return { hands, repairSite: { x: 1.46, z: tower.position.z + depth / 2 + 0.52 } };
+  const doorX = -0.96;
+  door(kit, tower, doorX, depth / 2 + 0.05, 1.33, 2.33, 0x51736a);
+  sign(tower, 'Clock Tower', doorX, 2.72, depth / 2 + 0.14, 1.91, 0.34);
+  solid(tower, (width + 0.3) * tower.scale.x, (depth + 0.31) * tower.scale.z, 13.5 * tower.scale.y);
+  const facade = tower.position.z + depth / 2 * tower.scale.z;
+  return {
+    hands, facade,
+    repairSite: { x: 1.68, z: facade + 0.49 },
+    lowerDoor: { x: doorX * tower.scale.x, z: facade + 0.28 },
+  };
+}
+
+function buildClockLookout(kit, clock) {
+  const { group, box, beam, sign } = kit;
+  const elevation = 10.62;
+  const deck = group('Clock Tower lookout', 0, elevation, 0);
+  const front = -7.8;
+  const back = clock.facade - 0.05;
+  const width = 8.4;
+  const half = width / 2;
+  const footprint = { x: 0, z: (front + back) / 2, width, depth: front - back };
+  box(deck, 0xa58c70, 0, -0.21, footprint.z, width, 0.42, footprint.depth, shadow);
+  box(deck, 0xc9b691, 0, -0.055, footprint.z, width - 0.045, 0.11, footprint.depth - 0.045);
+  railing(kit, deck, [-half, 0, front], [half, 0, front], 15, 0xe5c798, wood);
+  for (const side of [-1, 1]) {
+    const x = half * side;
+    railing(kit, deck, [x, 0, back], [x, 0, front], 6, 0xe5c798, wood);
+    railing(kit, deck, [x, 0, back], [side * 2.85, 0, back], 3, 0xe5c798, wood);
+    beam(deck, wood, [x * 0.83, -0.39, front - 0.54], [x * 0.59, -2.23, back], 0.29, 0.29, shadow);
+  }
+
+  const upstairs = group('Clock Tower upper entrance', 0, elevation, clock.facade - 0.31);
+  box(upstairs, stone, 0, 1.14, 0, 1.97, 2.29, 0.65, shadow);
+  door(kit, upstairs, 0, 0.38, 1.20, 1.97, 0x51736a);
+  box(upstairs, 0xd5b885, 0, 2.25, 0.07, 2.09, 0.21, 0.91);
+  sign(upstairs, 'Down to Village', 0, 2.22, 0.54, 1.66, 0.31);
+
+  return {
+    upperDoor: { x: 0, z: clock.facade + 0.34 },
+    elevation,
+    surface(x, z, feet = 0) {
+      if (feet >= elevation - 0.28 && insideClearance(footprint, x, z)) return elevation;
+    },
+    blocks(x, z, radius, feet, from) {
+      if (feet < elevation - 0.28 || !insideClearance(footprint, from.x, from.z)) return false;
+      return !insideClearance(footprint, x, z) || Math.abs(x) > half - radius || z > front - radius || z < back + radius;
+    },
+  };
 }

@@ -1,21 +1,25 @@
 {
-  "version": "881015db05e7b1fb36fad19e57e01048ccbd57f941f49a2c2ad91dee4b5b7167",
+  "version": "1f769c8bc08b328f4acb179f2c513f2f63a34dc3c93727cd9aaf0407c93987e1",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
-      "revision": "81115792f69eff0c2e2f4e1c9b1e07cf0a0c13cf73c06b3e39c2cdfe91985e17"
+      "revision": "1f83a881b14569465e16bdbe16a6abb8f369fd0b4c05a50506f0f96cf9d66f60"
     },
     {
       "path": "./areas/arendelle-village/clock-mission.js",
-      "revision": "3d375c61b6d4fecaa99806e5dee6e448e9c709a7878b4808a141f2b0af8d76e8"
+      "revision": "996a99e90598eb2400630b3fde9062d9a2571c0d4443f7f23936735eda413a2e"
     },
     {
       "path": "./areas/arendelle-village/decorations.js",
-      "revision": "c3fd684f6edd853f0b34c406e92d743164313688616605dcd70b5bfb2fa943e1"
+      "revision": "f51323d263686e999b3983fc93cde630a5a444cbad049a1cf0161187a2ec551e"
     },
     {
       "path": "./areas/arendelle-village/fishing.js",
       "revision": "6c39ab70e457e7f005bc4d53008b60bb4160be196acb5345ff3029b7651c4f48"
+    },
+    {
+      "path": "./areas/arendelle-village/fountain.js",
+      "revision": "fe50864e88f43a40e18dc0e8fa146f29e48a887f8b3aa210956b948317265254"
     },
     {
       "path": "./areas/arendelle-village/harbor.js",
@@ -23,23 +27,27 @@
     },
     {
       "path": "./areas/arendelle-village/index.js",
-      "revision": "34d69994b6f1c4c74777181665812aed155a13904dfcfbe667066c821ee00cc1"
+      "revision": "f1b0119ae77c3c5693eacd08c21ce8deb0d3351907a429a247afc22513096e11"
     },
     {
       "path": "./areas/arendelle-village/interactions.js",
-      "revision": "d0cdb10e8d75539cdbb53d89231257e2429719b48b0130f337dcd0af27741df6"
+      "revision": "84494b672cf4acdddc345bb3e3713931f474334dcd7d50605a673bb0bde7649e"
     },
     {
       "path": "./areas/arendelle-village/missions.js",
-      "revision": "629ab80149372ee82cd7981f3467fcbc327742c5cc624f160e4b391d94c133c2"
+      "revision": "cf4a1205ecd0698953e58ff951c949481f61f3030743ad1cdff2dc3031a0719d"
     },
     {
       "path": "./areas/arendelle-village/reindeer.js",
-      "revision": "e9ae72db23fdff38d8e1d700f8f3e2a0384bcb6102c4af9127846951fe1b8e70"
+      "revision": "fd900a29e558e5f464112eb5de898b210b69aa4c3d0af3c520e365aabb102241"
     },
     {
       "path": "./areas/arendelle-village/scenery.js",
       "revision": "837920af319f465c85868545cb4e22ccc3e2361cc54806b95ed8c5aa2cc34b1d"
+    },
+    {
+      "path": "./areas/arendelle-village/terraces.js",
+      "revision": "f2948e811d4d13d19daf9622e8d7b658b0e46c41a03271e686b162b6c209e9fc"
     },
     {
       "path": "./areas/arendelle-village/terrain.js",
@@ -47,7 +55,7 @@
     },
     {
       "path": "./areas/arendelle-village/villager.js",
-      "revision": "bd97a2c78616cff9e6efa1dae9677a94c9b3e3058e345e4f92c12495c784eb63"
+      "revision": "e654f1fc32121bd0efaf0c9ff24121097ced5a59063790465276984fc8945f29"
     },
     {
       "path": "./areas/flower-garden/garden-cabin.js",
@@ -115,7 +123,7 @@
     },
     {
       "path": "./areas/wooden-house/cleaning.js",
-      "revision": "6bef09e325cae99e696737f721277c32bcbcfeb0ba96ffdd6d1f28f73e50045d"
+      "revision": "76db0dd06c781aa4952db6a6c05a6ea040996f268f990bbbdb9502ebfb820494"
     },
     {
       "path": "./areas/wooden-house/furniture.js",
@@ -147,11 +155,15 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "d3fc1164826868de3d3724e6ee168b77b7b0b7bea22439f845caba492f0e9cd9"
+      "revision": "14d60b1a9212395913442dffb3b4927d6e4540c1fe2301780d3b7634eb22fa0a"
     },
     {
       "path": "./core/geometry.js",
       "revision": "504cfb8d9104e31d4dd20a961b9721a4a7abbe656c50168979d2600ca6e55734"
+    },
+    {
+      "path": "./core/interaction-clearance.js",
+      "revision": "da985894f3d230bb90e2606d36542e61dcfd56888c3e8ae9b5a2a39939cd0c80"
     },
     {
       "path": "./core/interactions.js",
@@ -167,7 +179,7 @@
     },
     {
       "path": "./core/player.js",
-      "revision": "da887159b8b3d552209d4f0503f4e1894dae9e7c8d986cf04a89ca3e14bad352"
+      "revision": "53b01c37ad892152fcd794d611c2a5b0f2e6aa8604e3df072961e4c6a4874ba8"
     },
     {
       "path": "./core/renderer.js",

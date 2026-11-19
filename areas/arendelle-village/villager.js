@@ -26,3 +26,15 @@ export function buildVillager(kit, site, ground, { name, yaw = 0, coat, apron, h
     person.rotation.y = yaw + (still ? 0 : Math.sin(elapsed * 0.85) * 0.13);
   };
 }
+
+export function buildBystanders(kit, ground) {
+  const poses = [
+    [-5.0, 9.5, 0.62, 0x936252, 0xd0b67f, 0x62423a],
+    [5.25, -3.12, -0.78, 0x547987, 0xe0b383, 0x80503d],
+    [10.92, 8.98, Math.PI * 0.8, 0xab8251, 0x857451, 0x4d3c37],
+    [21.15, 12.16, 0.90, 0x688358, 0xd9ae7f, 0x8b5d40],
+    [-28.32, -7.82, 1.18, 0x865570, 0xd9ac7e, 0x533835],
+  ].map(([x, z, yaw, coat, apron, hair], i) =>
+    buildVillager(kit, { x, z }, ground, { name: 'Village resident ' + (i + 1), yaw, coat, apron, hair }));
+  return (elapsed, still) => poses.forEach((pose, i) => pose(elapsed + i * 0.81, still));
+}

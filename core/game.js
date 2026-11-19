@@ -117,7 +117,9 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     glyph: game.querySelector('#interaction-glyph'),
     label: game.querySelector('#interaction-label'),
     camera, playing, touchMode,
-    runAction(item) { item.act({ heardCue: !item.silent && audio.effect('interact'), sit, travel }); },
+    runAction(item) {
+      item.act({ heardCue: !item.silent && audio.effect('interact'), sit, travel, relocate });
+    },
   });
   const controls = createControls(THREE, {
     game, canvas, joystick: game.querySelector('#joystick'), thumb: game.querySelector('#joystick-thumb'),
@@ -155,6 +157,11 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     notice.textContent = '';
     objective.textContent = '';
     view.invalidate();
+  }
+
+  function relocate(spawn) {
+    controls.clear();
+    player.reset(spawn, worlds.active.area);
   }
 
   function resetPlayer(arrival) {

@@ -10,7 +10,8 @@ export function createVillageMissions(context, { id, isLevelComplete, completeLe
   let finished = false;
   let recorded = isLevelComplete(id);
   const services = { ...context, onComplete };
-  const missions = [createFishing(services), createReindeer(services), createClockMission(services)];
+  const clock = createClockMission(services);
+  const missions = [createFishing(services), createReindeer(services), clock];
 
   function onComplete() {
     if (finished || !missions.every(mission => mission.complete)) return;
@@ -22,6 +23,7 @@ export function createVillageMissions(context, { id, isLevelComplete, completeLe
 
   return {
     interactions: missions.flatMap(mission => mission.interactions),
+    blocksGround: clock.blocksGround,
     get progress() {
       const lines = missions.map(mission => mission.progress);
       for (const mission of missions) {

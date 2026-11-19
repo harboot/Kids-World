@@ -1,4 +1,4 @@
-import { SURFACE_GAP } from '../../core/geometry.js';
+import { addClearanceOutline, clearanceMaterial, insideClearance } from '../../core/interaction-clearance.js';
 
 const cues = {
   bed: [
@@ -28,39 +28,11 @@ const cues = {
   ],
 };
 
-function insideClearance({ x, z, width, depth }, px, pz) {
-  return Math.abs(px - x) <= width / 2 && Math.abs(pz - z) <= depth / 2;
-}
-
-function addClearanceOutline(THREE, scene, model, material) {
-  const { x, z, width, depth, mark } = model.clearance;
-  if (mark === false) return null;
-
-  function rectangle(path, halfWidth, halfDepth) {
-    path.moveTo(-halfWidth, -halfDepth);
-    path.lineTo(-halfWidth, halfDepth);
-    path.lineTo(halfWidth, halfDepth);
-    path.lineTo(halfWidth, -halfDepth);
-    path.closePath();
-    return path;
-  }
-
-  const shape = rectangle(new THREE.Shape(), width / 2, depth / 2);
-  shape.holes.push(rectangle(new THREE.Path(), width / 2 - 0.034, depth / 2 - 0.034));
-  const outline = new THREE.Mesh(new THREE.ShapeGeometry(shape).rotateX(-Math.PI / 2), material);
-  outline.name = `${model.label} clearance`;
-  outline.position.set(x, 0.036 + SURFACE_GAP.detail, z);
-  scene.add(outline);
-  return outline;
-}
-
 export function createCleaningMissions(THREE, scene, models, { playCue, reducedMotion, signal, celebrate }) {
-  const outlineMaterial = new THREE.MeshBasicMaterial({
-    color: 0x376967, opacity: 0.43, transparent: true, depthWrite: false, toneMapped: false,
-  });
+  const outlineMaterial = clearanceMaterial(THREE);
   const tasks = models.map(model => ({
     model, completed: false, elapsed: null,
-    outline: addClearanceOutline(THREE, scene, model, outlineMaterial),
+    outline: addClearanceOutline(THREE, scene, model.label, model.clearance, outlineMaterial, 0.036),
   }));
   const allClean = () => tasks.every(task => task.completed);
 

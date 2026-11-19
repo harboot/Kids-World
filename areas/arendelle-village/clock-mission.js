@@ -1,3 +1,4 @@
+import { insideClearance } from '../../core/interaction-clearance.js';
 import { SURFACE_GAP } from '../../core/geometry.js';
 
 const gearSites = [
@@ -12,7 +13,7 @@ const bell = [[55, { duration: 0.92, level: 0.16, wave: 'triangle' }],
   [55, { duration: 0.96, level: 0.15, wave: 'triangle' }, 0.68],
   [79, { duration: 0.64, level: 0.09 }, 0.75]];
 
-export function createClockMission({ kit, terrain, clock, isActive, notify, playCue, onComplete }) {
+export function createClockMission({ kit, terrain, clock, mark, isActive, notify, playCue, onComplete }) {
   const { group, part, box, solid } = kit;
   const { hands, repairSite } = clock;
   const gears = gearSites.map(site => {
@@ -22,10 +23,13 @@ export function createClockMission({ kit, terrain, clock, isActive, notify, play
     solid(stand, 0.59, 0.53, 0.91);
     const model = group(site.name, 0, gearHeight, 0, 0, stand);
     buildGear(kit, model);
-    return { site, stand, model, collected: false };
+    const outline = mark(site.name, { ...site, width: 1.18, depth: 1.12 }, stand.position.y);
+    return { site, stand, model, outline, collected: false };
   });
 
-  const panel = group('Clock repair mechanism', repairSite.x, 0, repairSite.z - 0.43);
+  const clearance = { ...repairSite, z: repairSite.z + 0.34, width: 1.67, depth: 1.62 };
+  const repairOutline = mark('Repair Clock Tower', clearance);
+  const panel = group('Clock repair mechanism', repairSite.x, 0, clock.facade + 0.09);
   box(panel, 0x694d40, 0, 1.22, 0, 0.64, 0.76, 0.2);
   box(panel, 0x416761, 0, 1.22, 0.11, 0.53, 0.65, 0.065);
   for (const x of [-0.17, 0.17]) {
@@ -50,19 +54,20 @@ export function createClockMission({ kit, terrain, clock, isActive, notify, play
     act() {
       if (!this.active) return;
       gear.collected = true;
-      gear.model.visible = false;
+      gear.model.visible = gear.outline.visible = false;
       count++;
       playCue(pickup);
       notify(count === gears.length ? 'All three gears found!' : `Clock gear found. ${gears.length - count} to go!`);
     },
   }));
   interactions.push({
-    ...repairSite, anchorY: 1.35, radius: 1.75, label: 'Repair Clock Tower', silent: true,
-    reachable: player => player.z > panel.position.z,
+    ...repairSite, anchorY: 1.35, radius: 2.02, label: 'Repair Clock Tower', requiresView: true, silent: true,
+    reachable: player => player.y < 3.3 && player.z > panel.position.z && !insideClearance(clearance, player.x, player.z),
     get active() { return isActive() && !repaired && count === gears.length; },
     act() {
       if (!this.active) return;
       repaired = true;
+      repairOutline.visible = false;
       lever.rotation.z = -0.72;
       playCue(bell);
       notify('The clock is running and the village bell is ringing!');
@@ -88,15 +93,19 @@ export function createClockMission({ kit, terrain, clock, isActive, notify, play
 
   return {
     interactions,
+    blocksGround(x, z, feet) {
+      return !repaired && feet < 3.2 && insideClearance(clearance, x, z);
+    },
     get complete() { return repaired; },
     get progress() { return `Repair the clock · ${count}/${gears.length} gears${repaired ? ' ✓' : ''}`; },
     get hint() { return count === gears.length && !repaired ? 'Return to the Clock Tower with the gears.' : ''; },
     reset() {
       count = runningTime = 0;
       repaired = false;
+      repairOutline.visible = true;
       for (const gear of gears) {
         gear.collected = false;
-        gear.model.visible = true;
+        gear.model.visible = gear.outline.visible = true;
       }
       lever.rotation.z = 0.42;
       pose(0, true);

@@ -291,7 +291,13 @@ function escort(visit, worlds, camera, checkStep = () => {}) {
     checkStep();
   };
   followPath(player, camera, visit, [[-12.35, 5.6], [-12.35, 19.55], [-17.3, 19.55],
-    [-23.1, 19.55], [-28.2, 19.55], [-28.2, 23.4]], update);
+    [-23.1, 19.55], [-28.2, 19.55], [-28.2, 23.4], [-29.12, 24.85]], update);
+  for (let i = 0; i < 90; i++) update(0.04);
+  assert.match(visit.area.objective, /lost reindeer · 0\/1/, 'arrival alone does not finish the mission');
+  const keeper = nearestInteraction(visit.area.interactions, camera.position);
+  assert.equal(keeper?.label, 'Return Reindeer');
+  keeper.act();
+  assert.equal(keeper.active, false, 'the keeper accepts the handoff once');
   for (let i = 0; i < 90; i++) update(0.04);
 }
 
@@ -357,13 +363,13 @@ test('fishing supports pickup, bite timing, misses, walking away, and a single s
   assert.equal(seller.label, 'Talk to Fish Seller');
 });
 
-test('the reindeer follows the actual player across the bridge and reaches the trough without clipping', t => {
+test('the reindeer crosses the bridge and reaches the trough after the stable keeper accepts it', t => {
   const { visit, worlds, camera, completions } = fixture();
   t.after(worlds.unload);
   const { area, scene } = visit;
   const deer = scene.getObjectByName('Lost reindeer');
   const original = deer.position.clone();
-  const keeper = nearestInteraction(area.interactions, { x: -25, z: 22.4, y: 1.68 });
+  const keeper = nearestInteraction(area.interactions, { x: -29.12, z: 24.88, y: 1.68 });
   assert.equal(keeper.label, 'Talk to Stable Keeper');
   keeper.act();
   assert.match(area.objective, /west lanes/);
@@ -423,7 +429,7 @@ test('gears are unique reachable pickups and the repair starts all four clock fa
     assert.equal(repair.active, i === 2);
   });
   assert.match(area.objective, /Return to the Clock Tower/);
-  assert.equal(nearestInteraction(area.interactions, { x: 1.45, z: -10.35, y: 1.68 }), repair);
+  assert.equal(nearestInteraction(area.interactions, { x: 1.68, z: -9.55, y: 1.68 }), repair);
   repair.act();
   repair.act();
   assert.equal(cues.length, 4, 'three pickups and one bell cue');
@@ -485,7 +491,7 @@ test('the reindeer detours around a bench the player jumps over', t => {
   };
   followPath(player, camera, visit, [[-12.35, 5.2], [-7.22, 5.2], [-7.22, 1]], update);
   assert.ok(player.jump());
-  followPath(player, camera, visit, [[-3.25, 1]], update);
+  followPath(player, camera, visit, [[-3.28, 1], [-3.28, 4.45]], update);
   const stopped = new THREE.Vector2();
   for (let i = 0; i < 120; i++) {
     player.move(0.04, stopped, visit);
@@ -493,4 +499,131 @@ test('the reindeer detours around a bench the player jumps over', t => {
   }
   assert.ok(deer.position.x > -5, 'reaches the player on the other side of the bench');
   assert.equal(find(visit, 'Follow Me').active, false, 'keeps following after the detour');
+});
+
+test('the reindeer keeps a wider following gap and steps back when approached', t => {
+  const { visit, worlds, camera } = fixture();
+  t.after(worlds.unload);
+  const { area, scene } = visit;
+  const player = createPlayer(THREE, camera);
+  const deer = scene.getObjectByName('Lost reindeer');
+  player.reset({ x: -12.35, z: -5.2 }, area);
+  find(visit, 'Follow Me').act();
+  const update = dt => worlds.update(dt, camera.position);
+  followPath(player, camera, visit, [[-12.1, 1.0]], update);
+  for (let i = 0; i < 100; i++) update(0.04);
+  const distance = () => Math.hypot(camera.position.x - deer.position.x, camera.position.z - deer.position.z);
+  assert.ok(distance() >= 2.64 && distance() < 2.84, 'the deer follows at about 2.65 world units');
+  const before = deer.position.clone();
+  player.reset({ x: before.x, z: before.z + 0.68 }, area);
+  for (let i = 0; i < 50; i++) update(0.04);
+  assert.ok(distance() > 2.05 && deer.position.distanceTo(before) > 1.2, 'the deer backs away from a close player');
+});
+
+test('the Clock Tower doors relocate the player between levels and the lookout rail stops walkers and jumps', t => {
+  const { visit, worlds, camera } = fixture();
+  t.after(worlds.unload);
+  const { area, scene } = visit;
+  const player = createPlayer(THREE, camera);
+  const up = find(visit, 'Go Up Clock Tower');
+  const down = find(visit, 'Go Down Clock Tower');
+  const relocate = spawn => player.reset(spawn, area);
+  const tower = scene.getObjectByName('Clock tower');
+  assert.ok(tower.scale.y >= 1.4 && tower.scale.x > 1);
+  player.reset({ x: up.x, z: up.z + 1.05 }, area);
+  assert.equal(nearestInteraction(area.interactions, camera.position), up);
+  up.act({ relocate });
+  const elevation = camera.position.y - 1.68;
+  assert.ok(elevation > 9, 'the upper door opens onto the raised lookout');
+  assert.equal(area.getGroundHeight(camera.position.x, camera.position.z), 0, 'ground stays separate below');
+  assert.equal(nearestInteraction(area.interactions, camera.position), null, 'arrival does not retrigger the door');
+
+  const from = camera.position.clone();
+  assert.equal(walkElevation(area, from, from.x, -7.83, elevation, true), null);
+  assert.equal(walkElevation(area, from, from.x, -7.83, elevation + 0.8, false), null);
+  player.reset({ x: from.x, z: from.z, elevation }, area);
+  followPath(player, camera, visit, [[2.8, -9.15], [-0.05, -10.4]]);
+  assert.ok(Math.abs(camera.position.y - 1.68 - elevation) < 1e-6);
+  assert.equal(nearestInteraction(area.interactions, camera.position), down);
+  down.act({ relocate });
+  assert.equal(camera.position.y, 1.68);
+  assert.equal(nearestInteraction(area.interactions, camera.position), null);
+  assert.equal(worlds.active, visit);
+});
+
+test('the repair button uses a thin clearance marker and unlocks its approach only after repair', t => {
+  const { visit, worlds } = fixture();
+  t.after(worlds.unload);
+  const { area, scene } = visit;
+  const repair = find(visit, 'Repair Clock Tower');
+  const outline = scene.getObjectByName('Repair Clock Tower clearance');
+  const approach = { x: repair.x, z: -9.55, y: 1.68 };
+  const blocked = { x: repair.x, z: -10.25 };
+  assert.ok(outline.visible && outline.material.transparent);
+  assert.equal(outline.geometry.parameters.shapes.holes.length, 1, 'uses a hollow rectangle');
+  assert.equal(walkElevation(area, approach, blocked.x, blocked.z, 0, true), null);
+  assert.equal(walkElevation(area, approach, blocked.x, blocked.z, 0.92, false), null);
+  assert.equal(nearestInteraction(area.interactions, approach), null);
+  for (const item of area.interactions.filter(item => item.label === 'Collect Clock Gear')) item.act();
+  assert.equal(nearestInteraction(area.interactions, approach), repair);
+  assert.equal(nearestInteraction(area.interactions, { ...blocked, y: 1.68 }), null);
+  repair.act();
+  assert.equal(outline.visible, false);
+  assert.equal(walkElevation(area, approach, blocked.x, blocked.z, 0, true), 0);
+  worlds.reset();
+  assert.ok(outline.visible);
+  assert.equal(walkElevation(area, approach, blocked.x, blocked.z, 0, true), null);
+});
+
+test('the two house plots share one building with walkable stairs and a railed balcony', t => {
+  const { visit, worlds, camera } = fixture();
+  t.after(worlds.unload);
+  const { area, scene } = visit;
+  const player = createPlayer(THREE, camera);
+  assert.ok(scene.getObjectByName('Timber Hall'));
+  assert.ok(scene.getObjectByName('Timber Hall exterior stairs'));
+  player.reset({ x: -14.03, z: -12.5 }, area);
+  followPath(player, camera, visit, [[-16.1, -12.5], [-21.0, -12.5], [-25.0, -12.5]]);
+  assert.ok(Math.abs(camera.position.y - 4.08) < 1e-6, 'normal walking climbs to the balcony');
+  const from = camera.position.clone();
+  assert.equal(walkElevation(area, from, from.x, -11.44, 2.4, true), null);
+  assert.equal(walkElevation(area, from, -26.01, from.z, 2.4, true), null);
+  followPath(player, camera, visit, [[-20.25, -12.5], [-14.10, -12.5]]);
+  assert.equal(camera.position.y, 1.68, 'walks back down to the street');
+});
+
+test('the larger fountain animates its droplets, toggles from its valve, and resets with idle bystanders', t => {
+  const { visit, worlds, reduceMotion } = fixture();
+  t.after(worlds.unload);
+  const { area, scene } = visit;
+  const droplets = scene.getObjectByName('Fountain droplets');
+  const fountain = find(visit, 'Turn Fountain Off');
+  const firstDrop = new THREE.Matrix4();
+  const nextDrop = new THREE.Matrix4();
+  const bystander = scene.getObjectByName('Village resident 1');
+  const residents = scene.children.filter(node => node.name.startsWith('Village resident '));
+  assert.ok(residents.length >= 4);
+  assert.equal(nearestInteraction(area.interactions, bystander.position), null);
+  assert.equal(nearestInteraction(area.interactions, { x: 0, z: 5.1, y: 1.68 }), fountain);
+  assert.ok(droplets.visible && droplets.count >= 70);
+  droplets.getMatrixAt(0, firstDrop);
+  const yaw = bystander.rotation.y;
+  worlds.update(0.35);
+  droplets.getMatrixAt(0, nextDrop);
+  assert.ok(!firstDrop.equals(nextDrop) && bystander.rotation.y !== yaw);
+  fountain.act();
+  assert.ok(!droplets.visible);
+  assert.equal(fountain.label, 'Turn Fountain On');
+  reduceMotion();
+  fountain.act();
+  worlds.update(0.2);
+  droplets.getMatrixAt(0, nextDrop);
+  assert.ok(droplets.visible && firstDrop.equals(nextDrop));
+  fountain.act();
+  worlds.reset();
+  assert.ok(droplets.visible);
+  assert.equal(fountain.label, 'Turn Fountain Off');
+  worlds.unload();
+  fountain.act();
+  assert.equal(fountain.active, false);
 });

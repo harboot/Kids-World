@@ -25,7 +25,7 @@ export function createPlayer(THREE, camera) {
     seated = null;
     yaw = spawn.yaw ?? 0;
     pitch = 0;
-    elevation = world.getGroundHeight?.(spawn.x, spawn.z) ?? 0;
+    elevation = world.getGroundHeight?.(spawn.x, spawn.z, spawn.elevation) ?? 0;
     verticalSpeed = 0;
     grounded = true;
     speed.set(0, 0);
