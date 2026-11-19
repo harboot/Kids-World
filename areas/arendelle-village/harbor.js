@@ -46,8 +46,10 @@ export function buildHarbor(THREE, scene, kit) {
   fishingNet(kit, fishing, 27.4, -0.31);
 
   const citySign = group('City pier boarding sign', CITY_SIGN.x + 0.84, 0, CITY_SIGN.z - 1.5);
-  box(citySign, oak, 0, 0.82, 0, 0.17, 1.62, 0.17);
-  sign(citySign, 'To The City', -0.12, 1.54, 0, 1.8, 0.42, { background: '#35545b', yaw: -Math.PI / 2 });
+  const postHeight = 1.31;
+  box(citySign, oak, 0, postHeight / 2, 0, 0.17, postHeight, 0.17);
+  sign(citySign, 'To The City', -0.12, 1.54, 0, 1.8, 0.42,
+    { background: '#35545b', yaw: -Math.PI / 2, bothSides: true });
   solid(citySign, 0.23, 0.23, 1.6);
   box(city, timber, 28.6, 0.46, 19, 1.66, 0.15, 0.57);
   for (const x of [28.05, 29.15]) box(city, oak, x, 0.23, 19, 0.15, 0.46, 0.43);

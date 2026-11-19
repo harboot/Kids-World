@@ -61,7 +61,7 @@ export function decorateVillage(kit, height) {
     [16.9, 6.35, -Math.PI / 2, 'Harbor ↑'], [-8.54, 8.26, 0, '← West Lane']]) {
     const post = group('Village directions', x, height(x, z), z, yaw);
     box(post, oak, 0, 0.75, 0, 0.18, 1.5, 0.18);
-    kit.sign(post, label, 0, 1.68, 0, 1.71, 0.32, { bothSides: true });
+    kit.sign(post, label, 0, 1.68, 0, 1.71, 0.32);
   }
 }
 

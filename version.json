@@ -1,5 +1,5 @@
 {
-  "version": "1efe41904a10e1a8c8fe4eecf6a42a319e867d1c39e3b2d81b92087502a926bf",
+  "version": "65ad2750a88fb6a958bf6fa2e11aa5d48c47ed6b6f5d2caa0f45e3a02ed8ffbd",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
@@ -7,11 +7,11 @@
     },
     {
       "path": "./areas/arendelle-village/decorations.js",
-      "revision": "66f5f57f963b3f8c43418c5068aec712b384e7dd2107194844dd4b207e5ec0ef"
+      "revision": "c3fd684f6edd853f0b34c406e92d743164313688616605dcd70b5bfb2fa943e1"
     },
     {
       "path": "./areas/arendelle-village/harbor.js",
-      "revision": "0b82abf50b59314bec95f440dfea2569b60689aa16a4d54eb6eb8c88526ea768"
+      "revision": "1cc35ec99910fc67883ed9a185bd230aeb28e5ba84595a9a86e2f03335b53255"
     },
     {
       "path": "./areas/arendelle-village/index.js",
