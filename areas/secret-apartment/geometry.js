@@ -50,9 +50,12 @@ export function createArchitecture(THREE) {
       solid(x, z, w, d);
     }
 
-    function finish() {
+    function finish({ independentMaterials = false } = {}) {
+      const materials = new Map();
       for (const { shape, glow, parts } of batches.values()) {
-        const batch = new THREE.InstancedMesh(shapes[shape], glow ? lit : matte, parts.length);
+        const template = glow ? lit : matte;
+        if (!materials.has(template)) materials.set(template, independentMaterials ? template.clone() : template);
+        const batch = new THREE.InstancedMesh(shapes[shape], materials.get(template), parts.length);
         parts.forEach(({ transform, color }, i) => {
           batch.setMatrixAt(i, transform);
           batch.setColorAt(i, tint.setHex(color));
@@ -153,6 +156,7 @@ export function pointLight(THREE, parent, x, y, z, color, intensity, range) {
   const light = new THREE.PointLight(color, intensity, range);
   light.position.set(x, y, z);
   parent.add(light);
+  return light;
 }
 
 export function roomDoor(b, architecture, number, x, z, yaw, { width = 1.25, height = 2.34, open = false, accent = false } = {}) {
@@ -170,4 +174,14 @@ export function roomDoor(b, architecture, number, x, z, yaw, { width = 1.25, hei
   }
   if (number) architecture.sign(b.root, [number], x, height + 0.31, face, accent ? 0.76 : 0.58,
     accent ? 0.29 : 0.24, { yaw, background: accent ? '#493226' : '#342d27' });
+}
+
+export function lighterProp(architecture, parent, name, x, y, z, yaw) {
+  const model = architecture.group(parent, name, x, y, z, yaw);
+  const prop = architecture.builder(model);
+  prop.part(0xd74819, 0, 0, -0.015, 0.083, 0.042, 0.113);
+  prop.part(0xbfc8c5, 0, 0, 0.058, 0.083, 0.044, 0.031);
+  prop.part(0xf7e7a1, 0, 0.025, -0.021, 0.036, 0.008, 0.045);
+  prop.finish();
+  return model;
 }

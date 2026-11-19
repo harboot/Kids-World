@@ -1,5 +1,5 @@
 {
-  "version": "18eca1262e357ccebd8a5263e4ce9e317ee2d7ec41011b1450b167e6a8de3fe6",
+  "version": "43c79e95067eb63d1aa1a91493eb8ce9cb0e59d08810e5147577e3d1041007a4",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
@@ -107,7 +107,15 @@
     },
     {
       "path": "./areas/secret-apartment/basement.js",
-      "revision": "a93777050fe8ef9096cb383b3a439f1f31fb58e382ff7aae2c6b74230f742a3a"
+      "revision": "ff54408df1730e6aa6cfb1a370cafeb47610c8ac78b51adc199694e700f29575"
+    },
+    {
+      "path": "./areas/secret-apartment/car-door.js",
+      "revision": "dfab0982d524e2557169b61f75af22cbdd1e6c13b210a70cdd73d1f0bca336bc"
+    },
+    {
+      "path": "./areas/secret-apartment/cinematic.js",
+      "revision": "fb306ea1e97f3530df61c94da034f23e0241591fde823138b7122a6c991adccb"
     },
     {
       "path": "./areas/secret-apartment/corridor.js",
@@ -115,31 +123,35 @@
     },
     {
       "path": "./areas/secret-apartment/elevator.js",
-      "revision": "10b6146d0bab2797649dcb488554af72a756e12b9471dd8946448804383a1952"
+      "revision": "2d280bc50ea5e7e314e686c1a9b4474ac4aeaf85f6a8362e40612f6fbd349120"
     },
     {
       "path": "./areas/secret-apartment/floor17.js",
-      "revision": "2411339b3812cf6ab1e1378b23d455ad761127c8a631323a579d7475774c60e1"
+      "revision": "27cd4abfd31d7e771beb55af86dc691f8316bb4d05e6979e2904ece3dc439163"
     },
     {
       "path": "./areas/secret-apartment/floor8.js",
-      "revision": "aac6e9e59a20cc279d95224072502301cd15a82e6b798c664670bee03189bb28"
+      "revision": "f49ac0d0f595ec679d920ffa24db81078f2ff693bb6ffb61e068b03667a8d963"
     },
     {
       "path": "./areas/secret-apartment/geometry.js",
-      "revision": "74f01e997f4eb06605781ce2ef354d0f1c66d9a36fdc6f8e3bca52ba8d9ee7a2"
+      "revision": "3f0bae4dd90ece9e3d704efe66a928a90606270970090b400e68e0e253dccf97"
     },
     {
       "path": "./areas/secret-apartment/index.js",
-      "revision": "e4bc9dcce2312cab2cc4a269b1ddc2a29c70915678685081fc0826e163321b9f"
+      "revision": "d8dbad36acfa3fbc49077075150999d356cbb95b3c4deb52da5fa18d46dcaf88"
+    },
+    {
+      "path": "./areas/secret-apartment/missions.js",
+      "revision": "f37a53cfd6e26a0d5150bb4139db54b825253c0f161a197c64fc4b43676c89dc"
     },
     {
       "path": "./areas/secret-apartment/pool.js",
-      "revision": "3ead1e49278a1f9a48e9020ba29ce1a77a1ce61d11b7e95067aaf7589c4b8ab4"
+      "revision": "04ee18e74453be76539b3aeda6a3e5cf28b368f83ace235f8bbbead1c8319235"
     },
     {
       "path": "./areas/secret-apartment/unit17e.js",
-      "revision": "57e9fa5f541fae9671bc17a01e5b04cdb745217c36bce5d2091f5ab82885f365"
+      "revision": "f64150a4322a7bc728b716c205735dcb817b247ac3629696eb19230a259d2c26"
     },
     {
       "path": "./areas/snow-basin.js",
@@ -191,7 +203,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "22219cc6701739094bd4e5a83bddda54a40eb19bb627bbb827cf4c6bfc901413"
+      "revision": "c708a7b8056abb221d7a7027d805efcc710b47645c6cd66e01501c39fe4ec448"
     },
     {
       "path": "./core/geometry.js",
@@ -223,7 +235,7 @@
     },
     {
       "path": "./core/world-manager.js",
-      "revision": "2d5c4725118ae0686aa7f3704c36f03e4f59dc9625e3b1bc53da16400a059d83"
+      "revision": "33b73ab4c3f2dee46334988086a89f77579a2c2cc89bbaa18fdf4bdb37c19e6e"
     },
     {
       "path": "./game.js",
@@ -263,7 +275,7 @@
     },
     {
       "path": "./style.css",
-      "revision": "0f004f6bfd4297caf076bf5dd740ff3f7a426aaa7fd78dd78c8bab0278c64a32"
+      "revision": "d690e7aeecad60955fd8c9f01acb1f4f48700f5c0a9a75ff2ccef1e507e03762"
     },
     {
       "path": "./vendor/three.LICENSE",

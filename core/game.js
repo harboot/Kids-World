@@ -276,11 +276,12 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   });
 
   function frame(stamp) {
-    const dt = previousFrame === null ? 0 : Math.min((stamp - previousFrame) / 1000, 0.05);
+    const elapsed = previousFrame === null ? 0 : (stamp - previousFrame) / 1000;
+    const dt = Math.min(elapsed, 0.05);
     previousFrame = stamp;
     if (playing()) {
       player.move(dt, controls.sample(dt), worlds.active);
-      worlds.update(dt, camera.position);
+      worlds.update(dt, camera.position, elapsed);
       updateObjective();
       interactions.update();
     }

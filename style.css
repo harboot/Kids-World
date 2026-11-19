@@ -398,3 +398,36 @@ kbd {
 }
 
 .completed-levels button:hover { background: var(--accent-strong); }
+
+.apartment-cinematic {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+#game:not([data-state="playing"]) .apartment-cinematic { display: none; }
+.apartment-cinematic-flash {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: radial-gradient(ellipse at center, #ffd8a5, #da7d55 75%, #bd4e36);
+}
+.apartment-cinematic-title {
+  position: relative;
+  padding: 0.09em 0.25em 0.13em;
+  border: 3px solid #ffe0a9;
+  border-radius: 0.21em;
+  background: #302137e8;
+  color: #ffecbc;
+  font-size: clamp(3.5rem, 16vw, 8.5rem);
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 0.035em #ab583e;
+  box-shadow: 0 6px 24px #180f25a6;
+}
+.apartment-cinematic-title:empty { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .apartment-cinematic-flash { display: none; }
+}

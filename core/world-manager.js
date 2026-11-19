@@ -73,7 +73,7 @@ export function createWorldManager(THREE, { areas, camera, touch, playerRadius, 
     get active() { return active; },
     load,
     unload,
-    update(dt, position) { active?.area.update?.(dt, position); },
+    update(dt, position, elapsed = dt) { active?.area.update?.(dt, position, elapsed); },
     reset() { active?.area.reset?.(); },
   };
 }
