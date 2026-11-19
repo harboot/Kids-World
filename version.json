@@ -1,9 +1,9 @@
 {
-  "version": "1f769c8bc08b328f4acb179f2c513f2f63a34dc3c93727cd9aaf0407c93987e1",
+  "version": "5c2526e2ea00b1744cb815e88b5a6eb79f96b2bdc140b5955c25f08810e058f1",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
-      "revision": "1f83a881b14569465e16bdbe16a6abb8f369fd0b4c05a50506f0f96cf9d66f60"
+      "revision": "10498a03f33f26416b9daabb18910bab3a466380b8933306a0281f35070b791f"
     },
     {
       "path": "./areas/arendelle-village/clock-mission.js",
@@ -23,7 +23,7 @@
     },
     {
       "path": "./areas/arendelle-village/harbor.js",
-      "revision": "511b766951128c88caae942298f9c6aa7c228e6fb9b8525c4de7988bd4e37b21"
+      "revision": "6cdcd18f81c48e0fd3f737764e117df58fa354c67f81738db1dbfe70a289467f"
     },
     {
       "path": "./areas/arendelle-village/index.js",
@@ -47,7 +47,7 @@
     },
     {
       "path": "./areas/arendelle-village/terraces.js",
-      "revision": "f2948e811d4d13d19daf9622e8d7b658b0e46c41a03271e686b162b6c209e9fc"
+      "revision": "0037740d06467fe1207e4702a5d29cf8007b7b0564a59396c407b57321c90389"
     },
     {
       "path": "./areas/arendelle-village/terrain.js",

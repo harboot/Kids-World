@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import * as THREE from '../vendor/three.module.min.js';
-import { gabledRoof } from '../areas/arendelle-village/buildings.js';
+import { buildBuildings, gabledRoof } from '../areas/arendelle-village/buildings.js';
 import { createScenery } from '../areas/arendelle-village/scenery.js';
 import { addHillPath, createTerrain } from '../areas/flower-garden/garden-terrain.js';
 import { SURFACE_GAP } from '../core/geometry.js';
@@ -14,6 +14,32 @@ function instanceMatrix(mesh, index) {
   mesh.getMatrixAt(index, matrix);
   return matrix.premultiply(mesh.matrixWorld);
 }
+
+test('the Clock Tower lookout presents one walkable face across its inset and rim', () => {
+  const scene = new THREE.Scene();
+  const kit = createScenery(THREE, scene, null, []);
+  const { lookout } = buildBuildings(kit, () => 0);
+  kit.finish();
+  scene.updateMatrixWorld(true);
+
+  const batches = scene.children.filter(node => node.isInstancedMesh);
+  const down = new THREE.Vector3(0, -1, 0);
+  const { elevation } = lookout;
+  for (const [x, z] of [[0.2, -9.3], [2.5, -10.65], [4.19, -9.37], [-4.19, -9.37], [0.43, -7.81], [-3.2, -11.55]]) {
+    const ray = new THREE.Raycaster(new THREE.Vector3(x, elevation + 0.04, z), down, 0, 0.08);
+    const hits = ray.intersectObjects(batches, false);
+    assert.equal(hits.length, 1, `one visible floor face at ${x}, ${z}`);
+    assert.ok(Math.abs(hits[0].point.y - lookout.surface(x, z, elevation)) < tolerance);
+    assert.equal(hits[0].object.castShadow, true);
+  }
+
+  // A ray between the two horizontal rails should hit one corner post.
+  const east = new THREE.Vector3(1, 0, 0);
+  for (const [x, y, z] of [[-4.2, elevation + 0.55, -7.8], [-26, 2.95, -11.54]]) {
+    const ray = new THREE.Raycaster(new THREE.Vector3(x - 0.2, y, z + 0.01), east, 0, 0.4);
+    assert.equal(ray.intersectObjects(batches, false).length, 1, `one post at ${x}, ${z}`);
+  }
+});
 
 test('village roof strips follow both slopes and seat on the roof after batching', () => {
   for (const [width, depth, height, rise] of [[5.8, 6.6, 3.35, 2.9], [6.2, 4.7, 2.59, 2.08]]) {

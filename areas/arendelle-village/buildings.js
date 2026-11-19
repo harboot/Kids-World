@@ -146,9 +146,13 @@ function window({ box }, node, x, y, z, width, height, shutters = true) {
 
 function door({ box, part }, node, x, z, width = 0.93, height = 1.97, color = 0x986749) {
   box(node, wood, x, height / 2 + 0.11, z, width + 0.15, height + 0.17, 0.16);
-  box(node, color, x, height / 2 + 0.1, z + 0.1, width, height, 0.08);
+  const panelZ = z + 0.1;
+  const panelDepth = 0.08;
+  const relief = SURFACE_GAP.detail;
+  box(node, color, x, height / 2 + 0.1, panelZ, width, height, panelDepth);
   for (let i = 1; i <= 3; i++) {
-    box(node, wood, x + width * (i / 4 - 0.5), height / 2 + 0.1, z + 0.145, 0.023, height, 0.012);
+    box(node, wood, x + width * (i / 4 - 0.5), height / 2 + 0.1, panelZ + (panelDepth + relief) / 2,
+      0.023, height - 2 * relief, relief);
   }
   box(node, trim, x, 1.9, z + 0.143, width * 0.9, 0.085, 0.045);
   box(node, stone, x, 0.055, z + 0.19, width + 0.28, 0.11, 0.42);
@@ -335,15 +339,23 @@ function buildClockLookout(kit, clock) {
   const width = 8.4;
   const half = width / 2;
   const footprint = { x: 0, z: (front + back) / 2, width, depth: front - back };
-  box(deck, 0xa58c70, 0, -0.21, footprint.z, width, 0.42, footprint.depth, shadow);
-  box(deck, 0xc9b691, 0, -0.055, footprint.z, width - 0.045, 0.11, footprint.depth - 0.045);
-  railing(kit, deck, [-half, 0, front], [half, 0, front], 15, 0xe5c798, wood);
+  const slab = 0xa58c70;
+  const capHeight = 0.11;
+  const baseHeight = 0.42 - capHeight;
+  const rim = SURFACE_GAP.trim;
+  const innerWidth = width - 2 * rim;
+  box(deck, slab, 0, -capHeight - baseHeight / 2, footprint.z, width, baseHeight, footprint.depth, shadow);
+  // Fit the inset and its rim across the walkable surface at the same height.
+  box(deck, 0xc9b691, 0, -capHeight / 2, footprint.z, innerWidth, capHeight, footprint.depth - 2 * rim, shadow);
+  const spans = [[[-half, 0, front], [half, 0, front], 15]];
   for (const side of [-1, 1]) {
     const x = half * side;
-    railing(kit, deck, [x, 0, back], [x, 0, front], 6, 0xe5c798, wood);
-    railing(kit, deck, [x, 0, back], [side * 2.85, 0, back], 3, 0xe5c798, wood);
+    box(deck, slab, side * (half - rim / 2), -capHeight / 2, footprint.z, rim, capHeight, footprint.depth, shadow);
+    box(deck, slab, 0, -capHeight / 2, footprint.z + side * (footprint.depth - rim) / 2, innerWidth, capHeight, rim, shadow);
+    spans.push([[x, 0, back], [x, 0, front], 6], [[x, 0, back], [side * 2.85, 0, back], 3]);
     beam(deck, wood, [x * 0.83, -0.39, front - 0.54], [x * 0.59, -2.23, back], 0.29, 0.29, shadow);
   }
+  railing(kit, deck, spans, 0xe5c798, wood);
 
   const upstairs = group('Clock Tower upper entrance', 0, elevation, clock.facade - 0.31);
   box(upstairs, stone, 0, 1.14, 0, 1.97, 2.29, 0.65, shadow);

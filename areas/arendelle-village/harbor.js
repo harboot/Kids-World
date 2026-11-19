@@ -159,10 +159,14 @@ function buildSea(THREE, scene, { group, part }) {
 
 function crate({ box, solid }, node, x, z, size, base = 0) {
   box(node, 0xa77951, x, base + size / 2, z, size, size, size);
+  const bandDepth = 0.054;
   for (const face of [-1, 1]) {
-    box(node, oak, x, base + size - 0.084, z + face * size / 2, size, 0.13, 0.054);
-    box(node, oak, x + face * size / 2, base + size - 0.084, z, 0.054, 0.13, size);
-    for (const dx of [-0.36, 0.36]) box(node, 0x795138, x + dx * size, base + size / 2, z + face * size / 2, 0.08, size, 0.058);
+    box(node, oak, x, base + size - 0.084, z + face * size / 2, size + bandDepth, 0.13, bandDepth);
+    box(node, oak, x + face * size / 2, base + size - 0.084, z, bandDepth, 0.13, size - bandDepth);
+    for (const dx of [-0.36, 0.36]) {
+      box(node, 0x795138, x + dx * size, base + size / 2, z + face * size / 2,
+        0.08, size - 2 * SURFACE_GAP.detail, bandDepth + 2 * SURFACE_GAP.detail);
+    }
   }
   solid(node, size, size, base + size, x, z);
 }
