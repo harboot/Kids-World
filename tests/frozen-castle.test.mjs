@@ -111,7 +111,7 @@ test('the castle route, safe entrance spawn and named Snow Basin arrival use the
     assert.equal(walkElevation(snow, spawn, spawn.x, spawn.z, 0, true), 0);
     assert.equal(nearestInteraction(snow.interactions, camera.position).label, 'Enter Frozen Castle');
     assert.ok(camera.getWorldDirection(new THREE.Vector3()).z > 0, 'player faces the Snow Basin doorway');
-    assert.match(snow.objective, /^Snow Basin · 0\/3/);
+    assert.match(snow.objective, /^Destroy snowmen · 0\/3\nChop the pine · 0\/5\nCollect the Frozen Key · 0\/1/);
   } });
   assert.equal(worlds.active.id, 'snow');
   worlds.unload();

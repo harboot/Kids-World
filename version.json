@@ -1,5 +1,5 @@
 {
-  "version": "da24eaaeada46e2026f598ab61982db690223ee8c2ca56e2ab8263e60b003627",
+  "version": "54ec4a9c4dc73edf65dfcd6f1a3d0821a7f4b006ac48ea7d43a93a59d4c442a4",
   "files": [
     {
       "path": "./areas/flower-garden/garden-cabin.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./areas/flower-garden/garden-orchard.js",
-      "revision": "6ee3aa30fdd03b64130988811c26c6007ddf91503bdf28d526241fbdc0032b57"
+      "revision": "e94af23e914926dbcb05c8222e6f2f36fa069e6249e3924bc9bed47c54dd6c90"
     },
     {
       "path": "./areas/flower-garden/garden-pond.js",
@@ -19,7 +19,7 @@
     },
     {
       "path": "./areas/flower-garden/index.js",
-      "revision": "d7a242261f558eae76a973bac6c5348cda0398b627fa9c9f13af46abbcddacc6"
+      "revision": "80c5dc166fde12433c61d8e2cfda805bb1eb89fde48bca47c8367574f6b7f353"
     },
     {
       "path": "./areas/frozen-castle/activities.js",
@@ -51,7 +51,7 @@
     },
     {
       "path": "./areas/snow-basin.js",
-      "revision": "f0f27dc84bbddd7a7a2d28122e209c03bf1482946d528c5ba02890e0de30e4af"
+      "revision": "5f3f19d1332a5d4e31a93439ed4bf440adf94d847a933be31d55e1bf3fa91e47"
     },
     {
       "path": "./areas/snow-basin/activity.js",
@@ -67,7 +67,7 @@
     },
     {
       "path": "./areas/wooden-house/cleaning.js",
-      "revision": "9947cd7984cfbe8abbb1b7a9e79e9d9fb50f504a8ab3f974864c7c603962ad0f"
+      "revision": "3e052cbdf1ccb9ce91403310306e50721a190ea98365d51be9824ea588f3d316"
     },
     {
       "path": "./areas/wooden-house/furniture.js",
@@ -163,7 +163,7 @@
     },
     {
       "path": "./style.css",
-      "revision": "a4da22c9984fb21df937e7e85b0c519a0283ca77b4bccd01afae0f87f43c9641"
+      "revision": "13b25887848a4fa450a84b29726f5dda76f1dda809233de1108d00436ccbca8c"
     },
     {
       "path": "./vendor/three.LICENSE",

@@ -215,21 +215,25 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
     obstacles,
     arrivals: { 'frozen-castle': { x: castleSite.x, z: castleSite.z - 2.6, yaw: Math.PI } },
     get objective() {
-      const finished = Object.values(missions).filter(Boolean).length;
-      const progress = `Snow Basin · ${finished}/3 missions`;
-      if (finished === 3) return `${progress}\nSnow Basin complete! Frozen Castle unlocked!`;
-      const hints = [];
-      if (!missions.snowmen) {
-        const action = state.held ? 'Throw at a snowman' : 'Make a snowball';
-        hints.push(`${action} (${state.destroyed}/${SNOWMAN_COUNT} snowmen)`);
+      const lines = [
+        `Destroy snowmen · ${state.destroyed}/${SNOWMAN_COUNT}`,
+        `Chop the pine · ${state.chops}/${CHOPS}`,
+        `Collect the Frozen Key · ${Number(missions.key)}/1`,
+      ];
+      if (snowMissionsComplete(missions)) {
+        lines.push('Snow Basin complete! Frozen Castle unlocked!');
+        return lines.join('\n');
       }
+      const hints = [];
+      if (!missions.snowmen) hints.push(state.held ? 'Throw at a snowman' : 'Make a snowball');
       if (!missions.tree) {
         if (!state.axe) hints.push('Find the axe');
         else if (state.tree === 'falling') hints.push('Watch the pine fall');
-        else hints.push(`Chop the pine from the pond side (${state.chops}/${CHOPS})`);
-      } else if (!missions.key) hints.push('Find the Frozen Key');
-      if (!castle.active) hints.push('Frozen Castle is still locked');
-      return `${progress}\n${hints.join(' · ')}`;
+        else hints.push('Chop from the pond side');
+      } else if (!missions.key) hints.push('Find the key near the fallen pine');
+      if (hints.length) lines.push(hints.join(' · '));
+      if (!castle.active) lines.push('Frozen Castle is still locked');
+      return lines.join('\n');
     },
     interactions: [
       returnDoor, castle,
