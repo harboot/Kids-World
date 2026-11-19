@@ -6,7 +6,7 @@ const halfDepth = PALACE_DEPTH / 2;
 const stair = { halfWidth: 4.1, foot: -4.7, top: -8.7, rise: 1.6, steps: 9 };
 
 export function palaceGround(x, z) {
-  if (Math.abs(x) > stair.halfWidth) return 0;
+  if (Math.abs(x) > stair.halfWidth || z <= -halfDepth) return 0;
   return stair.rise * Math.max(0, Math.min(1, (stair.foot - z) / (stair.foot - stair.top)));
 }
 
@@ -16,7 +16,6 @@ export function createPalaceBuilder(THREE, scene, obstacles) {
     box: new THREE.BoxGeometry(1, 1, 1),
     gem: new THREE.OctahedronGeometry(1),
     drum: new THREE.CylinderGeometry(1, 1, 1, 8),
-    peak: new THREE.ConeGeometry(1, 1, 5),
     ball: new THREE.IcosahedronGeometry(1),
   };
   const ice = (color, emissive = 0x000000) => new THREE.MeshLambertMaterial({ color, emissive, flatShading: true });
@@ -84,13 +83,13 @@ export function createPalaceBuilder(THREE, scene, obstacles) {
   };
 }
 
-export function buildPalace(THREE, scene, builder) {
-  const { architecture, materials: { frost, snow, pearl, blue, deep, glass, lilac, silver, light }, group, part, beam, solid } = builder;
+export function buildPalace(THREE, scene, builder, document) {
+  const { architecture, materials: { frost, pearl, blue, deep, glass, lilac, silver, light }, group, part, beam, solid } = builder;
   const box = (material, ...values) => part(architecture, 'box', material, ...values);
   const gem = (material, ...values) => part(architecture, 'gem', material, ...values);
 
-  scene.background = new THREE.Color(0xa5c5ed);
-  scene.fog = new THREE.FogExp2(0xa8c8ed, 0.018);
+  scene.background = new THREE.Color(0xa3c8ef);
+  scene.fog = new THREE.FogExp2(0xbdd8ee, 0.011);
   scene.add(new THREE.HemisphereLight(0xe4f7ff, 0x8299c1, 2.05));
   const daylight = new THREE.DirectionalLight(0xfff5fa, 1.34);
   daylight.position.set(-8, 12, 5);
@@ -115,13 +114,41 @@ export function buildPalace(THREE, scene, builder) {
     border.rotation.z = Math.PI / 4;
   }
 
+  const openingHalfWidth = 1.81;
+  function wallSections(limit, opening) {
+    return [[-limit, opening - openingHalfWidth], [opening + openingHalfWidth, limit]];
+  }
+
+  function terraceArch(x, z, yaw) {
+    const passage = group('Summit Walk archway', x, 0, z, architecture);
+    passage.rotation.y = yaw;
+    arch(builder, passage, blue, 3.86, 3.95, 1.19, 0.43, 0.84);
+    arch(builder, passage, frost, 3.64, 4.02, 1.12, 0.24, 0.91);
+    part(passage, 'box', deep, 0, 4.65, 0, 2.84, 0.37, 0.26);
+    addPalaceSign(THREE, document, passage, 'Summit Walk', 0, 4.65, 0.145, 2.74, 0.33);
+    part(passage, 'gem', silver, 0, 5.22, 0.14, 0.35, 0.46, 0.2);
+    part(passage, 'box', glass, 0, 0.012, 0, 3.28, 0.024, 1.36);
+    for (const side of [-1, 1]) part(passage, 'box', light, side * 1.49, 0.027, 0, 0.049, 0.012, 1.35);
+  }
+
   for (const side of [-1, 1]) {
-    solid(side * halfWidth, 0, 0.38, PALACE_DEPTH, 12);
-    box(deep, side * 13.91, 0.63, 0, 0.45, 1.26, 28);
-    box(glass, side * 13.63, 1.29, 0, 0.18, 0.13, 28);
+    const opening = side * 10.5;
+    for (const [start, end] of wallSections(halfDepth, opening)) {
+      const z = (start + end) / 2;
+      const length = end - start;
+      solid(side * halfWidth, z, 0.42, length, 12);
+      box(deep, side * 13.91, 0.63, z, 0.45, 1.26, length);
+      box(glass, side * 13.63, 1.29, z, 0.18, 0.13, length);
+    }
     box(blue, side * 13.94, 7.29, 0, 0.55, 1.55, 28);
     box(silver, side * 13.58, 6.5, 0, 0.18, 0.12, 28);
     for (const z of [-10.5, -3.5, 3.5, 10.5]) {
+      if (z === opening) {
+        terraceArch(side * 13.88, z, -side * Math.PI / 2);
+        for (const offset of [-2.43, 2.43]) box(glass, side * 13.88, 3.24, z + offset, 0.35, 6.48, 1.2);
+        box(blue, side * 13.9, 5.99, z, 0.48, 1.04, 3.73);
+        continue;
+      }
       const window = group('Pointed ice window', side * 13.88, 1.28, z, architecture);
       window.rotation.y = -side * Math.PI / 2;
       arch(builder, window, frost, 2.78, 4.12, 1.03, 0.22, 0.22);
@@ -146,24 +173,20 @@ export function buildPalace(THREE, scene, builder) {
   }
 
   box(blue, 0, 3.9, 13.89, 28, 7.8, 0.45);
-  box(blue, 2.79, 3.9, -13.89, 22.4, 7.8, 0.45);
-  box(blue, -12.75, 3.9, -13.89, 2.5, 7.8, 0.45);
-  box(blue, -9.95, 7.18, -13.89, 3.2, 1.3, 0.45);
+  const northOpening = -9.95;
+  for (const [start, end] of wallSections(halfWidth, northOpening)) {
+    const x = (start + end) / 2;
+    box(blue, x, 3.9, -13.89, end - start, 7.8, 0.45);
+    solid(x, -halfDepth, end - start, 0.42, 12);
+  }
+  box(blue, northOpening, 6.55, -13.89, openingHalfWidth * 2, 2.5, 0.45);
+  terraceArch(northOpening, -13.89, 0);
   solid(0, halfDepth, 28, 0.42, 12);
-  solid(0, -halfDepth, 28, 0.42, 12);
   for (const z of [-13.61, 13.61]) {
     box(deep, 0, 7.47, z, 27.4, 0.46, 0.4);
     box(light, 0, 7.41, z * 0.982, 26.68, 0.045, 0.03);
     for (const x of [-6.9, 0, 6.9]) gem(lilac, x, 6.7, z * 0.98, 0.38, 0.52, 0.13);
   }
-  const balcony = group('Mountain balcony', -9.94, 0, -13.49, architecture);
-  part(balcony, 'box', snow, 0, 0.013, 1.54, 3.48, 0.026, 2.82);
-  arch(builder, balcony, frost, 3.35, 4.95, 1.35, 0.23, 0.4);
-  part(balcony, 'box', deep, 0, 1.03, 0, 3.47, 0.14, 0.34);
-  part(balcony, 'box', silver, 0, 1.15, 0, 3.56, 0.11, 0.4);
-  for (const x of [-1.45, -0.75, 0, 0.75, 1.45]) part(balcony, 'box', blue, x, 0.52, 0, 0.14, 1.1, 0.2);
-  solid(-9.94, -13.49, 3.47, 0.34, 2.05);
-
   for (const side of [-1, 1]) {
     const roof = box(side === -1 ? pearl : lilac, side * 7, 9.76, 0, 14.65, 0.28, 28);
     roof.rotation.z = -side * Math.atan2(4, 14);
@@ -212,7 +235,6 @@ export function buildPalace(THREE, scene, builder) {
     line(glass, 0.39, 0.26);
     solid(x, -9.13, 0.26, 8.92, 3.28);
   }
-  addMountains(builder);
 }
 
 export function arch({ beam }, parent, material, width, shoulder, crown, thickness, depth) {
@@ -255,28 +277,4 @@ export function addPalaceSign(THREE, document, parent, text, x, y, z, width, hei
   const sign = new THREE.Mesh(new THREE.PlaneGeometry(width, height), new THREE.MeshBasicMaterial({ map: texture }));
   sign.position.set(x, y, z);
   parent.add(sign);
-}
-
-function addMountains({ architecture, ice, materials: { snow, frost }, part }) {
-  const ridge = [ice(0x587ca9), ice(0x779cc5), ice(0x95aadb)];
-  for (let i = 0; i < 31; i++) {
-    const angle = i * Math.PI * 2 / 31;
-    const distance = 30 + i % 3 * 7;
-    const x = Math.cos(angle) * distance;
-    const z = Math.sin(angle) * distance;
-    const height = 9 + (i * 7 % 15);
-    const width = 6 + i % 5;
-    part(architecture, 'peak', ridge[i % 3], x, height / 2 - 6, z, width, height, width).rotation.y = i;
-    part(architecture, 'peak', snow, x, height * 0.78 - 5.96, z, width * 0.46, height * 0.46, width * 0.46).rotation.y = i;
-  }
-  part(architecture, 'box', frost, 0, -1.12, 0, 92, 0.6, 92);
-  for (let i = 0; i < 23; i++) {
-    const angle = i * 2.39996;
-    const distance = 20.9 + i % 4 * 2.8;
-    const x = Math.cos(angle) * distance;
-    const z = Math.sin(angle) * distance;
-    const height = 1.9 + i % 6 * 0.42;
-    part(architecture, 'peak', ridge[0], x, height / 2 - 0.85, z, 0.84, height, 0.84);
-    part(architecture, 'peak', snow, x, height * 0.65 - 0.85, z, 0.63, height * 0.76, 0.63);
-  }
 }

@@ -39,7 +39,9 @@ Complete all three missions to unlock **Enter Frozen Castle** at the end of the 
 
 ## Frozen Castle
 
-Follow the ice mosaic into the grand hall. The staircase at the far end leads to the Ice Throne, and the mountain lookout opens onto snowy peaks. Complete the three magical missions in any order.
+Frozen Castle sits on a snowy mountain summit. Look for the **Summit Walk** arches on the north, east, and west sides of the grand hall. Any of them leads to a continuous outdoor terrace around the palace, with railings and views of the peaks and clouds below. The terrace is open from the start.
+
+Follow the ice mosaic to the Ice Throne and complete the three magical missions in any order.
 
 - **Awaken the ice crystals.** Use **Activate crystal** at the entrance, near the fountain, and by the staircase. All three illuminate the chandelier.
 - **Build the ice staircase.** Use **Build ice staircase** three times at the pedestal on the west side of the hall. Climb the curved ice stairs to the balcony above the Snow Basin door once the sections finish forming.
@@ -70,7 +72,7 @@ Run `node --test` with Node.js 22.7 or later. It checks movement and collision, 
 
 `areas/snow-basin.js` composes the area and owns its controls and progress display. `areas/snow-basin/scenery.js` builds the landscape, `props.js` builds the winter activity models, and `activity.js` handles the chop sequence, snowman placement, and swept projectile collision. An area can use the shared `camera`, `hud`, `isPlaying()`, and `playCue(notes)` capabilities during its visit. It can set `silent: true` on an interaction that plays its own cue.
 
-`areas/frozen-castle/index.js` connects the castle lifecycle, mission HUD, and doors. `palace.js` builds and batches the architecture and defines its walkable elevation. `decorations.js` builds the throne, fountain, chandelier, aurora, and gateway. `activities.js` handles the three missions, and `staircase.js` builds the curved stairs and supports walking both above and below the entrance balcony.
+`areas/frozen-castle/index.js` connects the castle lifecycle, mission HUD, and doors. `palace.js` builds and batches the architecture, and `summit.js` builds the outdoor terrace, cliff, and mountain scenery. `decorations.js` builds the throne, fountain, chandelier, aurora, and gateway. `activities.js` handles the three missions, and `staircase.js` builds the curved stairs and supports walking both above and below the entrance balcony.
 
 Area travel replaces the scene and opens the destination's **Explore** menu in the same page. The URL records the area for browser Back and Forward. Opening the site without an area in the URL uses the last visited area. Existing links to `snow.html` and `index.html?arrive=garden` still resolve to their respective areas.
 

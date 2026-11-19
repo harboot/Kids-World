@@ -51,6 +51,19 @@ function assertProgress(area, count) {
   assert.equal(area.objective.split('\n')[0], `Frozen Castle · ${count}/3 missions`);
 }
 
+function followPath(player, camera, visit, path) {
+  const motion = new THREE.Vector2();
+  for (const { x, z } of path) {
+    let distance = Infinity;
+    for (let step = 0; step < 250 && distance >= 0.19; step++) {
+      motion.set(x - camera.position.x, z - camera.position.z);
+      distance = motion.length();
+      if (distance >= 0.19) player.move(0.04, motion.multiplyScalar(1 / 0.44).clampLength(0, 1), visit);
+    }
+    assert.ok(distance < 0.19, `could not approach ${x},${z}`);
+  }
+}
+
 function stairsModels(scene) {
   return [1, 2, 3].map(i => scene.getObjectByName('Ice staircase section ' + i));
 }
@@ -120,10 +133,43 @@ test('all missions, the throne, mountain lookout and ground-floor exit are reach
       `standing approach for ${item.label} at ${item.x},${item.z}`);
   }
   assert.ok(queue.some(cell => Math.abs(cell.x) < 1 && cell.z < -9.4 && cell.feet === 1.6), 'the central staircase is walkable');
-  assert.ok(queue.some(cell => Math.abs(cell.x + 9.94) < 0.8 && cell.z < -12), 'the mountain balcony is walkable');
+  assert.ok(queue.some(cell => Math.abs(cell.x + 9.95) < 0.8 && cell.z < -12), 'the north summit arch is reachable');
   assert.equal(walkElevation(area, { x: 5.7, z: 7.6 }, 5.7, 7.8, 0, true), null, 'pillar collision');
   assert.equal(walkElevation(area, { x: 8.45, z: -1.5 }, 8.45, -1.8, 0, true), null, 'fountain collision');
-  assert.equal(walkElevation(area, { x: -9.9, z: -12.9 }, -9.9, -13.1, 1.4, false), null, 'balcony guard');
+  worlds.unload();
+});
+
+test('the expanded summit terrace loops around all four walls and connects through three arches', () => {
+  const { worlds, area, visit, camera, exit } = fixture();
+  assert.equal(visit.definition.width, 40);
+  assert.equal(visit.definition.depth, 40);
+  assertProgress(area, 0);
+  const player = createPlayer(THREE, camera);
+  player.reset(visit.definition.spawn, area);
+  const circuit = [
+    [17, 11.17], [17, 17], [-17, 17], [-17, -10.5], [-11.9, -10.5], [-17, -10.5],
+    [-17, -17], [-9.95, -17], [-9.95, -11.2], [-9.95, -17], [17, -17], [17, 11.17], [0, 11.17],
+  ];
+  followPath(player, camera, visit, circuit.map(([x, z]) => ({ x, z })));
+  assert.equal(camera.position.y, 1.68);
+  assertProgress(area, 0);
+  assert.equal(nearestInteraction([exit], { x: 0, y: 1.68, z: 14.8 }), null, 'the return door is inside the castle');
+  worlds.unload();
+});
+
+test('the outdoor railings contain walking and jumping on every side of the summit', () => {
+  const { worlds, area, scene } = fixture();
+  for (const [x, z] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1]]) {
+    const from = { x: x * 18.85, z: z * 18.85 };
+    assert.equal(walkElevation(area, from, x * 19.03, z * 19.03, 0, true), 0);
+    assert.equal(walkElevation(area, from, x * 19.2, z * 19.2, 0, true), null);
+    assert.equal(walkElevation(area, from, x * 19.2, z * 19.2, 1.31, false), null);
+  }
+  assert.equal(walkElevation(area, { x: 16, z: 0 }, 14.4, 0, 0, true), null, 'the east wall still blocks outside the arch');
+  assert.equal(area.getGroundHeight(0, -17), 0, 'the raised throne floor ends at the north wall');
+  const cliff = scene.getObjectByName('Frozen Castle summit cliff').geometry;
+  cliff.computeBoundingBox();
+  assert.ok(cliff.boundingBox.max.y < 0 && cliff.boundingBox.min.y < -60, 'the cliff drops below the terrace');
   worlds.unload();
 });
 
@@ -239,23 +285,10 @@ test('the player can ascend and descend the whole curved staircase with normal m
   finishMission(game, 'stairs');
   player.reset(waypoints[0], area);
 
-  const motion = new THREE.Vector2();
-  function follow(path) {
-    for (const { x, z } of path) {
-      let distance = Infinity;
-      for (let step = 0; step < 180 && distance >= 0.19; step++) {
-        motion.set(x - camera.position.x, z - camera.position.z);
-        distance = motion.length();
-        if (distance >= 0.19) player.move(0.04, motion.multiplyScalar(1 / 0.44).clampLength(0, 1), visit);
-      }
-      assert.ok(distance < 0.19, `could not approach ${x},${z}`);
-    }
-  }
-
-  follow(waypoints.slice(1));
+  followPath(player, camera, visit, waypoints.slice(1));
   assert.ok(Math.abs(camera.position.y - (BALCONY_HEIGHT + 1.68)) < 1e-5);
   assert.equal(nearestInteraction(area.interactions, camera.position), gateway);
-  follow(waypoints.slice(0, -1).reverse());
+  followPath(player, camera, visit, waypoints.slice(0, -1).reverse());
   assert.ok(Math.abs(camera.position.y - 1.68) < 1e-5);
   worlds.unload();
 });

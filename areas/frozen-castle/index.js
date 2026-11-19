@@ -1,7 +1,8 @@
 import { createCastleActivities } from './activities.js';
 import { buildDecorations, gatewaySite, returnSite } from './decorations.js';
-import { buildPalace, createPalaceBuilder, PALACE_DEPTH, PALACE_WIDTH } from './palace.js';
+import { buildPalace, createPalaceBuilder } from './palace.js';
 import { BALCONY_HEIGHT } from './staircase.js';
+import { blocksSummitEdge, buildSummit, SUMMIT_SIZE } from './summit.js';
 
 const ID = 'frozen-castle';
 const villageName = 'Arendelle Village';
@@ -22,12 +23,12 @@ export const frozenCastle = {
   id: ID,
   title: 'Frozen Castle',
   heading: ['Frozen', 'Castle'],
-  description: 'Awaken ice crystals, build an ice staircase and play a crystal melody. Follow the ice mosaic into the palace.',
-  canvasLabel: '3D crystal palace',
+  description: 'Explore the crystal palace and its mountain terrace. Awaken ice crystals, build an ice staircase and play a crystal melody.',
+  canvasLabel: '3D crystal palace and mountaintop terrace',
   themeColor: '#dce9fb',
   music: ID,
-  width: PALACE_WIDTH,
-  depth: PALACE_DEPTH,
+  width: SUMMIT_SIZE,
+  depth: SUMMIT_SIZE,
   spawn: { x: 0, z: 11.17 },
   load: loadCastle,
 };
@@ -36,7 +37,8 @@ function loadCastle({ THREE, scene, hud, signal, playCue = () => {}, reducedMoti
   isLevelComplete = () => false, completeLevel = () => {} }) {
   const obstacles = [];
   const builder = createPalaceBuilder(THREE, scene, obstacles);
-  buildPalace(THREE, scene, builder);
+  buildPalace(THREE, scene, builder, hud?.ownerDocument);
+  buildSummit(THREE, scene, builder);
   const { throneInteraction, droplets, chandelierGlow, aurora, gatewayGlow } = buildDecorations(THREE, builder, hud?.ownerDocument, villageName, BALCONY_HEIGHT);
 
   let released = false;
@@ -78,7 +80,7 @@ function loadCastle({ THREE, scene, hud, signal, playCue = () => {}, reducedMoti
   };
   const exit = {
     ...returnSite, radius: 2.05, anchorY: 2.18, label: 'Return to Snow Basin',
-    reachable: player => player.y < 3.5,
+    reachable: player => player.y < 3.5 && player.z < returnSite.z,
     act({ travel, heardCue }) { if (isActive()) travel('snow', heardCue, ID); },
   };
   const throne = {
@@ -118,7 +120,9 @@ function loadCastle({ THREE, scene, hud, signal, playCue = () => {}, reducedMoti
   return {
     obstacles,
     interactions: [...activity.interactions, throne, gateway, exit],
-    blocksGround: activity.staircase.blocksGround,
+    blocksGround(x, z, radius, feet, from) {
+      return blocksSummitEdge(x, z, radius) || activity.staircase.blocksGround(x, z, radius, feet, from);
+    },
     getGroundHeight: activity.staircase.getGroundHeight,
     get objective() {
       const count = Object.values(missions).filter(Boolean).length;
