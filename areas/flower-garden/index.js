@@ -480,14 +480,14 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelCompl
     obstacles,
     arrivals: { cabin: cabin.arrival },
     get objective() {
-      const finished = Object.values(missions).filter(Boolean).length;
-      const progress = `Flower Garden · ${finished}/3 missions`;
-      if (finished === 3) return `${progress}\nFlower Garden complete! Snow Basin is unlocked!`;
-      const hints = [];
-      if (!missions.apples) hints.push(orchard.objective);
-      if (!missions.fish) hints.push('Feed the fish');
-      if (!missions.cow) hints.push('Greet a cow');
-      return `${progress}\n${hints.join(' · ')}`;
+      const lines = [
+        orchard.progress,
+        `Feed the fish · ${Number(missions.fish)}/1`,
+        `Greet a cow · ${Number(missions.cow)}/1`,
+      ];
+      if (!missions.apples) lines.push(orchard.deliveryHint);
+      else if (missions.fish && missions.cow) lines.push('Flower Garden complete! Snow Basin is unlocked!');
+      return lines.join('\n');
     },
     getGroundHeight(x, z) {
       return Math.max(getTerrainHeight(x, z), bridgeDeckHeight(x, z));

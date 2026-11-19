@@ -2,7 +2,7 @@
 
 Kids World is a first-person exploration game made with HTML, CSS, JavaScript, and Three.js. The game remembers your last area and which levels you have completed in this browser.
 
-The hint below the area name tracks missions and lists unfinished activities. A door sparkles briefly when you first unlock it. Replaying an area resets its missions and keeps access earned through saved level completion.
+The HUD below the area name shows every mission on its own line with its current progress. Contextual hints and unlock messages appear below the list. A door sparkles briefly when you first unlock it. Replaying an area resets its missions and keeps access earned through saved level completion.
 
 ## Flower Garden
 
@@ -17,7 +17,7 @@ Complete any of these three missions first. Finishing all three reveals the ice 
 - Cross the fish pond on the wooden bridge, or watch the fish from the bank. The banks and bridge rails keep you clear of the water.
 - Walk up the cabin steps to the porch bench or front door. While seated, you can look around. Use **Stand up** to move again.
 
-Returning to Flower Garden or using **Restart area** starts a fresh visit at 0/3 missions with the empty basket back by the apple tree.
+Returning to Flower Garden or using **Restart area** resets the mission counters and puts the empty basket back by the apple tree.
 
 ## Wooden House
 
@@ -46,8 +46,6 @@ Follow the ice mosaic to the Ice Throne and complete the three magical missions 
 - **Activate the ice crystals.** Use **Activate crystal** at each of the four giant crystals on the outdoor terrace, with one in each corner. All four illuminate the chandelier.
 - **Build the ice staircase.** Use **Build ice staircase** three times at the pedestal on the west side of the hall. Climb the curved ice stairs to the balcony above the Snow Basin door once the sections finish forming.
 - **Play the crystal melody.** Use **Play crystal** on the blue, pink, and purple crystals in the music corner. Each color counts once. Playing all three starts a short melody and lights the ceiling aurora.
-
-The Frozen Castle HUD tracks the crystals, staircase sections, and melody notes on separate lines.
 
 After the three missions, the golden gateway on the upper balcony offers **Enter Arendelle Village**. It displays **Arendelle Village — Coming Soon** while the village is in development. Use **Return to Snow Basin** at the grand entrance to reappear outside the castle door.
 

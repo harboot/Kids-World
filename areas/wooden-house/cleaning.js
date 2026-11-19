@@ -60,14 +60,14 @@ export function createCleaningMissions(THREE, scene, models, { playCue, reducedM
     model, completed: false, elapsed: null,
     outline: addClearanceOutline(THREE, scene, model, outlineMaterial),
   }));
-  const cleanedCount = () => tasks.reduce((count, task) => count + Number(task.completed), 0);
+  const allClean = () => tasks.every(task => task.completed);
 
   function finish(task) {
     task.model.render(1, false);
     task.elapsed = null;
     task.completed = true;
     if (task.outline) task.outline.visible = false;
-    if (cleanedCount() === tasks.length) {
+    if (allClean()) {
       celebrate(task.model);
       playCue(cues.success);
     }
@@ -75,9 +75,9 @@ export function createCleaningMissions(THREE, scene, models, { playCue, reducedM
 
   return {
     get objective() {
-      const count = cleanedCount();
-      const progress = `Clean up the house · ${count}/${tasks.length}`;
-      return count === tasks.length ? `${progress} · Great job! The house is sparkling clean!` : progress;
+      const lines = tasks.map(task => `${task.model.label} · ${Number(task.completed)}/1`);
+      if (allClean()) lines.push('Great job! The house is sparkling clean!');
+      return lines.join('\n');
     },
     interactions: tasks.map(task => {
       const { id, x, z, label, anchorY, radius, clearance, approach } = task.model;

@@ -13,8 +13,13 @@ const house = 'wooden-house';
 const labels = {
   bed: 'Make bed', dishes: 'Wash dishes', painting: 'Straighten painting', tv: 'Turn off TV', toys: 'Put away toys',
 };
-const success = 'Clean up the house · 5/5 · Great job! The house is sparkling clean!';
-const progressText = count => `Clean up the house · ${count}/5`;
+function progressText(completed = []) {
+  const lines = Object.entries(labels).map(([id, label]) => `${label} · ${Number(completed.includes(id))}/1`);
+  if (completed.length === lines.length) lines.push('Great job! The house is sparkling clean!');
+  return lines.join('\n');
+}
+
+const success = progressText(Object.keys(labels));
 
 function fixture(saved = []) {
   let data = JSON.stringify(saved);
@@ -185,7 +190,7 @@ test('each mission makes its actual furniture tidy exactly once and only after t
   assert.deepEqual(Object.fromEntries(Object.values(tasks).map(task => [task.id, task.label])), labels);
   for (const [id, task] of Object.entries(tasks)) {
     worlds.reset();
-    assert.equal(area.objective, progressText(0));
+    assert.equal(area.objective, progressText());
     for (const [key, isTidy] of Object.entries(tidy)) {
       assert.equal(isTidy(model), false, key);
       assert.ok(tasks[key].active);
@@ -194,15 +199,15 @@ test('each mission makes its actual furniture tidy exactly once and only after t
     task.act();
     task.act();
     assert.equal(task.active, false);
-    assert.equal(area.objective, progressText(0));
+    assert.equal(area.objective, progressText());
     if (id === 'dishes') assert.ok(model.water.visible);
     worlds.update(0.2);
-    assert.equal(area.objective, progressText(0));
+    assert.equal(area.objective, progressText());
     assert.equal(tidy[id](model), false);
     worlds.update(1.2);
     task.act();
     worlds.update(2);
-    assert.equal(area.objective, progressText(1));
+    assert.equal(area.objective, progressText([id]));
     assert.equal(tidy[id](model), true, id);
     assert.equal(cues.length, initialCues + 1);
     for (const other of Object.keys(tasks).filter(key => key !== id)) {
@@ -285,12 +290,12 @@ test('all five tasks can finish in different orders, record once per visit and r
     const { area, scene } = worlds.active ?? worlds.load(house);
     const tasks = missions(area);
     const model = models(scene);
-    assert.equal(area.objective, progressText(0));
+    assert.equal(area.objective, progressText());
     assert.ok(!model.stars.visible);
     order.forEach((id, i) => {
       tasks[id].act();
       worlds.update(1.3);
-      assert.equal(area.objective, i === 4 ? success : progressText(i + 1));
+      assert.equal(area.objective, progressText(order.slice(0, i + 1)));
     });
     for (const [id, task] of Object.entries(tasks)) {
       assert.ok(tidy[id](model), id);
@@ -306,7 +311,7 @@ test('all five tasks can finish in different orders, record once per visit and r
     assert.ok(reopened.has(house));
     assert.ok(reopened.has('garden') && reopened.has('snow'));
     worlds.reset();
-    assert.equal(area.objective, progressText(0));
+    assert.equal(area.objective, progressText());
     assert.ok(Object.values(tidy).every(isTidy => !isTidy(model)));
   }
   assert.deepEqual(completions, [house, house]);
@@ -314,7 +319,7 @@ test('all five tasks can finish in different orders, record once per visit and r
   assert.equal(cues.length, 12);
   worlds.load('garden');
   const revisit = worlds.load(house);
-  assert.equal(revisit.area.objective, progressText(0));
+  assert.equal(revisit.area.objective, progressText());
   assert.ok(Object.values(missions(revisit.area)).every(task => task.active));
   worlds.unload();
 });
@@ -334,7 +339,7 @@ test('unload cancels running missions and releases their resources', () => {
   worlds.reset();
   assert.equal(model.water.visible, false);
   assert.equal(model.screen.visible, false);
-  assert.equal(first.area.objective, progressText(0));
+  assert.equal(first.area.objective, progressText());
   tasks.dishes.act();
   tasks.tv.act();
   worlds.load('garden');
@@ -348,7 +353,7 @@ test('unload cancels running missions and releases their resources', () => {
   assert.equal(cues.length, 4);
   assert.deepEqual(completions, []);
   const next = worlds.load(house);
-  assert.equal(next.area.objective, progressText(0));
+  assert.equal(next.area.objective, progressText());
   worlds.unload();
 });
 
