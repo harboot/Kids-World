@@ -7,7 +7,7 @@ export function nearestInteraction(items, position, inView) {
     if (item.active === false || (item.reachable && !item.reachable(position))) continue;
     const distance = Math.hypot(position.x - item.x, position.z - item.z);
     if (distance < best && distance <= (item.radius ?? INTERACTION_RADIUS) &&
-        (!item.requiresView || !inView || inView(item))) {
+        (!(item.requiresView || item.aimRadius) || !inView || inView(item))) {
       nearest = item;
       best = distance;
     }
@@ -24,7 +24,8 @@ export function createInteractions(THREE, { button, glyph, label, camera, playin
   function project(item) {
     point.set(item.x, item.anchorY ?? 1.38, item.z).project(camera);
     const { x, y, z } = point;
-    return z >= -1 && z <= 1 && Math.abs(x) <= 1 && Math.abs(y) <= 1;
+    const onScreen = z >= -1 && z <= 1 && Math.abs(x) <= 1 && Math.abs(y) <= 1;
+    return onScreen && (!item.aimRadius || Math.hypot(x * camera.aspect, y) <= item.aimRadius);
   }
 
   function nearby() {

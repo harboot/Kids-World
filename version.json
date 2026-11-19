@@ -1,5 +1,5 @@
 {
-  "version": "5c2526e2ea00b1744cb815e88b5a6eb79f96b2bdc140b5955c25f08810e058f1",
+  "version": "18eca1262e357ccebd8a5263e4ce9e317ee2d7ec41011b1450b167e6a8de3fe6",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
@@ -106,6 +106,42 @@
       "revision": "046a5eb469413eb7554b2225aa31dfbb90204c84e3a0da55b7ad43fae8adb68e"
     },
     {
+      "path": "./areas/secret-apartment/basement.js",
+      "revision": "a93777050fe8ef9096cb383b3a439f1f31fb58e382ff7aae2c6b74230f742a3a"
+    },
+    {
+      "path": "./areas/secret-apartment/corridor.js",
+      "revision": "2800a3e13f1b98c1b625c7e3b7b1bfa19e2c4a325be4b2843a083edb2b72f82a"
+    },
+    {
+      "path": "./areas/secret-apartment/elevator.js",
+      "revision": "10b6146d0bab2797649dcb488554af72a756e12b9471dd8946448804383a1952"
+    },
+    {
+      "path": "./areas/secret-apartment/floor17.js",
+      "revision": "2411339b3812cf6ab1e1378b23d455ad761127c8a631323a579d7475774c60e1"
+    },
+    {
+      "path": "./areas/secret-apartment/floor8.js",
+      "revision": "aac6e9e59a20cc279d95224072502301cd15a82e6b798c664670bee03189bb28"
+    },
+    {
+      "path": "./areas/secret-apartment/geometry.js",
+      "revision": "74f01e997f4eb06605781ce2ef354d0f1c66d9a36fdc6f8e3bca52ba8d9ee7a2"
+    },
+    {
+      "path": "./areas/secret-apartment/index.js",
+      "revision": "e4bc9dcce2312cab2cc4a269b1ddc2a29c70915678685081fc0826e163321b9f"
+    },
+    {
+      "path": "./areas/secret-apartment/pool.js",
+      "revision": "3ead1e49278a1f9a48e9020ba29ce1a77a1ce61d11b7e95067aaf7589c4b8ab4"
+    },
+    {
+      "path": "./areas/secret-apartment/unit17e.js",
+      "revision": "57e9fa5f541fae9671bc17a01e5b04cdb745217c36bce5d2091f5ab82885f365"
+    },
+    {
       "path": "./areas/snow-basin.js",
       "revision": "5f3f19d1332a5d4e31a93439ed4bf440adf94d847a933be31d55e1bf3fa91e47"
     },
@@ -155,7 +191,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "14d60b1a9212395913442dffb3b4927d6e4540c1fe2301780d3b7634eb22fa0a"
+      "revision": "22219cc6701739094bd4e5a83bddda54a40eb19bb627bbb827cf4c6bfc901413"
     },
     {
       "path": "./core/geometry.js",
@@ -167,11 +203,11 @@
     },
     {
       "path": "./core/interactions.js",
-      "revision": "d5330bad85081bb49771473b09c30cf79b462ead0ed12e55b8efa99cb444a37e"
+      "revision": "5fa62097e8e2e49a65e3d25c164b74d94f91e28f6473be18178350a330f2e856"
     },
     {
       "path": "./core/level-progress.js",
-      "revision": "f9fa75a6451a55e20b9f26e517e8c5262f76adb4065beda2b5556ed1090d9120"
+      "revision": "4a045f7634c85c4272b384ebdcfee1d29faafab4f46e6cb1c44b4504a89b50e1"
     },
     {
       "path": "./core/movement.js",
@@ -179,7 +215,7 @@
     },
     {
       "path": "./core/player.js",
-      "revision": "53b01c37ad892152fcd794d611c2a5b0f2e6aa8604e3df072961e4c6a4874ba8"
+      "revision": "6246c06bb972e9181b2f7c3ffd2287ea8b5adbdd30837832f915c32596b26ac8"
     },
     {
       "path": "./core/renderer.js",
@@ -187,11 +223,11 @@
     },
     {
       "path": "./core/world-manager.js",
-      "revision": "51a8460d3c9f8ab36df4bbe3b25615c4034fdb8318304a9c40f0866ebb54c1d1"
+      "revision": "2d5c4725118ae0686aa7f3704c36f03e4f59dc9625e3b1bc53da16400a059d83"
     },
     {
       "path": "./game.js",
-      "revision": "601644462b4f2730a67759afc9c665a04171b88dc7caa29949dbe560d60e2ab0"
+      "revision": "68e9d62382aa9750ce1ca6e2b3d5e3b7f74fa40560cde5780e86053e76a72187"
     },
     {
       "path": "./index.html",

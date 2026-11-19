@@ -1,6 +1,7 @@
 import { advanceFall, floorHeight, PLAYER_RADIUS, walkElevation } from './movement.js';
 
 const EYE_HEIGHT = 1.68;
+const HEAD_HEIGHT = EYE_HEIGHT + 0.14;
 const JUMP_SPEED = 6.3;
 const WALK_SPEED = 4.6;
 
@@ -67,7 +68,7 @@ export function createPlayer(THREE, camera) {
 
   function walkTo(world, position, x, z) {
     const next = walkElevation(world, position, x, z, elevation, grounded);
-    if (next === null) return;
+    if (next === null || next + HEAD_HEIGHT > (world.getCeilingHeight?.(x, z) ?? Infinity)) return;
     elevation = next;
     position.x = x;
     position.z = z;
@@ -91,6 +92,12 @@ export function createPlayer(THREE, camera) {
 
     const floor = floorHeight(area, position.x, position.z, elevation);
     advanceFall(elevation, verticalSpeed, floor, dt, falling);
+    const ceiling = (area.getCeilingHeight?.(position.x, position.z) ?? Infinity) - HEAD_HEIGHT;
+    if (falling.feet > ceiling) {
+      falling.feet = ceiling;
+      falling.speed = 0;
+      falling.grounded = false;
+    }
     elevation = falling.feet;
     grounded = falling.grounded;
     verticalSpeed = falling.speed;

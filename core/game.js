@@ -5,7 +5,7 @@ import { createLevelProgress } from './level-progress.js';
 import { PLAYER_RADIUS } from './movement.js';
 import { createPlayer } from './player.js';
 import { createView } from './renderer.js';
-import { areaURL, createWorldManager, historyArrival, resolveArea } from './world-manager.js';
+import { areaURL, createWorldManager, historyArrival, isPublicArea, resolveArea } from './world-manager.js';
 
 const areaKey = 'kids-world-last-area';
 
@@ -193,7 +193,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
         const state = arrival ? { area: id, arrival } : null;
         history[historyMode](state, '', areaURL(new URL(location.href), id));
       }
-      rememberArea(id);
+      if (isPublicArea(areas, id)) rememberArea(id);
       menu(false);
     } catch (error) {
       console.error(error);
@@ -202,7 +202,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   }
 
   function travel(id, heardCue, arrival) {
-    if (!playing() || id === worlds.active.id || !Object.hasOwn(areas, id)) return;
+    if (!playing() || id === worlds.active.id || !isPublicArea(areas, id)) return;
     game.dataset.state = 'traveling';
     stopPlaying();
     if (heardCue) travelTimer = window.setTimeout(() => enterArea(id, 'pushState', arrival), 180);
@@ -264,7 +264,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
       enterArea(id, null, arrival);
       return;
     }
-    rememberArea(id);
+    if (isPublicArea(areas, id)) rememberArea(id);
     resetArea();
   }
 
