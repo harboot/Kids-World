@@ -34,8 +34,10 @@ Players explore connected worlds, interact with objects, and complete simple mis
 - Build the ice staircase.
 - Play the crystal melody.
 
-### Arendelle Village — Exploration
-Explore the village square, market streets, stables, and fishing harbor after completing Frozen Castle. Village missions are coming in Phase 2.
+### Arendelle Village — 3 Missions
+- Catch three fish and sell them at the Fish Shop.
+- Find and return the lost reindeer.
+- Collect three gears and repair the Clock Tower.
 
 ## Built for Expansion
 

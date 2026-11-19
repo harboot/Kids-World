@@ -1,25 +1,41 @@
 {
-  "version": "65ad2750a88fb6a958bf6fa2e11aa5d48c47ed6b6f5d2caa0f45e3a02ed8ffbd",
+  "version": "881015db05e7b1fb36fad19e57e01048ccbd57f941f49a2c2ad91dee4b5b7167",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
-      "revision": "a2849c40e28d569cc657de22f5b74d908a3be6a8a7eebeea827477bf44aa8854"
+      "revision": "81115792f69eff0c2e2f4e1c9b1e07cf0a0c13cf73c06b3e39c2cdfe91985e17"
+    },
+    {
+      "path": "./areas/arendelle-village/clock-mission.js",
+      "revision": "3d375c61b6d4fecaa99806e5dee6e448e9c709a7878b4808a141f2b0af8d76e8"
     },
     {
       "path": "./areas/arendelle-village/decorations.js",
       "revision": "c3fd684f6edd853f0b34c406e92d743164313688616605dcd70b5bfb2fa943e1"
     },
     {
+      "path": "./areas/arendelle-village/fishing.js",
+      "revision": "6c39ab70e457e7f005bc4d53008b60bb4160be196acb5345ff3029b7651c4f48"
+    },
+    {
       "path": "./areas/arendelle-village/harbor.js",
-      "revision": "1cc35ec99910fc67883ed9a185bd230aeb28e5ba84595a9a86e2f03335b53255"
+      "revision": "511b766951128c88caae942298f9c6aa7c228e6fb9b8525c4de7988bd4e37b21"
     },
     {
       "path": "./areas/arendelle-village/index.js",
-      "revision": "ae4de9cc9f28d0eca315e7f245d3951367ff046678fc43c466980b64967fb6c5"
+      "revision": "34d69994b6f1c4c74777181665812aed155a13904dfcfbe667066c821ee00cc1"
     },
     {
       "path": "./areas/arendelle-village/interactions.js",
       "revision": "d0cdb10e8d75539cdbb53d89231257e2429719b48b0130f337dcd0af27741df6"
+    },
+    {
+      "path": "./areas/arendelle-village/missions.js",
+      "revision": "629ab80149372ee82cd7981f3467fcbc327742c5cc624f160e4b391d94c133c2"
+    },
+    {
+      "path": "./areas/arendelle-village/reindeer.js",
+      "revision": "e9ae72db23fdff38d8e1d700f8f3e2a0384bcb6102c4af9127846951fe1b8e70"
     },
     {
       "path": "./areas/arendelle-village/scenery.js",
@@ -28,6 +44,10 @@
     {
       "path": "./areas/arendelle-village/terrain.js",
       "revision": "cd93578174d0a44b3de20e9f1ddbd2c60f8cfbb747986379ed636bf1ab799727"
+    },
+    {
+      "path": "./areas/arendelle-village/villager.js",
+      "revision": "bd97a2c78616cff9e6efa1dae9677a94c9b3e3058e345e4f92c12495c784eb63"
     },
     {
       "path": "./areas/flower-garden/garden-cabin.js",
