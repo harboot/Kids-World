@@ -43,9 +43,11 @@ Frozen Castle sits on a snowy mountain summit. Look for the **Summit Walk** arch
 
 Follow the ice mosaic to the Ice Throne and complete the three magical missions in any order.
 
-- **Awaken the ice crystals.** Use **Activate crystal** at the entrance, near the fountain, and by the staircase. All three illuminate the chandelier.
+- **Activate the ice crystals.** Use **Activate crystal** at each of the four giant crystals on the outdoor terrace, with one in each corner. All four illuminate the chandelier.
 - **Build the ice staircase.** Use **Build ice staircase** three times at the pedestal on the west side of the hall. Climb the curved ice stairs to the balcony above the Snow Basin door once the sections finish forming.
 - **Play the crystal melody.** Use **Play crystal** on the blue, pink, and purple crystals in the music corner. Each color counts once. Playing all three starts a short melody and lights the ceiling aurora.
+
+The Frozen Castle HUD tracks the crystals, staircase sections, and melody notes on separate lines.
 
 After the three missions, the golden gateway on the upper balcony offers **Enter Arendelle Village**. It displays **Arendelle Village — Coming Soon** while the village is in development. Use **Return to Snow Basin** at the grand entrance to reappear outside the castle door.
 

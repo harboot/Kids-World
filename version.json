@@ -1,5 +1,5 @@
 {
-  "version": "2c78fd149e9129b22787597d05171ddafb071375ba84840d58c50e4bdcc62f46",
+  "version": "da24eaaeada46e2026f598ab61982db690223ee8c2ca56e2ab8263e60b003627",
   "files": [
     {
       "path": "./areas/flower-garden/garden-cabin.js",
@@ -23,7 +23,7 @@
     },
     {
       "path": "./areas/frozen-castle/activities.js",
-      "revision": "851c4bb8d6264ce28f0075965ff1f1fa69ecb02df28eff37b56a525b174e2a25"
+      "revision": "b59e0e5e72240b04d05c1d12c300b2054dfe105d17888a96c2e7d603c2e8c3c7"
     },
     {
       "path": "./areas/frozen-castle/decorations.js",
@@ -31,7 +31,7 @@
     },
     {
       "path": "./areas/frozen-castle/index.js",
-      "revision": "33dba1be0e28eb3c36ecf07324d5ed96f5e90978b7ab702dbe07a031457fc242"
+      "revision": "c54d2863794fdeecc0a4b88169cb3302ed9204c724f97e47da910149ceece82e"
     },
     {
       "path": "./areas/frozen-castle/palace.js",
