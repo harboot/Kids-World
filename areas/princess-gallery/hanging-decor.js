@@ -117,6 +117,29 @@ export function buildHangingDecor({ THREE, parent, parts, colors, ceiling }) {
   display('Grand hanging crane', 5.15, 11.4, 21.1, -.20, bird);
   display('Adventure hanging bird', 22.5, 12.7, -10.6, -1.21, bird, .58);
 
+  display('Festival hot-air balloon', 14.05, 13.42, 24.5, .31, (group, suspend) => {
+    const cloth = [matte(0xb9727f), matte(0xe7bd81), matte(0x8facb4), matte(0xb3a0c3)];
+    const basket = matte(0xa57857);
+    for (let i = 0; i < 12; i++) {
+      const gore = new THREE.SphereGeometry(1, 6, 14, i * Math.PI / 6, Math.PI / 6, 0, Math.PI * .87);
+      part(group, gore, cloth[i % cloth.length], 0, .75, 0, 2.28, 2.57, 2.28);
+    }
+    part(group, 'drum', plum, 0, -1.61, 0, .95, .24, .95);
+    part(group, 'drum', gold, 0, -1.765, 0, .82, .092, .82);
+    for (const x of [-1, 1]) for (const z of [-1, 1]) {
+      beam(group, cable, [x * .66, -1.61, z * .66], [x * .59, -3.03, z * .40], .040);
+      beam(group, gold, [x * .57, -3.11, z * .38], [x * .62, -3.66, z * .42], .082);
+    }
+    part(group, 'box', basket, 0, -3.398, 0, 1.18, .56, .82);
+    part(group, 'box', cream, 0, -3.103, 0, 1.28, .095, .92);
+    part(group, 'box', plum, 0, -3.585, 0, 1.233, .129, .857);
+    for (const x of [-.41, -.198, .015, .228, .44]) {
+      part(group, 'box', gold, x, -3.32, .42, .049, .403, .036);
+    }
+    part(group, star, lunar, 0, -3.28, .477, .129, .14, .48);
+    for (const x of [-.66, .66]) suspend(x, 3.16, 0);
+  });
+
   function cloud(group, suspend) {
     const puffs = [
       [-2.00, -.09, -.04, 1.02, .62, .74], [-.91, .22, -.10, 1.23, .85, 1.03],

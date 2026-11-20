@@ -1,5 +1,5 @@
 {
-  "version": "ff8e1b6cfd5e27a900da21f4a108ddc16825c476daa55240b78cf6200d253145",
+  "version": "7dda2162701782d2a6e9a5d927c229586bdb3f1c4a48d44652b8ac58cc4126c8",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
@@ -114,16 +114,20 @@
       "revision": "b4f7943711579bb810b65d0fd111c556d0b12470e70a375289324d6948258c92"
     },
     {
+      "path": "./areas/princess-gallery/exhibit-facades.js",
+      "revision": "61e1c1ab903953b393fda618f72301a1e9f57cd9bef8eba35255dbf6175628f7"
+    },
+    {
       "path": "./areas/princess-gallery/exhibits.js",
       "revision": "02cd01d5dc7cbfd4519d19b33589061b287e82877b7fe9a6d364038143c070b9"
     },
     {
       "path": "./areas/princess-gallery/gallery.js",
-      "revision": "2916917eb8d52c2f17d90fc6d828d95bd3d7f5b957920ea145dc3dcaf6d07f07"
+      "revision": "0dee49cabde6ce09f3b4f089290a362be9529f68967b44ef1973247b14140168"
     },
     {
       "path": "./areas/princess-gallery/hanging-decor.js",
-      "revision": "9ba6d1f8d709faf1ca10f0d6a38daec433eeeb698f0ac7799471c73db5a1fa2d"
+      "revision": "35d5ce118b7c671554bd70f89096dce7276329f46d11554bfc8af2b9d200eb59"
     },
     {
       "path": "./areas/princess-gallery/index.js",
@@ -132,6 +136,10 @@
     {
       "path": "./areas/princess-gallery/parts.js",
       "revision": "f14f797fa1735ab9ae0f0c060f29555ec17470846b6ebd20c20dfde9ce59e5ae"
+    },
+    {
+      "path": "./areas/princess-gallery/promenade-furniture.js",
+      "revision": "57d99102c931de41063898a2cb418e7492994c1a1c5a6fe5415486ba6e9aa73d"
     },
     {
       "path": "./areas/princess-gallery/public-spaces.js",
@@ -144,6 +152,10 @@
     {
       "path": "./areas/princess-gallery/rapunzel.js",
       "revision": "4d644aef65f17b6612eb9a7c3d210665ca14d552e62bc1423c4fcd40f7817a2c"
+    },
+    {
+      "path": "./areas/princess-gallery/scenic-perimeter.js",
+      "revision": "5314bef3c75e26f8863e48cfebbb5d18a9eb28a124e44f33dfdce60adf32d2d6"
     },
     {
       "path": "./areas/princess-gallery/snacks.js",

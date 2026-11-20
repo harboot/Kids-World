@@ -267,6 +267,28 @@ test('visitors can walk from the lobby through the atrium and into all ten entra
   assert.equal(walkElevation(area, flank, flank.x, flank.z, flankHeight, true), flankHeight);
 });
 
+test('landscape barriers close the rear gaps behind the exhibits', t => {
+  const { worlds } = fixture();
+  t.after(worlds.unload);
+  const { area, scene } = worlds.load(ID);
+  const cells = walkableCells(area, hall.spawn);
+  for (const behind of ['-62:41', '-67:19', '-62:-46', '-43:-53', '24:-57', '55:-50', '66:-32', '66:28', '56:55', '33:54']) {
+    assert.equal(cells.has(behind), false, behind + ' is behind the landscape');
+  }
+  const scenery = scene.getObjectByName('Enchanted landscape borders');
+  const borders = scenery.children.filter(child => child.name.endsWith('scenic barrier'));
+  assert.equal(borders.length, 11);
+  for (const border of borders) {
+    const { x, z } = border.position;
+    assert.equal(walkElevation(area, { x, z }, x, z, 1.34, false), null, border.name);
+    assert.ok(new THREE.Box3().setFromObject(border).max.y < 15);
+  }
+  assert.equal(scene.getObjectByName('Scenic horizons').children.length, 8);
+  assert.ok(scene.getObjectByName('Twilight canopy').layers.isEnabled(PLAYER_ONLY_LAYER));
+  assert.ok(scene.getObjectByName('Woodland stone and ivy facade'));
+  assert.ok(scene.getObjectByName('Royal palace facade'));
+});
+
 test('the drone camera sees the gallery floor and picks surfaces below the ceiling', t => {
   const { worlds } = fixture();
   t.after(worlds.unload);
@@ -791,7 +813,35 @@ test('four snack carts have walkable service approaches in separate parts of the
   }
 });
 
-test('the birds, clouds, crescent and lanterns hang above the public floor and clear Drone View', t => {
+test('benches, bins, lamps and balloon bouquets are reachable along the promenade', t => {
+  const { worlds } = fixture();
+  t.after(worlds.unload);
+  const { area, scene } = worlds.load(ID);
+  const furniture = scene.getObjectByName('Promenade furniture');
+  const stations = furniture.children.filter(child => child.name.endsWith('rest stop'));
+  const bouquets = furniture.children.filter(child => child.name.startsWith('Balloon bouquet'));
+  assert.equal(stations.length, 6);
+  assert.equal(bouquets.length, 3);
+  const cells = walkableCells(area, hall.spawn);
+  for (const station of stations) {
+    const { x, z } = station.position;
+    const { toWorld } = spaceTransform({ position: { x, z }, rotation: station.rotation.y });
+    const approach = toWorld(0, 1.6);
+    assert.ok(cells.has(approach.map(Math.round).join(':')), station.name);
+    assertWalkable(area, approach, toWorld(0, .82), station.name);
+    assert.equal(walkElevation(area, { x, z }, x, z, 0, true), null, station.name);
+    assert.ok(new THREE.Box3().setFromObject(station).max.y > 3.1, station.name);
+  }
+  for (const bouquet of bouquets) {
+    const { x, z } = bouquet.position;
+    const approaches = [[x + 1.4, z], [x - 1.4, z], [x, z + 1.4], [x, z - 1.4]];
+    assert.ok(approaches.some(point => cells.has(point.map(Math.round).join(':'))), bouquet.name);
+    assert.equal(walkElevation(area, { x, z }, x, z, 0, true), null, bouquet.name);
+    assert.ok(new THREE.Box3().setFromObject(bouquet).max.y > 3.7, bouquet.name);
+  }
+});
+
+test('the hanging decorations stay above the public floor and clear Drone View', t => {
   const { worlds } = fixture();
   t.after(worlds.unload);
   const { scene, definition } = worlds.load(ID);
@@ -799,6 +849,7 @@ test('the birds, clouds, crescent and lanterns hang above the public floor and c
   assert.deepEqual(new Set(hanging.children.map(piece => piece.name)), new Set([
     'Grand hanging crane', 'Adventure hanging bird', 'Woodland hanging cloud', 'Adventure hanging cloud',
     'Lobby hanging cloud', 'Royal crescent and star mobile', 'Woodland hanging lanterns',
+    'Festival hot-air balloon',
   ]));
   const drone = createDroneCamera(THREE);
   drone.focus(definition, undefined, 1.7);
