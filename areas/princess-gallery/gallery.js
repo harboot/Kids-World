@@ -2,7 +2,9 @@ import { addGroup, paintCanvasTexture, SURFACE_GAP } from '../../core/geometry.j
 import { PLAYER_ONLY_LAYER } from '../../core/render-layers.js';
 import { seededRandom } from '../../core/random.js';
 import { buildAtrium, ATRIUM_RADII } from './atrium.js';
+import { buildConcessions } from './concessions.js';
 import { GALLERY_DEPTH, GALLERY_WIDTH, exhibitOutline, exhibits, wings } from './exhibits.js';
+import { buildHangingDecor } from './hanging-decor.js';
 import { addGallerySign, addSolid, createParts, spaceTransform } from './parts.js';
 import { buildPublicSpaces } from './public-spaces.js';
 import { buildGalleryPeople } from './visitors.js';
@@ -132,7 +134,7 @@ function galleryFloor(THREE, document, parts, parent) {
   floor.rotation.x = -Math.PI / 2;
 }
 
-export function buildGallery(THREE, scene, document, obstacles) {
+export function buildGallery(THREE, scene, document, obstacles, services) {
   scene.background = new THREE.Color(0xd1b4bf);
   scene.fog = new THREE.Fog(0xd1b4bf, 64, 112);
   scene.add(new THREE.HemisphereLight(0xffecd7, 0xc2a9dc, 2.18));
@@ -378,6 +380,8 @@ export function buildGallery(THREE, scene, document, obstacles) {
   }
   const walkway = buildWalkway({ THREE, document, parent: shell, parts, exhibits, ceiling });
   buildPublicSpaces({ THREE, parent: shell, parts, colors, obstacles });
-  const people = buildGalleryPeople({ THREE, parent: shell, parts, obstacles });
-  return { exhibitVisits, ceiling, walkway, people };
+  const carts = buildConcessions({ THREE, document, parent: shell, parts, obstacles, ...services });
+  buildHangingDecor({ THREE, parent: shell, parts, colors, ceiling });
+  const people = buildGalleryPeople({ THREE, parent: shell, parts, obstacles, vendors: carts.vendors });
+  return { exhibitVisits, ceiling, walkway, people, carts };
 }

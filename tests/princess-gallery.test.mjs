@@ -74,6 +74,7 @@ test('public gallery opens by normal and drone URLs with no castle progress', t 
     assert.match(visit.area.missionStatus.hint, /Cinderella’s glass slipper on the ballroom stairs/);
     assert.equal(game.progress.has(CASTLE), false);
     assert.equal(game.progress.has(ID), false);
+    assert.equal(game.progress.canSelect(ID), false);
   }
   assert.equal(resolveArea(new URL('https://example.test/?area=secret-apartment'), areas, 'garden'), 'secret-apartment');
 });
@@ -92,6 +93,7 @@ test('the castle gate explains its lock and unlocks only when all three missions
   assert.equal(nearestInteraction(area.interactions, reach), gate);
   assert.match(gate.label, /Locked/);
   assert.equal(gate.unlocked, false);
+  assert.equal(game.progress.canSelect(ID), false);
   assert.ok(seal.visible && !sparks.visible);
   gate.act({ travel, heardCue: true });
   assert.deepEqual(travels, []);
@@ -107,6 +109,9 @@ test('the castle gate explains its lock and unlocks only when all three missions
   game.worlds.update(0.6, game.camera.position);
   assert.ok(area.missionStatus.missions.every(mission => mission.complete));
   assert.equal(game.progress.has(CASTLE), true);
+  assert.equal(game.progress.canSelect(CASTLE), true);
+  assert.equal(game.progress.canSelect(ID), true);
+  assert.equal(game.progress.has(ID), false);
   assert.equal(gate.unlocked, true);
   assert.equal(gate.label, 'Enter Princess Gallery');
   assert.ok(!seal.visible && sparks.visible);
@@ -118,6 +123,10 @@ test('the castle gate explains its lock and unlocks only when all three missions
 test('saved completion, existing castle gates and named arrivals survive reset and visits', t => {
   const game = fixture({ saved: [CASTLE] });
   t.after(game.worlds.unload);
+  assert.equal(game.progress.canSelect(ID), true);
+  assert.equal(game.progress.canSelect('secret-apartment'), false);
+  assert.equal(game.progress.canSelect('arendelle-village'), false);
+  assert.equal(game.progress.has(ID), false);
   const castle = game.worlds.load(CASTLE);
   const gate = castle.area.interactions.find(item => item.destination === ID);
   const village = castle.area.interactions.find(item => item.destination === 'arendelle-village');
@@ -426,7 +435,7 @@ test('Snow White has eight distinct actors visitors can walk up to, with one sha
     assert.ok(cells.has(Math.round(point.x) + ':' + Math.round(point.z)), 'walk to ' + entry.actor.name);
     assert.ok(!area.obstacles.some(o => overlaps(o, point.x, point.z)), entry.actor.name + ' approach is clear');
   }
-  assert.deepEqual(area.interactions.map(item => item.destination), [CASTLE]);
+  assert.deepEqual(area.interactions.flatMap(item => item.destination ?? []), [CASTLE]);
   assert.deepEqual(area.missionStatus.missions, []);
   const [x, z] = spaceTransform(snowWhite).toWorld(-1, -7.33);
   assert.equal(walkElevation(area, { x, z }, x, z, area.getGroundHeight(x, z), true), null, 'cottage has collision');
@@ -745,7 +754,7 @@ test('gallery guests include guards, a child with their parents, and a parent wi
   assert.ok(baby.children.some(mesh => mesh.isMesh));
   const { x, z } = stroller.getWorldPosition(new THREE.Vector3());
   assert.equal(walkElevation(area, { x, z }, x, z, 0, true), null);
-  assert.deepEqual(area.interactions.map(item => item.destination), [CASTLE]);
+  assert.deepEqual(area.interactions.flatMap(item => item.destination ?? []), [CASTLE]);
 
   const head = child.getObjectByName('Woodland family child head');
   const rest = head.rotation.toArray();
@@ -763,4 +772,158 @@ test('reduced motion keeps gallery visitors in a steady pose', t => {
   const rest = arm.rotation.toArray();
   worlds.update(1, camera.position);
   assert.deepEqual(arm.rotation.toArray(), rest);
+});
+
+test('four snack carts have walkable service approaches in separate parts of the gallery', t => {
+  const { worlds } = fixture();
+  t.after(worlds.unload);
+  const { area, scene } = worlds.load(ID);
+  const collection = scene.getObjectByName('Princess Gallery snack carts');
+  assert.deepEqual(new Set(collection.children.map(cart => cart.name)),
+    new Set(['Popcorn cart', 'Cotton Candy cart', 'Hot Dogs cart', 'Cold Drinks cart']));
+  for (const cart of collection.children) {
+    assert.ok(cart.children.some(child => child.isInstancedMesh));
+    const { x, z } = cart.position;
+    const { toWorld } = spaceTransform({ position: { x, z }, rotation: cart.rotation.y });
+    assert.equal(walkElevation(area, { x, z }, x, z, 0, true), null, cart.name + ' has a solid footprint');
+    assertWalkable(area, toWorld(0, 2.8), toWorld(0, 1.42), cart.name);
+    assert.ok(collection.children.every(other => other === cart || other.position.distanceTo(cart.position) > 15));
+  }
+});
+
+test('the birds, clouds, crescent and lanterns hang above the public floor and clear Drone View', t => {
+  const { worlds } = fixture();
+  t.after(worlds.unload);
+  const { scene, definition } = worlds.load(ID);
+  const hanging = scene.getObjectByName('Princess Gallery hanging decorations');
+  assert.deepEqual(new Set(hanging.children.map(piece => piece.name)), new Set([
+    'Grand hanging crane', 'Adventure hanging bird', 'Woodland hanging cloud', 'Adventure hanging cloud',
+    'Lobby hanging cloud', 'Royal crescent and star mobile', 'Woodland hanging lanterns',
+  ]));
+  const drone = createDroneCamera(THREE);
+  drone.focus(definition, undefined, 1.7);
+  for (const piece of hanging.children) {
+    const bounds = new THREE.Box3().setFromObject(piece);
+    assert.ok(bounds.min.y > 9.5 && bounds.max.y > 24.3, piece.name);
+    assert.ok(piece.children.length > 0 && piece.children.every(mesh => !mesh.layers.test(drone.camera.layers)), piece.name);
+  }
+  const crane = hanging.getObjectByName('Grand hanging crane');
+  assert.ok(new THREE.Box3().setFromObject(crane).getSize(new THREE.Vector3()).x > 9);
+});
+
+const tastings = [
+  ['Popcorn', 'Eat popcorn', 'Tasting Popcorn'],
+  ['Cotton Candy', 'Eat cotton candy', 'Tasting Cotton candy'],
+  ['Hot Dogs', 'Eat a hot dog', 'Tasting Hot dog'],
+  ['Cold Drinks', 'Sip a cold drink', 'Tasting Cold drink'],
+];
+
+function snackApproach(scene, name, depth) {
+  const cart = scene.getObjectByName(name + ' cart');
+  const { x, z } = cart.position;
+  const { toWorld } = spaceTransform({ position: { x, z }, rotation: cart.rotation.y });
+  const [px, pz] = toWorld(0, depth);
+  return { x: px, y: EYE_HEIGHT, z: pz };
+}
+
+test('each cart has a vendor and a repeatable first-person tasting at its service side', t => {
+  const { worlds, camera } = fixture();
+  t.after(worlds.unload);
+  const { scene, area, viewmodel } = worlds.load(ID);
+  const models = viewmodel.getObjectByName('Gallery snack tasting').children;
+  const actions = tastings.map(([, label]) => area.interactions.find(item => item.label === label));
+  assert.equal(models.length, 4);
+  assert.ok(models.every(model => !model.visible));
+
+  for (const [index, [name, , modelName]] of tastings.entries()) {
+    const action = actions[index];
+    assert.ok(scene.getObjectByName(name + ' vendor right arm'));
+    const behind = snackApproach(scene, name, -1.65);
+    const front = snackApproach(scene, name, 2.36);
+    camera.position.set(behind.x, behind.y, behind.z);
+    assert.equal(nearestInteraction(actions, camera.position), null);
+    action.act();
+    assert.ok(models.every(model => !model.visible));
+    camera.position.set(front.x, front.y + 2, front.z);
+    assert.equal(nearestInteraction(actions, camera.position), null);
+    camera.position.y = front.y;
+    assert.equal(nearestInteraction(actions, camera.position, () => false), null);
+    assert.equal(nearestInteraction(actions, camera.position, () => true), action);
+    action.act();
+    const model = viewmodel.getObjectByName(modelName);
+    assert.deepEqual(models.filter(node => node.visible), [model]);
+    assert.ok(actions.every(item => !item.active));
+    const held = model.getObjectByName('Held food');
+    worlds.update(.35, camera.position);
+    const lower = held.position.clone();
+    worlds.update(.50, camera.position);
+    const lift = model.getObjectByName('Popcorn in hand');
+    if (lift) assert.ok(lift.visible && lift.parent.position.z > -.51);
+    else assert.ok(held.position.z > lower.z);
+    worlds.update(2.25, camera.position);
+    assert.ok(models.every(node => !node.visible));
+    assert.ok(actions.every(item => item.active));
+    action.act();
+    assert.equal(model.visible, true, name + ' can be tasted again');
+    worlds.reset();
+    assert.equal(model.visible, false);
+  }
+  assert.deepEqual(area.missionStatus.missions, []);
+});
+
+test('reduced motion holds the drink still and travel clears the snack viewmodel', () => {
+  const { worlds, camera } = fixture({ reduced: true });
+  const visit = worlds.load(ID);
+  const drink = visit.area.interactions.find(item => item.label === 'Sip a cold drink');
+  const front = snackApproach(visit.scene, 'Cold Drinks', 2.1);
+  camera.position.set(front.x, front.y, front.z);
+  drink.act();
+  const model = visit.viewmodel.getObjectByName('Tasting Cold drink');
+  const held = model.getObjectByName('Held food');
+  const originalPose = held.position.toArray();
+  worlds.update(.85, camera.position);
+  assert.ok(model.visible);
+  assert.deepEqual(held.position.toArray(), originalPose);
+  worlds.load(CASTLE);
+  assert.equal(model.visible, false);
+  assert.equal(visit.viewmodel.children.length, 0);
+  assert.equal(drink.active, false);
+  drink.act();
+  assert.equal(model.visible, false);
+});
+
+test('visitors, guards and stroller stroll while vendors and exhibit actors move at their posts', t => {
+  const { worlds } = fixture();
+  t.after(worlds.unload);
+  const { scene, area } = worlds.load(ID);
+  const crowd = scene.getObjectByName('Gallery visitors and guards').children;
+  const guests = crowd.filter(actor => !actor.name.endsWith(' vendor'));
+  const start = guests.map(actor => actor.position.clone());
+  const vendors = crowd.filter(actor => actor.name.endsWith(' vendor'));
+  const arms = vendors.map(vendor => vendor.getObjectByName(vendor.name + ' right arm'));
+  const rests = arms.map(arm => arm.rotation.toArray());
+  const wheel = scene.getObjectByName('Stroller wheel');
+  const baby = scene.getObjectByName('Baby in stroller');
+  const rapunzelHead = scene.getObjectByName('Rapunzel head');
+  const idle = { x: 0, y: EYE_HEIGHT, z: 54.3 };
+  for (let i = 0; i < 90; i++) worlds.update(1 / 60, idle);
+  for (const [index, actor] of guests.entries()) {
+    assert.ok(actor.position.distanceTo(start[index]) > .20, actor.name + ' walks');
+    const { x, z } = actor.position;
+    assert.equal(walkElevation(area, { x, z }, x, z, 0, true), null, actor.name + ' collision follows its position');
+  }
+  assert.notEqual(wheel.rotation.x, 0);
+  assert.notEqual(baby.rotation.y, 0);
+  assert.notEqual(rapunzelHead.rotation.y, 0);
+  for (const { actor } of snowActors(scene)) assert.notEqual(actor.rotation.z, 0, actor.name + ' has idle motion');
+  assert.equal(vendors.length, 4);
+  for (const [i, arm] of arms.entries()) assert.notDeepEqual(arm.rotation.toArray(), rests[i]);
+
+  const guard = guests[0];
+  const guardPosition = guard.position.clone();
+  worlds.update(.08, { x: guardPosition.x, y: EYE_HEIGHT, z: guardPosition.z });
+  assert.ok(guard.position.equals(guardPosition), 'guard pauses if its path would crowd the player');
+  worlds.reset();
+  assert.equal(wheel.rotation.x, 0);
+  assert.ok(guests.every((actor, i) => actor.position.equals(start[i])));
 });

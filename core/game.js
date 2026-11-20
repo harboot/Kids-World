@@ -253,7 +253,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     progress.refresh();
     levelList.replaceChildren();
     for (const [id, area] of Object.entries(areas)) {
-      if (!isPublicArea(areas, id) || !progress.has(id)) continue;
+      if (!progress.canSelect(id)) continue;
       const button = document.createElement('button');
       button.type = 'button';
       button.textContent = area.title;

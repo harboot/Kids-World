@@ -1,23 +1,30 @@
 import { addGroup, SURFACE_GAP } from '../../core/geometry.js';
-import { addRoundSolid, addSolid, spaceTransform } from './parts.js';
+import { PLAYER_RADIUS } from '../../core/movement.js';
 
 const people = [
-  { name: 'Lobby guard', x: 3.12, z: 42.5, yaw: -.21, style: 'guard', skin: 0xc4866e, hair: 0x392826 },
-  { name: 'Royal Wing guard', x: -3.05, z: -25.9, yaw: .50, style: 'guard', skin: 0x9c624d, hair: 0x322629 },
-  { name: 'Woodland family parent with jacket', x: -19.7, z: 22.71, yaw: -2.55, color: 0x4f7f7a,
+  { name: 'Lobby guard', route: 'lobby', x: 3.12, z: 42.5, yaw: -.21, style: 'guard', skin: 0xc4866e, hair: 0x392826 },
+  { name: 'Royal Wing guard', route: 'royalGuard', x: -3.05, z: -25.9, yaw: .50, style: 'guard', skin: 0x9c624d, hair: 0x322629 },
+  { name: 'Woodland family parent with jacket', route: 'family', x: -19.7, z: 22.71, yaw: -2.55, color: 0x4f7f7a,
     skin: 0xc88767, hair: 0x483333, style: 'coat' },
-  { name: 'Woodland family parent with dress', x: -18.55, z: 21.94, yaw: -1.53, color: 0xb0647d,
+  { name: 'Woodland family parent with dress', route: 'family', x: -18.55, z: 21.94, yaw: -1.53, color: 0xb0647d,
     skin: 0xa87554, hair: 0x352b30, style: 'dress' },
-  { name: 'Woodland family child', x: -20.99, z: 21.77, yaw: -2.82, color: 0xedbb64,
+  { name: 'Woodland family child', route: 'family', x: -20.99, z: 21.77, yaw: -2.82, color: 0xedbb64,
     skin: 0xb77b5b, hair: 0x463338, style: 'child' },
-  { name: 'Royal Wing visitor with dress', x: -11.94, z: -18.35, yaw: 2.79, color: 0x7484af,
+  { name: 'Royal Wing visitor with dress', route: 'royalVisitors', x: -11.94, z: -18.35, yaw: 2.79, color: 0x7484af,
     skin: 0xe5ae90, hair: 0x9d5e3c, style: 'dress' },
-  { name: 'Royal Wing visitor with satchel', x: -9.86, z: -18.46, yaw: -2.81, color: 0xa16854,
+  { name: 'Royal Wing visitor with satchel', route: 'royalVisitors', x: -9.86, z: -18.46, yaw: -2.81, color: 0xa16854,
     skin: 0x8f5e4d, hair: 0x3a3032, style: 'coat', satchel: true },
-  { name: 'Adventure Wing stroller parent', x: 25.85, z: 17.25, yaw: -.53, color: 0x617caf,
+  { name: 'Adventure Wing stroller parent', route: 'stroller', x: 25.85, z: 17.25, yaw: -.53, color: 0x617caf,
     skin: 0xc68365, hair: 0x49323c, style: 'parent' },
 ];
-
+const strolls = {
+  lobby: { rx: .76, rz: -.45, period: 8.2 },
+  royalGuard: { rx: .57, rz: -.40, period: 8.8 },
+  family: { rx: .66, rz: .71, period: 9.6 },
+  royalVisitors: { rx: .54, rz: .45, period: 8.4 },
+  stroller: { rx: 1.09, rz: 1.36, period: 13.8 },
+};
+const vendorLooks = [[0xbc7f60, 0x433139], [0x9a654f, 0x3a2f32], [0xe0a784, 0x975745], [0xc38868, 0x392c30]];
 
 // A rig draws one opaque mesh per moving joint, with clothing and facial colors carried by its vertices.
 function assemble(THREE, source, target, material) {
@@ -53,6 +60,7 @@ function buildPerson(THREE, group, parts, palette, style, color, skinColor, hair
   const dress = style === 'dress';
   const child = style === 'child';
   const parent = style === 'parent';
+  const vendor = style === 'vendor';
   const skin = matte(skinColor);
   const hair = matte(hairColor);
   const clothing = guard ? navy : matte(color);
@@ -77,6 +85,13 @@ function buildPerson(THREE, group, parts, palette, style, color, skinColor, hair
       part(body, 'gem', gold, -.105, 1.192, .143, .049, .058, .030);
       part(body, 'box', leather, .139, .901, .124, .093, .124, .073);
     }
+    if (vendor) {
+      for (const side of [-1, 1]) {
+        part(body, 'box', linen, side * .098, 1.141, .145, .036, .255, .035);
+      }
+      part(body, 'sphere', linen, 0, .966, .143, .158, .242, .054);
+      part(body, 'box', trim, 0, .929, .202, .124, .079, .026);
+    }
     if (child) {
       for (const side of [-1, 1]) {
         part(body, 'box', trim, side * .095, 1.114, .143, .045, .215, .033);
@@ -85,13 +100,6 @@ function buildPerson(THREE, group, parts, palette, style, color, skinColor, hair
     }
   }
 
-  for (const side of [-1, 1]) {
-    const x = side * .111;
-    const pants = guard || child ? navy : trim;
-    part(body, 'sphere', boots, x, .071, .061, .094, .075, .146);
-    part(body, 'sphere', dress ? skin : pants, x, dress ? .222 : .476, 0, .076, dress ? .168 : .356, .080);
-    if (guard) part(body, 'drum', boots, x, .169, 0, .079, .173, .082);
-  }
 
   if (satchel) {
     beam(body, leather, [-.18, 1.27, .117], [.18, .823, .170], .037);
@@ -100,6 +108,17 @@ function buildPerson(THREE, group, parts, palette, style, color, skinColor, hair
     part(body, 'gem', gold, .223, .817, .220, .027, .030, .015);
   }
   assemble(THREE, body, group, fabricMesh);
+  const legs = [-1, 1].map(side => {
+    const leg = addGroup(THREE, group, group.name + (side < 0 ? ' left leg' : ' right leg'),
+      side * .111, .766, 0);
+    const shoe = new THREE.Group();
+    const pants = guard || child ? navy : trim;
+    part(shoe, 'sphere', boots, 0, -.695, .061, .094, .075, .146);
+    part(shoe, 'sphere', dress ? skin : pants, 0, dress ? -.544 : -.290, 0, .076, dress ? .168 : .356, .080);
+    if (guard) part(shoe, 'drum', boots, 0, -.597, 0, .079, .173, .082);
+    assemble(THREE, shoe, leg, fabricMesh);
+    return leg;
+  });
 
   const head = addGroup(THREE, group, group.name + ' head', 0, child ? 1.51 : 1.574, .008);
   const face = new THREE.Group();
@@ -124,6 +143,10 @@ function buildPerson(THREE, group, parts, palette, style, color, skinColor, hair
     part(face, 'drum', gold, 0, .138, .003, .219, .036, .189);
     part(face, 'sphere', boots, 0, .116, .118, .204, .032, .126);
     part(face, 'gem', gold, 0, .193, .192, .042, .056, .026);
+  } else if (vendor) {
+    part(face, 'drum', clothing, 0, .143, -.012, .222, .062, .191);
+    part(face, 'sphere', linen, .012, .194, -.025, .235, .095, .192);
+    part(face, 'sphere', linen, .017, .139, .117, .174, .027, .125);
   } else {
     part(face, 'sphere', hair, -.061, .119, .122, headWidth * .70, .090, .103).rotation.z = .26;
     if (dress) {
@@ -152,17 +175,23 @@ function buildPerson(THREE, group, parts, palette, style, color, skinColor, hair
     return { arm, elbow };
   });
 
-  return (time, still, phase) => {
+  return (time, still, phase, pace = 0, vendorNearby = false) => {
     const glance = still ? 0 : Math.sin(time * .86 + phase);
     const gesture = still ? 0 : Math.sin(time * 1.45 + phase);
+    const step = Math.sin(time * 7.1) * pace;
+    const serve = still || !vendor ? 0 : (.35 + .65 * Number(vendorNearby)) * Math.max(0, gesture) ** 2;
+    legs[0].rotation.x = step * .29;
+    legs[1].rotation.x = -step * .29;
     head.rotation.set(child ? -.057 + gesture * .050 : glance * .037, glance * (guard ? .10 : .16),
       child ? .09 + glance * .067 : glance * .037);
     for (const [index, { arm, elbow }] of arms.entries()) {
       const side = index ? 1 : -1;
-      const pointing = child && index === 1;
-      arm.rotation.set(parent ? -1.24 : pointing ? -1.44 + gesture * .12 : -.11 + gesture * .078 * side,
-        pointing ? -.19 : 0, parent ? 0 : side * (pointing ? .23 : .12));
-      elbow.rotation.x = parent ? -.13 : pointing ? -.14 + gesture * .14 : guard ? -.11 : -.21;
+      const pointing = child && index === 1 && pace === 0;
+      const serving = index === 1 ? serve : 0;
+      arm.rotation.set(parent ? -1.24 : pointing ? -1.44 + gesture * .12 :
+        -.11 + (gesture * .078 - step * .44) * side - serving * .62,
+      pointing ? -.19 : 0, parent ? 0 : side * (pointing ? .23 : .12) + serving * .45);
+      elbow.rotation.x = parent ? -.13 : pointing ? -.14 + gesture * .14 : (guard ? -.11 : -.21) - serving * .84;
     }
   };
 }
@@ -176,6 +205,7 @@ function buildStroller(THREE, group, parts, palette) {
   const skin = matte(0xd59476);
   const stroller = addGroup(THREE, group, 'Adventure stroller', 0, 0, 1.12);
   const details = new THREE.Group();
+  const wheels = [];
 
   for (const side of [-1, 1]) {
     const x = side * .329;
@@ -183,9 +213,12 @@ function buildStroller(THREE, group, parts, palette) {
     beam(details, gold, [x, .15, .423], [x, .81, -.29], .052);
     beam(details, navy, [x, .44, -.29], [x, 1.128, -.668], .054);
     for (const [z, r] of [[-.408, .196], [.437, .139]]) {
-      part(details, 'drum', boots, side * .39, r, z, r, .092, r).rotation.z = Math.PI / 2;
-      part(details, 'drum', trim, side * .441, r, z, r * .58, .025, r * .58).rotation.z = Math.PI / 2;
-      part(details, 'drum', gold, side * .467, r, z, .031, .029, .031).rotation.z = Math.PI / 2;
+      const wheel = addGroup(THREE, stroller, 'Stroller wheel', side * .39, r, z);
+      part(wheel, 'drum', boots, 0, 0, 0, r, .092, r).rotation.z = Math.PI / 2;
+      part(wheel, 'drum', trim, side * .048, 0, 0, r * .64, .023, r * .64).rotation.z = Math.PI / 2;
+      part(wheel, 'drum', gold, side * .063, 0, 0, .031, .022, .031).rotation.z = Math.PI / 2;
+      beam(wheel, gold, [side * .064, -.56 * r, 0], [side * .064, .56 * r, 0], .020);
+      wheels.push({ wheel, r });
     }
   }
   beam(details, leather, [-.348, 1.128, -.669], [.348, 1.128, -.669], .073);
@@ -232,10 +265,35 @@ function buildStroller(THREE, group, parts, palette) {
   part(bundle, 'gem', gold, 0, .089, .070, .027, .020, .016);
   assemble(THREE, bundle, baby, fabricMesh);
   batch(details, stroller);
-  return stroller;
+  return {
+    pose(time, still, distance) {
+      for (const { wheel, r } of wheels) wheel.rotation.x = distance / r;
+      baby.rotation.y = still ? 0 : .13 * Math.sin(time * 1.6);
+      baby.rotation.z = still ? 0 : .05 * Math.sin(time * 2.2);
+    },
+  };
 }
 
-export function buildGalleryPeople({ THREE, parent, parts, obstacles }) {
+function occupant(obstacles, radius, offset) {
+  const collision = {
+    height: 1.89,
+    touches(x, z) { return (x - this.x) ** 2 + (z - this.z) ** 2 < (radius + PLAYER_RADIUS) ** 2; },
+  };
+  obstacles.push(collision);
+  return {
+    radius, offset,
+    place(x, z, yaw) {
+      collision.x = x + Math.sin(yaw) * offset;
+      collision.z = z + Math.cos(yaw) * offset;
+      collision.left = collision.x - radius;
+      collision.right = collision.x + radius;
+      collision.front = collision.z - radius;
+      collision.back = collision.z + radius;
+    },
+  };
+}
+
+export function buildGalleryPeople({ THREE, parent, parts, obstacles, vendors }) {
   const { matte } = parts;
   const drape = points => new THREE.LatheGeometry(points.map(point => new THREE.Vector2(...point)), 16);
   const palette = {
@@ -247,32 +305,82 @@ export function buildGalleryPeople({ THREE, parent, parts, obstacles }) {
     trim: matte(0x626478), gold: matte(0xc99a59),
   };
   const visitors = addGroup(THREE, parent, 'Gallery visitors and guards');
-  const poses = people.map(({ name, x, z, yaw, style, color, skin, hair, satchel }) => {
+  const routes = Object.fromEntries(Object.entries(strolls).map(([key, path]) =>
+    [key, { ...path, time: 0, members: [] }]));
+  const staff = vendors.map((vendor, index) => ({
+    ...vendor, style: 'vendor', skin: vendorLooks[index][0], hair: vendorLooks[index][1],
+  }));
+  const guests = [...people, ...staff].map((site, index) => {
+    const { name, x, z, yaw, style, color, skin, hair, satchel, route } = site;
     const scale = style === 'child' ? .64 : 1;
     const group = addGroup(THREE, visitors, name, x, 0, z, yaw);
     group.scale.setScalar(scale);
-    addRoundSolid(obstacles, x, z, .33 * scale, 1.89);
+    const bodies = [occupant(obstacles, .33 * scale, 0)];
     const pose = buildPerson(THREE, group, parts, palette, style, color, skin, hair, satchel);
-    if (style === 'parent') {
-      const stroller = buildStroller(THREE, group, parts, palette);
-      const transform = spaceTransform({ position: { x, z }, rotation: yaw });
-      addSolid(obstacles, ...transform.toWorld(0, stroller.position.z), .86, 1.18, 1.89, yaw);
-    }
-    return pose;
+    const stroller = style === 'parent' ? buildStroller(THREE, group, parts, palette) : null;
+    if (stroller) bodies.push(occupant(obstacles, .65, 1.12));
+    const guest = { site, group, pose, stroller, bodies, phase: index * 1.17, pace: 0, distance: 0 };
+    if (route) routes[route].members.push(guest);
+    return guest;
   });
+
   let time = 0;
-  function poseAll(still) {
-    poses.forEach((pose, index) => pose(time, still, index * 1.17));
+  function place(guest, x, z, yaw) {
+    guest.distance += Math.hypot(x - guest.group.position.x, z - guest.group.position.z);
+    guest.group.position.set(x, 0, z);
+    guest.group.rotation.y = yaw;
+    for (const body of guest.bodies) body.place(x, z, yaw);
   }
-  poseAll(true);
+
+  function poseAll(still, player) {
+    for (const guest of guests) {
+      const { site, pose, phase, stroller, distance, pace } = guest;
+      const nearby = site.style === 'vendor' && player && player.y < 3.9 &&
+        Math.hypot(player.x - site.x, player.z - site.z) < 5;
+      pose(time, still, phase, still ? 0 : pace, nearby);
+      stroller?.pose(time, still, distance);
+    }
+  }
+
+  function reset() {
+    time = 0;
+    for (const route of Object.values(routes)) route.time = 0;
+    for (const guest of guests) {
+      const { x, z, yaw } = guest.site;
+      place(guest, x, z, yaw);
+      guest.distance = guest.pace = 0;
+    }
+    poseAll(true);
+  }
+  reset();
+
   return {
-    update(dt, reducedMotion) {
-      time += dt;
-      poseAll(reducedMotion);
+    update(dt, still, player) {
+      if (!still) {
+        time += dt;
+        for (const route of Object.values(routes)) {
+          const next = route.time + dt;
+          const phase = next * Math.PI * 2 / route.period;
+          const dx = route.rx * Math.sin(phase), dz = route.rz * (1 - Math.cos(phase));
+          const direction = Math.atan2(route.rx * Math.cos(phase), route.rz * Math.sin(phase));
+          const glide = THREE.MathUtils.smoothstep(next, 0, .75);
+          const changes = route.members.map(guest => {
+            const { x, z, yaw } = guest.site;
+            const angle = Math.atan2(Math.sin(direction - yaw), Math.cos(direction - yaw));
+            return { guest, x: x + dx, z: z + dz, yaw: yaw + angle * glide };
+          });
+          const blocked = player?.y < 3.9 && changes.some(({ guest, x, z, yaw }) => guest.bodies.some(({ radius, offset }) =>
+            Math.hypot(player.x - x - Math.sin(yaw) * offset, player.z - z - Math.cos(yaw) * offset) <
+              radius + PLAYER_RADIUS + .13));
+          if (!blocked) route.time = next;
+          for (const { guest, x, z, yaw } of changes) {
+            guest.pace = blocked ? 0 : glide;
+            if (!blocked) place(guest, x, z, yaw);
+          }
+        }
+      }
+      poseAll(still, player);
     },
-    reset() {
-      time = 0;
-      poseAll(true);
-    },
+    reset,
   };
 }

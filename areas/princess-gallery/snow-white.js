@@ -182,6 +182,7 @@ function createActor({ THREE, parts, bay, ground, profile, toWorld, obstacles, p
 
   let blend = 0;
   let time = 0;
+  let breathing = 0;
   const dozing = name === 'Sleepy';
   const studying = name === 'Doc';
   const grumpy = name === 'Grumpy';
@@ -204,13 +205,16 @@ function createActor({ THREE, parts, bay, ground, profile, toWorld, obstacles, p
   const greeting = profile.motion(.37);
   addRoundSolid(obstacles, wx, wz, princess ? .47 : .41, y + (princess ? 1.7 : 1.36));
   function reset() {
-    blend = time = 0;
+    blend = time = breathing = 0;
+    actor.rotation.z = 0;
     pose(greeting);
   }
   reset();
   return {
     reset,
     update(dt, player, still) {
+      if (!still) breathing += dt;
+      actor.rotation.z = still ? 0 : .031 * Math.sin(breathing * 1.54 + profile.x) * Math.min(1, breathing * 2.5);
       const close = (player.x - wx) ** 2 + (player.z - wz) ** 2 <= radius ** 2 &&
         Math.abs(player.y - EYE_HEIGHT - y) <= 1.65;
       const target = Number(close);

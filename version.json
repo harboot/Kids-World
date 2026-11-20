@@ -1,5 +1,5 @@
 {
-  "version": "6ac2ca0e840aacbbd0d456ccaaace2dc498eb2090420d413532baf61a28cbbb9",
+  "version": "ff8e1b6cfd5e27a900da21f4a108ddc16825c476daa55240b78cf6200d253145",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
@@ -110,16 +110,24 @@
       "revision": "7e32f4e7ca9255be755f5c002bd33ea4d3c60ad0df065503fb7ff8915cbeb77a"
     },
     {
+      "path": "./areas/princess-gallery/concessions.js",
+      "revision": "b4f7943711579bb810b65d0fd111c556d0b12470e70a375289324d6948258c92"
+    },
+    {
       "path": "./areas/princess-gallery/exhibits.js",
       "revision": "02cd01d5dc7cbfd4519d19b33589061b287e82877b7fe9a6d364038143c070b9"
     },
     {
       "path": "./areas/princess-gallery/gallery.js",
-      "revision": "0a8baedd03205569befa49439d491450ef291dd0ed06660951f878b7e3a182fb"
+      "revision": "2916917eb8d52c2f17d90fc6d828d95bd3d7f5b957920ea145dc3dcaf6d07f07"
+    },
+    {
+      "path": "./areas/princess-gallery/hanging-decor.js",
+      "revision": "9ba6d1f8d709faf1ca10f0d6a38daec433eeeb698f0ac7799471c73db5a1fa2d"
     },
     {
       "path": "./areas/princess-gallery/index.js",
-      "revision": "6d181953f25e8f4f2d8340326acdddbf5f46a37f8148c3124097039e8837346c"
+      "revision": "2fdffa4f404a8b09734aaa76ad5ae64c3b36bedca9764c1e1a7650972574a5de"
     },
     {
       "path": "./areas/princess-gallery/parts.js",
@@ -131,19 +139,27 @@
     },
     {
       "path": "./areas/princess-gallery/rapunzel-tower.js",
-      "revision": "3e5365572f168ce98baabbd1f5bd297307801c1e0587308aef7e1d18a6c35864"
+      "revision": "fd2e9e3ceafef06b02cdd67785bacdcec275790a8e47e99d8ddd795817d5b3ea"
     },
     {
       "path": "./areas/princess-gallery/rapunzel.js",
       "revision": "4d644aef65f17b6612eb9a7c3d210665ca14d552e62bc1423c4fcd40f7817a2c"
     },
     {
+      "path": "./areas/princess-gallery/snacks.js",
+      "revision": "8566d3f0abf0596deb3702713359e4648fc3af8f437c3512224d0e4be81b67df"
+    },
+    {
       "path": "./areas/princess-gallery/snow-white.js",
-      "revision": "8bc81ce3eebf30f53358a9ccc0c4f0bdfb6d07f05f70ea73b8e9b95a7a5d6088"
+      "revision": "24c1a0c7466d00306c13883ae5907b36cc563197f103ad83e63311d3876fec69"
+    },
+    {
+      "path": "./areas/princess-gallery/tasting.js",
+      "revision": "dcbf6d55230334943b1b017912b0d405e21522d18becf06169a56a1b352dbe9f"
     },
     {
       "path": "./areas/princess-gallery/visitors.js",
-      "revision": "12a00989a6a61ccd7745bd9609db435ba0910fecf2f748bace86fa798410e187"
+      "revision": "a98fe853b54d78abb2a5c2ca1885f0f9961a963c71691e4d93c7b9c2be879add"
     },
     {
       "path": "./areas/princess-gallery/walkway.js",
@@ -271,7 +287,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "89e3dadd3b2f9348f2f01501ce6a49b0a80765fef749c2d7fceb275908a51bc3"
+      "revision": "f3ca7436a80d70179390a0cff9c00c6939a0c39398ae1928ef5322af946dfbdc"
     },
     {
       "path": "./core/geometry.js",
@@ -291,7 +307,7 @@
     },
     {
       "path": "./core/level-progress.js",
-      "revision": "63f09d20a6565cfb95cdc70f431dbcaf2392036e0b957bcdaf05324cf8079511"
+      "revision": "9a82dd63e197f6f5af45ffd462fe829e94a3739349b4747feed3e5323fa0a879"
     },
     {
       "path": "./core/missions.js",
@@ -323,7 +339,7 @@
     },
     {
       "path": "./game.js",
-      "revision": "f5705e4b6eaac0daa8db8adfb2b267fccb35a2f25bab852a5e01175c22db8d41"
+      "revision": "7afd3468a67103005623e1382ce0ca0ce33c50d7734cba2af77092e4b82f7882"
     },
     {
       "path": "./index.html",

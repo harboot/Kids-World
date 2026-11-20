@@ -14,7 +14,7 @@ node scripts/generate-pwa-manifest.mjs --check
 node --test
 ```
 
-Public areas are eligible for in-game travel, the replay picker after completion, and saved-area fallback. Link-only areas open from explicit links such as `?area=secret-apartment` and are excluded from public travel and progress.
+Public areas are eligible for in-game travel, the level picker after completion, and saved-area fallback. A public registry entry can also declare `menuUnlockAfter` to appear in the level picker once the named area is complete. Link-only areas open from explicit links such as `?area=secret-apartment` and are excluded from public travel and progress.
 
 ## Area definition
 
