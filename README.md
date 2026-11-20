@@ -42,7 +42,8 @@ Players explore connected worlds, interact with objects, and complete simple mis
 ### Princess Gallery — Interactive Exhibits
 - Rapunzel — Jump onto the observation platform to make Rapunzel wave.
 - Snow White — Approach Snow White and the seven dwarfs to see them react.
-- Eight additional princess exhibits coming soon.
+- Cinderella — Approach the glass slipper on the ballroom stairs to make it float and sparkle.
+- Seven additional princess exhibits coming soon.
 
 ## Built for Expansion
 

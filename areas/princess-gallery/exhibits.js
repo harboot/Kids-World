@@ -1,3 +1,4 @@
+import { buildCinderella } from './cinderella.js';
 import { buildRapunzel } from './rapunzel.js';
 import { buildSnowWhite } from './snow-white.js';
 
@@ -51,7 +52,7 @@ export const exhibits = [
     id: 'cinderella', title: 'Cinderella', accent: 0x799fc8, wing: 'royal',
     position: { x: 4, z: -45 }, rotation: -.13,
     bounds: { width: 27, depth: 23, height: 23 }, shape: 'chamfered', entrance: 7.8,
-    approach: [3, -29], status: 'coming-soon',
+    approach: [3, -29], status: 'complete', build: buildCinderella,
   },
   {
     id: 'jasmine', title: 'Jasmine — Aladdin', accent: 0x5ea99b, wing: 'royal',

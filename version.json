@@ -1,5 +1,5 @@
 {
-  "version": "cfd57514b1cbafcf1c7c4d4a689f29868aaf1a7a78e49635e0ace26f5953949b",
+  "version": "fb5ef00b8dff0945df2715ed0cc76a547a0ca13c1ce25b92e43b97b77403d619",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
@@ -106,16 +106,20 @@
       "revision": "13558e60135308daea64df9ee041cb1c9da064b17001c74ca197df8e681a55e3"
     },
     {
+      "path": "./areas/princess-gallery/cinderella.js",
+      "revision": "7e32f4e7ca9255be755f5c002bd33ea4d3c60ad0df065503fb7ff8915cbeb77a"
+    },
+    {
       "path": "./areas/princess-gallery/exhibits.js",
-      "revision": "e4108c35dcc3a91512f69705948f8f3c9b26be50d86e380eb93ded5965528872"
+      "revision": "02cd01d5dc7cbfd4519d19b33589061b287e82877b7fe9a6d364038143c070b9"
     },
     {
       "path": "./areas/princess-gallery/gallery.js",
-      "revision": "d555d283cf0c92e491255755603329c15311d3bf92ecf51bc6b528d5b2f87b55"
+      "revision": "44d329fa90c72829ed05bd3712d71718d2f174de70cb47e6b622217cd79debcc"
     },
     {
       "path": "./areas/princess-gallery/index.js",
-      "revision": "5f3699ca5afb1d3f1f650688813dd98f2d6a6cd4ba7569cb398c946056a1f8ec"
+      "revision": "790686d25fdd7e51849b46bc6e487f18b7b4c6bb6deabe31180e29c558d822fc"
     },
     {
       "path": "./areas/princess-gallery/parts.js",

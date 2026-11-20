@@ -7,15 +7,15 @@ const spawn = { x: 0, z: 54.3 };
 const returnSite = { x: 0, z: 58.67 };
 const missionStatus = {
   missions: [],
-  hint: 'Visit Rapunzel and jump onto the observation platform to make her wave. Approach Snow White and the seven dwarfs to see them react.',
+  hint: 'Visit Rapunzel and jump onto the observation platform to make her wave. Approach Snow White and the seven dwarfs to see them react. Find Cinderella’s glass slipper on the ballroom stairs.',
 };
 
 export const princessGallery = {
   id: 'princess-gallery',
   title: 'Princess Gallery',
   heading: ['Princess', 'Gallery'],
-  description: 'Explore the Central Atrium and visit Rapunzel and Snow White in their enchanted woodlands.',
-  canvasLabel: '3D enchanted exhibition park with Rapunzel and Snow White',
+  description: 'Explore the Central Atrium, the enchanted woodlands, and Cinderella’s palace ballroom.',
+  canvasLabel: '3D enchanted exhibition park with Rapunzel, Snow White, and Cinderella',
   themeColor: '#705184',
   music: 'garden',
   width: GALLERY_WIDTH,
