@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { nearestInteraction } from '../core/interactions.js';
-import { areaURL, createWorldManager, resolveArea } from '../core/world-manager.js';
+import { areaURL, createWorldManager, historyArrival, resolveArea } from '../core/world-manager.js';
 
 class Node {
   children = [];
@@ -40,6 +40,7 @@ function areaFixture(name, events) {
   }
 
   return {
+    show: true,
     disposed,
     target,
     load({ scene, viewmodel, signal }) {
@@ -138,6 +139,7 @@ test('a failed load cleans up its resources and leaves the current world availab
     areas: {
       garden: areaFixture('garden', []),
       broken: {
+        show: true,
         load({ viewmodel, signal }) {
           signal.addEventListener('abort', () => { aborted = true; });
           viewmodel.add(Object.assign(new Node(), { geometry: { dispose() { disposed = true; } } }));
@@ -157,14 +159,39 @@ test('a failed load cleans up its resources and leaves the current world availab
 });
 
 test('area routes honor explicit and legacy links, with a saved area as a fallback', () => {
-  const areas = { garden: {}, snow: {} };
+  const areas = { garden: { show: true }, snow: { show: true }, apartment: { show: false } };
   const root = new URL('https://example.test/Kids-World/');
   assert.equal(resolveArea(root, areas, 'garden'), 'garden');
   assert.equal(resolveArea(root, areas, 'garden', 'snow'), 'snow');
   assert.equal(resolveArea(new URL('./index.html?arrive=garden', root), areas, 'garden', 'snow'), 'garden');
   assert.equal(resolveArea(new URL('./index.html?area=snow', root), areas, 'garden', 'garden'), 'snow');
   assert.equal(resolveArea(new URL('./?area=unknown', root), areas, 'garden', 'unknown'), 'garden');
+  assert.equal(resolveArea(new URL('./?area=constructor', root), areas, 'garden', 'snow'), 'snow');
+  assert.throws(() => resolveArea(root, areas, 'apartment'), /Default area "apartment" must be public/);
   const route = areaURL(new URL('./index.html?arrive=garden&source=test#scene', root), 'snow');
   assert.equal(route.href, 'https://example.test/Kids-World/index.html?source=test&area=snow#scene');
   assert.equal(resolveArea(route, areas, 'garden'), 'snow');
+});
+
+test('history routes keep their area, named arrival, query parameters and hash', () => {
+  const areas = { garden: { show: true }, snow: { show: true } };
+  const initial = new URL('https://example.test/Kids-World/?arrive=garden&source=test&tag=a&tag=b#scene');
+  const garden = areaURL(initial, 'garden');
+  const snow = areaURL(garden, 'snow');
+  const arrivalState = { area: 'garden', arrival: 'cabin' };
+  for (const [url, state, id, arrival] of [
+    [garden, arrivalState, 'garden', 'cabin'],
+    [snow, null, 'snow', undefined],
+  ]) {
+    assert.equal(resolveArea(url, areas, 'garden', 'snow'), id);
+    assert.equal(historyArrival(id, state), arrival);
+    assert.equal(url.searchParams.get('source'), 'test');
+    assert.deepEqual(url.searchParams.getAll('tag'), ['a', 'b']);
+    assert.equal(url.searchParams.has('arrive'), false);
+    assert.equal(url.hash, '#scene');
+    assert.equal(url.pathname, '/Kids-World/index.html');
+    assert.equal(areaURL(url, id).href, url.href);
+  }
+  assert.equal(historyArrival('snow', arrivalState), undefined);
+  assert.equal(historyArrival('garden', { area: 'garden', arrival: 1 }), undefined);
 });

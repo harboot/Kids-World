@@ -1,13 +1,14 @@
-export function isPublicArea(areas, id) {
-  return Object.hasOwn(areas, id) && !areas[id].hidden;
-}
+import { hasArea, isPublicArea } from './area-registry.js';
+
+export { isPublicArea } from './area-registry.js';
 
 export function resolveArea(url, areas, defaultArea, savedArea) {
   const explicit = url.searchParams.get('area');
-  if (explicit && Object.hasOwn(areas, explicit)) return explicit;
+  if (explicit && hasArea(areas, explicit)) return explicit;
   for (const id of [url.searchParams.get('arrive'), savedArea]) {
     if (id && isPublicArea(areas, id)) return id;
   }
+  if (!isPublicArea(areas, defaultArea)) throw new Error(`Default area "${defaultArea}" must be public.`);
   return defaultArea;
 }
 
@@ -46,7 +47,7 @@ export function createWorldManager(THREE, { areas, camera, touch, playerRadius, 
   }
 
   function load(id) {
-    if (!Object.hasOwn(areas, id)) throw new Error(`Unknown area: ${id}`);
+    if (!hasArea(areas, id)) throw new Error(`Unknown area: ${id}`);
     const definition = areas[id];
     const scene = new THREE.Scene();
     const viewmodel = new THREE.Group();

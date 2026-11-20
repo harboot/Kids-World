@@ -7,12 +7,12 @@ import { secretApartment } from './areas/secret-apartment/index.js';
 import { createGame } from './core/game.js';
 
 export const areas = {
-  garden: flowerGarden,
-  snow: snowBasin,
-  'wooden-house': woodenHouse,
-  'frozen-castle': frozenCastle,
-  'arendelle-village': arendelleVillage,
-  'secret-apartment': secretApartment,
+  garden: { ...flowerGarden, show: true },
+  snow: { ...snowBasin, show: true },
+  'wooden-house': { ...woodenHouse, show: true },
+  'frozen-castle': { ...frozenCastle, show: true },
+  'arendelle-village': { ...arendelleVillage, show: true },
+  'secret-apartment': { ...secretApartment, show: false },
 };
 
 export function startGame(game) {
