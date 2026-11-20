@@ -1,5 +1,5 @@
 {
-  "version": "f8eabbca565e4cf6b748967bedc8d9e92a8d788cc9d2b6f629d9e96ffae767aa",
+  "version": "73c1ba0a848c47904d37947ab8253fca6ac0507462ed7f76dd5092dbbe387feb",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
@@ -302,8 +302,12 @@
       "revision": "a9a13504ddaf82296c889a8cdb8d39d3874d5ef0cdcf7b5125d9f09fc323fbb8"
     },
     {
+      "path": "./core/frame-meter.js",
+      "revision": "a7ad256b736d808c7508d5cfd8f61c34cf826ca56c514e68fc551bcdc1788981"
+    },
+    {
       "path": "./core/game.js",
-      "revision": "f3ca7436a80d70179390a0cff9c00c6939a0c39398ae1928ef5322af946dfbdc"
+      "revision": "67e22794bb6efed431aa0953644c343de1d4b05af00a6c38c36fc9af4478db90"
     },
     {
       "path": "./core/geometry.js",
@@ -347,7 +351,7 @@
     },
     {
       "path": "./core/renderer.js",
-      "revision": "a18a822d688651161cd5d497e8e3aa832a40e1e3a19c9b9de2e7460ce75b4b66"
+      "revision": "3a43b3e726af571e0bd70b94f6e55021e8a53483a005cbd01ebc4f90d7a2f0d1"
     },
     {
       "path": "./core/world-manager.js",
@@ -359,7 +363,7 @@
     },
     {
       "path": "./index.html",
-      "revision": "95e4ada45509b0a4e19ece1a76a17324b09c72aae2624da25b69381beab579ac"
+      "revision": "8e8ba5d889385279f002ff09045898bd9207fb29c2de36afea3e490d3b4d4f38"
     },
     {
       "path": "./manifest.webmanifest",
@@ -391,7 +395,7 @@
     },
     {
       "path": "./style.css",
-      "revision": "f81475dfc6c00bbe6807c29dc0a3e709b40e9a490a8ed761c0e97898bba71523"
+      "revision": "4b2639d76d6c0e23f054b78a164fbd9365eceb8b765d7f87ff0c5a1bdc184798"
     },
     {
       "path": "./vendor/three.LICENSE",

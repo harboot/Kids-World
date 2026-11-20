@@ -2,6 +2,7 @@ import { isPublicArea, validateAreaRegistry } from './area-registry.js';
 import { createAudio } from './audio.js';
 import { createControls } from './controls.js';
 import { createDroneView, isDroneView, replaceDroneView } from './drone-view.js';
+import { createFrameMeter, isFpsView } from './frame-meter.js';
 import { createMissionHud } from './hud.js';
 import { createInteractions } from './interactions.js';
 import { createLevelProgress } from './level-progress.js';
@@ -45,6 +46,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   const heading = game.querySelector('#menu-title');
   const areaName = game.querySelector('.wordmark small');
   const missionHud = createMissionHud(game);
+  const frameMeter = createFrameMeter(game.querySelector('#fps-meter'));
   const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
   const theme = document.querySelector('meta[name="theme-color"]');
   const touchDevice = matchMedia('(pointer: coarse)').matches ||
@@ -145,9 +147,13 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   let travelTimer;
   let previousFrame = null;
 
+  function syncFrameMeter() {
+    frameMeter.setActive(Boolean(route?.fps && playerInput() && !document.hidden));
+  }
+
   function syncView(url = new URL(location.href)) {
     const visit = worlds.active;
-    route = { drone: isDroneView(url), arrival: historyArrival(visit.id, history.state) };
+    route = { drone: isDroneView(url), fps: isFpsView(url), arrival: historyArrival(visit.id, history.state) };
     if (route.drone) {
       drone ??= createDroneView(THREE, {
         game, canvas, aspect: () => camera.aspect, enabled: playing, invalidate: view.invalidate,
@@ -159,6 +165,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
       interactions.hide();
     } else drone?.stop();
     droneEntry.hidden = !drone || route.drone;
+    syncFrameMeter();
   }
 
   function changeDroneView(enabled) {
@@ -168,6 +175,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
 
   function stopPlaying() {
     window.clearTimeout(travelTimer);
+    frameMeter.setActive(false);
     audio.setPlaying(false);
     controls.clear();
     controls.releaseMouse();
@@ -291,6 +299,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     interactions.hide();
     start.blur();
     game.dataset.state = 'playing';
+    syncFrameMeter();
     missionHud.update(worlds.active.area.missionStatus);
     view.invalidate();
     audio.setPlaying(true);
@@ -306,7 +315,8 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     const url = new URL(location.href);
     const id = resolveArea(url, areas, defaultArea);
     const arrival = historyArrival(id, history.state);
-    if (worlds.active?.id === id && route && route.arrival === arrival && route.drone !== isDroneView(url)) {
+    if (worlds.active?.id === id && route && route.arrival === arrival &&
+      (route.drone !== isDroneView(url) || route.fps !== isFpsView(url))) {
       syncView(url);
       return;
     }
@@ -319,6 +329,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   }
 
   restart.addEventListener('click', resetArea);
+  document.addEventListener('visibilitychange', syncFrameMeter);
   window.addEventListener('popstate', restoreArea);
   window.addEventListener('pagehide', () => {
     stopPlaying();
@@ -333,14 +344,16 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     const elapsed = previousFrame === null ? 0 : (stamp - previousFrame) / 1000;
     const dt = Math.min(elapsed, 0.05);
     previousFrame = stamp;
-    if (playerInput()) {
+    const activePlayer = playerInput();
+    if (activePlayer) {
       player.move(dt, controls.sample(dt), worlds.active);
       worlds.update(dt, camera.position, elapsed);
       missionHud.update(worlds.active.area.missionStatus);
       interactions.update();
     }
     drone?.update();
-    view.render(worlds.active?.scene, playerInput(), drone?.camera);
+    const rendered = view.render(worlds.active?.scene, activePlayer, drone?.camera);
+    if (rendered && route?.fps) frameMeter.sample(stamp);
     requestAnimationFrame(frame);
   }
 

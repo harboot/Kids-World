@@ -65,8 +65,10 @@ test('the player renderer includes the normal and player-only layers and the dro
   assert.equal(PLAYER_ONLY_LAYER, 1);
   assert.deepEqual([view.camera.near, view.camera.far], [0.07, 115]);
   assert.equal(view.camera.isPerspectiveCamera, true);
-  view.render(scene, true);
-  view.render(scene, true, drone.camera);
+  assert.equal(view.render(null, false), false);
+  assert.equal(view.render(scene, false), true);
+  assert.equal(view.render(scene, false), false);
+  assert.equal(view.render(scene, true, drone.camera), true);
   assert.deepEqual(renders, [[floor, ceiling], [floor]]);
   assert.equal(ceiling.visible, true);
 });

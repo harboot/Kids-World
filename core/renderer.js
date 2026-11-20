@@ -68,7 +68,7 @@ export function createView(THREE, { game, canvas, fullscreen, touchDevice, conte
       renderPending = true;
     },
     render(scene, playing, activeCamera = camera) {
-      if (!scene || !(playing || renderPending)) return;
+      if (!scene || !(playing || renderPending)) return false;
       if (activeCamera === camera) renderer.render(scene, camera);
       else {
         const fog = scene.fog;
@@ -81,6 +81,7 @@ export function createView(THREE, { game, canvas, fullscreen, touchDevice, conte
         }
       }
       renderPending = false;
+      return true;
     },
   };
 }
