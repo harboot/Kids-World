@@ -1,15 +1,18 @@
 import { addGroup, SURFACE_GAP } from '../../core/geometry.js';
-import { addGallerySign, addSolid } from './parts.js';
+import { EYE_HEIGHT } from '../../core/player.js';
+import { addGallerySign, addSolid, spaceTransform } from './parts.js';
+import { createSnackModels } from './snacks.js';
+import { createTasting } from './tasting.js';
 
 const sites = [
-  { name: 'Popcorn', x: -10.8, z: 49, yaw: 1.16, color: 0xae5266, accent: 0xe7a158, build: popcorn },
-  { name: 'Cotton Candy', x: -23.7, z: -18.3, yaw: -1.46, color: 0xb3629a, accent: 0x8eacd1, build: cottonCandy },
-  { name: 'Hot Dogs', x: 8.5, z: -20, yaw: -.40, color: 0x7d5343, accent: 0xd79455, build: hotDogs },
-  { name: 'Cold Drinks', x: 26.25, z: -2.8, yaw: -1.08, color: 0x45788c, accent: 0x6eb09e, build: drinks },
+  { name: 'Popcorn', kind: 'popcorn', label: 'Eat popcorn', x: -10.8, z: 49, yaw: 1.16, color: 0xae5266, accent: 0xe7a158, build: popcorn },
+  { name: 'Cotton Candy', kind: 'cotton', label: 'Eat cotton candy', x: -23.7, z: -18.3, yaw: -1.46, color: 0xb3629a, accent: 0x8eacd1, build: cottonCandy },
+  { name: 'Hot Dogs', kind: 'hotDog', label: 'Eat a hot dog', x: 8.5, z: -20, yaw: -.40, color: 0x7d5343, accent: 0xd79455, build: hotDogs },
+  { name: 'Cold Drinks', kind: 'drink', label: 'Sip a cold drink', x: 26.25, z: -2.8, yaw: -1.08, color: 0x45788c, accent: 0x6eb09e, build: drinks },
 ];
 
-function popcorn({ THREE, part, beam, group, colors }) {
-  const { cream, gold, cherry, butter, navy, pane, print } = colors;
+function popcorn({ THREE, part, beam, group, colors, snacks }) {
+  const { gold, cherry, navy, pane } = colors;
   part(group, 'box', navy, -.56, 1.30, -.085, .96, .14, .70);
   for (const x of [-1.01, -.11]) for (const z of [-.40, .225]) {
     beam(group, gold, [x, 1.36, z], [x, 1.99, z], .058);
@@ -18,58 +21,32 @@ function popcorn({ THREE, part, beam, group, colors }) {
   for (const z of [-.400, .225]) part(group, 'box', pane, -.56, 1.67, z, .86, .61, .012);
   for (const x of [-.996, -.124]) part(group, 'box', pane, x, 1.67, -.085, .012, .61, .61);
 
-  const cup = new THREE.CylinderGeometry(.184, .121, .33, 12, 1, true).toNonIndexed();
-  const stripes = Array.from({ length: cup.getAttribute('position').count }, (_, index) => {
-    const color = Math.floor(index / 6) % 2 ? cherry.color : cream.color;
-    return [color.r, color.g, color.b];
-  }).flat();
-  cup.setAttribute('color', new THREE.Float32BufferAttribute(stripes, 3));
-  function fill(x, z, y, cols, scatter) {
-    for (let i = 0; i < cols; i++) {
-      const angle = i * 2.40;
-      const spread = scatter * Math.sqrt((i + .5) / cols);
-      part(group, 'ball', i % 3 ? butter : cream, x + Math.cos(angle) * spread, y + .058 * Math.sin(i * 3.5),
-        z + Math.sin(angle) * spread, .060, .056, .057);
-    }
-  }
   for (const [x, z] of [[.32, .23], [.83, -.05]]) {
-    // The stripes are part of the cup surface.
-    part(group, cup, print, x, 1.407, z, 1, 1, 1);
-    part(group, 'drum', cream, x, 1.577, z, .184, .020, .184);
-    fill(x, z, 1.61, 15, .147);
+    snacks.popcorn(addGroup(THREE, group, 'Popcorn cup', x, 1.407, z));
   }
-  for (const [x, z] of [[-.80, -.21], [-.60, .035], [-.33, -.095]]) fill(x, z, 1.41, 11, .145);
+  for (const [x, z] of [[-.80, -.21], [-.60, .035], [-.33, -.095]]) snacks.kernels(group, x, 1.41, z, 11, .145);
 }
 
-function cottonCandy({ part, beam, group, colors }) {
+function cottonCandy({ THREE, part, beam, group, colors, snacks }) {
   const { gold, cream, pink, lilac, ice, cherry } = colors;
   for (const x of [-.93, .88]) beam(group, gold, [x, 1.26, -.14], [x, 2.01, -.14], .045);
   beam(group, gold, [-.93, 2.00, -.14], [.88, 2.00, -.14], .049);
   for (const [i, x, z] of [[0, -.72, -.08], [1, -.34, .11], [2, .08, -.19], [3, .48, .08], [4, .81, -.15]]) {
-    const fluff = [pink, ice, lilac, pink, ice][i];
-    part(group, 'cone', cream, x, 1.48, z, .077, .38, .077).rotation.z = Math.PI;
-    for (const [dx, dy, dz, scale] of [[-.045, 0, 0, 1], [.11, .055, .034, .68], [0, .16, -.003, .78]]) {
-      part(group, 'sphere', fluff, x + dx, 1.78 + dy, z + dz, .16 * scale, .16 * scale, .129 * scale);
-    }
+    snacks.cotton(addGroup(THREE, group, 'Cotton candy cone', x, 1.48, z), [pink, ice, lilac, pink, ice][i]);
   }
   part(group, 'box', cherry, 0, 1.29, .37, .94, .082, .31);
   for (const x of [-.32, -.14, .11, .30]) part(group, 'drum', cream, x, 1.34, .37, .027, .035, .027);
 }
 
-function hotDogs({ part, beam, group, colors }) {
-  const { navy, gold, bun, cherry, butter, pickle, cream } = colors;
+function hotDogs({ THREE, part, group, colors, snacks }) {
+  const { navy, gold, cherry, butter, pickle, cream } = colors;
   part(group, 'box', navy, -.46, 1.314, -.08, 1.25, .13, .82);
   for (const x of [-1.03, .11]) part(group, 'box', cream, x, 1.413, -.08, .071, .10, .84);
   for (let i = 0; i < 9; i++) {
     part(group, 'box', gold, -.97 + i * .126, 1.384, -.08, .034, .036, .765);
   }
   for (const [x, z, yell] of [[-.82, -.18, true], [-.49, -.06, false], [-.16, -.135, true]]) {
-    part(group, 'sphere', bun, x, 1.459, z, .132, .084, .247);
-    part(group, 'sphere', cherry, x, 1.527, z, .074, .057, .239);
-    for (let i = 0; i < 7; i++) {
-      beam(group, yell ? butter : pickle, [x + (i % 2 ? .039 : -.039), 1.579, z - .16 + i * .049],
-        [x + (i % 2 ? -.039 : .039), 1.579, z - .111 + i * .049], .023);
-    }
+    snacks.hotDog(addGroup(THREE, group, 'Hot dog display', x, 1.459, z), yell ? butter : pickle);
   }
   for (const [x, material] of [[.52, cherry], [.84, butter]]) {
     part(group, 'drum', material, x, 1.450, -.10, .081, .37, .081);
@@ -77,7 +54,7 @@ function hotDogs({ part, beam, group, colors }) {
   }
 }
 
-function drinks({ part, beam, group, colors }) {
+function drinks({ THREE, part, group, colors, snacks }) {
   const { ice, navy, cherry, butter, cream, pickle } = colors;
   part(group, 'box', navy, -.42, 1.382, -.10, 1.30, .272, .84);
   part(group, 'box', ice, -.42, 1.524, -.10, 1.254, .060, .794);
@@ -90,9 +67,7 @@ function drinks({ part, beam, group, colors }) {
     part(group, 'box', cream, x, 1.729, z + .083 + SURFACE_GAP.detail, .118, .123, .028);
   }
   for (const [x, z, tint] of [[.59, .25, cherry], [.87, -.20, pickle]]) {
-    part(group, 'drum', tint, x, 1.426, z, .123, .32, .123);
-    part(group, 'drum', cream, x, 1.588, z, .138, .053, .138);
-    beam(group, cream, [x, 1.595, z], [x + .043, 1.796, z + .017], .032);
+    snacks.drink(addGroup(THREE, group, 'Drink cup', x, 1.426, z), tint);
   }
 }
 
@@ -113,7 +88,9 @@ function awningGeometry(THREE) {
   return roof;
 }
 
-export function buildConcessions({ THREE, document, parent, parts, obstacles }) {
+export function buildConcessions({
+  THREE, document, parent, parts, obstacles, viewmodel, camera, isActive, reducedMotion, playCue,
+}) {
   const { part, beam, batch, matte } = parts;
   const cloth = color => matte(color, { side: THREE.DoubleSide });
   const colors = {
@@ -129,7 +106,10 @@ export function buildConcessions({ THREE, document, parent, parts, obstacles }) 
   const rubber = matte(0x363345);
   const whiteCloth = cloth(0xf6ddbc);
   const root = addGroup(THREE, parent, 'Princess Gallery snack carts');
-  for (const { name, x, z, yaw, color, accent, build } of sites) {
+  const snacks = createSnackModels(THREE, parts, colors);
+  const tasting = createTasting({ THREE, viewmodel, camera, parts, snacks, playCue });
+  const interactions = [], vendors = [];
+  for (const { name, kind, label, x, z, yaw, color, accent, build } of sites) {
     const cart = addGroup(THREE, root, name + ' cart', x, 0, z, yaw);
     const group = new THREE.Group();
     const painted = matte(color);
@@ -176,8 +156,28 @@ export function buildConcessions({ THREE, document, parent, parts, obstacles }) 
     }
     part(group, 'box', gold, 0, 2.465, .851, 1.83, .365, .11);
     addGallerySign(THREE, document, cart, [name], 0, 2.465, .906 + SURFACE_GAP.detail, 1.74, .288);
-    build({ THREE, group, part, beam, colors });
+    build({ THREE, group, part, beam, colors, snacks });
     batch(group, cart);
     addSolid(obstacles, x, z, 2.58, 1.34, 2.51, yaw);
+
+    const { toWorld, toLocal } = spaceTransform({ position: { x, z }, rotation: yaw });
+    const [serviceX, serviceZ] = toWorld(0, 1.10);
+    interactions.push({
+      x: serviceX, z: serviceZ, radius: 2.18, anchorY: 1.39, label, requiresView: true, silent: true,
+      get active() { return isActive() && tasting.ready; },
+      reachable(player) {
+        const [lx, lz] = toLocal(player.x, player.z);
+        return Math.abs(lx) <= 1.49 && lz > .96 && lz < 3.10 && Math.abs(player.y - EYE_HEIGHT) < .68;
+      },
+      act() {
+        if (this.active && camera && this.reachable(camera.position)) {
+          const { x, z } = camera.position;
+          if (Math.hypot(x - serviceX, z - serviceZ) <= this.radius) tasting.taste(kind, reducedMotion());
+        }
+      },
+    });
+    const [staffX, staffZ] = toWorld(.18, -1.17);
+    vendors.push({ name: name + ' vendor', x: staffX, z: staffZ, yaw, color });
   }
+  return { interactions, vendors, update: tasting.update, reset: tasting.reset };
 }

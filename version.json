@@ -1,5 +1,5 @@
 {
-  "version": "f33a5c072c5fe2c94f89c938a5b188dd99c0f7afce072ce57070bdd44d8ae7cc",
+  "version": "75ddd31e7047a73cdf19d625c6c249480477a9ec7e49daa7e5433fecb91500c6",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
@@ -111,7 +111,7 @@
     },
     {
       "path": "./areas/princess-gallery/concessions.js",
-      "revision": "3249f9cb0ab8bc801112620d51d171c01898c0eae0fa0838210fbd57a1f85fd0"
+      "revision": "6419b3ed325a3b5d8aa07aa952b45fc5de2857388a919d9fe4eca03788a77e82"
     },
     {
       "path": "./areas/princess-gallery/exhibits.js",
@@ -119,7 +119,7 @@
     },
     {
       "path": "./areas/princess-gallery/gallery.js",
-      "revision": "27fc5b99664026e9ae72ab055de45c1f9ce890f53c7c9fcd6e15a56e5950c566"
+      "revision": "2916917eb8d52c2f17d90fc6d828d95bd3d7f5b957920ea145dc3dcaf6d07f07"
     },
     {
       "path": "./areas/princess-gallery/hanging-decor.js",
@@ -127,7 +127,7 @@
     },
     {
       "path": "./areas/princess-gallery/index.js",
-      "revision": "6d181953f25e8f4f2d8340326acdddbf5f46a37f8148c3124097039e8837346c"
+      "revision": "2fdffa4f404a8b09734aaa76ad5ae64c3b36bedca9764c1e1a7650972574a5de"
     },
     {
       "path": "./areas/princess-gallery/parts.js",
@@ -139,19 +139,27 @@
     },
     {
       "path": "./areas/princess-gallery/rapunzel-tower.js",
-      "revision": "3e5365572f168ce98baabbd1f5bd297307801c1e0587308aef7e1d18a6c35864"
+      "revision": "fd2e9e3ceafef06b02cdd67785bacdcec275790a8e47e99d8ddd795817d5b3ea"
     },
     {
       "path": "./areas/princess-gallery/rapunzel.js",
       "revision": "4d644aef65f17b6612eb9a7c3d210665ca14d552e62bc1423c4fcd40f7817a2c"
     },
     {
+      "path": "./areas/princess-gallery/snacks.js",
+      "revision": "d2b9d013b550e154f80fbe23bc1782589427569ef7cccd9e97eaf78b563c3d2f"
+    },
+    {
       "path": "./areas/princess-gallery/snow-white.js",
-      "revision": "8bc81ce3eebf30f53358a9ccc0c4f0bdfb6d07f05f70ea73b8e9b95a7a5d6088"
+      "revision": "24c1a0c7466d00306c13883ae5907b36cc563197f103ad83e63311d3876fec69"
+    },
+    {
+      "path": "./areas/princess-gallery/tasting.js",
+      "revision": "986f9544e4517f0031f93810a9a825627a6fe38bbd7eb2c9b4315585910dadf4"
     },
     {
       "path": "./areas/princess-gallery/visitors.js",
-      "revision": "12a00989a6a61ccd7745bd9609db435ba0910fecf2f748bace86fa798410e187"
+      "revision": "a98fe853b54d78abb2a5c2ca1885f0f9961a963c71691e4d93c7b9c2be879add"
     },
     {
       "path": "./areas/princess-gallery/walkway.js",

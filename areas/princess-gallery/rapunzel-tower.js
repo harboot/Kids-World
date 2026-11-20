@@ -301,6 +301,7 @@ function buildRapunzelCharacter(THREE, actor, { part, matte }) {
 
   let blend = 0;
   let time = 0;
+  let breathing = 0;
 
   function pose(wave) {
     right.shoulder.rotation.set(-0.34 + blend * 0.17, -blend * 0.25, 0.28 + blend * 1.88);
@@ -309,13 +310,18 @@ function buildRapunzelCharacter(THREE, actor, { part, matte }) {
 
   function reset() {
     blend = 0;
-    time = 0;
+    time = breathing = 0;
+    head.rotation.y = 0;
+    left.shoulder.rotation.x = -.70;
     pose(0);
   }
 
   return {
     reset,
     update(dt, onPlatform, still) {
+      if (!still) breathing += dt;
+      head.rotation.y = still ? 0 : .10 * Math.sin(breathing * 1.16);
+      left.shoulder.rotation.x = -.70 + (still ? 0 : .037 * Math.sin(breathing * 1.6));
       if (!onPlatform && blend === 0) return;
       const target = Number(onPlatform);
       blend = still ? target : blend + (target - blend) * (1 - Math.exp(-dt * 12));
