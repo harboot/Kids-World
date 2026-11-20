@@ -4,6 +4,8 @@ import { seededRandom } from '../../core/random.js';
 import { buildAtrium, ATRIUM_RADII } from './atrium.js';
 import { GALLERY_DEPTH, GALLERY_WIDTH, exhibitOutline, exhibits, wings } from './exhibits.js';
 import { addGallerySign, addSolid, createParts, spaceTransform } from './parts.js';
+import { buildPublicSpaces } from './public-spaces.js';
+import { buildGalleryPeople } from './visitors.js';
 import { buildWalkway, WALKWAY_HEIGHT, walkwayStairs } from './walkway.js';
 
 const halfWidth = GALLERY_WIDTH / 2;
@@ -375,5 +377,7 @@ export function buildGallery(THREE, scene, document, obstacles) {
     if (build) exhibitVisits.push(build({ THREE, document, bay, exhibit, parts, obstacles, interiorFace, outline }));
   }
   const walkway = buildWalkway({ THREE, document, parent: shell, parts, exhibits, ceiling });
-  return { exhibitVisits, ceiling, walkway };
+  buildPublicSpaces({ THREE, parent: shell, parts, colors, obstacles });
+  const people = buildGalleryPeople({ THREE, parent: shell, parts, obstacles });
+  return { exhibitVisits, ceiling, walkway, people };
 }

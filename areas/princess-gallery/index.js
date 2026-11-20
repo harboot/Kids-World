@@ -24,7 +24,7 @@ export const princessGallery = {
   load({ THREE, scene, hud, signal, reducedMotion = () => false, isPlayerGrounded = () => true }) {
     const document = hud?.ownerDocument;
     const obstacles = [];
-    const { exhibitVisits, ceiling, walkway } = buildGallery(THREE, scene, document, obstacles);
+    const { exhibitVisits, ceiling, walkway, people } = buildGallery(THREE, scene, document, obstacles);
     const setReturnGlow = buildRoyalGateway(THREE, scene, document, obstacles, {
       ...returnSite, yaw: Math.PI, title: 'Return to Frozen Castle',
     });
@@ -58,13 +58,16 @@ export const princessGallery = {
         if (released || signal?.aborted || !player) return;
         const grounded = isPlayerGrounded();
         const still = reducedMotion();
+        people.update(dt, still);
         for (const visit of exhibitVisits) visit.update?.(dt, player, grounded, still);
       },
       reset() {
+        people.reset();
         for (const visit of exhibitVisits) visit.reset?.();
       },
       unload() {
         released = true;
+        people.reset();
         for (const visit of exhibitVisits) visit.reset?.();
       },
     };

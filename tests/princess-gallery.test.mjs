@@ -698,3 +698,69 @@ test('the overhead lookout into Cinderella can still be inspected by the drone a
   const selected = pick(scene, drone.camera, viewmodel, (point.x + 1) * 510, (1 - point.y) * 300, rect);
   assert.ok(selected && Math.abs(selected.y) < .04);
 });
+
+test('the three wings have their own public landmarks with room to walk around them', t => {
+  const { worlds } = fixture();
+  t.after(worlds.unload);
+  const { area, scene } = worlds.load(ID);
+  const publicSpaces = scene.getObjectByName('Gallery public spaces');
+  assert.ok(publicSpaces);
+  for (const [name, count] of [
+    ['Woodland flower garden 1', 1], ['Woodland flower garden 2', 1], ['Woodland bench', 3],
+    ['Royal dancer statue', 1], ['Royal urn planter', 4], ['Adventure rock and palm island', 2],
+  ]) {
+    const landmarks = publicSpaces.children.filter(child => child.name === name);
+    assert.equal(landmarks.length, count, name);
+    for (const landmark of landmarks) {
+      assert.ok(landmark.children.some(mesh => mesh.isMesh));
+      const { x, z } = landmark.position;
+      assert.equal(walkElevation(area, { x, z }, x, z, 0, true), null, name + ' footprint has collision');
+    }
+  }
+  const compass = publicSpaces.getObjectByName('Adventure compass mosaic');
+  assert.ok(compass?.children.some(child => child.geometry?.hasAttribute('color')));
+  const { x, z } = compass.position;
+  assertWalkable(area, [x - 1.6, z], [x + 1.6, z], 'compass mosaic');
+});
+
+test('gallery guests include guards, a child with their parents, and a parent with an occupied stroller', t => {
+  const { worlds, camera } = fixture();
+  t.after(worlds.unload);
+  const { area, scene } = worlds.load(ID);
+  const guests = scene.getObjectByName('Gallery visitors and guards');
+  assert.ok(guests);
+  for (const name of ['Lobby guard', 'Royal Wing guard', 'Royal Wing visitor with satchel']) {
+    const figure = guests.getObjectByName(name);
+    assert.ok(figure?.children.some(mesh => mesh.isMesh), name);
+  }
+  const child = guests.getObjectByName('Woodland family child');
+  assert.ok(child.scale.y < .75);
+  for (const name of ['Woodland family parent with jacket', 'Woodland family parent with dress']) {
+    const parent = guests.getObjectByName(name);
+    assert.ok(parent.position.distanceTo(child.position) < 3 && parent.scale.y > child.scale.y);
+  }
+  const strollerParent = guests.getObjectByName('Adventure Wing stroller parent');
+  const stroller = strollerParent.getObjectByName('Adventure stroller');
+  const baby = stroller.getObjectByName('Baby in stroller');
+  assert.ok(baby.children.some(mesh => mesh.isMesh));
+  const { x, z } = stroller.getWorldPosition(new THREE.Vector3());
+  assert.equal(walkElevation(area, { x, z }, x, z, 0, true), null);
+  assert.deepEqual(area.interactions.map(item => item.destination), [CASTLE]);
+
+  const head = child.getObjectByName('Woodland family child head');
+  const rest = head.rotation.toArray();
+  worlds.update(.4, camera.position);
+  assert.notDeepEqual(head.rotation.toArray(), rest);
+  worlds.reset();
+  assert.deepEqual(head.rotation.toArray(), rest);
+});
+
+test('reduced motion keeps gallery visitors in a steady pose', t => {
+  const { worlds, camera } = fixture({ reduced: true });
+  t.after(worlds.unload);
+  const { scene } = worlds.load(ID);
+  const arm = scene.getObjectByName('Woodland family child right arm');
+  const rest = arm.rotation.toArray();
+  worlds.update(1, camera.position);
+  assert.deepEqual(arm.rotation.toArray(), rest);
+});
