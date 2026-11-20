@@ -11,12 +11,17 @@ import { areaURL, createWorldManager, isPublicArea, resolveArea } from '../core/
 
 const ID = 'secret-apartment';
 
-test('the hidden area can only be resolved by an explicit area URL and never enters public progress', () => {
+test('the link-only area opens by explicit URL and never enters public progress', () => {
   const root = new URL('https://example.test/Kids-World/');
   assert.equal(isPublicArea(areas, ID), false);
   assert.equal(resolveArea(root, areas, 'garden', ID), 'garden');
+  assert.equal(resolveArea(new URL('?arrive=secret-apartment', root), areas, 'garden'), 'garden');
   assert.equal(resolveArea(new URL('?arrive=secret-apartment', root), areas, 'garden', 'snow'), 'snow');
-  assert.equal(resolveArea(new URL('?area=secret-apartment&arrive=snow', root), areas, 'garden', 'snow'), ID);
+  const explicit = resolveArea(new URL('?area=secret-apartment&arrive=snow', root), areas, 'garden', 'snow');
+  assert.equal(explicit, ID);
+  const worlds = createWorldManager(THREE, { areas, camera: new THREE.PerspectiveCamera(), services: {} });
+  assert.equal(worlds.load(explicit).definition.title, 'Secret Apartment — 17E');
+  worlds.unload();
   assert.equal(resolveArea(areaURL(root, ID), areas, 'garden'), ID);
   assert.equal(resolveArea(new URL('?area=snow', root), areas, 'garden', ID), 'snow');
 
@@ -27,6 +32,7 @@ test('the hidden area can only be resolved by an explicit area URL and never ent
   }));
   progress.complete(ID);
   assert.equal(progress.has(ID), false);
+  assert.deepEqual(JSON.parse(saved), [ID, 'garden']);
   progress.complete('snow');
   assert.deepEqual(JSON.parse(saved), ['garden', 'snow']);
   assert.equal(progress.has('garden'), true);

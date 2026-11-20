@@ -1,3 +1,4 @@
+import { isPublicArea, validateAreaRegistry } from './area-registry.js';
 import { createAudio } from './audio.js';
 import { createControls } from './controls.js';
 import { createInteractions } from './interactions.js';
@@ -5,7 +6,7 @@ import { createLevelProgress } from './level-progress.js';
 import { PLAYER_RADIUS } from './movement.js';
 import { createPlayer } from './player.js';
 import { createView } from './renderer.js';
-import { areaURL, createWorldManager, historyArrival, isPublicArea, resolveArea } from './world-manager.js';
+import { areaURL, createWorldManager, historyArrival, resolveArea } from './world-manager.js';
 
 const areaKey = 'kids-world-last-area';
 
@@ -17,7 +18,8 @@ function savedArea() {
   }
 }
 
-function rememberArea(id) {
+function rememberArea(areas, id) {
+  if (!isPublicArea(areas, id)) return;
   try {
     localStorage.setItem(areaKey, id);
   } catch {
@@ -26,6 +28,8 @@ function rememberArea(id) {
 }
 
 export async function createGame({ game, loadThree, areas, defaultArea }) {
+  validateAreaRegistry(areas);
+
   const canvas = game.querySelector('#view');
   const start = game.querySelector('#start');
   const startLabel = game.querySelector('#start-label');
@@ -193,7 +197,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
         const state = arrival ? { area: id, arrival } : null;
         history[historyMode](state, '', areaURL(new URL(location.href), id));
       }
-      if (isPublicArea(areas, id)) rememberArea(id);
+      rememberArea(areas, id);
       menu(false);
     } catch (error) {
       console.error(error);
@@ -215,7 +219,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     progress.refresh();
     levelList.replaceChildren();
     for (const [id, area] of Object.entries(areas)) {
-      if (!progress.has(id)) continue;
+      if (!isPublicArea(areas, id) || !progress.has(id)) continue;
       const button = document.createElement('button');
       button.type = 'button';
       button.textContent = area.title;
@@ -264,7 +268,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
       enterArea(id, null, arrival);
       return;
     }
-    if (isPublicArea(areas, id)) rememberArea(id);
+    rememberArea(areas, id);
     resetArea();
   }
 

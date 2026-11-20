@@ -59,8 +59,17 @@ To contribute a world:
 1. Create a new area module in `areas/`.
 2. Build its environment, objects, interactions, and missions.
 3. Register the area in `game.js`.
-4. Connect it to another world through an interactive doorway.
+4. Connect public areas to another world through an interactive doorway.
 5. Add tests and update the PWA release manifest.
+
+The registry in `game.js` declares each area's visibility.
+
+```js
+show: true  // Public area
+show: false // Link-only area
+```
+
+Link-only areas open via a direct URL such as `?area=secret-apartment`. The level picker, normal travel, completion tracking, and the saved last area use public areas.
 
 The shared engine handles rendering, player controls, world transitions, and resource cleanup.
 

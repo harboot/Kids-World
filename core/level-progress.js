@@ -1,4 +1,4 @@
-import { isPublicArea } from './world-manager.js';
+import { isPublicArea } from './area-registry.js';
 
 const progressKey = 'kids-world-completed-levels';
 
@@ -10,7 +10,7 @@ export function createLevelProgress(areas, getStorage = () => globalThis.localSt
       const saved = JSON.parse(getStorage().getItem(progressKey));
       if (!Array.isArray(saved)) return;
       for (const id of saved) {
-        if (typeof id === 'string' && isPublicArea(areas, id)) completed.add(id);
+        if (isPublicArea(areas, id)) completed.add(id);
       }
     } catch {
       // The current game still tracks completions if storage is unavailable.

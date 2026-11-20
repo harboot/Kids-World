@@ -1,5 +1,5 @@
 {
-  "version": "43c79e95067eb63d1aa1a91493eb8ce9cb0e59d08810e5147577e3d1041007a4",
+  "version": "a8ca68079ced198a574a7c1c04e5b433e8ee342f3c20e30309ec89efd8b4a14c",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
@@ -139,7 +139,7 @@
     },
     {
       "path": "./areas/secret-apartment/index.js",
-      "revision": "d8dbad36acfa3fbc49077075150999d356cbb95b3c4deb52da5fa18d46dcaf88"
+      "revision": "1ae1d4d1f838467992a0ef22aeb43beeb1b5074ad0c2630f5e58b3bdcc9ad059"
     },
     {
       "path": "./areas/secret-apartment/missions.js",
@@ -194,6 +194,10 @@
       "revision": "b27df2db398c99e96cdd44cb6e307c720bda68b5d734da43d0dc53507440f0d7"
     },
     {
+      "path": "./core/area-registry.js",
+      "revision": "2cb6722990b7e6c8606fa34958ef7eae37e357250a1b173eb36e817fe32622b3"
+    },
+    {
       "path": "./core/audio.js",
       "revision": "0902e77feb10f54d176fd34b927af82c41f9d3a679d8664bcc33ba6f58322673"
     },
@@ -203,7 +207,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "c708a7b8056abb221d7a7027d805efcc710b47645c6cd66e01501c39fe4ec448"
+      "revision": "4c8bbe9f67479996729176b2a07c01c96dabffc4fb3bff75eb559649f8b258d9"
     },
     {
       "path": "./core/geometry.js",
@@ -219,7 +223,7 @@
     },
     {
       "path": "./core/level-progress.js",
-      "revision": "4a045f7634c85c4272b384ebdcfee1d29faafab4f46e6cb1c44b4504a89b50e1"
+      "revision": "63f09d20a6565cfb95cdc70f431dbcaf2392036e0b957bcdaf05324cf8079511"
     },
     {
       "path": "./core/movement.js",
@@ -235,11 +239,11 @@
     },
     {
       "path": "./core/world-manager.js",
-      "revision": "33b73ab4c3f2dee46334988086a89f77579a2c2cc89bbaa18fdf4bdb37c19e6e"
+      "revision": "cdf86d0abf3cff90d2bd833e7164dcb5aea14952e8f064cf96d10f4c0ba21b51"
     },
     {
       "path": "./game.js",
-      "revision": "68e9d62382aa9750ce1ca6e2b3d5e3b7f74fa40560cde5780e86053e76a72187"
+      "revision": "25ebda1890c4df4c1f313557fb1432c4eb90da7ff1aa3809538e5cc5a0cb19de"
     },
     {
       "path": "./index.html",

@@ -9,7 +9,10 @@ import { createLevelProgress } from '../core/level-progress.js';
 import { createWorldManager } from '../core/world-manager.js';
 import { walkElevation } from '../core/movement.js';
 
-const areas = { garden: flowerGarden, snow: { load: () => ({ obstacles: [] }) } };
+const areas = {
+  garden: { ...flowerGarden, show: true },
+  snow: { show: true, load: () => ({ obstacles: [] }) },
+};
 
 function storageFixture() {
   const entries = new Map();
