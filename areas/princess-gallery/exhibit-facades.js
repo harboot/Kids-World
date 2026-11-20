@@ -66,7 +66,7 @@ export function buildExhibitFacade({ THREE, document, bay, parts, exhibit, outli
   const random = seededRandom(woodland ? 736 : 198);
   const greens = [0x486b60, 0x6c8a68, 0x7b9367].map(color => matte(color));
   const ivyStem = matte(0x5c6250);
-  const banner = matte(0x526b9b);
+  const banner = matte(id === 'aurora' ? 0x985782 : 0x526b9b);
   const bannerShape = new THREE.Shape([
     new THREE.Vector2(-1, 1), new THREE.Vector2(-1, -.58), new THREE.Vector2(0, -1),
     new THREE.Vector2(1, -.58), new THREE.Vector2(1, 1),
