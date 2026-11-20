@@ -1,4 +1,5 @@
-import { addMesh, paintCanvasTexture } from '../../core/geometry.js';
+import { addMesh, paintCanvasTexture, rectangleBounds } from '../../core/geometry.js';
+import { PLAYER_RADIUS } from '../../core/movement.js';
 
 export function createParts(THREE) {
   const shapes = {
@@ -78,4 +79,42 @@ export function addGallerySign(THREE, document, parent, lines, x, y, z, width, h
   sign.position.set(x, y, z);
   parent.add(sign);
   return sign;
+}
+
+// Collision for local rectangles, including thin wall segments at any angle.
+export function spaceTransform({ position, rotation }) {
+  const cos = Math.cos(rotation);
+  const sin = Math.sin(rotation);
+  return {
+    toWorld: (x, z) => [position.x + cos * x + sin * z, position.z - sin * x + cos * z],
+    toLocal: (x, z) => [cos * (x - position.x) - sin * (z - position.z),
+      sin * (x - position.x) + cos * (z - position.z)],
+  };
+}
+
+export function addSolid(obstacles, x, z, width, depth, height, yaw = 0) {
+  const cos = Math.cos(yaw);
+  const sin = Math.sin(yaw);
+  const solid = {
+    ...rectangleBounds(x, z, Math.abs(cos) * width + Math.abs(sin) * depth,
+      Math.abs(sin) * width + Math.abs(cos) * depth),
+    height,
+  };
+  if (yaw) {
+    solid.touches = (px, pz) => {
+      const wx = px - x;
+      const wz = pz - z;
+      const dx = Math.max(0, Math.abs(cos * wx - sin * wz) - width / 2);
+      const dz = Math.max(0, Math.abs(sin * wx + cos * wz) - depth / 2);
+      return dx * dx + dz * dz < PLAYER_RADIUS * PLAYER_RADIUS;
+    };
+  }
+  obstacles.push(solid);
+}
+
+export function addRoundSolid(obstacles, x, z, radius, height) {
+  obstacles.push({
+    ...rectangleBounds(x, z, radius * 2, radius * 2), height,
+    touches: (px, pz) => (px - x) ** 2 + (pz - z) ** 2 < (radius + PLAYER_RADIUS) ** 2,
+  });
 }

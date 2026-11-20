@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import * as THREE from '../vendor/three.module.min.js';
 import { areas } from '../game.js';
-import { exhibits } from '../areas/princess-gallery/exhibits.js';
+import { exhibits, exhibitOutline } from '../areas/princess-gallery/exhibits.js';
+import { spaceTransform } from '../areas/princess-gallery/parts.js';
 import { observationPlatform } from '../areas/princess-gallery/rapunzel.js';
 import { createCoordinatePicker } from '../core/coordinate-picker.js';
 import { createDroneCamera, isDroneView } from '../core/drone-view.js';
@@ -16,13 +17,13 @@ import { areaURL, createWorldManager, historyArrival, resolveArea } from '../cor
 const ID = 'princess-gallery';
 const CASTLE = 'frozen-castle';
 const hall = areas[ID];
-const rapunzel = exhibits[0];
+const rapunzel = exhibits.find(entry => entry.id === 'rapunzel');
+const snowWhite = exhibits.find(entry => entry.id === 'snow-white');
 const storageKey = 'kids-world-completed-levels';
 
 function worldPoint(x, z) {
-  const cos = Math.cos(rapunzel.rotation);
-  const sin = Math.sin(rapunzel.rotation);
-  return { x: rapunzel.position.x + cos * x + sin * z, z: rapunzel.position.z - sin * x + cos * z };
+  const [worldX, worldZ] = spaceTransform(rapunzel).toWorld(x, z);
+  return { x: worldX, z: worldZ };
 }
 
 function fixture({ saved = [], reduced = false } = {}) {
@@ -68,7 +69,8 @@ test('public gallery opens by normal and drone URLs with no castle progress', t 
     assert.equal(visit.id, ID);
     assertSafeSpawn(hall.spawn, visit, game);
     assert.deepEqual(visit.area.missionStatus.missions, []);
-    assert.match(visit.area.missionStatus.hint, /jump onto the platform/);
+    assert.match(visit.area.missionStatus.hint, /Visit Rapunzel and jump onto the observation platform/);
+    assert.match(visit.area.missionStatus.hint, /Approach Snow White and the seven dwarfs/);
     assert.equal(game.progress.has(CASTLE), false);
     assert.equal(game.progress.has(ID), false);
   }
@@ -142,29 +144,111 @@ test('saved completion, existing castle gates and named arrivals survive reset a
   assert.equal(game.worlds.load(CASTLE).area.interactions.find(item => item.destination === ID).unlocked, true);
 });
 
-test('ten permanent bays have distinct IDs, five per side, and only Rapunzel is built', t => {
+function containsPoint(polygon, [x, z]) {
+  let inside = false;
+  for (const [index, [ax, az]] of polygon.entries()) {
+    const [bx, bz] = polygon[(index + 1) % polygon.length];
+    if ((az > z) !== (bz > z) && x < ax + (bx - ax) * (z - az) / (bz - az)) inside = !inside;
+  }
+  return inside;
+}
+
+function edgesCross(a, b, c, d) {
+  const side = ([x, z], [u, v], [s, t]) => (u - x) * (t - z) - (v - z) * (s - x);
+  return side(a, b, c) * side(a, b, d) < 0 && side(c, d, a) * side(c, d, b) < 0;
+}
+
+function assertWalkable(area, from, to, label) {
+  const [ax, az] = from, [bx, bz] = to;
+  const steps = Math.ceil(Math.hypot(bx - ax, bz - az) / .18);
+  let prev = { x: ax, z: az };
+  let feet = area.getGroundHeight(ax, az);
+  for (let i = 1; i <= steps; i++) {
+    const x = ax + (bx - ax) * i / steps;
+    const z = az + (bz - az) * i / steps;
+    feet = walkElevation(area, prev, x, z, feet, true);
+    assert.notEqual(feet, null, label + ' should be walkable at ' + [x, z].map(n => n.toFixed(2)));
+    prev = { x, z };
+  }
+}
+
+function walkableCells(area, start) {
+  const queue = [{ x: Math.round(start.x), z: Math.round(start.z), feet: 0 }];
+  const visited = new Set([queue[0].x + ':' + queue[0].z]);
+  for (let i = 0; i < queue.length; i++) {
+    const from = queue[i];
+    for (const [dx, dz] of [[1, 0], [0, 1], [-1, 0], [0, -1]]) {
+      const x = from.x + dx, z = from.z + dz, key = x + ':' + z;
+      if (Math.abs(x) > hall.width / 2 || Math.abs(z) > hall.depth / 2 || visited.has(key)) continue;
+      const feet = walkElevation(area, from, x, z, from.feet, true);
+      if (feet === null || walkElevation(area, from, x - dx / 2, z - dz / 2, from.feet, true) === null) continue;
+      visited.add(key);
+      queue.push({ x, z, feet });
+    }
+  }
+  return visited;
+}
+
+test('ten distinct and nonoverlapping footprints surround the Central Atrium', t => {
   const { worlds } = fixture();
   t.after(worlds.unload);
-  const { area, scene } = worlds.load(ID);
-  assert.deepEqual(exhibits.map(entry => entry.id), [
+  const { scene } = worlds.load(ID);
+  assert.deepEqual([hall.width, hall.depth], [140, 120]);
+  assert.ok(scene.getObjectByName('Central Atrium'));
+  assert.ok(scene.getObjectByName('Marble promenade, wing paths and atrium inlay'));
+  assert.equal(exhibits.length, 10);
+  assert.deepEqual(new Set(exhibits.map(entry => entry.id)), new Set([
     'rapunzel', 'snow-white', 'cinderella', 'aurora', 'ariel', 'belle', 'jasmine', 'mulan', 'tiana', 'moana',
-  ]);
-  assert.equal(new Set(exhibits.map(entry => entry.id)).size, 10);
-  assert.deepEqual(exhibits.filter(entry => entry.status === 'complete').map(entry => entry.id), ['rapunzel']);
-  assert.equal(exhibits.filter(entry => entry.status === 'coming-soon' && !entry.build).length, 9);
-  assert.equal(exhibits.filter(entry => entry.position.x < 0).length, 5);
-  assert.equal(exhibits.filter(entry => entry.position.x > 0).length, 5);
-  assert.equal(rapunzel.position.z, Math.max(...exhibits.map(entry => entry.position.z)));
-  for (const { id, position, rotation, bounds } of exhibits) {
-    assert.ok(bounds.height > 17.8);
-    const bay = scene.getObjectByName(id + ' exhibit');
-    assert.ok(bay);
-    const doorZ = position.z;
-    const facadeX = position.x + Math.sin(rotation) * bounds.depth / 2;
-    // The middle of every facade is open, the flanks and the next bay's shared wall are solid.
-    assert.equal(walkElevation(area, { x: facadeX, z: doorZ }, facadeX, doorZ, 0, true), 0);
-    assert.equal(walkElevation(area, { x: facadeX, z: doorZ + 5 }, facadeX, doorZ + 5, 0, true), null);
-    assert.equal(walkElevation(area, { x: position.x, z: doorZ - 10 }, position.x, doorZ - 10, 0, true), null);
+  ]));
+  assert.deepEqual(exhibits.filter(entry => entry.status === 'complete' && entry.build).map(entry => entry.id),
+    ['rapunzel', 'snow-white']);
+  assert.equal(exhibits.filter(entry => entry.status === 'coming-soon' && !entry.build).length, 8);
+  assert.ok(new Set(exhibits.map(entry => entry.shape)).size >= 5);
+  assert.ok(new Set(exhibits.map(entry => entry.rotation)).size >= 8);
+  for (const key of ['width', 'depth', 'height']) {
+    assert.ok(exhibits.every(entry => Number.isFinite(entry.bounds[key]) && entry.bounds[key] >= 17));
+    assert.ok(new Set(exhibits.map(entry => entry.bounds[key])).size >= 4);
+  }
+  for (const wing of ['Woodland Wing', 'Royal Wing', 'Adventure Wing']) {
+    assert.ok(scene.getObjectByName(wing + ' entrance'));
+  }
+  const outlines = exhibits.map(({ id, ...entry }) => {
+    assert.ok(scene.getObjectByName(id + ' exhibit'));
+    const polygon = exhibitOutline(entry).map(point => spaceTransform(entry).toWorld(...point));
+    assert.ok(polygon.every(([x, z]) => Math.abs(x) < hall.width / 2 && Math.abs(z) < hall.depth / 2));
+    assert.equal(containsPoint(polygon, [0, 0]), false, id + ' should leave the atrium open');
+    return polygon;
+  });
+  for (const [i, a] of outlines.entries()) {
+    for (const [offset, b] of outlines.slice(i + 1).entries()) {
+      const intersect = a.some((p, n) => b.some((q, m) => edgesCross(p, a[(n + 1) % a.length], q, b[(m + 1) % b.length])));
+      assert.ok(!intersect && !a.some(p => containsPoint(b, p)) && !b.some(p => containsPoint(a, p)),
+        exhibits[i].id + ' overlaps ' + exhibits[i + 1 + offset].id);
+    }
+  }
+});
+
+test('visitors can walk from the lobby through the atrium and into all ten entrances', t => {
+  const { worlds } = fixture();
+  t.after(worlds.unload);
+  const { area } = worlds.load(ID);
+  const cells = walkableCells(area, hall.spawn);
+  assert.ok(cells.has('0:12') && cells.has('0:-12'), 'both sides of the fountain are reachable');
+  for (const exhibit of exhibits) {
+    const { toWorld } = spaceTransform(exhibit);
+    const front = exhibit.bounds.depth / 2;
+    assert.ok(cells.has(exhibit.approach.join(':')), 'lobby to ' + exhibit.id);
+    assertWalkable(area, exhibit.approach, toWorld(0, front + 1.25), exhibit.id + ' branch');
+    assertWalkable(area, toWorld(0, front + 1.25), toWorld(0, front - 1.75), exhibit.id + ' entrance');
+    const outline = exhibitOutline(exhibit);
+    for (const [index, [ax, az]] of outline.slice(1).entries()) {
+      const [bx, bz] = outline[(index + 2) % outline.length];
+      const [x, z] = toWorld((ax + bx) / 2, (az + bz) / 2);
+      assert.equal(walkElevation(area, { x, z }, x, z, 1.34, false), null, exhibit.id + ' partition');
+    }
+  }
+  for (const outside of ['0:-60', '0:60', '-70:0', '70:0', '-68:58', '68:-58']) {
+    assert.equal(cells.has(outside), false, 'perimeter holds near ' + outside);
   }
   const tower = worldPoint(0, -5.15);
   const flank = worldPoint(3.06, -5.15);
@@ -189,11 +273,22 @@ test('the drone camera sees the gallery floor and picks surfaces below the ceili
   assert.ok(roof > 0);
   const pick = createCoordinatePicker(THREE);
   const rect = { left: 0, top: 0, width: 1020, height: 600 };
-  for (const { position } of exhibits) {
-    const point = new THREE.Vector3(position.x, 0, position.z + 4).project(drone.camera);
+  for (const exhibit of exhibits) {
+    const { toWorld } = spaceTransform(exhibit);
+    const [x, z] = toWorld(0, exhibit.bounds.depth / 2 - 2.25);
+    const point = new THREE.Vector3(x, 0, z).project(drone.camera);
     assert.ok(Math.abs(point.x) < 1 && Math.abs(point.y) < 1);
     const selected = pick(scene, drone.camera, viewmodel, (point.x + 1) * 510, (1 - point.y) * 300, rect);
-    assert.ok(selected && selected.y < 1, 'drone should select the floor inside ' + position.z);
+    assert.ok(selected && selected.y < 1, 'drone should select the floor inside ' + exhibit.id);
+    assert.ok(Math.abs(selected.x - x) < .001 && Math.abs(selected.z - z) < .001);
+  }
+  assert.ok(drone.resize(.52));
+  for (const exhibit of exhibits) {
+    for (const vertex of exhibitOutline(exhibit)) {
+      const [x, z] = spaceTransform(exhibit).toWorld(...vertex);
+      const point = new THREE.Vector3(x, 0, z).project(drone.camera);
+      assert.ok(Math.abs(point.x) < 1 && Math.abs(point.y) < 1, 'portrait view fits ' + exhibit.id);
+    }
   }
 });
 
@@ -284,4 +379,124 @@ test('reduced motion, airborne exclusion, reset and unload clean up the greeting
   assert.equal(shoulder.rotation.z, rest);
   visit.area.update(1, camera.position);
   assert.equal(shoulder.rotation.z, rest);
+});
+
+const snowCharacters = ['Snow White', 'Doc', 'Grumpy', 'Happy', 'Sleepy', 'Bashful', 'Sneezy', 'Dopey'];
+
+function snowActors(scene) {
+  return snowCharacters.map(name => {
+    const actor = scene.getObjectByName(name);
+    assert.ok(actor?.isGroup, name);
+    const joints = [];
+    actor.traverse(object => {
+      if (object.isGroup && object !== actor) joints.push(object);
+    });
+    return {
+      actor,
+      center: () => actor.getWorldPosition(new THREE.Vector3()),
+      pose: () => joints.flatMap(joint => [...joint.rotation.toArray().slice(0, 3), joint.position.y]),
+    };
+  });
+}
+
+function approachActor(entry, area, distance = 1.82) {
+  const point = entry.center();
+  const forward = entry.actor.getWorldDirection(new THREE.Vector3());
+  point.addScaledVector(forward, distance);
+  point.y = EYE_HEIGHT + area.getGroundHeight(point.x, point.z);
+  return point;
+}
+
+test('Snow White has eight distinct actors visitors can walk up to, with one shared type of reaction', t => {
+  const { worlds } = fixture();
+  t.after(worlds.unload);
+  const { scene, area } = worlds.load(ID);
+  const actors = snowActors(scene);
+  const cells = walkableCells(area, hall.spawn);
+  const appearances = actors.map(({ actor }) => {
+    const colors = new Set();
+    actor.traverse(object => { if (object.isMesh) colors.add(object.material.color.getHex()); });
+    return [...colors].sort().join(':');
+  });
+  assert.equal(new Set(appearances).size, 8);
+  assert.equal(scene.getObjectByName('snow-white exhibit').children.filter(child => snowCharacters.includes(child.name)).length, 8);
+  for (const entry of actors) {
+    const point = approachActor(entry, area);
+    assert.ok(cells.has(Math.round(point.x) + ':' + Math.round(point.z)), 'walk to ' + entry.actor.name);
+    assert.ok(!area.obstacles.some(o => overlaps(o, point.x, point.z)), entry.actor.name + ' approach is clear');
+  }
+  assert.deepEqual(area.interactions.map(item => item.destination), [CASTLE]);
+  assert.deepEqual(area.missionStatus.missions, []);
+  const [x, z] = spaceTransform(snowWhite).toWorld(-1, -7.33);
+  assert.equal(walkElevation(area, { x, z }, x, z, area.getGroundHeight(x, z), true), null, 'cottage has collision');
+});
+
+test('each actor animates independently, settles to idle on departure and responds again', t => {
+  const { worlds } = fixture();
+  t.after(worlds.unload);
+  const { scene, area } = worlds.load(ID);
+  const actors = snowActors(scene);
+  const idle = actors.map(entry => entry.pose());
+  const far = { x: hall.spawn.x, y: EYE_HEIGHT, z: hall.spawn.z };
+  const advance = (frames, point) => {
+    for (let frame = 0; frame < frames; frame++) worlds.update(1 / 60, point);
+  };
+
+  for (const [index, entry] of actors.entries()) {
+    const name = entry.actor.name;
+    const near = approachActor(entry, area, .87);
+    advance(1, near);
+    const start = entry.pose();
+    advance(24, near);
+    const greeting = entry.pose();
+    assert.notDeepEqual(start, idle[index], name + ' starts reacting');
+    assert.notDeepEqual(greeting, start, name + ' blends in and moves');
+    advance(60, near);
+    assert.notDeepEqual(entry.pose(), greeting, name + ' continues while nearby');
+    assert.ok(actors.every((other, i) => i === index || other.pose().every((value, j) => value === idle[i][j])),
+      name + ' does not trigger the others');
+
+    advance(1, far);
+    assert.notDeepEqual(entry.pose(), idle[index], name + ' eases out');
+    advance(60, far);
+    assert.deepEqual(entry.pose(), idle[index], name + ' returns to rest');
+    advance(25, near);
+    assert.deepEqual(entry.pose(), greeting, name + ' can react again from the original pose');
+    advance(61, far);
+  }
+
+  const shared = actors[1].center().lerp(actors[2].center(), .5);
+  shared.y = EYE_HEIGHT + area.getGroundHeight(shared.x, shared.z);
+  advance(30, shared);
+  assert.notDeepEqual(actors[1].pose(), idle[1], 'Doc reacts');
+  assert.notDeepEqual(actors[2].pose(), idle[2], 'Grumpy reacts at the same time');
+  assert.deepEqual(actors[0].pose(), idle[0], 'Snow White stays idle');
+  worlds.reset();
+  assert.deepEqual(actors.map(entry => entry.pose()), idle);
+});
+
+test('Snow White supports static greetings and resets all actors on unload', () => {
+  const { worlds } = fixture({ reduced: true });
+  const visit = worlds.load(ID);
+  const actors = snowActors(visit.scene);
+  const idle = actors.map(entry => entry.pose());
+  const near = approachActor(actors[0], visit.area);
+  worlds.update(.1, near);
+  const greeting = actors[0].pose();
+  assert.notDeepEqual(greeting, idle[0]);
+  for (let frame = 0; frame < 60; frame++) worlds.update(1 / 60, near);
+  assert.deepEqual(actors[0].pose(), greeting);
+  worlds.update(.1, { x: hall.spawn.x, y: EYE_HEIGHT, z: hall.spawn.z });
+  assert.deepEqual(actors[0].pose(), idle[0]);
+  worlds.update(.1, near);
+  assert.deepEqual(actors[0].pose(), greeting);
+
+  let disposed = 0;
+  const costume = actors[0].actor.getObjectByName('Snow White body').children.find(object => object.isMesh);
+  costume.material.addEventListener('dispose', () => disposed++);
+  worlds.unload();
+  assert.equal(disposed, 1);
+  assert.deepEqual(actors.map(entry => entry.pose()), idle);
+  visit.area.update(.1, near);
+  assert.deepEqual(actors.map(entry => entry.pose()), idle);
 });

@@ -40,8 +40,9 @@ Players explore connected worlds, interact with objects, and complete simple mis
 - Collect three gears and repair the Clock Tower.
 
 ### Princess Gallery — Interactive Exhibits
-- Rapunzel: Jump onto the observation platform to make Rapunzel wave.
-- Nine additional princess exhibitions are coming soon.
+- Rapunzel — Jump onto the observation platform to make Rapunzel wave.
+- Snow White — Approach Snow White and the seven dwarfs to see them react.
+- Eight additional princess exhibits coming soon.
 
 ## Built for Expansion
 
