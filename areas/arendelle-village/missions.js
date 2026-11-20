@@ -25,7 +25,7 @@ export function createVillageMissions(context, { id, isLevelComplete, completeLe
     if (!recorded && !isLevelComplete(id)) completeLevel(id);
     recorded = true;
     context.playCue(completionCue);
-    context.notify(`${message} Arendelle Village Complete!`);
+    context.notify(`${message} Arendelle Village Complete! The Flower Garden gate is open on the north lane.`);
   }
 
   return {

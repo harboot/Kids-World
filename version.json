@@ -1,5 +1,5 @@
 {
-  "version": "26a048a9367fa0f99cb97e03b57e7ac633d5d10ab3d9f32d25089eb86e76c48e",
+  "version": "1e38cc20c00a4c96d8f017307da80f610a0aa797d18c2c6c2ce11403877485ec",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
@@ -27,7 +27,7 @@
     },
     {
       "path": "./areas/arendelle-village/index.js",
-      "revision": "4350368621782f28bc67498e61a9dc5c71baf124dca930007435b3e92650c306"
+      "revision": "be3997d88ef7fd8b49d79944f7f935e80cd7111d469c612b7aa7795663b82a26"
     },
     {
       "path": "./areas/arendelle-village/interactions.js",
@@ -35,7 +35,7 @@
     },
     {
       "path": "./areas/arendelle-village/missions.js",
-      "revision": "b7bfa869d2e9225cedcf68916ace874727ff8e0d3108d57ee575bffd96b6dba5"
+      "revision": "2c5e794043b705fa18bca6e03c8c5749c8ec9f3d01b2b19386a02dc376187334"
     },
     {
       "path": "./areas/arendelle-village/reindeer.js",
@@ -51,7 +51,7 @@
     },
     {
       "path": "./areas/arendelle-village/terrain.js",
-      "revision": "cd2655349bf643ea1f8f96ef1af7c339da5c8e1e6a6cf62241e7d8134a183b78"
+      "revision": "b983b143c322b2058e0f8c63fd7445be423713c32a667f30ea26595abfe93f40"
     },
     {
       "path": "./areas/arendelle-village/villager.js",
@@ -75,7 +75,7 @@
     },
     {
       "path": "./areas/flower-garden/index.js",
-      "revision": "3c16fa90e8dd426d73646e5c4f1aaccb9f30d82abcc1a04176013835a769d58b"
+      "revision": "9865eadc2d5825207378ed024b60420fbaac77707c629befb91edd15bc7f5abd"
     },
     {
       "path": "./areas/frozen-castle/activities.js",
@@ -148,6 +148,10 @@
     {
       "path": "./areas/secret-apartment/unit17e.js",
       "revision": "41c0400c669413d4e52e5eb3c404ae1b7e66d5c262e4a8c2324522a7ce5b1062"
+    },
+    {
+      "path": "./areas/shared/garden-village-gate.js",
+      "revision": "44734aa37d4bf345b2185d7f343c5fff9df259cad7e70e34f44c8c7400a2b862"
     },
     {
       "path": "./areas/shared/ice-door.js",
