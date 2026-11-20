@@ -24,7 +24,7 @@ export const arendelleVillage = {
 };
 
 function loadVillage({ THREE, scene, viewmodel, hud, signal, touch, reducedMotion = () => false,
-  playCue = () => {}, isLevelComplete = () => false, completeLevel = () => {} }) {
+  playCue = () => {}, isLevelComplete = () => false, completeLevel = () => {}, notify = () => {} }) {
   const sky = 0xc4dedc;
   scene.background = new THREE.Color(sky);
   scene.fog = new THREE.Fog(sky, 28, 105);
@@ -47,8 +47,6 @@ function loadVillage({ THREE, scene, viewmodel, hud, signal, touch, reducedMotio
   const poseHarbor = buildHarbor(THREE, scene, kit);
 
   let elapsed = 0;
-  let message = '';
-  let timeLeft = 0;
   const isActive = () => !signal?.aborted;
   const outlineMaterial = clearanceMaterial(THREE);
   function mark(label, footprint, elevation = terrain.getGroundHeight(footprint.x, footprint.z)) {
@@ -56,10 +54,6 @@ function loadVillage({ THREE, scene, viewmodel, hud, signal, touch, reducedMotio
   }
   const fountain = buildFountain(THREE, kit, mark, isActive);
   const poseBystanders = buildBystanders(kit, terrain.getGroundHeight);
-  function notify(text) {
-    message = text;
-    timeLeft = 3.2;
-  }
   const missions = createVillageMissions({
     THREE, scene, viewmodel, kit, terrain: { ...terrain, obstacles }, clock, mark, isActive, notify, playCue,
   }, { id: arendelleVillage.id, isLevelComplete, completeLevel });
@@ -79,15 +73,9 @@ function loadVillage({ THREE, scene, viewmodel, hud, signal, touch, reducedMotio
     },
     obstacles,
     interactions,
-    get objective() {
-      const lines = missions.progress;
-      if (message) lines.push(message);
-      return lines.join('\n');
-    },
+    get missionStatus() { return missions.missionStatus; },
     reset() {
       elapsed = 0;
-      message = '';
-      timeLeft = 0;
       poseHarbor(0);
       poseBystanders(0, true);
       fountain.reset();
@@ -100,10 +88,6 @@ function loadVillage({ THREE, scene, viewmodel, hud, signal, touch, reducedMotio
       poseHarbor(still ? 0 : elapsed);
       poseBystanders(elapsed, still);
       fountain.update(elapsed, still);
-      if (timeLeft > 0) {
-        timeLeft = Math.max(0, timeLeft - dt);
-        if (!timeLeft) message = '';
-      }
       missions.update(dt, player, elapsed, still);
     },
   };

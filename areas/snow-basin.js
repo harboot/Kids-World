@@ -43,7 +43,7 @@ export const snowBasin = {
 };
 
 function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlaying, playCue, playerRadius = 0.34,
-  isLevelComplete, completeLevel, reducedMotion }) {
+  isLevelComplete, completeLevel, reducedMotion, notify }) {
   const { width, depth, spawn } = snowBasin;
   const kit = addWinterScenery({ THREE, scene, touch, width, depth });
   const { obstacles } = kit;
@@ -68,7 +68,6 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
 
   const direction = new THREE.Vector3();
   const origin = new THREE.Vector3();
-  let noticeTime = 0;
   let impactTime = Infinity;
   let keyTime = 0;
   let panel;
@@ -85,18 +84,15 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
     },
     cue(name) {
       if (name === 'land') impactTime = 0;
-      if (name === 'key') {
-        key.model.visible = false;
-        showNotice('Frozen Key collected!');
-      }
+      if (name === 'key') key.model.visible = false;
       playCue?.(cues[name]);
       if ((name === 'hit' || name === 'key') && snowMissionsComplete(missions)) {
         castle.refresh();
         completeLevel?.('snow');
         playCue?.(cues.success);
-        if (name !== 'key') showNotice('Frozen Castle unlocked!');
-      }
-      updateHUD();
+        notify?.(name === 'key' ? 'Frozen Key collected! Frozen Castle unlocked!' : 'Frozen Castle unlocked!');
+      } else if (name === 'key') notify?.('Frozen Key collected!');
+      updateThrowControls();
     },
   });
   const { state, missions } = activity;
@@ -140,13 +136,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
 
   if (hud) panel = addSnowHud(hud, signal, throwBall);
 
-  function showNotice(message) {
-    if (!panel) return;
-    panel.notice.textContent = message;
-    noticeTime = 3;
-  }
-
-  function updateHUD() {
+  function updateThrowControls() {
     if (!panel) return;
     panel.throwButton.hidden = !state.held;
     panel.throwKey.hidden = !state.held;
@@ -201,40 +191,46 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
       model.position.set(x, 0, z);
       model.rotation.y = Math.atan2(-x, 4 - z);
     }
-    noticeTime = 0;
     impactTime = Infinity;
     keyTime = 0;
-    if (panel) panel.notice.textContent = '';
     castle.refresh();
     castle.resetHighlight();
-    updateHUD();
+    updateThrowControls();
     updateModels();
   }
 
+  const missionStatus = {
+    missions: [
+      {
+        id: 'snowmen', title: 'Destroy snowmen', total: SNOWMAN_COUNT,
+        get current() { return state.destroyed; },
+        get complete() { return missions.snowmen; },
+      },
+      {
+        id: 'pine', title: 'Chop down the pine', total: CHOPS,
+        get current() { return state.chops; },
+        get complete() { return missions.tree; },
+      },
+      {
+        id: 'key', title: 'Collect the Frozen Key', total: 1,
+        get current() { return Number(missions.key); },
+        get complete() { return missions.key; },
+      },
+    ],
+    get hint() {
+      if (state.tree === 'falling') return 'Watch the pine fall';
+      if (missions.tree && !missions.key) return 'Find the key near the fallen pine';
+      if (state.held && !missions.snowmen) return 'Throw at a snowman';
+      if (!missions.tree && state.axe) return 'Chop from the pond side';
+      if (!missions.snowmen) return 'Make a snowball';
+      if (!missions.tree) return 'Find the axe';
+      return '';
+    },
+  };
   return {
     obstacles,
     arrivals: { 'frozen-castle': { x: castleSite.x, z: castleSite.z - 2.6, yaw: Math.PI } },
-    get objective() {
-      const lines = [
-        `Destroy snowmen · ${state.destroyed}/${SNOWMAN_COUNT}`,
-        `Chop the pine · ${state.chops}/${CHOPS}`,
-        `Collect the Frozen Key · ${Number(missions.key)}/1`,
-      ];
-      if (snowMissionsComplete(missions)) {
-        lines.push('Snow Basin complete! Frozen Castle unlocked!');
-        return lines.join('\n');
-      }
-      const hints = [];
-      if (!missions.snowmen) hints.push(state.held ? 'Throw at a snowman' : 'Make a snowball');
-      if (!missions.tree) {
-        if (!state.axe) hints.push('Find the axe');
-        else if (state.tree === 'falling') hints.push('Watch the pine fall');
-        else hints.push('Chop from the pond side');
-      } else if (!missions.key) hints.push('Find the key near the fallen pine');
-      if (hints.length) lines.push(hints.join(' · '));
-      if (!castle.active) lines.push('Frozen Castle is still locked');
-      return lines.join('\n');
-    },
+    get missionStatus() { return missionStatus; },
     interactions: [
       returnDoor, castle,
       {
@@ -268,10 +264,6 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
       activity.update(dt);
       castle.refresh(dt);
       if (impactTime < 0.56) impactTime += dt;
-      if (noticeTime > 0) {
-        noticeTime = Math.max(0, noticeTime - dt);
-        if (!noticeTime) panel.notice.textContent = '';
-      }
       updateModels(dt);
     },
     reset,
@@ -292,8 +284,6 @@ function addSnowHud(hud, signal, throwBall) {
     root.append(element);
     return element;
   };
-  const notice = make('p', 'snow-notice');
-  notice.setAttribute('role', 'status');
   const throwKey = make('p', 'snow-throw-key', 'F to throw');
   const throwButton = make('button', 'snow-throw', 'Throw');
   throwButton.type = 'button';
@@ -306,5 +296,5 @@ function addSnowHud(hud, signal, throwBall) {
   }, { signal });
   throwButton.addEventListener('click', throwBall, { signal });
   hud.append(root);
-  return { root, notice, throwKey, throwButton };
+  return { root, throwKey, throwButton };
 }

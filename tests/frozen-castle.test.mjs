@@ -24,6 +24,7 @@ function fixture({ saved = [], still = false } = {}) {
   const progress = createLevelProgress(areas, getStorage);
   const recorded = [];
   const cues = [];
+  const notifications = [];
   const camera = new THREE.PerspectiveCamera();
   const worlds = createWorldManager(THREE, {
     areas, camera, touch: true, playerRadius: PLAYER_RADIUS,
@@ -32,13 +33,14 @@ function fixture({ saved = [], still = false } = {}) {
       isLevelComplete: progress.has,
       completeLevel(id) { recorded.push(id); progress.complete(id); },
       playCue(notes) { cues.push(notes); },
+      notify(message) { notifications.push(message); },
     },
   });
   const visit = worlds.load(ID);
   const { area, scene } = visit;
   const withLabel = label => area.interactions.filter(item => item.label === label);
   return {
-    worlds, camera, visit, area, scene, getStorage, writes, progress, recorded, cues,
+    worlds, camera, visit, area, scene, getStorage, writes, progress, recorded, cues, notifications,
     crystals: withLabel('Activate crystal'),
     music: withLabel('Play crystal'),
     stairs: withLabel('Build ice staircase')[0],
@@ -47,14 +49,13 @@ function fixture({ saved = [], still = false } = {}) {
   };
 }
 
-const completionNotice = ['Castle Magic Restored!', 'Arendelle Village unlocked!'];
+const completionNotice = 'Castle Magic Restored! Arendelle Village unlocked!';
 
-function assertProgress(area, { crystals = 0, stairs = 0, melody = 0 } = {}, notices = []) {
-  assert.deepEqual(area.objective.split('\n'), [
-    `Activate ice crystals · ${crystals}/4`,
-    `Build the ice staircase · ${stairs}/3`,
-    `Play crystal melody · ${melody}/3`,
-    ...notices,
+function assertProgress(area, { crystals = 0, stairs = 0, melody = 0, stairsFinished = stairs === 3 } = {}) {
+  assert.deepEqual(area.missionStatus.missions, [
+    { id: 'crystals', title: 'Activate ice crystals', current: crystals, total: 4, complete: crystals === 4 },
+    { id: 'stairs', title: 'Build the ice staircase', current: stairs, total: 3, complete: stairsFinished },
+    { id: 'melody', title: 'Play the crystal melody', current: melody, total: 3, complete: melody === 3 },
   ]);
 }
 
@@ -111,7 +112,9 @@ test('the castle route, safe entrance spawn and named Snow Basin arrival use the
     assert.equal(walkElevation(snow, spawn, spawn.x, spawn.z, 0, true), 0);
     assert.equal(nearestInteraction(snow.interactions, camera.position).label, 'Enter Frozen Castle');
     assert.ok(camera.getWorldDirection(new THREE.Vector3()).z > 0, 'player faces the Snow Basin doorway');
-    assert.match(snow.objective, /^Destroy snowmen · 0\/3\nChop the pine · 0\/5\nCollect the Frozen Key · 0\/1/);
+    assert.deepEqual(snow.missionStatus.missions.map(({ id, current, total, complete }) => [id, current, total, complete]), [
+      ['snowmen', 0, 3, false], ['pine', 0, 5, false], ['key', 0, 1, false],
+    ]);
   } });
   assert.equal(worlds.active.id, 'snow');
   worlds.unload();
@@ -227,7 +230,8 @@ test('each terrace corner has a giant solid crystal and all four activate the ch
   assert.equal(gateway.active, false);
   crystals[3].act();
   worlds.update(0.7);
-  assertProgress(area, { crystals: 4, stairs: 3, melody: 3 }, completionNotice);
+  assertProgress(area, { crystals: 4, stairs: 3, melody: 3 });
+  assert.deepEqual(game.notifications, [completionNotice]);
   assert.ok(chandelier.emissiveIntensity > dim);
   assert.ok(crystals.every(item => !item.active));
   assert.equal(gateway.active, true);
@@ -267,7 +271,7 @@ test('the curved staircase forms exactly three sections and safely connects the 
     stairs.act();
     assert.equal(models.filter(model => model.visible).length, i + 1);
     assert.ok(models[i].position.y < 0);
-    assertProgress(area, { stairs: i + 1 });
+    assertProgress(area, { stairs: i + 1, stairsFinished: false });
     worlds.update(0.6);
     assert.equal(models[i].position.y, 0);
     const end = (i + 1) / 3;
@@ -326,8 +330,8 @@ test('the blue, pink and purple tuning crystals play distinct notes and can be r
   for (const index of [1, 1, 2, 0]) {
     music[index].act();
     assert.ok(scene.getObjectByName('Musical crystal ' + (index + 1)).children[1].visible);
-    if (index === 1) assert.match(area.objective, /Play crystal melody · 1\/3/);
-    if (index === 2) assert.match(area.objective, /Play crystal melody · 2\/3/);
+    if (index === 1) assertProgress(area, { melody: 1 });
+    if (index === 2) assertProgress(area, { melody: 2 });
   }
   worlds.update(0.1);
   assertProgress(area, { melody: 3 });
@@ -348,7 +352,7 @@ test('all mission orders unlock travel to the village and completion is saved on
     ['melody', 'crystals', 'stairs'], ['melody', 'stairs', 'crystals'],
   ]) {
     const game = fixture({ saved: ['snow'] });
-    const { worlds, area, gateway, recorded, writes, getStorage } = game;
+    const { worlds, area, gateway, recorded, writes, getStorage, notifications } = game;
     const trips = [];
     const travel = (...trip) => trips.push(trip);
     const totals = { crystals: 4, stairs: 3, melody: 3 };
@@ -357,13 +361,15 @@ test('all mission orders unlock travel to the village and completion is saved on
     order.forEach((mission, index) => {
       finishMission(game, mission);
       completed[mission] = totals[mission];
-      assertProgress(area, completed, index === 2 ? completionNotice : []);
+      assertProgress(area, completed);
+      assert.deepEqual(notifications, index === 2 ? [completionNotice] : []);
       saveCheck(index === 2);
     });
     gateway.act({ travel, heardCue: true });
     assert.deepEqual(trips, [['arendelle-village', true]]);
     for (const item of [...game.crystals, game.stairs, ...game.music]) item.act();
-    assertProgress(area, totals, completionNotice);
+    assertProgress(area, totals);
+    assert.deepEqual(notifications, [completionNotice]);
     assert.deepEqual(recorded, [ID]);
     assert.equal(writes.length, 1);
     const reopened = createLevelProgress(areas, getStorage);

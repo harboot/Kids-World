@@ -150,9 +150,8 @@ export function createReindeer({ kit, terrain, isActive, notify, playCue, onComp
     }
     state = 'returned';
     happiness = 1.35;
-    notify('Stable keeper: Thank you for bringing our reindeer home!');
     playCue(happyCue);
-    onComplete();
+    onComplete('Stable keeper: Thank you for bringing our reindeer home!');
     return false;
   }
 
@@ -203,8 +202,16 @@ export function createReindeer({ kit, terrain, isActive, notify, playCue, onComp
         notify('The reindeer is following you. Lead it over the bridge and talk to the stable keeper.');
       },
     }],
-    get complete() { return state === 'returned'; },
-    get progress() { return `Return the lost reindeer · ${state === 'returned' ? 1 : 0}/1`; },
+    mission: {
+      id: 'reindeer', title: 'Return the lost reindeer', total: 1,
+      get current() { return Number(this.complete); },
+      get complete() { return state === 'returned'; },
+    },
+    get hint() {
+      if (state === 'following') return 'Lead the reindeer over the bridge to the stable keeper.';
+      if (state === 'waiting') return 'Return to the reindeer and choose a clear path together.';
+      return '';
+    },
     reset() {
       state = 'lost';
       lastMark = null;

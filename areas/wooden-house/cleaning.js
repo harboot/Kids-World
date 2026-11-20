@@ -48,10 +48,13 @@ export function createCleaningMissions(THREE, scene, models, { playCue, reducedM
   }
 
   return {
-    get objective() {
-      const lines = tasks.map(task => `${task.model.label} · ${Number(task.completed)}/1`);
-      if (allClean()) lines.push('Great job! The house is sparkling clean!');
-      return lines.join('\n');
+    missionStatus: {
+      missions: tasks.map(task => ({
+        id: task.model.id, title: task.model.label, total: 1,
+        get current() { return Number(task.completed); },
+        get complete() { return task.completed; },
+      })),
+      hint: '',
     },
     interactions: tasks.map(task => {
       const { id, x, z, label, anchorY, radius, clearance, approach } = task.model;

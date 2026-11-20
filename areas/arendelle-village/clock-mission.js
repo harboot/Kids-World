@@ -70,8 +70,7 @@ export function createClockMission({ kit, terrain, clock, mark, isActive, notify
       repairOutline.visible = false;
       lever.rotation.z = -0.72;
       playCue(bell);
-      notify('The clock is running and the village bell is ringing!');
-      onComplete();
+      onComplete('The clock is running and the village bell is ringing!');
     },
   });
 
@@ -96,8 +95,11 @@ export function createClockMission({ kit, terrain, clock, mark, isActive, notify
     blocksGround(x, z, feet) {
       return !repaired && feet < 3.2 && insideClearance(clearance, x, z);
     },
-    get complete() { return repaired; },
-    get progress() { return `Repair the clock · ${count}/${gears.length} gears${repaired ? ' ✓' : ''}`; },
+    mission: {
+      id: 'clock', title: 'Repair the Clock Tower', total: gears.length,
+      get current() { return count; },
+      get complete() { return repaired; },
+    },
     get hint() { return count === gears.length && !repaired ? 'Return to the Clock Tower with the gears.' : ''; },
     reset() {
       count = runningTime = 0;

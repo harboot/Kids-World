@@ -1,4 +1,4 @@
-const STEPS = [
+const STEP_HINTS = [
   'Find the car with the cabin light on.',
   'Take the access card from the car.',
   'Use the access card to reach Floor 8.',
@@ -9,7 +9,6 @@ const STEPS = [
   'Place the lighter in the prop oven.',
   'The countdown has started.',
   '',
-  'Secret Apartment — Mission Complete',
 ];
 
 export const STEP = Object.freeze({
@@ -32,11 +31,19 @@ const boomCue = [
 const COUNTDOWN_TIME = 5;
 export const BURST_TIME = 2.65;
 
-export function createApartmentMission(playCue, signal) {
+const apartmentMissions = [
+  ['basement', 'Basement: Find the access card', [STEP.CARD, STEP.FLOOR_8]],
+  ['floor8', 'Floor 8: Collect the lighter', [STEP.GAZEBO, STEP.FLOOR_17]],
+  ['floor17', 'Floor 17: Complete the Unit 17E sequence',
+    [STEP.UNIT, STEP.CONTROL, STEP.OVEN, STEP.COUNTDOWN, STEP.COMPLETE]],
+];
+const noItems = Object.freeze([]);
+const accessCard = Object.freeze(['Access card']);
+const cardAndLighter = Object.freeze(['Access card', 'Lighter']);
+
+export function createApartmentMission(playCue, signal, showNotification = () => {}) {
   let step = STEP.CAR;
   let elapsed = 0;
-  let notification = '';
-  let notificationTime = 0;
 
   function ready(expected) {
     return !signal?.aborted && step === expected;
@@ -46,14 +53,11 @@ export function createApartmentMission(playCue, signal) {
     if (!ready(expected)) return false;
     step++;
     elapsed = 0;
-    notification = '';
-    notificationTime = 0;
     return true;
   }
 
   function notify(message) {
-    notification = message;
-    notificationTime = 2.65;
+    if (!signal?.aborted) showNotification(message);
   }
 
   function pickUp(expected, message) {
@@ -72,15 +76,17 @@ export function createApartmentMission(playCue, signal) {
       if (step === STEP.COUNTDOWN) return String(Math.max(1, Math.ceil(COUNTDOWN_TIME - elapsed - 1e-8)));
       return step === STEP.BURST && elapsed < 1.15 ? 'BOOM!' : '';
     },
-    objective(transit) {
-      const inventory = [];
-      if (step >= STEP.FLOOR_8) inventory.push('Access card');
-      if (step >= STEP.FLOOR_17 && step < STEP.COUNTDOWN) inventory.push('Lighter');
-      return [
-        transit || STEPS[step],
-        inventory.length ? 'Inventory · ' + inventory.join(' · ') : '',
-        !transit && notification,
-      ].filter(Boolean).join('\n');
+    missionStatus: {
+      missions: apartmentMissions.map(([id, title, milestones]) => ({
+        id, title, total: milestones.length,
+        get current() { return milestones.reduce((count, target) => count + Number(step >= target), 0); },
+        get complete() { return step >= milestones.at(-1); },
+      })),
+      get hint() { return STEP_HINTS[step] ?? ''; },
+      get inventory() {
+        if (step >= STEP.FLOOR_17 && step < STEP.COUNTDOWN) return cardAndLighter;
+        return step >= STEP.FLOOR_8 ? accessCard : noItems;
+      },
     },
     accessMessage(destination) {
       if (destination === 'basement') return '';
@@ -105,8 +111,6 @@ export function createApartmentMission(playCue, signal) {
     },
     update(dt) {
       if (signal?.aborted) return;
-      notificationTime = Math.max(0, notificationTime - dt);
-      if (!notificationTime) notification = '';
       if (step === STEP.COUNTDOWN) {
         elapsed += dt;
         if (elapsed >= COUNTDOWN_TIME - 1e-8) {
@@ -117,14 +121,12 @@ export function createApartmentMission(playCue, signal) {
         }
       } else if (step === STEP.BURST) {
         elapsed += dt;
-        if (elapsed >= BURST_TIME - 1e-8) advance(STEP.BURST);
+        if (elapsed >= BURST_TIME - 1e-8 && advance(STEP.BURST)) notify('Secret Apartment — Mission Complete');
       }
     },
     reset() {
       step = STEP.CAR;
       elapsed = 0;
-      notification = '';
-      notificationTime = 0;
     },
   };
 }

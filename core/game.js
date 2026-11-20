@@ -1,6 +1,7 @@
 import { isPublicArea, validateAreaRegistry } from './area-registry.js';
 import { createAudio } from './audio.js';
 import { createControls } from './controls.js';
+import { createMissionHud } from './hud.js';
 import { createInteractions } from './interactions.js';
 import { createLevelProgress } from './level-progress.js';
 import { PLAYER_RADIUS } from './movement.js';
@@ -41,7 +42,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   const notice = game.querySelector('#notice');
   const heading = game.querySelector('#menu-title');
   const areaName = game.querySelector('.wordmark small');
-  const objective = game.querySelector('#objective');
+  const missionHud = createMissionHud(game);
   const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
   const theme = document.querySelector('meta[name="theme-color"]');
   const touchDevice = matchMedia('(pointer: coarse)').matches ||
@@ -52,6 +53,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   const touchMode = () => game.dataset.input === 'touch';
 
   function showError(message) {
+    missionHud.reset();
     game.dataset.state = 'error';
     menuMessage.textContent = message;
     notice.textContent = '';
@@ -106,7 +108,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   const worlds = createWorldManager(THREE, {
     areas, camera, touch: touchDevice, playerRadius: PLAYER_RADIUS,
     services: {
-      hud: game, isPlaying: playing, playCue: audio.playCue,
+      hud: game, isPlaying: playing, playCue: audio.playCue, notify: missionHud.notify,
       reducedMotion: () => motionPreference.matches,
       isLevelComplete: progress.has,
       completeLevel(id) {
@@ -135,11 +137,6 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   let travelTimer;
   let previousFrame = null;
 
-  function updateObjective() {
-    const hint = worlds.active.area.objective ?? '';
-    if (objective.textContent !== hint) objective.textContent = hint;
-  }
-
   function stopPlaying() {
     window.clearTimeout(travelTimer);
     audio.setPlaying(false);
@@ -159,7 +156,6 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     startLabel.textContent = paused ? 'Resume exploring' : 'Explore';
     menuMessage.textContent = paused ? 'Take a break, then continue exploring.' : worlds.active.definition.description;
     notice.textContent = '';
-    objective.textContent = '';
     view.invalidate();
   }
 
@@ -178,8 +174,10 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
 
   function resetArea() {
     if (levelPicker.open) levelPicker.close();
+    missionHud.reset();
     worlds.reset();
     resetPlayer();
+    missionHud.update(worlds.active.area.missionStatus);
     menu(false);
   }
 
@@ -187,9 +185,11 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     if (levelPicker.open) levelPicker.close();
     game.dataset.state = 'traveling';
     stopPlaying();
+    missionHud.reset();
     try {
-      const { definition } = worlds.load(id);
+      const { definition, area } = worlds.load(id);
       resetPlayer(arrival);
+      missionHud.update(area.missionStatus);
       audio.setArea(definition.music);
       view.sceneChanged();
       showArea(id);
@@ -257,7 +257,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     interactions.hide();
     start.blur();
     game.dataset.state = 'playing';
-    updateObjective();
+    missionHud.update(worlds.active.area.missionStatus);
     audio.setPlaying(true);
   });
 
@@ -274,7 +274,10 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
 
   restart.addEventListener('click', resetArea);
   window.addEventListener('popstate', restoreArea);
-  window.addEventListener('pagehide', stopPlaying);
+  window.addEventListener('pagehide', () => {
+    stopPlaying();
+    missionHud.clearNotification();
+  });
   window.addEventListener('pageshow', event => {
     if (event.persisted) restoreArea();
   });
@@ -286,7 +289,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     if (playing()) {
       player.move(dt, controls.sample(dt), worlds.active);
       worlds.update(dt, camera.position, elapsed);
-      updateObjective();
+      missionHud.update(worlds.active.area.missionStatus);
       interactions.update();
     }
     view.render(worlds.active?.scene, playing());

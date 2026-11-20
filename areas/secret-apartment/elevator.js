@@ -124,7 +124,7 @@ export function createElevator(THREE, architecture, zones, {
         }
         pending = { id: destination.id, label: destination.label, relocate };
         begin('closing');
-        onDepart();
+        onDepart(destination.label);
       },
     }))];
   });

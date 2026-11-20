@@ -11,33 +11,36 @@ export function createVillageMissions(context, { id, isLevelComplete, completeLe
   let recorded = isLevelComplete(id);
   const services = { ...context, onComplete };
   const clock = createClockMission(services);
-  const missions = [createFishing(services), createReindeer(services), clock];
+  const fishing = createFishing(services);
+  const reindeer = createReindeer(services);
+  const activities = [fishing, reindeer, clock];
+  const missions = activities.map(activity => activity.mission);
 
-  function onComplete() {
-    if (finished || !missions.every(mission => mission.complete)) return;
+  function onComplete(message) {
+    if (finished || !missions.every(mission => mission.complete)) {
+      context.notify(message);
+      return;
+    }
     finished = true;
     if (!recorded && !isLevelComplete(id)) completeLevel(id);
     recorded = true;
     context.playCue(completionCue);
+    context.notify(`${message} Arendelle Village Complete!`);
   }
 
   return {
-    interactions: missions.flatMap(mission => mission.interactions),
+    interactions: activities.flatMap(activity => activity.interactions),
     blocksGround: clock.blocksGround,
-    get progress() {
-      const lines = missions.map(mission => mission.progress);
-      for (const mission of missions) {
-        if (mission.hint) lines.push(mission.hint);
-      }
-      if (finished) lines.push('Arendelle Village Complete!');
-      return lines;
+    missionStatus: {
+      missions,
+      get hint() { return fishing.hint || clock.hint || reindeer.hint; },
     },
     reset() {
       finished = false;
-      for (const mission of missions) mission.reset();
+      for (const activity of activities) activity.reset();
     },
     update(dt, player, elapsed, still) {
-      for (const mission of missions) mission.update(dt, player, elapsed, still);
+      for (const activity of activities) activity.update(dt, player, elapsed, still);
     },
   };
 }

@@ -44,12 +44,26 @@
         <span class="world-mark" aria-hidden="true"></span>
         <span>Kids World <small>Flower Garden</small></span>
       </div>
+      <p id="mission-toast" class="mission-toast" role="status"></p>
       <div class="hud-actions">
         <button id="sound" class="hud-button sound-button" type="button" aria-label="Mute sound" aria-pressed="false" hidden>♪</button>
         <button id="choose-level" class="hud-button" type="button" aria-label="Choose level" title="Choose level" aria-haspopup="dialog" disabled>☷</button>
         <button id="fullscreen" class="hud-button" type="button" aria-label="Fullscreen" title="Fullscreen" hidden>⛶</button>
       </div>
-      <p id="objective" class="objective" role="status"></p>
+      <details id="mission-hud" class="mission-hud">
+        <summary>Missions <span id="mission-summary" class="mission-count">0/0</span><span class="mission-arrow" aria-hidden="true"></span></summary>
+        <div id="mission-panel" class="mission-panel" role="region" aria-label="Mission details" tabindex="0">
+          <ul id="mission-list" class="mission-list" role="list"></ul>
+          <section id="mission-hint" class="mission-note" hidden>
+            <h2>Hint</h2>
+            <p id="mission-hint-text"></p>
+          </section>
+          <section id="mission-inventory" class="mission-note" hidden>
+            <h2>Inventory</h2>
+            <p id="mission-inventory-text"></p>
+          </section>
+        </div>
+      </details>
     </header>
 
     <button id="interaction" class="interaction" type="button" hidden>
