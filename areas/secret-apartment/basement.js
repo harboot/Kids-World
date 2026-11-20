@@ -124,11 +124,11 @@ export function buildBasement(THREE, architecture, { b, doorZ, x: offset }, miss
   const lineY = SURFACE_GAP.detail;
   const yellow = 0xd4ac50;
   concreteFloor(THREE, architecture, b.root);
-  b.part(0x818380, 0, HEIGHT + 0.12, (FRONT + BACK) / 2, WIDTH, 0.24, BACK - FRONT);
+  b.part(0x818380, 0, HEIGHT + 0.12, (FRONT + BACK) / 2, WIDTH, 0.24, BACK - FRONT, { playerOnly: true });
   for (const x of [-WIDTH / 2, WIDTH / 2]) wallZ(b, concrete, x, FRONT, BACK, HEIGHT);
   for (const z of [FRONT, BACK]) wallX(b, concrete, -WIDTH / 2, WIDTH / 2, z, HEIGHT);
   for (const z of [-8.55, -2.1, 4.4, 10.9]) {
-    b.part(0x767b77, 0, HEIGHT - 0.23, z, WIDTH - 0.15, 0.46, 0.56);
+    b.part(0x767b77, 0, HEIGHT - 0.23, z, WIDTH - 0.15, 0.46, 0.56, { playerOnly: true });
     for (const x of [-5.22, 5.22]) {
       b.block(0x8e8e82, x, HEIGHT / 2, z, 0.81, HEIGHT, 0.81);
       b.part(0x393f3e, x, 0.38, z, 0.84, 0.76, 0.84);
@@ -137,7 +137,7 @@ export function buildBasement(THREE, architecture, { b, doorZ, x: offset }, miss
     }
   }
   for (const x of [-11.6, -3.3, 3.3, 11.6]) {
-    b.part(0x494c4c, x, 3.3, 0.2, 0.14, 0.14, 24.5);
+    b.part(0x494c4c, x, 3.3, 0.2, 0.14, 0.14, 24.5, { playerOnly: true });
     for (const z of [-6.0, 0.9, 7.3]) ceilingLight(b, x, z, 0.2, 2.05, 3.59, COLORS.whiteLight);
   }
   for (const x of [-13.9, -9.5, 9.5, 13.9]) {

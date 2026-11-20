@@ -250,6 +250,9 @@ test('the elevator calls without a card, rejects locked floors, and seals during
   const panel = first.getObjectByName('Sliding elevator door');
   const closedX = panel.position.x;
   assert.ok(first.visible);
+  const basementFocus = area.droneView;
+  assert.equal(basementFocus.center.x, -88);
+  assert.ok(basementFocus.width > 30 && basementFocus.width < 35);
   assert.equal(area.blocksGround(-88, -9.75), true);
   assert.equal(area.blocksGround(-78.75, 3.75), true, 'the lit car is solid');
   assert.equal(area.blocksGround(-82.78, 4.4), true, 'the parking column is solid');
@@ -297,6 +300,9 @@ test('the elevator calls without a card, rejects locked floors, and seals during
   assert.equal(area.blocksGround(position.x, position.z), false);
   assert.equal(first.visible, false);
   assert.equal(scene.getObjectByName('floor8').visible, true);
+  assert.notEqual(area.droneView, basementFocus);
+  assert.ok(Math.abs(area.droneView.center.x) < 1);
+  assert.ok(area.droneView.width > 60 && area.droneView.width < 65);
   assert.match(area.missionStatus.hint, /Search the poolside gazebo/);
   assert.ok(player.jump());
   const idle = new THREE.Vector2();
@@ -376,6 +382,8 @@ test('the gazebo and kitchen routes remain walkable and the ending is confined t
   assert.ok(scene.getObjectByName('Gazebo table surface'));
 
   game.kitchen();
+  assert.ok(Math.abs(area.droneView.center.x - 88) < 1);
+  assert.ok(area.droneView.width > 20 && area.droneView.width < 25);
   find('Pick Up Lighter').act();
   assert.equal(lighter.visible, false);
   assert.equal(position.x, 97.15);
@@ -434,6 +442,7 @@ test('the gazebo and kitchen routes remain walkable and the ending is confined t
   assertProgress(area.missionStatus, [2, 2, 5], [true, true, true]);
   worlds.reset();
   assert.equal(marks.visible, false);
+  assert.equal(area.droneView.center.x, -88);
   assert.equal(lighter.visible, true);
   assert.ok(material.color.equals(intactColor));
   assert.equal(lights[0].intensity, intactIntensity);

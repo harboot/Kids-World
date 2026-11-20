@@ -108,6 +108,12 @@ Run the tests (Node.js 22 or later):
 node --test
 ```
 
+### Drone View
+
+Open `?area=garden&view=drone` (or use any registered area ID) and select **Play**. Drag to pan, use the mouse wheel or a two-finger pinch to zoom, and click or tap a surface to select its world coordinates. **Copy Coordinates** copies the selection as `{ x: 12.45, y: 2.10, z: -8.20 }`. Use **Reset View** to restore the overview or **Exit Drone** (Esc) to resume play. After exiting, use **Drone View** in the pause menu to inspect the same visit again.
+
+The overview fits the area's `width` and `depth`. A loaded area can return `droneView: { center: { x, z }, width, depth }` to override the focus. A getter can return different bounds when the active zone changes.
+
 ## Publishing Updates
 
 After changing game files, regenerate the offline release manifest:

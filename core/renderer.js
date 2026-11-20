@@ -1,6 +1,9 @@
+export const PLAYER_ONLY_LAYER = 1;
+
 export function createView(THREE, { game, canvas, fullscreen, touchDevice, contextLost }) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !touchDevice, powerPreference: 'high-performance' });
   const camera = new THREE.PerspectiveCamera(62, 1, 0.07, 115);
+  camera.layers.enable(PLAYER_ONLY_LAYER);
   let renderPending = true;
 
   renderer.shadowMap.enabled = true;
@@ -64,9 +67,19 @@ export function createView(THREE, { game, canvas, fullscreen, touchDevice, conte
       renderer.shadowMap.needsUpdate = true;
       renderPending = true;
     },
-    render(scene, playing) {
+    render(scene, playing, activeCamera = camera) {
       if (!scene || !(playing || renderPending)) return;
-      renderer.render(scene, camera);
+      if (activeCamera === camera) renderer.render(scene, camera);
+      else {
+        const fog = scene.fog;
+        // Distance fog is tuned for the player at ground level.
+        scene.fog = null;
+        try {
+          renderer.render(scene, activeCamera);
+        } finally {
+          scene.fog = fog;
+        }
+      }
       renderPending = false;
     },
   };

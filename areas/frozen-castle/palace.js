@@ -1,4 +1,5 @@
 import { SURFACE_GAP } from '../../core/geometry.js';
+import { PLAYER_ONLY_LAYER } from '../../core/renderer.js';
 
 export const PALACE_WIDTH = 28;
 export const PALACE_DEPTH = 28;
@@ -65,13 +66,14 @@ export function createPalaceBuilder(THREE, scene, obstacles) {
     const builds = new Map();
     source.traverse(mesh => {
       if (!mesh.isMesh) return;
-      const key = mesh.geometry.id + ':' + mesh.material.id;
+      const key = mesh.geometry.id + ':' + mesh.material.id + ':' + mesh.layers.mask;
       if (!builds.has(key)) builds.set(key, []);
       builds.get(key).push(mesh);
     });
     for (const meshes of builds.values()) {
       const { geometry, material } = meshes[0];
       const batch = new THREE.InstancedMesh(geometry, material, meshes.length);
+      batch.layers.mask = meshes[0].layers.mask;
       meshes.forEach((mesh, i) => batch.setMatrixAt(i, mesh.matrixWorld));
       batch.instanceMatrix.needsUpdate = true;
       target.add(batch);
@@ -196,13 +198,14 @@ export function buildPalace(THREE, scene, builder, document) {
   for (const side of [-1, 1]) {
     const roof = box(side === -1 ? pearl : lilac, side * 7, 9.76, 0, 14.65, 0.28, 28);
     roof.rotation.z = -side * Math.atan2(4, 14);
+    roof.layers.set(PLAYER_ONLY_LAYER);
     for (const z of [-13.53, -9.45, -3.65, 2.8, 8.65, 13.53]) {
-      beam(architecture, silver, [side * 13.84, 7.73, z], [0, 11.73, z], 0.22, 0.26);
-      beam(architecture, pearl, [side * 5.7, 7.06, z], [side * 3.1, 9.17, z], 0.29, 0.31);
-      beam(architecture, frost, [side * 3.1, 9.17, z], [0, 10.18, z], 0.28, 0.35);
+      beam(architecture, silver, [side * 13.84, 7.73, z], [0, 11.73, z], 0.22, 0.26).layers.set(PLAYER_ONLY_LAYER);
+      beam(architecture, pearl, [side * 5.7, 7.06, z], [side * 3.1, 9.17, z], 0.29, 0.31).layers.set(PLAYER_ONLY_LAYER);
+      beam(architecture, frost, [side * 3.1, 9.17, z], [0, 10.18, z], 0.28, 0.35).layers.set(PLAYER_ONLY_LAYER);
     }
   }
-  box(frost, 0, 11.75, 0, 0.38, 0.35, 28);
+  box(frost, 0, 11.75, 0, 0.38, 0.35, 28).layers.set(PLAYER_ONLY_LAYER);
   const gable = new THREE.BufferGeometry();
   gable.setAttribute('position', new THREE.Float32BufferAttribute([-14, 7.79, 0, 14, 7.79, 0, 0, 11.75, 0], 3));
   gable.computeVertexNormals();

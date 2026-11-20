@@ -1,6 +1,7 @@
 import { isPublicArea, validateAreaRegistry } from './area-registry.js';
 import { createAudio } from './audio.js';
 import { createControls } from './controls.js';
+import { createDroneView, isDroneView, replaceDroneView } from './drone-view.js';
 import { createMissionHud } from './hud.js';
 import { createInteractions } from './interactions.js';
 import { createLevelProgress } from './level-progress.js';
@@ -34,6 +35,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   const canvas = game.querySelector('#view');
   const start = game.querySelector('#start');
   const startLabel = game.querySelector('#start-label');
+  const droneEntry = game.querySelector('#open-drone');
   const chooseLevel = game.querySelector('#choose-level');
   const levelPicker = game.querySelector('#level-picker');
   const levelList = game.querySelector('#completed-levels');
@@ -49,10 +51,15 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     (navigator.maxTouchPoints > 0 && matchMedia('(hover: none)').matches);
   game.dataset.input = touchDevice ? 'touch' : 'mouse';
 
+  let drone;
+  let route;
   const playing = () => game.dataset.state === 'playing';
+  const playerInput = () => playing() && !drone?.camera;
   const touchMode = () => game.dataset.input === 'touch';
 
   function showError(message) {
+    drone?.stop();
+    droneEntry.hidden = true;
     missionHud.reset();
     game.dataset.state = 'error';
     menuMessage.textContent = message;
@@ -108,7 +115,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   const worlds = createWorldManager(THREE, {
     areas, camera, touch: touchDevice, playerRadius: PLAYER_RADIUS,
     services: {
-      hud: game, isPlaying: playing, playCue: audio.playCue, notify: missionHud.notify,
+      hud: game, isPlaying: playerInput, playCue: audio.playCue, notify: missionHud.notify,
       reducedMotion: () => motionPreference.matches,
       isLevelComplete: progress.has,
       completeLevel(id) {
@@ -122,14 +129,14 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     button: game.querySelector('#interaction'),
     glyph: game.querySelector('#interaction-glyph'),
     label: game.querySelector('#interaction-label'),
-    camera, playing, touchMode,
+    camera, playing: playerInput, touchMode,
     runAction(item) {
       item.act({ heardCue: !item.silent && audio.effect('interact'), sit, travel, relocate });
     },
   });
   const controls = createControls(THREE, {
     game, canvas, joystick: game.querySelector('#joystick'), thumb: game.querySelector('#joystick-thumb'),
-    playing, touchMode, seated: () => player.seated,
+    playing: playerInput, touchMode, seated: () => player.seated,
     look: player.look, interact: interactions.interact,
     jump() { if (player.jump()) audio.effect('jump'); },
     pause() { menu(true); },
@@ -137,11 +144,33 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   let travelTimer;
   let previousFrame = null;
 
+  function syncView(url = new URL(location.href)) {
+    const visit = worlds.active;
+    route = { drone: isDroneView(url), arrival: historyArrival(visit.id, history.state) };
+    if (route.drone) {
+      drone ??= createDroneView(THREE, {
+        game, canvas, aspect: () => camera.aspect, enabled: playing, invalidate: view.invalidate,
+        exit() { changeDroneView(false); },
+      });
+      drone.start(visit);
+      controls.clear();
+      controls.releaseMouse();
+      interactions.hide();
+    } else drone?.stop();
+    droneEntry.hidden = !drone || route.drone;
+  }
+
+  function changeDroneView(enabled) {
+    replaceDroneView(new URL(location.href), history, enabled);
+    syncView();
+  }
+
   function stopPlaying() {
     window.clearTimeout(travelTimer);
     audio.setPlaying(false);
     controls.clear();
     controls.releaseMouse();
+    drone?.cancelGesture();
     player.stop();
     interactions.hide();
   }
@@ -175,10 +204,12 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   function resetArea() {
     if (levelPicker.open) levelPicker.close();
     missionHud.reset();
+    drone?.stop();
     worlds.reset();
     resetPlayer();
     missionHud.update(worlds.active.area.missionStatus);
     menu(false);
+    syncView();
   }
 
   function enterArea(id, historyMode, arrival) {
@@ -186,6 +217,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     game.dataset.state = 'traveling';
     stopPlaying();
     missionHud.reset();
+    drone?.stop();
     try {
       const { definition, area } = worlds.load(id);
       resetPlayer(arrival);
@@ -199,6 +231,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
       }
       rememberArea(areas, id);
       menu(false);
+      syncView();
     } catch (error) {
       console.error(error);
       showError('This area failed to load. Reload the page to try again.');
@@ -206,7 +239,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   }
 
   function travel(id, heardCue, arrival) {
-    if (!playing() || id === worlds.active.id || !isPublicArea(areas, id)) return;
+    if (!playerInput() || id === worlds.active.id || !isPublicArea(areas, id)) return;
     game.dataset.state = 'traveling';
     stopPlaying();
     if (heardCue) travelTimer = window.setTimeout(() => enterArea(id, 'pushState', arrival), 180);
@@ -258,12 +291,23 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     start.blur();
     game.dataset.state = 'playing';
     missionHud.update(worlds.active.area.missionStatus);
+    view.invalidate();
     audio.setPlaying(true);
   });
 
+  droneEntry.addEventListener('click', () => {
+    changeDroneView(true);
+    start.click();
+  });
+
   function restoreArea() {
-    const id = resolveArea(new URL(location.href), areas, defaultArea);
+    const url = new URL(location.href);
+    const id = resolveArea(url, areas, defaultArea);
     const arrival = historyArrival(id, history.state);
+    if (worlds.active?.id === id && route && route.arrival === arrival && route.drone !== isDroneView(url)) {
+      syncView(url);
+      return;
+    }
     if (worlds.active?.id !== id || arrival) {
       enterArea(id, null, arrival);
       return;
@@ -276,6 +320,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   window.addEventListener('popstate', restoreArea);
   window.addEventListener('pagehide', () => {
     stopPlaying();
+    drone?.stop();
     missionHud.clearNotification();
   });
   window.addEventListener('pageshow', event => {
@@ -286,13 +331,14 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     const elapsed = previousFrame === null ? 0 : (stamp - previousFrame) / 1000;
     const dt = Math.min(elapsed, 0.05);
     previousFrame = stamp;
-    if (playing()) {
+    if (playerInput()) {
       player.move(dt, controls.sample(dt), worlds.active);
       worlds.update(dt, camera.position, elapsed);
       missionHud.update(worlds.active.area.missionStatus);
       interactions.update();
     }
-    view.render(worlds.active?.scene, playing());
+    drone?.update();
+    view.render(worlds.active?.scene, playerInput(), drone?.camera);
     requestAnimationFrame(frame);
   }
 

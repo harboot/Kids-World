@@ -1,3 +1,5 @@
+import { PLAYER_ONLY_LAYER } from '../../core/renderer.js';
+
 export const HOUSE_WIDTH = 12.8;
 export const HOUSE_DEPTH = 10.8;
 const HEIGHT = 3.8;
@@ -59,15 +61,19 @@ export function createHouseBuilder(THREE, scene, obstacles) {
     architecture.updateMatrixWorld(true);
     for (const template of [matte, bright]) {
       for (const shape of Object.values(shapes)) {
-        const parts = staticParts.filter(({ mesh }) => mesh.geometry === shape && mesh.material === template);
-        if (!parts.length) continue;
-        const batch = new THREE.InstancedMesh(shape, template, parts.length);
-        const color = new THREE.Color();
-        parts.forEach(({ mesh, color: hex }, i) => {
-          batch.setMatrixAt(i, mesh.matrixWorld);
-          batch.setColorAt(i, color.setHex(hex));
-        });
-        scene.add(batch);
+        for (const layer of [0, PLAYER_ONLY_LAYER]) {
+          const parts = staticParts.filter(({ mesh }) =>
+            mesh.geometry === shape && mesh.material === template && mesh.layers.isEnabled(layer));
+          if (!parts.length) continue;
+          const batch = new THREE.InstancedMesh(shape, template, parts.length);
+          batch.layers.set(layer);
+          const color = new THREE.Color();
+          parts.forEach(({ mesh, color: hex }, i) => {
+            batch.setMatrixAt(i, mesh.matrixWorld);
+            batch.setColorAt(i, color.setHex(hex));
+          });
+          scene.add(batch);
+        }
       }
     }
     architecture.clear();
@@ -103,9 +109,13 @@ export function buildInterior(THREE, scene, { group, part, solid }) {
       left += span;
     }
   }
-  part(room, 0xe7caac, 0, HEIGHT + 0.09, 0, HOUSE_WIDTH, 0.18, HOUSE_DEPTH);
-  for (const z of [-4.96, -2.52, 0, 2.52, 4.96]) part(room, honey, 0, HEIGHT - 0.1, z, HOUSE_WIDTH, 0.2, 0.17);
-  for (const x of [-5.98, 5.98]) part(room, walnut, x, HEIGHT - 0.18, 0, 0.18, 0.19, HOUSE_DEPTH);
+  part(room, 0xe7caac, 0, HEIGHT + 0.09, 0, HOUSE_WIDTH, 0.18, HOUSE_DEPTH).layers.set(PLAYER_ONLY_LAYER);
+  for (const z of [-4.96, -2.52, 0, 2.52, 4.96]) {
+    part(room, honey, 0, HEIGHT - 0.1, z, HOUSE_WIDTH, 0.2, 0.17).layers.set(PLAYER_ONLY_LAYER);
+  }
+  for (const x of [-5.98, 5.98]) {
+    part(room, walnut, x, HEIGHT - 0.18, 0, 0.18, 0.19, HOUSE_DEPTH).layers.set(PLAYER_ONLY_LAYER);
+  }
 
   function wall(x, z, span, angle) {
     const face = group('Exterior wall', x, 0, z);

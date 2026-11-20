@@ -487,3 +487,57 @@ kbd {
 @media (prefers-reduced-motion: reduce) {
   .apartment-cinematic-flash { display: none; }
 }
+
+#game[data-view="drone"] :is(.mission-hud, .mission-toast, .joystick, .interaction, .snow-activity, .apartment-cinematic),
+#game:not([data-state="playing"]) :is(.drone-panel, .drone-marker) { display: none; }
+[data-view="drone"] #view { cursor: crosshair; }
+.drone-panel {
+  position: absolute;
+  z-index: 3;
+  left: calc(14px + env(safe-area-inset-left));
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  width: max-content;
+  max-width: calc(100% - 28px - env(safe-area-inset-left) - env(safe-area-inset-right));
+  padding: 9px 11px;
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 3px 14px #253e2933;
+  font-size: 13px;
+}
+.drone-panel h2 { display: inline; margin: 0 6px 0 0; font-size: 14px; }
+.drone-area { display: inline; margin: 0; color: var(--muted); }
+.drone-coordinates {
+  display: block;
+  margin-top: 6px;
+  font: 12px/1.4 ui-monospace, monospace;
+  white-space: pre-wrap;
+  user-select: text;
+  -webkit-user-select: text;
+  -webkit-touch-callout: default;
+}
+.drone-feedback { margin: 5px 0 0; color: var(--muted); }
+.drone-feedback:empty { margin: 0; }
+.drone-actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+.drone-actions button, .drone-entry {
+  min-height: 44px;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--accent-strong);
+  font-weight: 750;
+  touch-action: manipulation;
+}
+#drone-exit { background: var(--accent); color: white; border-color: transparent; }
+.drone-entry { min-height: 40px; margin: 4px 0 0 4px; vertical-align: middle; }
+.drone-marker {
+  position: absolute;
+  z-index: 2;
+  width: 14px;
+  height: 14px;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px #21384f, inset 0 0 0 1px #21384f;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}

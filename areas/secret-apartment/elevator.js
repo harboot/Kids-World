@@ -21,7 +21,7 @@ function buildCabin(THREE, architecture, zone, doorMaterial, lampMaterial) {
   const rail = 0xa19a83;
   b.part(0x666b6b, 0, -0.09, center, CABIN_WIDTH, 0.18, CABIN_DEPTH);
   b.part(0x93928d, 0, 0.001, doorZ + 0.01, 2.38, 0.03, 0.27);
-  b.part(0xc4beb0, 0, 2.61, center, CABIN_WIDTH, 0.16, CABIN_DEPTH);
+  b.part(0xc4beb0, 0, 2.61, center, CABIN_WIDTH, 0.16, CABIN_DEPTH, { playerOnly: true });
   b.block(0xb5b1a4, 0, 1.31, back, CABIN_WIDTH, 2.62, 0.14);
   for (const side of [-1, 1]) {
     const x = side * CABIN_WIDTH / 2;
