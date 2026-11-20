@@ -36,7 +36,7 @@ export function createTasting({ THREE, viewmodel, camera, parts, snacks, playCue
       const model = addGroup(THREE, root, 'Tasting ' + name);
       model.visible = false;
       const held = addGroup(THREE, model, 'Held food');
-      hand(held, kind === 'popcorn' ? -1 : 1, kind === 'popcorn' ? -.047 : .055, -.087, .017);
+      hand(held, kind === 'popcorn' ? -1 : 1, kind === 'popcorn' ? -.047 : .055, kind === 'hotDog' ? -.060 : -.087, .017);
       const food = addGroup(THREE, held, name, 0, .016, 0);
       food.scale.setScalar(kind === 'hotDog' ? .56 : .60);
       if (kind === 'hotDog') food.rotation.y = Math.PI / 2.3;

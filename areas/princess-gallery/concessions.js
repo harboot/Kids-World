@@ -31,11 +31,13 @@ function cottonCandy({ THREE, part, beam, group, colors, snacks }) {
   const { gold, cream, pink, lilac, ice, cherry } = colors;
   for (const x of [-.93, .88]) beam(group, gold, [x, 1.26, -.14], [x, 2.01, -.14], .045);
   beam(group, gold, [-.93, 2.00, -.14], [.88, 2.00, -.14], .049);
-  for (const [i, x, z] of [[0, -.72, -.08], [1, -.34, .11], [2, .08, -.19], [3, .48, .08], [4, .81, -.15]]) {
-    snacks.cotton(addGroup(THREE, group, 'Cotton candy cone', x, 1.48, z), [pink, ice, lilac, pink, ice][i]);
+  for (const [i, x, z] of [[0, -.89, -.12], [1, -.53, .05], [2, .51, .05], [3, .87, -.14]]) {
+    snacks.cotton(addGroup(THREE, group, 'Cotton candy cone', x, 1.48, z), [pink, ice, lilac, pink][i]);
   }
-  part(group, 'box', cherry, 0, 1.29, .37, .94, .082, .31);
-  for (const x of [-.32, -.14, .11, .30]) part(group, 'drum', cream, x, 1.34, .37, .027, .035, .027);
+  for (const x of [-.72, .70]) {
+    part(group, 'box', cherry, x, 1.29, .015, .58, .082, .48);
+    for (const dx of [-.18, .18]) part(group, 'drum', cream, x + dx, 1.34, .015, .027, .035, .027);
+  }
 }
 
 function hotDogs({ THREE, part, group, colors, snacks }) {
@@ -176,7 +178,7 @@ export function buildConcessions({
         }
       },
     });
-    const [staffX, staffZ] = toWorld(.18, -1.17);
+    const [staffX, staffZ] = toWorld(kind === 'drink' ? .46 : .18, -1.17);
     vendors.push({ name: name + ' vendor', x: staffX, z: staffZ, yaw, color });
   }
   return { interactions, vendors, update: tasting.update, reset: tasting.reset };

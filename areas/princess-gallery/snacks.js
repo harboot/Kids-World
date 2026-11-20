@@ -21,11 +21,11 @@ export function createSnackModels(THREE, parts, colors) {
 
   return {
     kernels,
-    popcorn(group, tint, count = 15) {
+    popcorn(group) {
       part(group, cup, print, 0, 0, 0, 1, 1, 1);
       part(group, 'drum', cream, 0, .167, 0, .184, .017, .184);
       const filling = addGroup(THREE, group, 'Popcorn kernels', 0, .197, 0);
-      kernels(filling, 0, 0, 0, count, .147);
+      kernels(filling, 0, 0, 0, 15, .147);
       return filling;
     },
     cotton(group, tint = pink) {

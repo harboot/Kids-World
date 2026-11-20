@@ -1,5 +1,5 @@
 {
-  "version": "75ddd31e7047a73cdf19d625c6c249480477a9ec7e49daa7e5433fecb91500c6",
+  "version": "ff8e1b6cfd5e27a900da21f4a108ddc16825c476daa55240b78cf6200d253145",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
@@ -111,7 +111,7 @@
     },
     {
       "path": "./areas/princess-gallery/concessions.js",
-      "revision": "6419b3ed325a3b5d8aa07aa952b45fc5de2857388a919d9fe4eca03788a77e82"
+      "revision": "b4f7943711579bb810b65d0fd111c556d0b12470e70a375289324d6948258c92"
     },
     {
       "path": "./areas/princess-gallery/exhibits.js",
@@ -147,7 +147,7 @@
     },
     {
       "path": "./areas/princess-gallery/snacks.js",
-      "revision": "d2b9d013b550e154f80fbe23bc1782589427569ef7cccd9e97eaf78b563c3d2f"
+      "revision": "8566d3f0abf0596deb3702713359e4648fc3af8f437c3512224d0e4be81b67df"
     },
     {
       "path": "./areas/princess-gallery/snow-white.js",
@@ -155,7 +155,7 @@
     },
     {
       "path": "./areas/princess-gallery/tasting.js",
-      "revision": "986f9544e4517f0031f93810a9a825627a6fe38bbd7eb2c9b4315585910dadf4"
+      "revision": "dcbf6d55230334943b1b017912b0d405e21522d18becf06169a56a1b352dbe9f"
     },
     {
       "path": "./areas/princess-gallery/visitors.js",
