@@ -304,14 +304,15 @@ export function buildGallery(THREE, scene, document, obstacles, services) {
     const outline = exhibitOutline(exhibit);
     const woodland = wing === 'woodland';
     const enclosed = id === 'rapunzel';
-    const fullWalls = enclosed || id === 'cinderella';
+    const sleepingChamber = id === 'aurora';
+    const fullWalls = enclosed || sleepingChamber || id === 'cinderella';
     const height = fullWalls ? bounds.height : id === 'snow-white' ? 4.25 : wing === 'royal' ? 4.5 : 2.85;
     const thickness = enclosed ? .44 : .55;
     const interiorFace = front - thickness / 2;
 
     function partition(a, b, index) {
-      wall(local, a, b, height + (fullWalls ? 0 : .26 * (index % 3)), enclosed ? ivory : woodland ? moss : ivory,
-        enclosed ? blush : wingMaterials[wing], transform, thickness, !woodland || enclosed);
+      wall(local, a, b, height + (fullWalls ? 0 : .26 * (index % 3)), fullWalls || !woodland ? ivory : moss,
+        enclosed || sleepingChamber ? blush : wingMaterials[wing], transform, thickness, fullWalls || !woodland);
       const [ax, az] = a, [bx, bz] = b;
       if (fullWalls || (id === 'snow-white' && index >= 3 && index <= 9)) return;
       const length = Math.hypot(bx - ax, bz - az);
@@ -370,7 +371,8 @@ export function buildGallery(THREE, scene, document, obstacles, services) {
     }
 
     batch(local, bay);
-    if (build) exhibitVisits.push(build({ THREE, document, bay, exhibit, parts, obstacles, interiorFace, outline }));
+    if (build) exhibitVisits.push(build({ THREE, document, bay, exhibit, parts, obstacles, interiorFace, outline,
+      reducedMotion: services.reducedMotion }));
   }
   buildScenicEdges({ THREE, parent: shell, parts, obstacles });
   const walkway = buildWalkway({ THREE, document, parent: shell, parts, exhibits, ceiling });

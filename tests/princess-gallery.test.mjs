@@ -73,6 +73,7 @@ test('public gallery opens by normal and drone URLs with no castle progress', t 
     assert.match(visit.area.missionStatus.hint, /Visit Rapunzel and jump onto the observation platform/);
     assert.match(visit.area.missionStatus.hint, /Approach Snow White and the seven dwarfs/);
     assert.match(visit.area.missionStatus.hint, /Cinderella’s glass slipper on the ballroom stairs/);
+    assert.match(visit.area.missionStatus.hint, /Approach the enchanted rose to wake Aurora/);
     assert.equal(game.progress.has(CASTLE), false);
     assert.equal(game.progress.has(ID), false);
     assert.equal(game.progress.canSelect(ID), false);
@@ -212,8 +213,8 @@ test('ten distinct and nonoverlapping footprints surround the Central Atrium', t
     'rapunzel', 'snow-white', 'cinderella', 'aurora', 'ariel', 'belle', 'jasmine', 'mulan', 'tiana', 'moana',
   ]));
   assert.deepEqual(exhibits.filter(entry => entry.status === 'complete' && entry.build).map(entry => entry.id),
-    ['rapunzel', 'snow-white', 'cinderella']);
-  assert.equal(exhibits.filter(entry => entry.status === 'coming-soon' && !entry.build).length, 7);
+    ['rapunzel', 'snow-white', 'aurora', 'cinderella']);
+  assert.equal(exhibits.filter(entry => entry.status === 'coming-soon' && !entry.build).length, 6);
   assert.ok(new Set(exhibits.map(entry => entry.shape)).size >= 5);
   assert.ok(new Set(exhibits.map(entry => entry.rotation)).size >= 8);
   for (const key of ['width', 'depth', 'height']) {
@@ -556,6 +557,221 @@ test('Snow White supports static greetings and resets all actors on unload', () 
   assert.deepEqual(actors.map(entry => entry.pose()), idle);
 });
 
+test('Aurora’s bed and rose are solid with a clear approach from the gallery entrance', t => {
+  const { worlds } = fixture();
+  t.after(worlds.unload);
+  const { area, scene } = worlds.load(ID);
+  const exhibit = exhibits.find(entry => entry.id === 'aurora');
+  const { toWorld } = spaceTransform(exhibit);
+  const room = scene.getObjectByName('Aurora royal sleeping chamber');
+  const bed = room.getObjectByName('Aurora royal bed');
+  const character = bed.getObjectByName('Aurora character');
+  const rose = room.getObjectByName('Enchanted rose');
+  assert.ok(scene.getObjectByName('Aurora chamber ceiling').layers.isEnabled(PLAYER_ONLY_LAYER));
+  assert.ok(new THREE.Box3().setFromObject(bed).getSize(new THREE.Vector3()).y > 4.8);
+  const { x: rx, z: rz } = rose.position;
+  const approach = toWorld(rx, rz + 1.8);
+  assertWalkable(area, toWorld(0, 14), toWorld(0, 4.25), 'Aurora entrance');
+  assertWalkable(area, toWorld(0, 4.25), approach, 'enchanted rose');
+  const besideRose = toWorld(rx + 1.4, rz + 1.8);
+  const besideBed = toWorld(rx + 1.4, bed.position.z);
+  assertWalkable(area, approach, besideRose, 'front of the rose');
+  assertWalkable(area, besideRose, besideBed, 'around the rose pedestal');
+  assertWalkable(area, besideBed, toWorld(rx, bed.position.z), 'bedside aisle');
+  for (const [x, z] of [
+    [rx, rz], [0, bed.position.z], [2.39, bed.position.z + 2.73], [0, bed.position.z - 2.73],
+  ].map(point => toWorld(...point))) {
+    assert.equal(walkElevation(area, { x, z }, x, z, 0, true), null);
+  }
+  assert.equal(nearestInteraction(area.interactions, { x: approach[0], y: EYE_HEIGHT, z: approach[1] }), null);
+
+  const head = character.getObjectByName('Aurora head');
+  const sleepingHead = bed.worldToLocal(head.getWorldPosition(new THREE.Vector3()));
+  assert.ok(sleepingHead.z < character.position.z - .95, 'the head rests toward the headboard');
+  assert.ok(Math.abs(sleepingHead.y - character.position.y) < .12, 'the body rests level with the mattress');
+  assert.ok(head.getObjectByName('Closed eyelids').visible);
+  assert.equal(head.getObjectByName('Open eyes').visible, false);
+});
+
+test('approaching the rose wakes Aurora smoothly and repeatedly with a stable boundary', t => {
+  const { worlds } = fixture();
+  t.after(worlds.unload);
+  const { scene } = worlds.load(ID);
+  const { toWorld } = spaceTransform(exhibits.find(entry => entry.id === 'aurora'));
+  const { x: rx, z: rz } = scene.getObjectByName('Enchanted rose').position;
+  const body = scene.getObjectByName('Aurora upper body');
+  const eyes = body.getObjectByName('Open eyes');
+  const leftElbow = body.getObjectByName('Aurora left elbow');
+  const dust = scene.getObjectByName('Aurora magical particles');
+  const light = scene.getObjectByName('Aurora bedlight');
+  const rest = body.rotation.x;
+  const elbowAtRest = leftElbow.rotation.x;
+  const idleMotes = dust.geometry.drawRange.count;
+  const idleLight = light.intensity;
+  const [bx, bz] = toWorld(rx, rz + 2.74);
+  const boundary = { x: bx, y: EYE_HEIGHT, z: bz };
+  const [nx, nz] = toWorld(rx, rz + 2.3);
+  const near = { x: nx, y: EYE_HEIGHT, z: nz };
+
+  function tick(player, seconds) {
+    for (let i = 0; i < seconds * 60; i++) worlds.update(1 / 60, player);
+  }
+
+  tick({ ...near, y: EYE_HEIGHT + scene.getObjectByName('aurora overlook').position.y }, 2.4);
+  assert.equal(eyes.visible, false, 'the Glass Walkway stays above the activation zone');
+  assert.equal(light.intensity, idleLight);
+  tick(boundary, 2.4);
+  assert.equal(eyes.visible, false, 'the exit threshold cannot wake a sleeping Aurora');
+  assert.notEqual(body.rotation.x, rest, 'she breathes when asleep');
+
+  tick(near, .4);
+  const partlyRaised = body.rotation.x;
+  assert.ok(partlyRaised > rest + .02 && partlyRaised < rest + .6);
+  tick(near, .6);
+  assert.ok(body.rotation.x > partlyRaised + .3 && body.rotation.x < -.4);
+  assert.ok(eyes.visible);
+  tick(near, 1.2);
+  assert.ok(body.rotation.x > -.35);
+  assert.ok(leftElbow.rotation.x < elbowAtRest - .25);
+  assert.equal(eyes.scale.y, 1);
+  assert.ok(dust.geometry.drawRange.count > idleMotes);
+  assert.ok(light.intensity > idleLight);
+  const awakeLight = light.intensity;
+
+  tick(near, 3);
+  tick(boundary, 4);
+  assert.ok(body.rotation.x > -.35, 'remaining nearby holds the awake pose past the entry threshold');
+  assert.equal(light.intensity, awakeLight);
+  const [ax, az] = toWorld(rx, rz + 3.3);
+  const away = { x: ax, y: EYE_HEIGHT, z: az };
+  tick(away, .75);
+  assert.ok(body.rotation.x < -.42 && body.rotation.x > rest + .12, 'returning to the pillow takes time');
+  tick(away, 1.35);
+  assert.ok(Math.abs(body.rotation.x - rest) < .02);
+  assert.equal(eyes.visible, false);
+  assert.equal(light.intensity, idleLight);
+  assert.equal(dust.geometry.drawRange.count, idleMotes);
+
+  tick(near, 2.2);
+  assert.ok(body.rotation.x > -.35, 'another approach wakes her again');
+  assert.ok(eyes.visible);
+  assert.equal(light.intensity, awakeLight);
+});
+
+test('Aurora resets her pose and effects and releases scene resources on travel', t => {
+  const { worlds } = fixture();
+  t.after(worlds.unload);
+  const visit = worlds.load(ID);
+  const { scene } = visit;
+  const body = scene.getObjectByName('Aurora upper body');
+  const head = scene.getObjectByName('Aurora head');
+  const rose = scene.getObjectByName('Enchanted rose');
+  const dust = scene.getObjectByName('Aurora magical particles');
+  const bloom = rose.children.filter(child => child.material?.emissive?.getHex());
+  assert.ok(bloom.length >= 3, 'the petals use several glow levels');
+  const near = rose.getWorldPosition(new THREE.Vector3());
+  near.y = EYE_HEIGHT;
+  const state = () => [body.rotation.x, body.scale.z, head.rotation.toArray(), head.getObjectByName('Open eyes').visible,
+    bloom.map(petal => petal.material.emissiveIntensity), dust.geometry.drawRange.count,
+    Array.from(dust.geometry.attributes.position.array.slice(0, dust.geometry.drawRange.count * 3))];
+  const rest = state();
+  worlds.update(2.2, near);
+  assert.notDeepEqual(state(), rest);
+  assert.ok(bloom.every((petal, i) => petal.material.emissiveIntensity > rest[4][i]));
+  worlds.reset();
+  assert.deepEqual(state(), rest);
+
+  const resources = [dust.geometry, head.children.find(child => child.isMesh).material];
+  const disposed = new Set();
+  for (const resource of resources) resource.addEventListener('dispose', () => disposed.add(resource));
+  worlds.update(2.2, near);
+  worlds.load(CASTLE);
+  assert.deepEqual(disposed, new Set(resources));
+  assert.equal(scene.children.length, 0);
+  assert.deepEqual(state(), rest);
+  visit.area.update(3, near);
+  assert.deepEqual(state(), rest);
+  const fresh = worlds.load(ID).scene.getObjectByName('Aurora upper body');
+  assert.equal(fresh.rotation.x, rest[0]);
+  assert.equal(fresh.getObjectByName('Open eyes').visible, false);
+});
+
+test('reduced motion keeps Aurora still and wakes or settles her immediately', t => {
+  const { worlds } = fixture({ reduced: true });
+  t.after(worlds.unload);
+  const { scene } = worlds.load(ID);
+  const body = scene.getObjectByName('Aurora upper body');
+  const head = scene.getObjectByName('Aurora head');
+  const eyes = head.getObjectByName('Open eyes');
+  const dust = scene.getObjectByName('Aurora magical particles');
+  const rose = scene.getObjectByName('Enchanted rose');
+  const near = rose.getWorldPosition(new THREE.Vector3());
+  near.y = EYE_HEIGHT;
+  const rest = body.rotation.x;
+  assert.equal(dust.visible, false);
+  worlds.update(1 / 60, near);
+  assert.ok(body.rotation.x > -.35 && eyes.visible);
+  assert.equal(dust.visible, false);
+  const awake = [body.rotation.x, head.rotation.toArray()];
+  worlds.update(1.3, near);
+  assert.deepEqual([body.rotation.x, head.rotation.toArray()], awake);
+  worlds.update(1 / 60, { ...near, y: EYE_HEIGHT + 15.6 });
+  assert.equal(body.rotation.x, rest);
+  assert.equal(eyes.visible, false);
+  worlds.update(1 / 60, near);
+  worlds.reset();
+  assert.equal(body.rotation.x, rest);
+  assert.equal(dust.visible, false);
+});
+
+test('Cinderella stands in view from the entrance and leaves both stair approaches clear', t => {
+  const { worlds } = fixture();
+  t.after(worlds.unload);
+  const { area, scene } = worlds.load(ID);
+  const ballroom = scene.getObjectByName('Cinderella palace ballroom');
+  const character = ballroom.getObjectByName('Cinderella character');
+  const head = character.getObjectByName('Cinderella head');
+  assert.ok(head.getObjectByName('Open eyes').visible);
+  const bounds = new THREE.Box3().setFromObject(character);
+  const feet = character.getWorldPosition(new THREE.Vector3());
+  assert.ok(Math.abs(bounds.min.y - feet.y) < 1e-5);
+  assert.equal(floorHeight(area, feet.x, feet.z, feet.y), feet.y);
+  assert.ok(bounds.max.y - feet.y > 2.5);
+
+  const exhibit = exhibits.find(entry => entry.id === 'cinderella');
+  const { toWorld } = spaceTransform(exhibit);
+  assertWalkable(area, toWorld(0, 9.75), toWorld(0, -4), 'center ballroom aisle');
+  assertWalkable(area, toWorld(0, 7), toWorld(-3.4, 3.3), 'left staircase approach');
+  assertWalkable(area, toWorld(0, 7), toWorld(3.4, 3.15), 'right staircase approach');
+  const [ex, ez] = toWorld(0, 9.75);
+  const eye = new THREE.Vector3(ex, EYE_HEIGHT, ez);
+  const aim = new THREE.Vector3(feet.x, feet.y + 1.25, feet.z);
+  scene.updateMatrixWorld(true);
+  const sight = new THREE.Raycaster(eye, aim.sub(eye).normalize()).intersectObject(scene, true)
+    .find(hit => hit.object.isMesh && !hit.object.material.transparent);
+  assert.ok(character.getObjectById(sight?.object.id), 'the figure is visible from the entrance');
+
+  const [x, z] = toWorld(character.position.x, character.position.z + 1.3);
+  const nearby = { x, y: EYE_HEIGHT, z };
+  assert.equal(walkElevation(area, nearby, feet.x, feet.z, 0, true), null, 'the gown has a solid footprint');
+  const pose = head.rotation.toArray();
+  const slipper = ballroom.getObjectByName('Cinderella glass slipper');
+  const slipperRest = slipper.position.y;
+  assert.equal(nearestInteraction(area.interactions, nearby), null);
+  worlds.update(2, nearby);
+  assert.deepEqual(head.rotation.toArray(), pose);
+  assert.equal(slipper.position.y, slipperRest);
+  worlds.reset();
+  assert.deepEqual(head.rotation.toArray(), pose);
+
+  const gown = character.children.find(child => child.isMesh);
+  let disposed = false;
+  gown.material.addEventListener('dispose', () => { disposed = true; });
+  worlds.unload();
+  assert.ok(disposed);
+  assert.deepEqual(head.rotation.toArray(), pose);
+});
+
 test('Cinderella’s curved staircase can be walked in both directions and the slipper responds on approach', t => {
   const { worlds, player, camera } = fixture();
   t.after(worlds.unload);
@@ -674,6 +890,7 @@ test('both staircases connect the main level to the glass loop and all ten overl
     rapunzel: [0, 7.5, -5.15],
     'snow-white': [-1, 3.35, -7.33],
     cinderella: [0, 9.54, -10.65],
+    aurora: [0, 1.7, -6.35],
   };
 
   function walkTo(x, z) {

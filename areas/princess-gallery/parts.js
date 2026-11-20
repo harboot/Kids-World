@@ -87,8 +87,13 @@ export function spaceTransform({ position, rotation }) {
   const sin = Math.sin(rotation);
   return {
     toWorld: (x, z) => [position.x + cos * x + sin * z, position.z - sin * x + cos * z],
-    toLocal: (x, z) => [cos * (x - position.x) - sin * (z - position.z),
-      sin * (x - position.x) + cos * (z - position.z)],
+    toLocal(x, z, target = []) {
+      const dx = x - position.x;
+      const dz = z - position.z;
+      target[0] = cos * dx - sin * dz;
+      target[1] = sin * dx + cos * dz;
+      return target;
+    },
   };
 }
 

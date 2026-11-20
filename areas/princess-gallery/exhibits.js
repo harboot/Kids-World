@@ -1,3 +1,4 @@
+import { buildAurora } from './aurora.js';
 import { buildCinderella } from './cinderella.js';
 import { buildRapunzel } from './rapunzel.js';
 import { buildSnowWhite } from './snow-white.js';
@@ -40,7 +41,7 @@ export const exhibits = [
     id: 'aurora', title: 'Aurora — Sleeping Beauty', accent: 0xcb7ca0, wing: 'woodland',
     position: { x: -49, z: -30 }, rotation: 1.14,
     bounds: { width: 23, depth: 24, height: 19 }, shape: 'oval', entrance: 6.3,
-    approach: [-29, -18], status: 'coming-soon',
+    approach: [-29, -18], status: 'complete', build: buildAurora,
   },
   {
     id: 'belle', title: 'Belle — Beauty and the Beast', accent: 0xc99856, wing: 'royal',
