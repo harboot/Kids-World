@@ -4,6 +4,7 @@ import { seededRandom } from '../../core/random.js';
 import { buildAtrium, ATRIUM_RADII } from './atrium.js';
 import { GALLERY_DEPTH, GALLERY_WIDTH, exhibitOutline, exhibits, wings } from './exhibits.js';
 import { addGallerySign, addSolid, createParts, spaceTransform } from './parts.js';
+import { buildWalkway, WALKWAY_HEIGHT, walkwayStairs } from './walkway.js';
 
 const halfWidth = GALLERY_WIDTH / 2;
 const halfDepth = GALLERY_DEPTH / 2;
@@ -80,6 +81,7 @@ function galleryFloor(THREE, document, parts, parent) {
     for (const [wing, link] of Object.entries(links)) {
       route(link, 7.1, wings[wing].path);
     }
+    for (const stair of walkwayStairs) route(stair.floorApproach, 3.9, '#7793a3');
     route(lobby, 9.2, '#b7808e');
     for (const [rx, rz, color] of [[5.0, 3.4, '#765071'], [4.81, 3.22, '#d0a361'], [4.54, 2.96, '#f2dfcb']]) {
       ink.fillStyle = color;
@@ -344,8 +346,20 @@ export function buildGallery(THREE, scene, document, obstacles) {
 
     if (fullWalls) {
       const opening = 6.75;
-      part(local, 'box', ivory, 0, (bounds.height + opening) / 2, front,
-        entrance + .24, bounds.height - opening, thickness);
+      // The upper opening gives the lookout access to the exhibit below its interior ceiling.
+      const deckBottom = WALKWAY_HEIGHT - .26;
+      const upperLintel = WALKWAY_HEIGHT + 3.2;
+      for (const [bottom, top] of [[opening, deckBottom], [upperLintel, bounds.height]]) {
+        part(local, 'box', ivory, 0, (bottom + top) / 2, front,
+          entrance + .24, top - bottom, thickness);
+      }
+      const frameZ = front + thickness / 2 + SURFACE_GAP.detail;
+      for (const side of [-1, 1]) {
+        part(local, 'box', gold, side * (entrance / 2 + .23), (deckBottom + upperLintel) / 2,
+          frameZ, .23, upperLintel - deckBottom + .32, .14);
+      }
+      part(local, 'box', gold, 0, upperLintel + .12, frameZ,
+        entrance + .69, .24, .16);
       if (enclosed) overhead(part(local, 'box', blush, 0, bounds.height + .06, 0, bounds.width, .12, bounds.depth));
     } else if (!build) {
       // Small accent medallion reserves the scene and leaves the entire floor walkable.
@@ -360,5 +374,6 @@ export function buildGallery(THREE, scene, document, obstacles) {
     batch(local, bay);
     if (build) exhibitVisits.push(build({ THREE, document, bay, exhibit, parts, obstacles, interiorFace, outline }));
   }
-  return { exhibitVisits, ceiling };
+  const walkway = buildWalkway({ THREE, document, parent: shell, parts, exhibits, ceiling });
+  return { exhibitVisits, ceiling, walkway };
 }

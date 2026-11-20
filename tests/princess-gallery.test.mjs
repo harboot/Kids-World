@@ -602,3 +602,99 @@ test('Cinderella’s slipper holds a static sparkle in reduced motion and clears
   visit.area.update(1, near);
   assert.equal(slipper.position.y, rest);
 });
+
+test('both staircases connect the main level to the glass loop and all ten overlooks', t => {
+  const { worlds, player, camera } = fixture();
+  t.after(worlds.unload);
+  const visit = worlds.load(ID);
+  const { area, scene } = visit;
+  const walkway = scene.getObjectByName('Princess Gallery Glass Walkway');
+  const floor = walkway.getObjectByName('Suspended glass bridge floor');
+  assert.ok(floor.material.transparent && floor.material.opacity < .5);
+  assert.ok(floor.layers.isEnabled(PLAYER_ONLY_LAYER));
+  const direction = new THREE.Vector2();
+  const ray = new THREE.Raycaster();
+  ray.layers.enable(PLAYER_ONLY_LAYER);
+  scene.updateMatrixWorld(true);
+  const landmarks = {
+    rapunzel: [0, 7.5, -5.15],
+    'snow-white': [-1, 3.35, -7.33],
+    cinderella: [0, 9.54, -10.65],
+  };
+
+  function walkTo(x, z) {
+    for (let frame = 0; frame < 460; frame++) {
+      direction.set(x - camera.position.x, z - camera.position.z);
+      if (direction.length() < .12) {
+        player.stop();
+        assert.ok(player.grounded);
+        return;
+      }
+      player.move(1 / 60, direction.normalize(), visit);
+    }
+    assert.fail(`could not walk to ${x}, ${z} from ${camera.position.toArray()}`);
+  }
+
+  player.reset(hall.spawn, area);
+  walkTo(-21.15, 38.5);
+  walkTo(-21.15, 54.62);
+  walkTo(-16, 54.62);
+  walkTo(-16, 33);
+  const height = camera.position.y - EYE_HEIGHT;
+  assert.ok(height > 15);
+  assert.equal(area.getGroundHeight(-16, 33, 0), 0, 'the floor below remains usable');
+  assert.ok(Math.abs(area.getGroundHeight(-16, 33, height) - height) < 1e-6);
+
+  const ring = [[-16, 33], [-27, 24], [-30, 7], [-29, -18], [-17, -27],
+    [3, -29], [14.5, -30], [25, -24], [34, -11], [33, 10], [26, 25], [11, 32], [-4, 32], [-16, 33]];
+  for (const approach of ring) {
+    walkTo(...approach);
+    const exhibit = exhibits.find(e => e.approach.every((value, axis) => value === approach[axis]));
+    if (!exhibit) continue;
+    const platform = walkway.getObjectByName(exhibit.id + ' overlook');
+    const offset = platform.position.clone().sub(new THREE.Vector3(approach[0], height, approach[1])).normalize();
+    walkTo(platform.position.x - offset.x * .65, platform.position.z - offset.z * .65);
+    assert.ok(Math.abs(camera.position.y - (height + EYE_HEIGHT)) < 1e-6);
+    const across = platform.position.clone().addScaledVector(offset, -.65);
+    assert.equal(walkElevation(area, camera.position, across.x + offset.z * 2.06,
+      across.z - offset.x * 2.06, height, true), null, exhibit.id + ' railing');
+    assert.equal(walkElevation(area, camera.position, platform.position.x, platform.position.z, height + 1.31, false),
+      null, exhibit.id + ' railing also holds during a jump');
+    const { toLocal, toWorld } = spaceTransform(exhibit);
+    const [, localZ] = toLocal(camera.position.x, camera.position.z);
+    assert.ok(localZ < exhibit.bounds.depth / 2 - 2, exhibit.id + ' platform reaches inside the facade');
+    const [targetX, targetY, targetZ] = landmarks[exhibit.id] ?? [0, 1.5, -exhibit.bounds.depth * .24];
+    const [aimX, aimZ] = toWorld(targetX, targetZ);
+    const room = scene.getObjectByName(exhibit.id + ' exhibit');
+    const visible = [.6, .85, 1.25].some(distance => {
+      const eye = platform.position.clone().addScaledVector(offset, -distance);
+      eye.y += EYE_HEIGHT;
+      ray.set(eye, new THREE.Vector3(aimX, targetY, aimZ).sub(eye).normalize());
+      const sight = ray.intersectObject(scene, true).find(hit => hit.object.isMesh && !hit.object.material.transparent);
+      return sight && room.getObjectById(sight.object.id);
+    });
+    assert.ok(visible, exhibit.id + ' has a clear view into the exhibit');
+    walkTo(...approach);
+  }
+
+  for (const point of ring.slice(1, 7)) walkTo(...point);
+  walkTo(14.5, -11.62);
+  walkTo(19.65, -11.62);
+  walkTo(19.65, -27.5);
+  assert.ok(Math.abs(camera.position.y - EYE_HEIGHT) < 1e-6, 'return to the main floor');
+});
+
+test('the overhead lookout into Cinderella can still be inspected by the drone at floor level', t => {
+  const { worlds } = fixture();
+  t.after(worlds.unload);
+  const { area, scene, definition, viewmodel } = worlds.load(ID);
+  const [x, z] = spaceTransform(exhibits.find(entry => entry.id === 'cinderella')).toWorld(0, 9.6);
+  assert.ok(area.getGroundHeight(x, z, 15.6) > 15);
+  const drone = createDroneCamera(THREE);
+  drone.focus(definition, undefined, 1.7);
+  const pick = createCoordinatePicker(THREE);
+  const point = new THREE.Vector3(x, 0, z).project(drone.camera);
+  const rect = { left: 0, top: 0, width: 1020, height: 600 };
+  const selected = pick(scene, drone.camera, viewmodel, (point.x + 1) * 510, (1 - point.y) * 300, rect);
+  assert.ok(selected && Math.abs(selected.y) < .04);
+});

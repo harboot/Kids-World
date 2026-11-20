@@ -1,5 +1,5 @@
 {
-  "version": "fb5ef00b8dff0945df2715ed0cc76a547a0ca13c1ce25b92e43b97b77403d619",
+  "version": "e9a4912fc1761b6e3c57f32dfb1c45faaea663bd237272ccd5ddc8f16a887f83",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
@@ -115,11 +115,11 @@
     },
     {
       "path": "./areas/princess-gallery/gallery.js",
-      "revision": "44d329fa90c72829ed05bd3712d71718d2f174de70cb47e6b622217cd79debcc"
+      "revision": "949d2a93e07def4458f98fac18473ac88ec46572bc896e7d588ff22cde2fe01a"
     },
     {
       "path": "./areas/princess-gallery/index.js",
-      "revision": "790686d25fdd7e51849b46bc6e487f18b7b4c6bb6deabe31180e29c558d822fc"
+      "revision": "3fb28280ee9d629e6da4f7076ea0d6f2c0828245d1623d4e70c6b225ae4648ce"
     },
     {
       "path": "./areas/princess-gallery/parts.js",
@@ -136,6 +136,10 @@
     {
       "path": "./areas/princess-gallery/snow-white.js",
       "revision": "8bc81ce3eebf30f53358a9ccc0c4f0bdfb6d07f05f70ea73b8e9b95a7a5d6088"
+    },
+    {
+      "path": "./areas/princess-gallery/walkway.js",
+      "revision": "417f2cb4d1bce51efdd73cf868c87e0012d4bbdf54b325522e7418178860a0c7"
     },
     {
       "path": "./areas/secret-apartment/basement.js",
