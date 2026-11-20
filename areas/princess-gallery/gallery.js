@@ -1,296 +1,372 @@
-import { addGroup, paintCanvasTexture, rectangleBounds, SURFACE_GAP } from '../../core/geometry.js';
+import { addGroup, paintCanvasTexture, SURFACE_GAP } from '../../core/geometry.js';
 import { PLAYER_ONLY_LAYER } from '../../core/render-layers.js';
 import { seededRandom } from '../../core/random.js';
-import {
-  CORRIDOR_WIDTH, END_HALL_START, EXHIBIT_DEPTH, EXHIBIT_HEIGHT, EXHIBIT_WIDTH,
-  GALLERY_DEPTH, GALLERY_WIDTH, LOBBY_START, exhibits,
-} from './exhibits.js';
-import { addGallerySign, createParts } from './parts.js';
+import { buildAtrium, ATRIUM_RADII } from './atrium.js';
+import { GALLERY_DEPTH, GALLERY_WIDTH, exhibitOutline, exhibits, wings } from './exhibits.js';
+import { addGallerySign, addSolid, createParts, spaceTransform } from './parts.js';
 
-const ceiling = EXHIBIT_HEIGHT;
 const halfWidth = GALLERY_WIDTH / 2;
 const halfDepth = GALLERY_DEPTH / 2;
-const passage = CORRIDOR_WIDTH / 2;
-const wallDepth = 0.44;
+const ceiling = 24.5;
+const shellOutline = [[-61, 60], [60, 60], [70, 50], [70, -49], [60, -60], [-60, -60], [-70, -50], [-70, 51]];
+const promenade = [[-16, 33], [-27, 24], [-30, 7], [-29, -18], [-17, -27], [3, -29],
+  [25, -24], [34, -11], [33, 10], [26, 25], [11, 32], [-4, 32]];
+const lobby = [[0, 59], [0, 51], [-4, 42], [-4, 32], [-1, 23], [0, 14]];
+const links = {
+  woodland: [[-30, 7], [-24, 3], [-17, 1]],
+  royal: [[3, -29], [1, -23], [-2, -14]],
+  adventure: [[33, 10], [25, 8], [17, 3]],
+};
+
+function galleryFloor(THREE, document, parts, parent) {
+  const map = paintCanvasTexture(THREE, document, 2048, 2048, (ink, width, height) => {
+    ink.scale(width / GALLERY_WIDTH, height / GALLERY_DEPTH);
+    ink.translate(halfWidth, halfDepth);
+    ink.fillStyle = '#bca2ab';
+    ink.fillRect(-halfWidth, -halfDepth, GALLERY_WIDTH, GALLERY_DEPTH);
+    const random = seededRandom(1083);
+    const tiles = ['#bda3ae', '#b59ba8', '#c3a9b0', '#baa1ac'];
+    for (let z = -halfDepth; z < halfDepth; z += 3) {
+      for (let x = -halfWidth; x < halfWidth; x += 3) {
+        ink.fillStyle = tiles[Math.floor(random() * tiles.length)];
+        ink.fillRect(x + .055, z + .055, 2.89, 2.89);
+        ink.strokeStyle = '#fff6e922';
+        ink.lineWidth = .07;
+        ink.beginPath();
+        ink.moveTo(x + .15, z + 2.86);
+        ink.quadraticCurveTo(x + 2.4, z + random() * 2, x + 2.84, z + .14);
+        ink.stroke();
+      }
+    }
+
+    for (const exhibit of exhibits) {
+      if (exhibit.build) continue;
+      const { toWorld } = spaceTransform(exhibit);
+      const outline = exhibitOutline(exhibit);
+      for (const [scale, color] of [[1, '#e5cbb7'], [.88, wings[exhibit.wing].path], [.85, '#ebd7c7']]) {
+        ink.fillStyle = color;
+        ink.beginPath();
+        for (const [x, z] of outline) ink.lineTo(...toWorld(x * scale, z * scale));
+        ink.closePath();
+        ink.fill();
+      }
+    }
+
+    // All joins and inlays are painted on one floor surface, including where paths cross.
+    function route(points, width, accent, loop = false) {
+      const curves = new THREE.CatmullRomCurve3(points.map(([x, z]) => new THREE.Vector3(x, 0, z)), loop);
+      const samples = curves.getPoints(points.length * 12);
+      ink.lineCap = 'round';
+      ink.lineJoin = 'round';
+      ink.beginPath();
+      ink.moveTo(samples[0].x, samples[0].z);
+      for (const point of samples.slice(1)) ink.lineTo(point.x, point.z);
+      if (loop) ink.closePath();
+      for (const [color, size] of [['#6d5269', width + .68], ['#d5af6a', width + .42],
+        [accent, width], ['#efdfd1', width - 1.45]]) {
+        ink.strokeStyle = color;
+        ink.lineWidth = size;
+        ink.stroke();
+      }
+    }
+
+    route(promenade, 6.7, '#9c728f', true);
+    for (const exhibit of exhibits) {
+      const { toWorld } = spaceTransform(exhibit);
+      const front = exhibit.bounds.depth / 2;
+      route([exhibit.approach, toWorld(0, front + 2.25), toWorld(0, front - .42)],
+        exhibit.entrance - .9, wings[exhibit.wing].path);
+    }
+    for (const [wing, link] of Object.entries(links)) {
+      route(link, 7.1, wings[wing].path);
+    }
+    route(lobby, 9.2, '#b7808e');
+    for (const [rx, rz, color] of [[5.0, 3.4, '#765071'], [4.81, 3.22, '#d0a361'], [4.54, 2.96, '#f2dfcb']]) {
+      ink.fillStyle = color;
+      ink.beginPath();
+      ink.ellipse(0, 51, rx, rz, 0, 0, Math.PI * 2);
+      ink.fill();
+    }
+    ink.fillStyle = '#b8837b';
+    ink.beginPath();
+    for (const point of [[0, 48.45], [.94, 50.57], [3.29, 51], [.94, 51.43],
+      [0, 53.55], [-.94, 51.43], [-3.29, 51], [-.94, 50.57]]) ink.lineTo(...point);
+    ink.closePath();
+    ink.fill();
+
+    for (const [rx, rz, color] of [[18.8, 16.8, '#765071'], [18.45, 16.45, '#d0a361'],
+      [18.2, 16.2, '#edd7c5'], [16.9, 14.9, '#a57f9b'], [16.5, 14.5, '#f3e3d4']]) {
+      ink.fillStyle = color;
+      ink.beginPath();
+      ink.ellipse(0, 0, rx, rz, 0, 0, Math.PI * 2);
+      ink.fill();
+    }
+    ink.save();
+    for (let i = 0; i < 16; i++) {
+      ink.fillStyle = i % 2 ? '#ddc297' : '#b78375';
+      ink.beginPath();
+      ink.moveTo(0, -12.8);
+      ink.lineTo(1.04, -9);
+      ink.lineTo(0, -6.3);
+      ink.lineTo(-1.04, -9);
+      ink.closePath();
+      ink.fill();
+      ink.rotate(Math.PI / 8);
+    }
+    ink.restore();
+  });
+  const outline = new THREE.Shape(shellOutline.map(([x, z]) => new THREE.Vector2(x, -z)));
+  const geometry = new THREE.ShapeGeometry(outline);
+  const vertices = geometry.getAttribute('position');
+  const uv = geometry.getAttribute('uv');
+  for (let i = 0; i < vertices.count; i++) {
+    uv.setXY(i, vertices.getX(i) / GALLERY_WIDTH + .5, vertices.getY(i) / GALLERY_DEPTH + .5);
+  }
+  const floor = parts.part(parent, geometry,
+    parts.matte(map ? 0xffffff : 0xd0b3b1, { map }), 0, -SURFACE_GAP.trim, 0, 1, 1, 1);
+  floor.name = 'Marble promenade, wing paths and atrium inlay';
+  floor.rotation.x = -Math.PI / 2;
+}
 
 export function buildGallery(THREE, scene, document, obstacles) {
-  scene.background = new THREE.Color(0x5f456c);
-  scene.fog = new THREE.Fog(0x866c9a, 43, 112);
-  scene.add(new THREE.HemisphereLight(0xffe6d2, 0x9382b7, 2.05));
-  const key = new THREE.DirectionalLight(0xffedce, 1.65);
-  key.position.set(-14, 26, 13);
+  scene.background = new THREE.Color(0xd1b4bf);
+  scene.fog = new THREE.Fog(0xd1b4bf, 64, 112);
+  scene.add(new THREE.HemisphereLight(0xffecd7, 0xc2a9dc, 2.18));
+  const key = new THREE.DirectionalLight(0xffebc7, 1.45);
+  key.position.set(-18, 30, 16);
   scene.add(key);
-  const fill = new THREE.DirectionalLight(0xe6caff, 0.58);
-  fill.position.set(12, 14, -15);
-  scene.add(fill);
 
   const parts = createParts(THREE);
-  const { part, beam, batch, matte } = parts;
-  const ivory = matte(0xe4cdbb);
-  const blush = matte(0xc293a9);
-  const mauve = matte(0x9b739e);
-  const plum = matte(0x542753);
-  const wine = matte(0x743b68);
-  const gold = matte(0xd4a661);
-  const cream = matte(0xffe4bf);
-  const stone = matte(0xb89caa);
-  const crystal = matte(0xffcda3, { emissive: 0xf8a061, emissiveIntensity: 0.65 });
-  const lantern = new THREE.MeshBasicMaterial({ color: 0xffe2af, toneMapped: false });
-  const marbleMap = paintCanvasTexture(THREE, document, 256, 256, (ink, w, h) => {
-    const random = seededRandom(52);
-    ink.fillStyle = '#fcf4e8';
-    ink.fillRect(0, 0, w, h);
-    for (let i = 0; i < 29; i++) {
-      const x = random() * w * 1.6 - w * 0.55;
-      const drift = 30 + random() * 120;
-      ink.strokeStyle = i % 4 ? '#ad7a9a19' : '#c8a58347';
-      ink.lineWidth = 0.35 + random() * 1.9;
-      ink.beginPath();
-      ink.moveTo(x, -6);
-      ink.bezierCurveTo(x + drift, 74 + random() * 38, x - drift * 0.29, 142, x + 0.83 * drift, 262);
-      ink.stroke();
-    }
-  });
-  const marble = [0xe2c9bd, 0xd4adb2, 0xf4dfd0, 0xe9d6cd].map(color => matte(color, {
-    map: marbleMap, reflectivity: 0.18,
-  }));
-
+  const { part, batch, matte } = parts;
+  const colors = {
+    cream: matte(0xf7ddba), ivory: matte(0xe5c8b4), blush: matte(0xc495a1), wine: matte(0x704967),
+    plum: matte(0x514058), gold: matte(0xbb8342), moss: matte(0x496b56), leaf: matte(0x75936a),
+    glow: matte(0xffdc93, { emissive: 0xffba65, emissiveIntensity: .42 }),
+  };
+  const { cream, ivory, blush, wine, plum, gold, moss, leaf, glow } = colors;
+  const wingMaterials = Object.fromEntries(Object.entries(wings).map(([id, wing]) => [id, matte(wing.accent)]));
   const shell = addGroup(THREE, scene, 'Gallery architecture');
   const components = new THREE.Group();
-  const box = (material, ...transform) => part(components, 'box', material, ...transform);
   const overhead = mesh => mesh.layers.set(PLAYER_ONLY_LAYER);
+  galleryFloor(THREE, document, parts, shell);
 
-  function solid(x, z, width, depth, height = ceiling) {
-    obstacles.push({ ...rectangleBounds(x, z, width, depth), height });
+  const roofShape = new THREE.Shape(shellOutline.map(([x, z]) => new THREE.Vector2(x, -z)));
+  const [domeX, domeZ] = ATRIUM_RADII;
+  const roofHole = new THREE.Path();
+  roofHole.absellipse(0, 0, domeX, domeZ, 0, Math.PI * 2, true);
+  roofShape.holes.push(roofHole);
+  const roof = part(shell, new THREE.ShapeGeometry(roofShape, 32), matte(0xc5a3b3, { side: THREE.DoubleSide }),
+    0, ceiling, 0, 1, 1, 1);
+  roof.rotation.x = -Math.PI / 2;
+  overhead(roof);
+
+  function wall(parent, a, b, height, material, base, transform, thickness = .58, dressed = true) {
+    const [ax, az] = a;
+    const [bx, bz] = b;
+    const yaw = Math.atan2(az - bz, bx - ax);
+    const x = (ax + bx) / 2;
+    const z = (az + bz) / 2;
+    const length = Math.hypot(bx - ax, bz - az);
+    part(parent, 'box', material, x, height / 2, z, length + .04, height, thickness).rotation.y = yaw;
+    if (dressed) {
+      part(parent, 'box', base, x, .47, z, length + .13, .94, thickness + .16).rotation.y = yaw;
+      part(parent, 'box', gold, x, 1, z, length, .09, thickness + .23).rotation.y = yaw;
+      part(parent, 'box', base, x, height - .05, z, length, .26, thickness + .13).rotation.y = yaw;
+    }
+    const [wx, wz] = transform?.toWorld(x, z) ?? [x, z];
+    addSolid(obstacles, wx, wz, length + .10, thickness + (dressed ? .23 : 0), height + .08,
+      yaw + (transform?.rotation ?? 0));
   }
 
-  function wall(x, z, width, depth) {
-    box(ivory, x, ceiling / 2, z, width, ceiling, depth);
-    const base = 0.12;
-    const vertical = width < depth;
-    const faceWidth = vertical ? width + 2 * base : width;
-    const faceDepth = vertical ? depth : depth + 2 * base;
-    box(mauve, x, 0.79, z, faceWidth, 1.58, faceDepth);
-    box(gold, x, 1.62, z, faceWidth + SURFACE_GAP.trim, 0.086, faceDepth + SURFACE_GAP.trim);
-    solid(x, z, faceWidth, faceDepth);
+  for (let i = 0; i < shellOutline.length; i++) {
+    const [ax, az] = shellOutline[i];
+    const [bx, bz] = shellOutline[(i + 1) % shellOutline.length];
+    wall(components, [ax, az], [bx, bz], ceiling, ivory, wine, null, 1.0);
+    const length = Math.hypot(bx - ax, bz - az);
+    const bays = Math.round(length / 10);
+    for (let j = 0; j < bays; j++) {
+      const t = (j + .5) / bays;
+      const model = addGroup(THREE, components, 'Perimeter window', ax + (bx - ax) * t, 0,
+        az + (bz - az) * t, Math.atan2(az - bz, bx - ax) + Math.PI);
+      part(model, 'box', wine, 0, 14.15, .57, 3.06, 6.5, .16);
+      part(model, 'box', glow, 0, 14.17, .68, 2.68, 6.08, .08);
+      part(model, 'sphere', glow, 0, 17.25, .678, 1.34, 1.17, .05);
+      part(model, 'box', gold, 0, 14.20, .74, .085, 6.16, .07);
+      for (const y of [12.4, 14.8, 16.85]) part(model, 'box', gold, 0, y, .74, 2.66, .11, .07);
+    }
   }
 
-  box(stone, 0, -0.24, 0, GALLERY_WIDTH, 0.40, GALLERY_DEPTH);
-  for (const side of [-1, 1]) wall(side * (halfWidth - wallDepth / 2), 0, wallDepth, GALLERY_DEPTH);
-  for (const z of [-halfDepth + wallDepth / 2, halfDepth - wallDepth / 2]) wall(0, z, GALLERY_WIDTH - 2 * wallDepth, wallDepth);
-
-  for (let row = 0; row <= 5; row++) {
-    const z = LOBBY_START - row * EXHIBIT_WIDTH;
+  function gateway(parent, title, subtitle, span, height, accent, { reverse = false, mapYaw } = {}) {
+    const model = addGroup(THREE, parent, title + ' arch');
+    const local = new THREE.Group();
+    const half = span / 2;
+    const shoulder = height - span * .26;
     for (const side of [-1, 1]) {
-      wall(side * (passage + (EXHIBIT_DEPTH - wallDepth) / 2), z, EXHIBIT_DEPTH - wallDepth, wallDepth);
+      part(local, 'box', plum, side * (half + .22), .21, 0, .93, .42, .94);
+      part(local, 'drum', ivory, side * (half + .23), (shoulder + .27) / 2, 0, .32, shoulder - .27, .36);
+      part(local, 'drum', gold, side * (half + .23), shoulder - .14, 0, .46, .24, .47);
+      part(local, 'gem', glow, side * (half + .24), 2.45, .32, .23, .38, .2);
     }
-  }
-
-  // The corridor, lobby and end hall share a stone floor and a continuous inlay.
-  function tiledFloor(x, z, width, depth, across, along) {
-    const tileWidth = width / across;
-    const tileDepth = depth / along;
-    for (let i = 0; i < across; i++) {
-      for (let j = 0; j < along; j++) {
-        box(marble[(i * 7 + j * 11 + i * j) % marble.length],
-          x - width / 2 + (i + 0.5) * tileWidth, -0.019, z - depth / 2 + (j + 0.5) * tileDepth,
-          tileWidth - 0.034, 0.038, tileDepth - 0.034);
+    function archBand(width) {
+      const points = [];
+      for (const edge of [1, -1]) {
+        for (let i = 0; i <= 24; i++) {
+          const angle = Math.PI * (edge === 1 ? i : 24 - i) / 24;
+          points.push(new THREE.Vector2(Math.cos(angle) * (half + .23 + edge * width / 2),
+            shoulder + Math.sin(angle) * (height - shoulder + edge * width / 2)));
+        }
       }
+      return new THREE.Shape(points);
     }
-  }
+    const arch = new THREE.ExtrudeGeometry(archBand(.48), { depth: .56, bevelEnabled: false });
+    part(local, arch, accent, 0, 0, -.28, 1, 1, 1);
+    const pinstripe = new THREE.ShapeGeometry(archBand(.075));
+    part(local, pinstripe, gold, 0, 0, .28 + SURFACE_GAP.detail, 1, 1, 1);
+    if (reverse) part(local, pinstripe, gold, 0, 0, -.28 - SURFACE_GAP.detail, 1, 1, 1).rotation.y = Math.PI;
 
-  tiledFloor(0, (END_HALL_START + LOBBY_START) / 2, CORRIDOR_WIDTH, LOBBY_START - END_HALL_START, 6, 50);
-  tiledFloor(0, (LOBBY_START + halfDepth) / 2, GALLERY_WIDTH, halfDepth - LOBBY_START, 26, 5);
-  tiledFloor(0, (END_HALL_START - halfDepth) / 2, GALLERY_WIDTH, halfDepth + END_HALL_START, 26, 4);
-  box(plum, 0, SURFACE_GAP.detail / 2, -0.45, 4.15, SURFACE_GAP.detail, 101.1);
-  for (const side of [-1, 1]) {
-    box(gold, side * 1.88, SURFACE_GAP.detail * 1.5, -0.45, 0.046, SURFACE_GAP.detail, 101.06);
-    box(wine, side * 1.72, SURFACE_GAP.detail * 1.5, -0.45, 0.16, SURFACE_GAP.detail, 101.06);
-  }
-
-  function medallion(z, radius) {
-    part(components, 'drum', gold, 0, 0.021, z, radius, 0.042, radius);
-    part(components, 'drum', wine, 0, 0.036, z, radius * 0.92, 0.04, radius * 0.92);
-    for (let i = 0; i < 8; i++) {
-      const angle = i * Math.PI / 4;
-      const floret = part(components, 'gem', cream, Math.cos(angle) * radius * 0.48, 0.064,
-        z + Math.sin(angle) * radius * 0.48, radius * 0.25, 0.013, radius * 0.10);
-      floret.rotation.y = -angle;
+    const signs = subtitle ? [title, subtitle] : [title];
+    const signWidth = Math.min(span + 1, Math.max(5.1, title.length / 5));
+    const signY = height - .60;
+    const face = .35;
+    part(local, 'box', gold, 0, signY, 0, signWidth + .24, 1.29, face * 2);
+    addGallerySign(THREE, document, model, signs, 0, signY, face + SURFACE_GAP.detail, signWidth, 1.13);
+    if (reverse) {
+      const sign = addGallerySign(THREE, document, model, signs, 0, signY, -face - SURFACE_GAP.detail, signWidth, 1.13);
+      if (sign) sign.rotation.y = Math.PI;
     }
-    part(components, 'gem', gold, 0, 0.067, z, radius * 0.17, 0.018, radius * 0.17).rotation.y = Math.PI / 4;
-  }
-  medallion(54.0, 3.7);
-  for (const { position: { z } } of exhibits.filter((_, index) => index % 2 === 0)) medallion(z, 1.47);
-
-  // Given a box ceiling, the beams and coffers provide depth without blocking drone inspection.
-  overhead(box(ivory, 0, ceiling + 0.15, 0, GALLERY_WIDTH, 0.3, GALLERY_DEPTH));
-  overhead(box(mauve, 0, ceiling - 0.12, 0, CORRIDOR_WIDTH, 0.24, GALLERY_DEPTH));
-  overhead(box(cream, 0, ceiling - 0.26, 0, 4.8, 0.13, GALLERY_DEPTH));
-  for (const side of [-1, 1]) {
-    overhead(box(gold, side * 2.45, ceiling - 0.35, 0, 0.13, 0.18, GALLERY_DEPTH));
-    overhead(box(plum, side * 5.66, ceiling - 0.21, 0, 0.34, 0.42, GALLERY_DEPTH));
-  }
-
-  const ring = new THREE.TorusGeometry(1, 0.045, 6, 28);
-  function chandelier(z, scale) {
-    const model = addGroup(THREE, components, 'Crystal chandelier', 0, 12.8, z);
-    model.scale.setScalar(scale);
-    const fixture = part(model, ring, gold, 0, 0, 0, 1.74, 1.74, 1.74);
-    fixture.rotation.x = Math.PI / 2;
-    const upper = part(model, ring, gold, 0, 0.44, 0, 1.09, 1.09, 1.09);
-    upper.rotation.x = Math.PI / 2;
-    overhead(fixture);
-    overhead(upper);
-    overhead(beam(components, gold, [0, 13.65, z], [0, ceiling - 0.28, z], 0.078));
-    overhead(part(model, 'gem', crystal, 0, -0.96, 0, 0.39, 0.92, 0.39));
-    for (let i = 0; i < 8; i++) {
-      const angle = i * Math.PI / 4;
-      const x = Math.cos(angle) * 1.74;
-      const offset = Math.sin(angle) * 1.74;
-      overhead(beam(model, gold, [0, 1.37, 0], [x, 0.02, offset], 0.052));
-      overhead(part(model, 'gem', crystal, x, -0.36, offset, 0.14, 0.44, 0.14));
-      overhead(part(model, 'drum', gold, x, 0.1, offset, 0.14, 0.11, 0.14));
-      overhead(part(model, 'sphere', lantern, x, 0.31, offset, 0.085, 0.16, 0.085));
+    if (mapYaw !== undefined) {
+      const marker = addGroup(THREE, model, 'Overhead exhibit label', 0, 0, 4.2, -mapYaw);
+      const sign = addGallerySign(THREE, document, marker, signs, 0, .008, 0, signWidth, subtitle ? 1.72 : 1.36);
+      if (sign) sign.rotation.x = -Math.PI / 2;
     }
+    batch(local, model);
   }
 
-  // Columns, banners and high arches repeat along the central axis.
-  for (const z of [54, 49, 29, 9, -11, -31, -51, -55.6]) {
+  function transition(x, z, yaw, span, title, subtitle, material) {
+    const gate = addGroup(THREE, shell, title + ' entrance', x, 0, z, yaw);
+    gateway(gate, title, subtitle, span, 6.8, material, { reverse: true });
+    const { toWorld } = spaceTransform({ position: { x, z }, rotation: yaw });
     for (const side of [-1, 1]) {
-      const x = side * 5.36;
-      solid(x, z, 1.18, 1.26, 15);
-      part(components, 'box', plum, x, 0.16, z, 1.18, 0.32, 1.26);
-      part(components, 'drum', ivory, x, 6.4, z, 0.43, 12.45, 0.43);
-      for (const [y, size, height] of [[0.43, 0.55, 0.26], [1.04, 0.47, 0.09], [11.84, 0.49, 0.12], [12.53, 0.62, 0.33]]) {
-        part(components, 'drum', gold, x, y, z, size, height, size);
+      addSolid(obstacles, ...toWorld(side * (span / 2 + .22), 0), .96, .96, 4, yaw);
+      const gardenX = side * (span / 2 + 2.25);
+      const [gx, gz] = toWorld(gardenX, 0);
+      const garden = addGroup(THREE, components, 'Wing garden edge', gx, 0, gz, yaw);
+      part(garden, 'box', ivory, 0, .28, 0, 3.05, .56, 1.58);
+      part(garden, 'box', material, 0, .59, 0, 3.18, .16, 1.66);
+      for (let i = 0; i < 5; i++) {
+        part(garden, 'ball', i % 2 ? leaf : moss, (i - 2) * .52, .84, Math.sin(i * 3) * .15, .51, .54, .63);
+        part(garden, 'sphere', i % 2 ? cream : glow, (i - 2) * .52, 1.2, .26, .16, .13, .16);
       }
-      const points = [[x, 12.55, z], [side * 4.87, 14.58, z], [side * 3.39, 16.27, z],
-        [side * 1.61, 17.25, z], [0, 17.61, z]];
-      for (let i = 1; i < points.length; i++) {
-        overhead(beam(components, ivory, points[i - 1], points[i], 0.6, 0.73));
-        const front = point => [point[0], point[1], z + 0.38];
-        overhead(beam(components, gold, front(points[i - 1]), front(points[i]), 0.14, 0.12));
-      }
-      if (z > 49 || z < -51) continue;
-      const banner = addGroup(THREE, components, 'Royal banner', side * 5.69, 6.92, z);
-      banner.rotation.y = -side * Math.PI / 2;
-      part(banner, 'box', wine, 0, 0, 0, 1.31, 2.91, 0.10);
-      part(banner, 'box', gold, 0, 1.47, 0, 1.58, 0.12, 0.16);
-      part(banner, 'gem', wine, 0, -1.31, 0, 0.653, 0.56, 0.055);
-      part(banner, 'gem', gold, 0, 0.15, 0.073, 0.31, 0.54, 0.045);
-      part(banner, 'gem', cream, 0, 0.15, 0.118, 0.124, 0.24, 0.038);
+      addSolid(obstacles, ...toWorld(gardenX, 0), 3.18, 1.66, 1.25, yaw);
     }
   }
 
-  for (const z of [54.4, 39, 19, -1, -21, -41, -54.9]) chandelier(z, z > 50 ? 1.38 : 1);
-  const lobby = addGroup(THREE, components, 'Lobby title frame', 0, 0, LOBBY_START);
-  part(lobby, 'box', plum, 0, 4.26, 0, 10.64, 0.22, 0.48);
-  part(lobby, 'box', gold, 0, 4.26, 0.269, 10.64, 0.055, 0.058);
-  part(lobby, 'box', plum, 0, 4.26, 0.26, 6.8, 0.95, 0.18);
-  part(lobby, 'box', gold, 0, 4.26, 0.349, 6.64, 0.83, 0.11);
-  part(lobby, 'gem', gold, 0, 4.84, 0.34, 0.23, 0.24, 0.10);
-  addGallerySign(THREE, document, scene, ['Princess Gallery'], 0, 4.26,
-    LOBBY_START + 0.404 + SURFACE_GAP.detail, 6.43, 0.70);
+  transition(0, 44.2, .18, 10.3, 'Princess Gallery', 'Central Atrium', wine);
+  transition(-24, 3, Math.PI / 2.6, 7.5, wings.woodland.title, 'Rapunzel · Snow White · Aurora', wingMaterials.woodland);
+  transition(1, -23, Math.PI + .18, 7.6, wings.royal.title, 'Belle · Cinderella · Jasmine', wingMaterials.royal);
+  transition(24.8, 7.9, -Math.PI / 3, 7.7, wings.adventure.title, 'Ariel · Mulan · Moana · Tiana', wingMaterials.adventure);
 
-  const display = addGroup(THREE, components, 'Royal crown display', 0, 0, -55);
-  part(display, 'drum', plum, 0, 0.27, 0, 1.88, 0.54, 1.88);
-  part(display, 'drum', blush, 0, 0.76, 0, 1.42, 0.46, 1.42);
-  part(display, 'drum', gold, 0, 1.02, 0, 1.37, 0.14, 1.37);
-  part(display, ring, gold, 0, 1.38, 0, 0.94, 0.94, 0.94).rotation.x = Math.PI / 2;
-  for (let i = 0; i < 8; i++) {
-    const angle = i * Math.PI / 4;
-    const x = Math.cos(angle);
-    const z = Math.sin(angle);
-    beam(display, gold, [x * 0.92, 1.41, z * 0.92], [x * 0.67, 2.18, z * 0.67], 0.066);
-    part(display, 'gem', crystal, x * 0.67, 2.20, z * 0.67, 0.115, 0.2, 0.115);
+  for (const [x, z, yaw] of [[-8.2, 54.8, .13], [8.2, 54.8, -.13]]) {
+    const planter = addGroup(THREE, components, 'Lobby topiary', x, 0, z, yaw);
+    part(planter, 'box', plum, 0, .19, 0, 2.3, .38, 2.3);
+    part(planter, 'drum', wine, 0, .48, 0, 1.03, .43, 1.03);
+    part(planter, 'drum', gold, 0, .74, 0, 1.09, .12, 1.09);
+    part(planter, 'drum', gold, 0, 1.4, 0, .12, 1.31, .12);
+    for (const [y, size] of [[2.05, .9], [3.02, .68], [3.73, .48]]) {
+      part(planter, 'ball', moss, 0, y, 0, size, size * .80, size).rotation.y = y;
+      part(planter, 'ball', leaf, .23, y + .09, .17, size * .72, size * .67, size * .74);
+    }
+    addSolid(obstacles, x, z, 2.3, 2.3, 4.16, yaw);
   }
-  part(display, 'gem', crystal, 0, 1.72, 0, 0.31, 0.61, 0.31);
-  solid(0, -55, 3.76, 3.76, 2.36);
+
+  // A blue mosaic crosses the Adventure path beneath level timber-and-marble decking.
+  const bridgeYaw = -.24;
+  const bridge = addGroup(THREE, components, 'Adventure mosaic bridge', 28.7, 0, 9.1, bridgeYaw);
+  part(bridge, 'box', wingMaterials.adventure, 0, -.020, 0, 9.5, .034, 5.2);
+  for (let i = -5; i <= 5; i++) {
+    part(bridge, 'box', i % 2 ? ivory : cream, i * .69, -.015, 0, .665, .045, 4.04);
+  }
+  for (const side of [-1, 1]) {
+    part(bridge, 'box', gold, 0, .83, side * 2.05, 7.8, .09, .11);
+    part(bridge, 'box', wine, 0, .17, side * 2.05, 7.8, .12, .21);
+    for (const x of [-3.8, -1.9, 0, 1.9, 3.8]) {
+      part(bridge, 'box', gold, x, .45, side * 2.05, .17, .90, .17);
+    }
+    const { toWorld } = spaceTransform({ position: { x: 28.7, z: 9.1 }, rotation: bridgeYaw });
+    addSolid(obstacles, ...toWorld(0, side * 2.05), 7.8, .21, .9, bridgeYaw);
+  }
+
+  buildAtrium({ THREE, document, shell, parts, colors, obstacles, ceiling });
   batch(components, shell);
 
-  const visits = exhibits.map(exhibit => {
-    const { id, title, accent, position, rotation, bounds, build } = exhibit;
-    const { width, depth } = bounds;
+  const exhibitVisits = [];
+  for (const exhibit of exhibits) {
+    const { id, title, accent, wing, position, rotation, bounds, build, entrance, status } = exhibit;
     const bay = addGroup(THREE, scene, id + ' exhibit', position.x, 0, position.z, rotation);
-    const components = new THREE.Group();
-    const box = (material, ...transform) => part(components, 'box', material, ...transform);
-    const localPart = (shape, material, ...transform) => part(components, shape, material, ...transform);
+    const local = new THREE.Group();
     const tint = matte(accent);
-    const front = depth / 2;
-    const interiorFace = front - wallDepth / 2;
-    const clearWidth = 6.7;
-    const jambWidth = (width - clearWidth) / 2;
-    const roomTrim = 0.30;
-    const side = Math.sign(position.x);
-    const z = position.z;
+    const front = bounds.depth / 2;
+    const transform = { ...spaceTransform(exhibit), rotation };
+    const outline = exhibitOutline(exhibit);
+    const woodland = wing === 'woodland';
+    const enclosed = id === 'rapunzel';
+    const height = enclosed ? bounds.height : id === 'snow-white' ? 4.25 : wing === 'royal' ? 4.5 : 2.85;
+    const thickness = enclosed ? .44 : .55;
+    const interiorFace = front - thickness / 2;
 
-    for (const direction of [-1, 1]) {
-      const x = direction * (clearWidth + jambWidth) / 2;
-      box(ivory, x, ceiling / 2, front, jambWidth - 0.01, ceiling, wallDepth);
-      box(mauve, x, 0.79, front, jambWidth - roomTrim, 1.58, 0.57);
-      box(gold, x, 1.62, front, jambWidth - 0.12, 0.086, 0.61);
-      solid(side * passage, z + x, 0.61, jambWidth);
-      for (const offset of [3.69, 7.8]) {
-        const pilaster = direction * offset;
-        box(blush, pilaster, 3.16, front + 0.29, 0.58, 6.3, 0.33);
-        box(cream, pilaster, 3.24, front + 0.43, 0.185, 5.97, 0.17);
-        box(gold, pilaster, 0.25, front + 0.28, 0.68, 0.47, 0.45);
+    function partition(a, b, index) {
+      wall(local, a, b, height + (enclosed ? 0 : .26 * (index % 3)), enclosed ? ivory : woodland ? moss : ivory,
+        enclosed ? blush : wingMaterials[wing], transform, thickness, !woodland || enclosed);
+      const [ax, az] = a, [bx, bz] = b;
+      if (enclosed || (id === 'snow-white' && index >= 3 && index <= 9)) return;
+      const length = Math.hypot(bx - ax, bz - az);
+      const count = Math.max(1, Math.round(length / 3.8));
+      const yaw = Math.atan2(az - bz, bx - ax);
+      for (let i = 0; i < count; i++) {
+        const t = (i + .5) / count;
+        const x = ax + (bx - ax) * t;
+        const z = az + (bz - az) * t;
+        if (woodland) {
+          part(local, 'ball', i % 2 ? leaf : moss, x, height + .16, z, 1.25, .74, .8).rotation.y = yaw;
+          part(local, 'ball', tint, x + .42, height + .49, z, .45, .37, .44);
+        } else {
+          part(local, 'box', wingMaterials[wing], x, height - .35, z, 1.05, .94, .74).rotation.y = yaw;
+          part(local, 'gem', tint, x, height + .25, z, .25, .49, .25).rotation.y = yaw;
+        }
       }
-      const mount = direction * 5.57;
-      box(plum, mount, 2.99, front + 0.26, 0.24, 0.73, 0.16);
-      box(gold, mount, 2.86, front + 0.43, 0.43, 0.12, 0.43);
-      localPart('gem', crystal, mount, 3.29, front + 0.47, 0.2, 0.43, 0.21);
     }
-    box(ivory, 0, (ceiling + 5.12) / 2, front, clearWidth, ceiling - 5.12, wallDepth);
-    box(mauve, 0, 5.38, front + 0.24, clearWidth + 0.69, 0.55, 0.29);
+    partition(outline[0], [-entrance / 2 - .13, front], 0);
+    partition([entrance / 2 + .13, front], outline[1], 0);
+    for (let i = 1; i < outline.length; i++) partition(outline[i], outline[(i + 1) % outline.length], i);
 
-    const arch = [[-3.53, 0], [-3.53, 3.68], [-2.97, 4.48], [-1.62, 5.01], [0, 5.18],
-      [1.62, 5.01], [2.97, 4.48], [3.53, 3.68], [3.53, 0]];
-    for (let i = 1; i < arch.length; i++) {
-      const a = arch[i - 1];
-      const b = arch[i];
-      beam(components, plum, [...a, front + 0.31], [...b, front + 0.31], 0.37, 0.44);
-      beam(components, gold, [...a, front + 0.535], [...b, front + 0.535], 0.075, 0.085);
+    const facade = addGroup(THREE, bay, 'Exhibit entrance', 0, 0, front + .12);
+    gateway(facade, title, status === 'coming-soon' ? 'Coming Soon' : null, entrance,
+      woodland ? 6.5 : 5.9, tint, { mapYaw: rotation });
+    const plaqueX = entrance / 2 + 2.05;
+    part(local, 'box', gold, plaqueX, 1.89, front + .31, 2.98, .96, .19);
+    addGallerySign(THREE, document, bay, status === 'coming-soon' ? [title, 'Coming Soon'] : [title],
+      plaqueX, 1.89, front + .405 + SURFACE_GAP.detail, 2.85, .81);
+    for (const side of [-1, 1]) {
+      addSolid(obstacles, ...transform.toWorld(side * (entrance / 2 + .22), front + .12), .94, .94, 3.7, rotation);
     }
 
-    const fascia = build ? [title] : [title, 'Coming Soon'];
-    box(gold, 0, 5.73, front + 0.48, 6.58, 1.24, 0.16);
-    addGallerySign(THREE, document, bay, fascia, 0, 5.73, front + 0.56 + SURFACE_GAP.detail, 6.4, 1.11);
-    // Give players a readable sign at eye level when they are close to the doorway.
-    box(gold, -5.3, 1.92, front + 0.25, 2.62, 0.83, 0.15);
-    addGallerySign(THREE, document, bay, fascia, -5.3, 1.92, front + 0.325 + SURFACE_GAP.detail, 2.51, 0.72);
-
-    box(tint, 0, SURFACE_GAP.detail / 2, front, clearWidth - 0.09, SURFACE_GAP.detail, 0.92);
-    const mapLabel = addGallerySign(THREE, document, bay, fascia, 0, SURFACE_GAP.detail * 2,
-      front + 1.32, 5.9, 1.02);
-    if (mapLabel) mapLabel.rotation.set(-Math.PI / 2, 0, Math.PI);
-
-    if (!build) {
-      box(marble[0], 0, -0.019, 0, width - wallDepth, 0.038, depth - wallDepth);
-      box(wine, 0, SURFACE_GAP.detail / 2, 0, 4.37, SURFACE_GAP.detail, depth - 1.16);
-      for (const edge of [-1, 1]) {
-        box(gold, edge * 2.04, SURFACE_GAP.detail * 1.5, 0, 0.055, SURFACE_GAP.detail, depth - 1.2);
-      }
-      const displayZ = -4.2;
-      localPart('drum', plum, 0, 0.18, displayZ, 1.56, 0.36, 1.56);
-      localPart('drum', gold, 0, 0.4, displayZ, 1.42, 0.12, 1.42);
-      localPart('drum', tint, 0, 0.61, displayZ, 1.32, 0.33, 1.32);
-      localPart('gem', tint, 0, 1.77, displayZ, 0.56, 1.03, 0.56).rotation.y = Math.PI / 4;
-      for (const edge of [-1, 1]) {
-        localPart('gem', crystal, edge * 0.73, 1.15, displayZ + 0.12, 0.18, 0.32, 0.17);
-        box(blush, edge * 6.25, 5.0, -depth / 2 + 0.31, 2.2, 6.71, 0.12);
-        box(gold, edge * 6.25, 8.43, -depth / 2 + 0.30, 2.55, 0.14, 0.21);
-        localPart('gem', gold, edge * 6.25, 5.63, -depth / 2 + 0.439, 0.55, 1.14, 0.14);
-      }
-      solid(position.x + Math.sin(rotation) * displayZ, z, 3.12, 3.12, 2.8);
-      box(plum, 0, 3.05, -depth / 2 + 0.33, 6.24, 1.46, 0.31);
-      addGallerySign(THREE, document, bay, fascia, 0, 3.05, -depth / 2 + 0.485 + SURFACE_GAP.detail, 6.04, 1.22);
+    if (enclosed) {
+      const opening = 6.75;
+      part(local, 'box', ivory, 0, (bounds.height + opening) / 2, front,
+        entrance + .24, bounds.height - opening, thickness);
+      overhead(part(local, 'box', blush, 0, bounds.height + .06, 0, bounds.width, .12, bounds.depth));
+    } else if (!build) {
+      // Small accent medallion reserves the scene and leaves the entire floor walkable.
+      const displayZ = -bounds.depth * .24;
+      const podium = addGroup(THREE, local, 'Exhibit reservation', 0, 0, displayZ);
+      part(podium, 'drum', plum, 0, .31, 0, 1.38, .62, 1.38);
+      part(podium, 'drum', gold, 0, .65, 0, 1.30, .10, 1.30);
+      part(podium, 'gem', tint, 0, 1.57, 0, .64, .87, .64).rotation.y = Math.PI / 4;
+      addSolid(obstacles, ...transform.toWorld(0, displayZ), 2.76, 2.76, 2.44, rotation);
     }
-    overhead(box(blush, 0, ceiling - 0.09, 0, width - 0.095, 0.17, depth - 0.10));
-    for (const offset of [-7.8, 7.8]) overhead(box(cream, offset, ceiling - 0.22, 0, 0.31, 0.27, depth - 0.20));
-    batch(components, bay);
-    return build?.({ THREE, document, bay, exhibit, parts, obstacles, interiorFace });
-  });
 
-  return { exhibitVisits: visits.filter(Boolean), ceiling };
+    batch(local, bay);
+    if (build) exhibitVisits.push(build({ THREE, document, bay, exhibit, parts, obstacles, interiorFace, outline }));
+  }
+  return { exhibitVisits, ceiling };
 }
