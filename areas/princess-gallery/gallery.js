@@ -196,7 +196,7 @@ export function buildGallery(THREE, scene, document, obstacles) {
     }
   }
 
-  function gateway(parent, title, subtitle, span, height, accent, { reverse = false, mapYaw } = {}) {
+  function gateway(parent, title, subtitle, span, height, accent, { reverse = false } = {}) {
     const model = addGroup(THREE, parent, title + ' arch');
     const local = new THREE.Group();
     const half = span / 2;
@@ -233,11 +233,6 @@ export function buildGallery(THREE, scene, document, obstacles) {
     if (reverse) {
       const sign = addGallerySign(THREE, document, model, signs, 0, signY, -face - SURFACE_GAP.detail, signWidth, 1.13);
       if (sign) sign.rotation.y = Math.PI;
-    }
-    if (mapYaw !== undefined) {
-      const marker = addGroup(THREE, model, 'Overhead exhibit label', 0, 0, 4.2, -mapYaw);
-      const sign = addGallerySign(THREE, document, marker, signs, 0, .008, 0, signWidth, subtitle ? 1.72 : 1.36);
-      if (sign) sign.rotation.x = -Math.PI / 2;
     }
     batch(local, model);
   }
@@ -341,11 +336,7 @@ export function buildGallery(THREE, scene, document, obstacles) {
 
     const facade = addGroup(THREE, bay, 'Exhibit entrance', 0, 0, front + .12);
     gateway(facade, title, status === 'coming-soon' ? 'Coming Soon' : null, entrance,
-      woodland ? 6.5 : 5.9, tint, { mapYaw: rotation });
-    const plaqueX = entrance / 2 + 2.05;
-    part(local, 'box', gold, plaqueX, 1.89, front + .31, 2.98, .96, .19);
-    addGallerySign(THREE, document, bay, status === 'coming-soon' ? [title, 'Coming Soon'] : [title],
-      plaqueX, 1.89, front + .405 + SURFACE_GAP.detail, 2.85, .81);
+      woodland ? 6.5 : 5.9, tint);
     for (const side of [-1, 1]) {
       addSolid(obstacles, ...transform.toWorld(side * (entrance / 2 + .22), front + .12), .94, .94, 3.7, rotation);
     }
