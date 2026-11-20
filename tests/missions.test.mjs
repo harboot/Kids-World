@@ -58,6 +58,9 @@ test('every registered area provides a fresh mission status and releases its vis
   ]) {
     const previous = worlds.active;
     const { area, scene } = worlds.load(id);
+    assert.ok(Array.isArray(area.obstacles), id);
+    assert.equal(typeof area.reset, 'function', id);
+    assert.ok(Array.isArray(area.interactions) && area.interactions.every(item => typeof item.act === 'function'), id);
     const status = normalizeMissionStatus(area.missionStatus);
     assert.deepEqual(status.missions.map(mission => mission.total), totals, id);
     assert.equal(status.completed, 0, id);

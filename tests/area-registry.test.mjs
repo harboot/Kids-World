@@ -33,3 +33,28 @@ test('game startup rejects missing, inherited, and non-boolean visibility', asyn
     });
   }
 });
+
+test('registry rejects malformed definitions with the area and property in the error', () => {
+  const definition = areas.garden;
+  for (const [property, overrides] of [
+    ['load', { load: null }],
+    ['width', { width: 0 }],
+    ['depth', { depth: Infinity }],
+    ['spawn.x', { spawn: { x: '0', z: 0 } }],
+    ['spawn.z', { spawn: { x: 0 } }],
+    ['spawn.yaw', { spawn: { x: 0, z: 0, yaw: NaN } }],
+    ['spawn.elevation', { spawn: { x: 0, z: 0, elevation: null } }],
+    ['title', { title: '' }],
+    ['description', { description: ' ' }],
+    ['canvasLabel', { canvasLabel: false }],
+    ['themeColor', { themeColor: null }],
+    ['heading', { heading: ['One'] }],
+    ['heading', { heading: ['', ' '] }],
+  ]) {
+    assert.throws(() => validateAreaRegistry({ meadow: { ...definition, ...overrides } }), error =>
+      error instanceof TypeError && error.message.includes('Area "meadow"') && error.message.includes(`"${property}"`));
+  }
+  assert.doesNotThrow(() => validateAreaRegistry({
+    meadow: { ...definition, heading: ['Meadow', ''], spawn: { x: 0, z: 0 } },
+  }));
+});

@@ -1,5 +1,5 @@
-import { SURFACE_GAP } from '../../core/geometry.js';
-import { PLAYER_ONLY_LAYER } from '../../core/renderer.js';
+import { addGroup, addMesh, paintCanvasTexture, rectangleBounds, SURFACE_GAP } from '../../core/geometry.js';
+import { PLAYER_ONLY_LAYER } from '../../core/render-layers.js';
 
 export const COLORS = {
   cream: 0xe8ddc9, ivory: 0xf9f1df, plaster: 0xe0d2ba, grout: 0xb0a291,
@@ -22,12 +22,7 @@ export function createArchitecture(THREE) {
   const signs = new Map();
 
   function group(parent, name, x = 0, y = 0, z = 0, yaw = 0) {
-    const node = new THREE.Group();
-    node.name = name;
-    node.position.set(x, y, z);
-    node.rotation.y = yaw;
-    parent.add(node);
-    return node;
+    return addGroup(THREE, parent, name, x, y, z, yaw);
   }
 
   function builder(root, solids = []) {
@@ -43,7 +38,7 @@ export function createArchitecture(THREE) {
     }
 
     function solid(x, z, w, d) {
-      solids.push({ left: x - w / 2, right: x + w / 2, front: z - d / 2, back: z + d / 2 });
+      solids.push(rectangleBounds(x, z, w, d));
     }
 
     function block(color, x, y, z, w, h, d) {
@@ -71,25 +66,11 @@ export function createArchitecture(THREE) {
   }
 
   function box(parent, material, x, y, z, w, h, d) {
-    const mesh = new THREE.Mesh(shapes.box, material);
-    mesh.position.set(x, y, z);
-    mesh.scale.set(w, h, d);
-    parent.add(mesh);
-    return mesh;
+    return addMesh(THREE, parent, shapes.box, material, x, y, z, w, h, d);
   }
 
   function canvasTexture(width, height, draw) {
-    const canvas = globalThis.document?.createElement('canvas');
-    if (!canvas) return null;
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
-    draw(ctx, width, height);
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.anisotropy = 4;
-    return texture;
+    return paintCanvasTexture(THREE, globalThis.document, width, height, draw);
   }
 
   function sign(parent, lines, x, y, z, w, h, { yaw = 0, color = '#fff1cd', background = '#252e36' } = {}) {

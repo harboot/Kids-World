@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import * as THREE from '../vendor/three.module.min.js';
 import { createCoordinatePicker, formatCoordinates, pointerToNDC } from '../core/coordinate-picker.js';
 import { createDroneCamera } from '../core/drone-view.js';
-import { PLAYER_ONLY_LAYER } from '../core/renderer.js';
+import { PLAYER_ONLY_LAYER } from '../core/render-layers.js';
 import { createWorldManager } from '../core/world-manager.js';
 import { BRIDGE } from '../areas/flower-garden/garden-pond.js';
 import { HILL, POND } from '../areas/flower-garden/garden-terrain.js';

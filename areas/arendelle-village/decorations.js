@@ -1,6 +1,6 @@
 import { SURFACE_GAP } from '../../core/geometry.js';
 import { gabledRoof } from './buildings.js';
-import { randomFrom } from './scenery.js';
+import { seededRandom } from '../../core/random.js';
 
 export const GATE = { x: 0, z: 26.85 };
 const oak = 0x714b34;
@@ -14,7 +14,7 @@ export function decorateVillage(kit, height) {
   square(kit, height);
   stable(kit, height);
 
-  const random = randomFrom(391);
+  const random = seededRandom(391);
   const plant = (x, z, size, evergreen) => tree(kit, x, height(x, z), z, size, evergreen);
   for (const [x, z, size, evergreen] of [
     [-5.8, 28.6, 1.06, true], [6.8, 29.7, 1.22, false], [-7.8, 25.8, 0.94, true],

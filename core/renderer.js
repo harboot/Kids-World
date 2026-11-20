@@ -1,4 +1,4 @@
-export const PLAYER_ONLY_LAYER = 1;
+import { PLAYER_ONLY_LAYER } from './render-layers.js';
 
 export function createView(THREE, { game, canvas, fullscreen, touchDevice, contextLost }) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !touchDevice, powerPreference: 'high-performance' });

@@ -1,6 +1,6 @@
 import { SURFACE_GAP } from '../../core/geometry.js';
 import { BALL_RADIUS, BREAK_DURATION, CHOPS, SNOWMAN_COUNT, SNOWMAN_SPHERES } from './activity.js';
-import { registerDoor } from '../ice-door.js';
+import { registerDoor } from '../shared/ice-door.js';
 
 export function addAxe(THREE, scene, viewmodel, kit, site) {
   const { box, mesh, material } = kit;

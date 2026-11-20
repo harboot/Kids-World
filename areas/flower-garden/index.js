@@ -1,4 +1,6 @@
-import { addIceDoor } from '../ice-door.js';
+import { addMesh, rectangleBounds } from '../../core/geometry.js';
+import { seededRandom } from '../../core/random.js';
+import { addIceDoor } from '../shared/ice-door.js';
 import { addCabin } from './garden-cabin.js';
 import { addOrchard } from './garden-orchard.js';
 import { addPond, blocksPondTravel, bridgeDeckHeight } from './garden-pond.js';
@@ -231,17 +233,14 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelCompl
   scene.add(sun);
 
   function mesh(geometry, material, x, y, z, sx, sy, sz, parent = scene, shadow = false) {
-    const object = new THREE.Mesh(geometry, material);
-    object.position.set(x, y, z);
-    object.scale.set(sx, sy, sz);
+    const object = addMesh(THREE, parent, geometry, material, x, y, z, sx, sy, sz);
     object.castShadow = shadow;
     object.receiveShadow = true;
-    parent.add(object);
     return object;
   }
 
   function collision(x, z, sx, sz, height) {
-    return { left: x - sx / 2, right: x + sx / 2, front: z - sz / 2, back: z + sz / 2, height };
+    return { ...rectangleBounds(x, z, sx, sz), height };
   }
 
   mesh(box, grass, 0, -0.54, 0, 170, 0.1, 160);
@@ -391,11 +390,7 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelCompl
     [14.2, 10.75, 1.0, 1.25, 1], [19.7, 11.4, 1.15, 1.25, 2], [17.75, 16.3, 1.55, 1.05, 0],
     [-11.05, 21.9, 1.05, 0.93, 2], [-19.05, 22.1, 0.86, 0.71, 0],
   ];
-  let seed = 728;
-  function random() {
-    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
-    return seed / 4294967296;
-  }
+  const random = seededRandom(728);
   const stems = [];
   const leaves = [];
   const petals = [];

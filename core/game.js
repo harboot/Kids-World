@@ -186,6 +186,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     menuMessage.textContent = paused ? 'Take a break, then continue exploring.' : worlds.active.definition.description;
     notice.textContent = '';
     view.invalidate();
+    if (!paused) syncView();
   }
 
   function relocate(spawn) {
@@ -193,35 +194,35 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     player.reset(spawn, worlds.active.area);
   }
 
-  function resetPlayer(arrival) {
+  function prepareVisit(arrival) {
     const { definition, area } = worlds.active;
     const spawn = arrival && Object.hasOwn(area.arrivals ?? {}, arrival) ? area.arrivals[arrival] : definition.spawn;
     player.reset(spawn, area);
     delete game.dataset.seated;
     interactions.setItems(area.interactions ?? []);
+    missionHud.update(area.missionStatus);
+  }
+
+  function clearVisitPresentation() {
+    if (levelPicker.open) levelPicker.close();
+    missionHud.reset();
+    drone?.stop();
   }
 
   function resetArea() {
-    if (levelPicker.open) levelPicker.close();
-    missionHud.reset();
-    drone?.stop();
+    clearVisitPresentation();
     worlds.reset();
-    resetPlayer();
-    missionHud.update(worlds.active.area.missionStatus);
+    prepareVisit();
     menu(false);
-    syncView();
   }
 
   function enterArea(id, historyMode, arrival) {
-    if (levelPicker.open) levelPicker.close();
     game.dataset.state = 'traveling';
     stopPlaying();
-    missionHud.reset();
-    drone?.stop();
+    clearVisitPresentation();
     try {
-      const { definition, area } = worlds.load(id);
-      resetPlayer(arrival);
-      missionHud.update(area.missionStatus);
+      const { definition } = worlds.load(id);
+      prepareVisit(arrival);
       audio.setArea(definition.music);
       view.sceneChanged();
       showArea(id);
@@ -231,7 +232,6 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
       }
       rememberArea(areas, id);
       menu(false);
-      syncView();
     } catch (error) {
       console.error(error);
       showError('This area failed to load. Reload the page to try again.');
@@ -281,10 +281,10 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     });
   }
 
-  start.addEventListener('click', event => {
+  function startPlaying(pointerType) {
     audio.unlock();
-    if (game.dataset.state === 'menu' && event.pointerType) {
-      game.dataset.input = event.pointerType === 'mouse' ? 'mouse' : 'touch';
+    if (game.dataset.state === 'menu' && pointerType) {
+      game.dataset.input = pointerType === 'mouse' ? 'mouse' : 'touch';
     }
     controls.clear();
     interactions.hide();
@@ -293,11 +293,12 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     missionHud.update(worlds.active.area.missionStatus);
     view.invalidate();
     audio.setPlaying(true);
-  });
+  }
 
+  start.addEventListener('click', event => startPlaying(event.pointerType));
   droneEntry.addEventListener('click', () => {
     changeDroneView(true);
-    start.click();
+    startPlaying();
   });
 
   function restoreArea() {

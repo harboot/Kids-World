@@ -1,4 +1,4 @@
-import { SURFACE_GAP } from '../../core/geometry.js';
+import { addMesh, rectangleBounds, SURFACE_GAP } from '../../core/geometry.js';
 
 export function addWinterScenery({ THREE, scene, touch, width, depth }) {
   const obstacles = [];
@@ -27,17 +27,14 @@ export function addWinterScenery({ THREE, scene, touch, width, depth }) {
   const ice = material(0x77a8bc);
 
   function mesh(geometry, surface, x, y, z, sx, sy, sz, shadow = false, parent = scene) {
-    const object = new THREE.Mesh(geometry, surface);
-    object.position.set(x, y, z);
-    object.scale.set(sx, sy, sz);
+    const object = addMesh(THREE, parent, geometry, surface, x, y, z, sx, sy, sz);
     object.castShadow = shadow;
     object.receiveShadow = true;
-    parent.add(object);
     return object;
   }
 
   function block(x, z, sx, sz, height) {
-    obstacles.push({ left: x - sx / 2, right: x + sx / 2, front: z - sz / 2, back: z + sz / 2, height });
+    obstacles.push({ ...rectangleBounds(x, z, sx, sz), height });
   }
 
   mesh(box, snow, 0, -0.15, 0, width, 0.3, depth);
@@ -101,5 +98,5 @@ export function addWinterScenery({ THREE, scene, touch, width, depth }) {
     mesh(cone, frost, x * 1.30, height * 0.74 - 0.7, z * 1.16, span * 0.56, height * 0.52, span * 0.445).rotation.y = angle;
   }
 
-  return { obstacles, box, cone, rock, material, mesh, block };
+  return { obstacles, box, cone, material, mesh, block };
 }

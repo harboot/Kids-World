@@ -1,5 +1,5 @@
 {
-  "version": "1b7821473c5a4a47ffe9c62fb5b5eed257edc5fc0cd9b410ceb79f4b37ecfa3f",
+  "version": "26a048a9367fa0f99cb97e03b57e7ac633d5d10ab3d9f32d25089eb86e76c48e",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
@@ -11,7 +11,7 @@
     },
     {
       "path": "./areas/arendelle-village/decorations.js",
-      "revision": "f51323d263686e999b3983fc93cde630a5a444cbad049a1cf0161187a2ec551e"
+      "revision": "e5163914ff191f03cc1cb2af5de431efecd05f60ce1aa967b3bc1da4069dd63c"
     },
     {
       "path": "./areas/arendelle-village/fishing.js",
@@ -23,7 +23,7 @@
     },
     {
       "path": "./areas/arendelle-village/harbor.js",
-      "revision": "6cdcd18f81c48e0fd3f737764e117df58fa354c67f81738db1dbfe70a289467f"
+      "revision": "bac42d795c4f68a95460df9fad9af1fd6617665ee8fc9dea517423aecb03ba33"
     },
     {
       "path": "./areas/arendelle-village/index.js",
@@ -43,7 +43,7 @@
     },
     {
       "path": "./areas/arendelle-village/scenery.js",
-      "revision": "837920af319f465c85868545cb4e22ccc3e2361cc54806b95ed8c5aa2cc34b1d"
+      "revision": "42fd1777a8555637db0518fc00209ac867deba6d3cb226eae3c74e2a4e2fe55b"
     },
     {
       "path": "./areas/arendelle-village/terraces.js",
@@ -51,7 +51,7 @@
     },
     {
       "path": "./areas/arendelle-village/terrain.js",
-      "revision": "cd93578174d0a44b3de20e9f1ddbd2c60f8cfbb747986379ed636bf1ab799727"
+      "revision": "cd2655349bf643ea1f8f96ef1af7c339da5c8e1e6a6cf62241e7d8134a183b78"
     },
     {
       "path": "./areas/arendelle-village/villager.js",
@@ -75,7 +75,7 @@
     },
     {
       "path": "./areas/flower-garden/index.js",
-      "revision": "9f7b68e65b3d3c4ccc2ce9677a1a459a7df50efa6ea4d0b9186cb4c9cdc63add"
+      "revision": "3c16fa90e8dd426d73646e5c4f1aaccb9f30d82abcc1a04176013835a769d58b"
     },
     {
       "path": "./areas/frozen-castle/activities.js",
@@ -91,7 +91,7 @@
     },
     {
       "path": "./areas/frozen-castle/palace.js",
-      "revision": "a664b1fd96e21e76ea5447140f3f17682506db75fb4110aed10c6eeeb720fb78"
+      "revision": "2befcf7a289f3e74d6eb41fb921eef614199b449a1d8e072b3be7db562a386c9"
     },
     {
       "path": "./areas/frozen-castle/staircase.js",
@@ -100,10 +100,6 @@
     {
       "path": "./areas/frozen-castle/summit.js",
       "revision": "cf5cc7ccd4a26a36f73206e00e35a954f484352bdf2c1999a1c85e09bbcc6529"
-    },
-    {
-      "path": "./areas/ice-door.js",
-      "revision": "046a5eb469413eb7554b2225aa31dfbb90204c84e3a0da55b7ad43fae8adb68e"
     },
     {
       "path": "./areas/secret-apartment/basement.js",
@@ -127,7 +123,7 @@
     },
     {
       "path": "./areas/secret-apartment/floor17.js",
-      "revision": "27cd4abfd31d7e771beb55af86dc691f8316bb4d05e6979e2904ece3dc439163"
+      "revision": "8c8e9da5ff1793272507590760f46f63c81619e4de29c1f24934a116e7e1f170"
     },
     {
       "path": "./areas/secret-apartment/floor8.js",
@@ -135,7 +131,7 @@
     },
     {
       "path": "./areas/secret-apartment/geometry.js",
-      "revision": "dc37651883c93912371763af64cb88844e5f68bb7a8d311939fdda47b6d783c0"
+      "revision": "0578607812d5280966abfee0c09dcd75388bdb6cc5cdcc81f55eaf28c150c260"
     },
     {
       "path": "./areas/secret-apartment/index.js",
@@ -154,8 +150,12 @@
       "revision": "41c0400c669413d4e52e5eb3c404ae1b7e66d5c262e4a8c2324522a7ce5b1062"
     },
     {
+      "path": "./areas/shared/ice-door.js",
+      "revision": "046a5eb469413eb7554b2225aa31dfbb90204c84e3a0da55b7ad43fae8adb68e"
+    },
+    {
       "path": "./areas/snow-basin.js",
-      "revision": "caf33731eae462b45441e4f59c8b467dbda7bdf3f068478bc0a7424382b78faa"
+      "revision": "2977d481d47f65b93c6abc398f602c548fd6926286a50672bd5be9a839f73002"
     },
     {
       "path": "./areas/snow-basin/activity.js",
@@ -163,11 +163,11 @@
     },
     {
       "path": "./areas/snow-basin/props.js",
-      "revision": "00cf0997c9da1a3e85fc591d91548d5acd6cfe58545ba205d40ab34ee484dda8"
+      "revision": "d091a664020d616540c9ecb21e376ef1190b83d00059aa86e418428fab8f31d1"
     },
     {
       "path": "./areas/snow-basin/scenery.js",
-      "revision": "823d59d5d80b9c74bb389c4a2ed18ed7c4fd7a7a189078b7ba17e013997f860e"
+      "revision": "a850ac9fc61e492c53e8ab6629e65ef30c907ededa7a8366e8f26c87797cb28a"
     },
     {
       "path": "./areas/wooden-house/cleaning.js",
@@ -183,7 +183,7 @@
     },
     {
       "path": "./areas/wooden-house/interior.js",
-      "revision": "7d37dbe183b88a3717a59661497c204b89b77ac76efeded74abf59c634605bdf"
+      "revision": "0818102ed4099e20360786728ac4df0c833b8e8cf3f930ed81ac8d83205c9c57"
     },
     {
       "path": "./assets/icons/icon-192.png",
@@ -195,7 +195,7 @@
     },
     {
       "path": "./core/area-registry.js",
-      "revision": "2cb6722990b7e6c8606fa34958ef7eae37e357250a1b173eb36e817fe32622b3"
+      "revision": "44e5f22757cac36a22342f22a91ded3a9976c04048a86a24e9e523bc3a90feb0"
     },
     {
       "path": "./core/audio.js",
@@ -215,11 +215,11 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "4ddd1fd8fb9b918b8f15d70f1bfe997e4865c64b78e011f907ad11b18ae55c44"
+      "revision": "ff83ab3a7fb9650367f9786fdd194d07a9204e5f9de6f12557e00548dfe16e74"
     },
     {
       "path": "./core/geometry.js",
-      "revision": "504cfb8d9104e31d4dd20a961b9721a4a7abbe656c50168979d2600ca6e55734"
+      "revision": "98cc457fd52fffedfde4991329bae9ce4ad5eef03050efcd3c5b43366dc1cb78"
     },
     {
       "path": "./core/hud.js",
@@ -243,15 +243,23 @@
     },
     {
       "path": "./core/movement.js",
-      "revision": "c01f5298c8485ea926c9a9a7daae53fb03a1b03ab30d02b4d528d1abecb4b56f"
+      "revision": "9a4eeaa03a70ca5518d8282fbada533fa441bb3af5a1baafb1c485f514bbf986"
     },
     {
       "path": "./core/player.js",
       "revision": "6246c06bb972e9181b2f7c3ffd2287ea8b5adbdd30837832f915c32596b26ac8"
     },
     {
+      "path": "./core/random.js",
+      "revision": "e5d9abe5101eefca34b96f55621dfdc2f74d3202716b0b132793e5c86b921806"
+    },
+    {
+      "path": "./core/render-layers.js",
+      "revision": "a7fe3a828d9e1ef611de320f63e80c3a1fb3eaae88415d295c15f468b6e00785"
+    },
+    {
       "path": "./core/renderer.js",
-      "revision": "755e68711d5020dbb15a4fbc2431135d105ec5f2c66ddc17b16c26789f83c1d3"
+      "revision": "a18a822d688651161cd5d497e8e3aa832a40e1e3a19c9b9de2e7460ce75b4b66"
     },
     {
       "path": "./core/world-manager.js",

@@ -1,4 +1,4 @@
-import { SURFACE_GAP } from '../../core/geometry.js';
+import { addGroup, paintCanvasTexture, rectangleBounds, SURFACE_GAP } from '../../core/geometry.js';
 
 // Shared unit meshes keep the village's static architecture and props in a few instance batches.
 export function createScenery(THREE, scene, document, obstacles) {
@@ -38,12 +38,7 @@ export function createScenery(THREE, scene, document, obstacles) {
   const color = new THREE.Color();
 
   function group(name, x, y, z, yaw = 0, parent = scene) {
-    const node = new THREE.Group();
-    node.name = name;
-    node.position.set(x, y, z);
-    node.rotation.y = yaw;
-    parent.add(node);
-    return node;
+    return addGroup(THREE, parent, name, x, y, z, yaw);
   }
 
   function part(node, shape, ink, x, y, z, width, height, depth, options = {}) {
@@ -80,22 +75,12 @@ export function createScenery(THREE, scene, document, obstacles) {
     const turn = Math.round(node.rotation.y / (Math.PI / 2));
     const cx = node.position.x + x * Math.cos(node.rotation.y) + z * Math.sin(node.rotation.y);
     const cz = node.position.z - x * Math.sin(node.rotation.y) + z * Math.cos(node.rotation.y);
-    const [dx, dz] = turn % 2 ? [depth / 2, width / 2] : [width / 2, depth / 2];
-    obstacles.push({ left: cx - dx, right: cx + dx, front: cz - dz, back: cz + dz, height: node.position.y + height });
+    const bounds = turn % 2 ? rectangleBounds(cx, cz, depth, width) : rectangleBounds(cx, cz, width, depth);
+    obstacles.push({ ...bounds, height: node.position.y + height });
   }
 
   function paintedTexture(width, height, paint) {
-    const canvas = document?.createElement('canvas');
-    if (!canvas?.getContext) return null;
-    canvas.width = width;
-    canvas.height = height;
-    const ink = canvas.getContext('2d');
-    if (!ink) return null;
-    paint(ink);
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.anisotropy = 4;
-    return texture;
+    return paintCanvasTexture(THREE, document, width, height, paint);
   }
 
   function sign(node, text, x, y, z, width, height, { background = '#263f3d', yaw = 0, bothSides = false } = {}) {
@@ -163,11 +148,4 @@ export function createScenery(THREE, scene, document, obstacles) {
   }
 
   return { group, part, box, beam, solid, sign, paintedTexture, finish };
-}
-
-export function randomFrom(seed) {
-  return () => {
-    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
-    return seed / 4294967296;
-  };
 }

@@ -52,43 +52,7 @@ Kids World is designed around a reusable game engine and independent world modul
 
 ## Create Your Own World
 
-New worlds live in the `areas/` directory.
-
-To contribute a world:
-
-1. Create a new area module in `areas/`.
-2. Build its environment, objects, interactions, and missions.
-3. Register the area in `game.js`.
-4. Connect public areas to another world through an interactive doorway.
-5. Add tests and update the PWA release manifest.
-
-The registry in `game.js` declares each area's visibility.
-
-```js
-show: true  // Public area
-show: false // Link-only area
-```
-
-Link-only areas open via a direct URL such as `?area=secret-apartment`. The level picker, normal travel, completion tracking, and the saved last area use public areas.
-
-The shared engine handles rendering, player controls, world transitions, and resource cleanup.
-
-Expose `missionStatus` from the loaded area. The shared Missions panel starts closed and shows numeric progress, actual completion, and an optional hint or inventory.
-
-```js
-get missionStatus() {
-  return {
-    missions: [{ id: 'fish', title: 'Catch and sell fish', current: fishCaught, total: 3, complete: fishSold }],
-    hint: fishCaught === 3 && !fishSold ? 'Take your fish to the Fish Shop.' : '',
-  };
-}
-```
-
-Keep mission IDs stable and derive counters and completion from the current visit. For brief feedback, call the shared `notify(message)` service from a gameplay event.
-
-See the [3D geometry guidelines](docs/geometry-guidelines.md) when building a world.
-
-**Focus on creating the adventure — not rebuilding the engine.**
+Build a world in `areas/` and register it in `game.js`. The guide includes a working example, the mission and interaction contracts, and the release checklist. [Area development guide](docs/area-development.md)
 
 ## Run Locally
 
@@ -111,8 +75,6 @@ node --test
 ### Drone View
 
 Open `?area=garden&view=drone` (or use any registered area ID) and select **Play**. Drag to pan, use the mouse wheel or a two-finger pinch to zoom, and click or tap a surface to select its world coordinates. **Copy Coordinates** copies the selection as `{ x: 12.45, y: 2.10, z: -8.20 }`. Use **Reset View** to restore the overview or **Exit Drone** (Esc) to resume play. After exiting, use **Drone View** in the pause menu to inspect the same visit again.
-
-The overview fits the area's `width` and `depth`. A loaded area can return `droneView: { center: { x, z }, width, depth }` to override the focus. A getter can return different bounds when the active zone changes.
 
 ## Publishing Updates
 
