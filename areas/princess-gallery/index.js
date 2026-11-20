@@ -7,14 +7,14 @@ const spawn = { x: 0, z: 54.3 };
 const returnSite = { x: 0, z: 58.67 };
 const missionStatus = {
   missions: [],
-  hint: 'Visit Rapunzel and jump onto the observation platform to make her wave. Approach Snow White and the seven dwarfs to see them react. Find Cinderella’s glass slipper on the ballroom stairs.',
+  hint: 'Visit Rapunzel and jump onto the observation platform to make her wave. Approach Snow White and the seven dwarfs to see them react. Find Cinderella’s glass slipper on the ballroom stairs. Take the Glass Walkway stairs near the lobby or in the Royal Wing to look down into every exhibit.',
 };
 
 export const princessGallery = {
   id: 'princess-gallery',
   title: 'Princess Gallery',
   heading: ['Princess', 'Gallery'],
-  description: 'Explore the Central Atrium, the enchanted woodlands, and Cinderella’s palace ballroom.',
+  description: 'Explore the Central Atrium, then take the Glass Walkway for a view into every exhibit.',
   canvasLabel: '3D enchanted exhibition park with Rapunzel, Snow White, and Cinderella',
   themeColor: '#705184',
   music: 'garden',
@@ -24,7 +24,7 @@ export const princessGallery = {
   load({ THREE, scene, hud, signal, reducedMotion = () => false, isPlayerGrounded = () => true }) {
     const document = hud?.ownerDocument;
     const obstacles = [];
-    const { exhibitVisits, ceiling } = buildGallery(THREE, scene, document, obstacles);
+    const { exhibitVisits, ceiling, walkway, people } = buildGallery(THREE, scene, document, obstacles);
     const setReturnGlow = buildRoyalGateway(THREE, scene, document, obstacles, {
       ...returnSite, yaw: Math.PI, title: 'Return to Frozen Castle',
     });
@@ -44,7 +44,10 @@ export const princessGallery = {
       }],
       missionStatus,
       getCeilingHeight: () => ceiling - 0.4,
-      getGroundHeight(x, z) {
+      blocksGround: walkway.blocksGround,
+      getGroundHeight(x, z, feet) {
+        const upper = walkway.getGroundHeight(x, z, feet);
+        if (upper !== undefined) return upper;
         for (const visit of exhibitVisits) {
           const ground = visit.getGroundHeight?.(x, z);
           if (ground !== undefined) return ground;
@@ -55,13 +58,16 @@ export const princessGallery = {
         if (released || signal?.aborted || !player) return;
         const grounded = isPlayerGrounded();
         const still = reducedMotion();
+        people.update(dt, still);
         for (const visit of exhibitVisits) visit.update?.(dt, player, grounded, still);
       },
       reset() {
+        people.reset();
         for (const visit of exhibitVisits) visit.reset?.();
       },
       unload() {
         released = true;
+        people.reset();
         for (const visit of exhibitVisits) visit.reset?.();
       },
     };

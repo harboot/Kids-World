@@ -1,5 +1,5 @@
 {
-  "version": "fb5ef00b8dff0945df2715ed0cc76a547a0ca13c1ce25b92e43b97b77403d619",
+  "version": "6ac2ca0e840aacbbd0d456ccaaace2dc498eb2090420d413532baf61a28cbbb9",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
@@ -115,15 +115,19 @@
     },
     {
       "path": "./areas/princess-gallery/gallery.js",
-      "revision": "44d329fa90c72829ed05bd3712d71718d2f174de70cb47e6b622217cd79debcc"
+      "revision": "0a8baedd03205569befa49439d491450ef291dd0ed06660951f878b7e3a182fb"
     },
     {
       "path": "./areas/princess-gallery/index.js",
-      "revision": "790686d25fdd7e51849b46bc6e487f18b7b4c6bb6deabe31180e29c558d822fc"
+      "revision": "6d181953f25e8f4f2d8340326acdddbf5f46a37f8148c3124097039e8837346c"
     },
     {
       "path": "./areas/princess-gallery/parts.js",
       "revision": "f14f797fa1735ab9ae0f0c060f29555ec17470846b6ebd20c20dfde9ce59e5ae"
+    },
+    {
+      "path": "./areas/princess-gallery/public-spaces.js",
+      "revision": "297d05cccb399fd2648aef45adf77e060ffb14896bba98def223c4da4cda5f5f"
     },
     {
       "path": "./areas/princess-gallery/rapunzel-tower.js",
@@ -136,6 +140,14 @@
     {
       "path": "./areas/princess-gallery/snow-white.js",
       "revision": "8bc81ce3eebf30f53358a9ccc0c4f0bdfb6d07f05f70ea73b8e9b95a7a5d6088"
+    },
+    {
+      "path": "./areas/princess-gallery/visitors.js",
+      "revision": "12a00989a6a61ccd7745bd9609db435ba0910fecf2f748bace86fa798410e187"
+    },
+    {
+      "path": "./areas/princess-gallery/walkway.js",
+      "revision": "417f2cb4d1bce51efdd73cf868c87e0012d4bbdf54b325522e7418178860a0c7"
     },
     {
       "path": "./areas/secret-apartment/basement.js",
