@@ -13,7 +13,7 @@ export const areas = {
   'wooden-house': { ...woodenHouse, show: true },
   'frozen-castle': { ...frozenCastle, show: true },
   'arendelle-village': { ...arendelleVillage, show: true },
-  'princess-gallery': { ...princessGallery, show: true },
+  'princess-gallery': { ...princessGallery, show: true, menuUnlockAfter: 'frozen-castle' },
   'secret-apartment': { ...secretApartment, show: false },
 };
 

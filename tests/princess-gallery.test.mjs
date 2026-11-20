@@ -74,6 +74,7 @@ test('public gallery opens by normal and drone URLs with no castle progress', t 
     assert.match(visit.area.missionStatus.hint, /Cinderella’s glass slipper on the ballroom stairs/);
     assert.equal(game.progress.has(CASTLE), false);
     assert.equal(game.progress.has(ID), false);
+    assert.equal(game.progress.canSelect(ID), false);
   }
   assert.equal(resolveArea(new URL('https://example.test/?area=secret-apartment'), areas, 'garden'), 'secret-apartment');
 });
@@ -92,6 +93,7 @@ test('the castle gate explains its lock and unlocks only when all three missions
   assert.equal(nearestInteraction(area.interactions, reach), gate);
   assert.match(gate.label, /Locked/);
   assert.equal(gate.unlocked, false);
+  assert.equal(game.progress.canSelect(ID), false);
   assert.ok(seal.visible && !sparks.visible);
   gate.act({ travel, heardCue: true });
   assert.deepEqual(travels, []);
@@ -107,6 +109,9 @@ test('the castle gate explains its lock and unlocks only when all three missions
   game.worlds.update(0.6, game.camera.position);
   assert.ok(area.missionStatus.missions.every(mission => mission.complete));
   assert.equal(game.progress.has(CASTLE), true);
+  assert.equal(game.progress.canSelect(CASTLE), true);
+  assert.equal(game.progress.canSelect(ID), true);
+  assert.equal(game.progress.has(ID), false);
   assert.equal(gate.unlocked, true);
   assert.equal(gate.label, 'Enter Princess Gallery');
   assert.ok(!seal.visible && sparks.visible);
@@ -118,6 +123,10 @@ test('the castle gate explains its lock and unlocks only when all three missions
 test('saved completion, existing castle gates and named arrivals survive reset and visits', t => {
   const game = fixture({ saved: [CASTLE] });
   t.after(game.worlds.unload);
+  assert.equal(game.progress.canSelect(ID), true);
+  assert.equal(game.progress.canSelect('secret-apartment'), false);
+  assert.equal(game.progress.canSelect('arendelle-village'), false);
+  assert.equal(game.progress.has(ID), false);
   const castle = game.worlds.load(CASTLE);
   const gate = castle.area.interactions.find(item => item.destination === ID);
   const village = castle.area.interactions.find(item => item.destination === 'arendelle-village');
@@ -763,4 +772,41 @@ test('reduced motion keeps gallery visitors in a steady pose', t => {
   const rest = arm.rotation.toArray();
   worlds.update(1, camera.position);
   assert.deepEqual(arm.rotation.toArray(), rest);
+});
+
+test('four snack carts have walkable service approaches in separate parts of the gallery', t => {
+  const { worlds } = fixture();
+  t.after(worlds.unload);
+  const { area, scene } = worlds.load(ID);
+  const collection = scene.getObjectByName('Princess Gallery snack carts');
+  assert.deepEqual(new Set(collection.children.map(cart => cart.name)),
+    new Set(['Popcorn cart', 'Cotton Candy cart', 'Hot Dogs cart', 'Cold Drinks cart']));
+  for (const cart of collection.children) {
+    assert.ok(cart.children.some(child => child.isInstancedMesh));
+    const { x, z } = cart.position;
+    const { toWorld } = spaceTransform({ position: { x, z }, rotation: cart.rotation.y });
+    assert.equal(walkElevation(area, { x, z }, x, z, 0, true), null, cart.name + ' has a solid footprint');
+    assertWalkable(area, toWorld(0, 2.8), toWorld(0, 1.42), cart.name);
+    assert.ok(collection.children.every(other => other === cart || other.position.distanceTo(cart.position) > 15));
+  }
+});
+
+test('the birds, clouds, crescent and lanterns hang above the public floor and clear Drone View', t => {
+  const { worlds } = fixture();
+  t.after(worlds.unload);
+  const { scene, definition } = worlds.load(ID);
+  const hanging = scene.getObjectByName('Princess Gallery hanging decorations');
+  assert.deepEqual(new Set(hanging.children.map(piece => piece.name)), new Set([
+    'Grand hanging crane', 'Adventure hanging bird', 'Woodland hanging cloud', 'Adventure hanging cloud',
+    'Lobby hanging cloud', 'Royal crescent and star mobile', 'Woodland hanging lanterns',
+  ]));
+  const drone = createDroneCamera(THREE);
+  drone.focus(definition, undefined, 1.7);
+  for (const piece of hanging.children) {
+    const bounds = new THREE.Box3().setFromObject(piece);
+    assert.ok(bounds.min.y > 9.5 && bounds.max.y > 24.3, piece.name);
+    assert.ok(piece.children.length > 0 && piece.children.every(mesh => !mesh.layers.test(drone.camera.layers)), piece.name);
+  }
+  const crane = hanging.getObjectByName('Grand hanging crane');
+  assert.ok(new THREE.Box3().setFromObject(crane).getSize(new THREE.Vector3()).x > 9);
 });

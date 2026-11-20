@@ -1,5 +1,5 @@
 {
-  "version": "6ac2ca0e840aacbbd0d456ccaaace2dc498eb2090420d413532baf61a28cbbb9",
+  "version": "f33a5c072c5fe2c94f89c938a5b188dd99c0f7afce072ce57070bdd44d8ae7cc",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
@@ -110,12 +110,20 @@
       "revision": "7e32f4e7ca9255be755f5c002bd33ea4d3c60ad0df065503fb7ff8915cbeb77a"
     },
     {
+      "path": "./areas/princess-gallery/concessions.js",
+      "revision": "3249f9cb0ab8bc801112620d51d171c01898c0eae0fa0838210fbd57a1f85fd0"
+    },
+    {
       "path": "./areas/princess-gallery/exhibits.js",
       "revision": "02cd01d5dc7cbfd4519d19b33589061b287e82877b7fe9a6d364038143c070b9"
     },
     {
       "path": "./areas/princess-gallery/gallery.js",
-      "revision": "0a8baedd03205569befa49439d491450ef291dd0ed06660951f878b7e3a182fb"
+      "revision": "27fc5b99664026e9ae72ab055de45c1f9ce890f53c7c9fcd6e15a56e5950c566"
+    },
+    {
+      "path": "./areas/princess-gallery/hanging-decor.js",
+      "revision": "9ba6d1f8d709faf1ca10f0d6a38daec433eeeb698f0ac7799471c73db5a1fa2d"
     },
     {
       "path": "./areas/princess-gallery/index.js",
@@ -271,7 +279,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "89e3dadd3b2f9348f2f01501ce6a49b0a80765fef749c2d7fceb275908a51bc3"
+      "revision": "f3ca7436a80d70179390a0cff9c00c6939a0c39398ae1928ef5322af946dfbdc"
     },
     {
       "path": "./core/geometry.js",
@@ -291,7 +299,7 @@
     },
     {
       "path": "./core/level-progress.js",
-      "revision": "63f09d20a6565cfb95cdc70f431dbcaf2392036e0b957bcdaf05324cf8079511"
+      "revision": "9a82dd63e197f6f5af45ffd462fe829e94a3739349b4747feed3e5323fa0a879"
     },
     {
       "path": "./core/missions.js",
@@ -323,7 +331,7 @@
     },
     {
       "path": "./game.js",
-      "revision": "f5705e4b6eaac0daa8db8adfb2b267fccb35a2f25bab852a5e01175c22db8d41"
+      "revision": "7afd3468a67103005623e1382ce0ca0ce33c50d7734cba2af77092e4b82f7882"
     },
     {
       "path": "./index.html",

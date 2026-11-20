@@ -29,6 +29,10 @@ export function createLevelProgress(areas, getStorage = () => globalThis.localSt
     }
   }
 
+  function canSelect(id) {
+    return isPublicArea(areas, id) && (completed.has(id) || completed.has(areas[id].menuUnlockAfter));
+  }
+
   refresh();
-  return { complete, refresh, has: id => completed.has(id) };
+  return { complete, refresh, has: id => completed.has(id), canSelect };
 }
