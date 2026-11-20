@@ -210,15 +210,16 @@ export function paintScenicGround(ink, halfWidth, halfDepth) {
   ink.restore();
 }
 
-function ridgeGeometry(THREE, length, height, tint, random) {
+function ridgeGeometry(THREE, length, height, tint, random, fitX = x => x) {
   const positions = [], shades = [];
   const count = Math.max(2, Math.ceil(length / 2.1));
   const crossSections = Array.from({ length: count + 1 }, (_, index) => {
     const x = -length / 2 + index * length / count;
     const peak = height * (.73 + random() * .30);
     const shift = (random() - .5) * .45;
-    return [[x, -.055, .81], [x, peak * .52, .69 + shift], [x, peak * .88, -.11 + shift],
-      [x, peak, -1.21 + shift], [x, peak * .68, -2.23 + shift], [x, -.055, -2.6]];
+    return [[-.055, .81], [peak * .52, .69 + shift], [peak * .88, -.11 + shift],
+      [peak, -1.21 + shift], [peak * .68, -2.23 + shift], [-.055, -2.6]]
+      .map(([y, z]) => [fitX(x, z), y, z]);
   });
   function triangle(a, b, c, color) {
     const tone = color.clone().multiplyScalar(.84 + random() * .21);
@@ -279,7 +280,19 @@ export function buildScenicEdges({ THREE, parent, parts, obstacles }) {
     const random = seededRandom(511 + index * 19);
     const model = new THREE.Group();
     const border = addGroup(THREE, group, (from ?? 'lobby') + ' to ' + (to ?? 'lobby') + ' scenic barrier', x, 0, z, yaw);
-    part(model, ridgeGeometry(THREE, length + .20, height, palette[theme], random), rock, 0, 0, 0, 1, 1, 1);
+    let fitX;
+    if (from === 'aurora' || to === 'aurora') {
+      // Seat the ridge against the oval's diagonal wall without projecting through its inner face.
+      const atStart = from === 'aurora';
+      const { toLocal } = spaceTransform({ position: { x, z }, rotation: yaw });
+      const outline = outlines.aurora;
+      const [wallX, wallZ] = toLocal(...(atStart ? outline[fromIndex + 1] : outline.at(-1)));
+      const end = (atStart ? -1 : 1) * length / 2;
+      const slope = (wallX - end) / wallZ;
+      fitX = atStart ? (x, z) => Math.max(x, end + slope * z - .10)
+        : (x, z) => Math.min(x, end + slope * z + .10);
+    }
+    part(model, ridgeGeometry(THREE, length + .20, height, palette[theme], random, fitX), rock, 0, 0, 0, 1, 1, 1);
 
     const saplings = Math.max(2, Math.round(length / 2.4));
     for (let i = 0; i < saplings; i++) {
