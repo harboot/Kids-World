@@ -8,20 +8,27 @@ import { createLevelProgress } from '../core/level-progress.js';
 import { PLAYER_RADIUS, walkElevation } from '../core/movement.js';
 import { createPlayer } from '../core/player.js';
 import { areaURL, createWorldManager, historyArrival, resolveArea } from '../core/world-manager.js';
+import { missionHudFixture } from './helpers/mission-hud.mjs';
 
 const ID = 'arendelle-village';
 const CASTLE = 'frozen-castle';
 const initialProgress = [
-  'Catch and sell fish · 0/3',
-  'Return the lost reindeer · 0/1',
-  'Repair the clock · 0/3 gears',
-].join('\n');
+  { id: 'fishing', title: 'Catch and sell fish', current: 0, total: 3, complete: false },
+  { id: 'reindeer', title: 'Return the lost reindeer', current: 0, total: 1, complete: false },
+  { id: 'clock', title: 'Repair the Clock Tower', current: 0, total: 3, complete: false },
+];
+
+function assertMission(area, id, current, complete) {
+  const initial = initialProgress.find(mission => mission.id === id);
+  assert.deepEqual(area.missionStatus.missions.find(mission => mission.id === id), { ...initial, current, complete });
+}
 
 function fixture(initial = ID) {
   let stored = JSON.stringify(['garden', 'wooden-house', 'snow']);
   const writes = [];
   const completions = [];
   const cues = [];
+  const missionHud = missionHudFixture();
   const progress = createLevelProgress(areas, () => ({
     getItem: () => stored,
     setItem(key, value) { stored = value; writes.push(JSON.parse(value)); },
@@ -34,10 +41,11 @@ function fixture(initial = ID) {
       isLevelComplete: progress.has, reducedMotion: () => still,
       completeLevel(id) { completions.push(id); progress.complete(id); },
       playCue(notes) { cues.push(notes); },
+      notify: missionHud.notify,
     },
   });
   const visit = worlds.load(initial);
-  return { visit, worlds, camera, progress, writes, completions, cues, reduceMotion() { still = true; } };
+  return { visit, worlds, camera, progress, writes, completions, cues, missionHud, reduceMotion() { still = true; } };
 }
 
 function followPath(player, camera, visit, points, onStep = () => {}) {
@@ -161,7 +169,7 @@ test('buildings, quay, bridge walls, water edges and the world boundary block mo
 });
 
 test('shop and dock interactions show temporary messages without travel or completion', t => {
-  const { visit, worlds, progress, writes } = fixture();
+  const { visit, worlds, progress, writes, missionHud } = fixture();
   t.after(worlds.unload);
   const { area } = visit;
   const prompts = [
@@ -169,16 +177,20 @@ test('shop and dock interactions show temporary messages without travel or compl
     ['Visit Fruit Shop', 'Fruit Shop — Coming Soon', { x: 14.2, z: 8.6 }],
     ['To The City', 'City Adventure — Coming Soon', { x: 30.1, z: 17.25 }],
   ];
-  assert.equal(area.objective, initialProgress);
+  assert.deepEqual(area.missionStatus.missions, initialProgress);
   for (const [label, message, site] of prompts) {
     const item = nearestInteraction(area.interactions, { ...site, y: 1.68 });
     assert.equal(item.label, label);
     item.act({ travel() { assert.fail('Coming Soon should stay in the current area'); } });
-    assert.equal(area.objective, initialProgress + '\n' + message);
+    assert.equal(missionHud.toast.textContent, message);
+    assert.deepEqual(area.missionStatus.missions, initialProgress);
     worlds.update(1.6);
-    assert.equal(area.objective, initialProgress + '\n' + message);
+    missionHud.advance(1600);
+    assert.equal(missionHud.toast.textContent, message);
     worlds.update(1.7);
-    assert.equal(area.objective, initialProgress);
+    missionHud.advance(1700);
+    assert.equal(missionHud.toast.textContent, '');
+    assert.deepEqual(area.missionStatus.missions, initialProgress);
   }
   assert.equal(nearestInteraction(area.interactions, { x: 7.4, y: 1.68, z: 10.1 }), null);
   assert.equal(nearestInteraction(area.interactions, { x: 18.5, y: 1.68, z: -3 }).label, 'Talk to Fish Seller');
@@ -187,8 +199,8 @@ test('shop and dock interactions show temporary messages without travel or compl
   assert.deepEqual(writes, []);
 });
 
-test('Restart restores motion and messages, and travel disposes the first visit before recreating it', t => {
-  const { visit, worlds, camera, progress, reduceMotion } = fixture();
+test('Restart restores motion, and travel disposes the first visit before recreating it', t => {
+  const { visit, worlds, camera, progress, reduceMotion, missionHud } = fixture();
   t.after(worlds.unload);
   const boat = visit.scene.getObjectByName('City passenger boat');
   const waves = visit.scene.getObjectByName('Water ripples');
@@ -218,7 +230,7 @@ test('Restart restores motion and messages, and travel disposes the first visit 
   worlds.reset();
   assert.equal(visit.scene.children.length, children);
   assert.equal(disposed.size, 0);
-  assert.equal(visit.area.objective, initialProgress);
+  assert.deepEqual(visit.area.missionStatus.missions, initialProgress);
   assert.ok(boat.position.equals(stillBoat) && waves.position.equals(stillWaves));
   assert.equal(boat.rotation.z, 0);
   worlds.update(1);
@@ -234,15 +246,17 @@ test('Restart restores motion and messages, and travel disposes the first visit 
   assert.equal(lineReleased, true);
   assert.ok([...disposed.values()].every(count => count === 1));
   assert.ok(visit.area.interactions.every(item => item.active === false));
+  const notices = missionHud.notifications.length;
   cityPrompt.act();
-  assert.equal(visit.area.objective, initialProgress);
+  assert.equal(missionHud.notifications.length, notices);
+  assert.deepEqual(visit.area.missionStatus.missions, initialProgress);
 
   const repeat = worlds.load(ID);
   assert.equal(camera.parent, repeat.scene);
   assert.equal(repeat.scene.children.length, children);
   assert.notEqual(repeat.area.interactions, visit.area.interactions);
   assert.equal(repeat.area.interactions.length, visit.area.interactions.length);
-  assert.equal(repeat.area.objective, initialProgress);
+  assert.deepEqual(repeat.area.missionStatus.missions, initialProgress);
   assert.ok(repeat.scene.getObjectByName('City passenger boat').position.equals(stillBoat));
   assert.ok(progress.has('snow') && !progress.has(ID));
 });
@@ -293,7 +307,7 @@ function escort(visit, worlds, camera, checkStep = () => {}) {
   followPath(player, camera, visit, [[-12.35, 5.6], [-12.35, 19.55], [-17.3, 19.55],
     [-23.1, 19.55], [-28.2, 19.55], [-28.2, 23.4], [-29.12, 24.85]], update);
   for (let i = 0; i < 90; i++) update(0.04);
-  assert.match(visit.area.objective, /lost reindeer · 0\/1/, 'arrival alone does not finish the mission');
+  assertMission(visit.area, 'reindeer', 0, false);
   const keeper = nearestInteraction(visit.area.interactions, camera.position);
   assert.equal(keeper?.label, 'Return Reindeer');
   keeper.act();
@@ -302,7 +316,7 @@ function escort(visit, worlds, camera, checkStep = () => {}) {
 }
 
 test('fishing supports pickup, bite timing, misses, walking away, and a single sale of three fish', t => {
-  const { visit, worlds, progress, cues } = fixture();
+  const { visit, worlds, progress, cues, missionHud } = fixture();
   t.after(worlds.unload);
   const { area, scene } = visit;
   const rod = scene.getObjectByName('Fishing rod');
@@ -315,7 +329,7 @@ test('fishing supports pickup, bite timing, misses, walking away, and a single s
   const site = { x: cast.x, z: cast.z, y: 1.68 };
   assert.equal(pickUp.label, 'Pick Up Fishing Rod');
   seller.act();
-  assert.match(area.objective, /Bring me three fish/);
+  assert.match(missionHud.toast.textContent, /Bring me three fish/);
   assert.equal(cast.active, false);
   assert.ok(!line.visible && !bobber.visible);
   pickUp.act();
@@ -332,31 +346,31 @@ test('fishing supports pickup, bite timing, misses, walking away, and a single s
   assert.ok(cues.length > 0);
   worlds.update(6.1, site);
   assert.ok(!bobber.visible);
-  assert.match(area.objective, /slipped away/);
-  assert.match(area.objective, /sell fish · 0\/3/);
+  assert.match(missionHud.toast.textContent, /slipped away/);
+  assertMission(area, 'fishing', 0, false);
   cast.act();
   worlds.update(1, { x: site.x - 4, z: site.z });
   assert.ok(cast.active && !line.visible);
 
   for (let i = 1; i <= 3; i++) {
     catchFish(worlds, cast);
-    assert.ok(area.objective.includes(`Catch and sell fish · ${i}/3`));
+    assertMission(area, 'fishing', i, false);
   }
   assert.equal(cast.active, false);
   cast.act();
   assert.equal(seller.label, 'Sell 3 Fish');
-  assert.match(area.objective, /Take your fish to the Fish Shop/);
+  assert.match(area.missionStatus.hint, /Take your fish to the Fish Shop/);
   const before = cues.length;
   seller.act();
   seller.act();
   assert.equal(cues.length, before + 1);
   assert.equal(seller.active, false);
-  assert.match(area.objective, /sell fish · 3\/3 ✓/);
+  assertMission(area, 'fishing', 3, true);
   assert.ok(!progress.has(ID));
   assert.equal(area.interactions, items);
 
   worlds.reset();
-  assert.equal(area.objective, initialProgress);
+  assert.deepEqual(area.missionStatus.missions, initialProgress);
   assert.equal(rod.parent, scene);
   assert.ok(!line.visible && !bobber.visible);
   assert.ok(pickUp.active && !cast.active);
@@ -364,7 +378,7 @@ test('fishing supports pickup, bite timing, misses, walking away, and a single s
 });
 
 test('the reindeer crosses the bridge and reaches the trough after the stable keeper accepts it', t => {
-  const { visit, worlds, camera, completions } = fixture();
+  const { visit, worlds, camera, completions, missionHud } = fixture();
   t.after(worlds.unload);
   const { area, scene } = visit;
   const deer = scene.getObjectByName('Lost reindeer');
@@ -372,7 +386,7 @@ test('the reindeer crosses the bridge and reaches the trough after the stable ke
   const keeper = nearestInteraction(area.interactions, { x: -29.12, z: 24.88, y: 1.68 });
   assert.equal(keeper.label, 'Talk to Stable Keeper');
   keeper.act();
-  assert.match(area.objective, /west lanes/);
+  assert.match(missionHud.toast.textContent, /west lanes/);
   let previous = deer.position.clone();
   let highest = 0;
   let inMotion = false;
@@ -387,11 +401,11 @@ test('the reindeer crosses the bridge and reaches the trough after the stable ke
   });
   assert.ok(highest > 0.49 && inMotion, 'animates while following on the bridge');
   assert.ok(deer.position.x < -27.9 && deer.position.z > 23.0, 'the reindeer reaches the feeding area');
-  assert.match(area.objective, /lost reindeer · 1\/1/);
+  assertMission(area, 'reindeer', 1, true);
   assert.equal(keeper.active, false);
   assert.deepEqual(completions, []);
   worlds.update(4, camera.position);
-  assert.match(area.objective, /lost reindeer · 1\/1/);
+  assertMission(area, 'reindeer', 1, true);
 
   worlds.reset();
   assert.ok(deer.position.equals(original));
@@ -425,15 +439,15 @@ test('gears are unique reachable pickups and the repair starts all four clock fa
     gear.act();
     gear.act();
     assert.ok(!gear.active && !scene.getObjectByName(gearNames[i]).visible);
-    assert.ok(area.objective.includes(`Repair the clock · ${i + 1}/3 gears`));
+    assertMission(area, 'clock', i + 1, false);
     assert.equal(repair.active, i === 2);
   });
-  assert.match(area.objective, /Return to the Clock Tower/);
+  assert.match(area.missionStatus.hint, /Return to the Clock Tower/);
   assert.equal(nearestInteraction(area.interactions, { x: 1.68, z: -9.55, y: 1.68 }), repair);
   repair.act();
   repair.act();
   assert.equal(cues.length, 4, 'three pickups and one bell cue');
-  assert.match(area.objective, /Repair the clock · 3\/3 gears ✓/);
+  assertMission(area, 'clock', 3, true);
   worlds.update(1);
   assert.ok(hands.every(hand => hand.rotation.z < 0));
   reduceMotion();
@@ -450,14 +464,15 @@ test('gears are unique reachable pickups and the repair starts all four clock fa
 test('any order completes the village only after all three missions and replay preserves the record', () => {
   const orders = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
   for (const order of orders) {
-    const { worlds, camera, progress, writes, completions } = fixture();
+    const { worlds, camera, progress, writes, completions, missionHud } = fixture();
     try {
       function playVisit(visit, replay = false) {
         const play = [() => deliverFish(visit, worlds), () => escort(visit, worlds, camera), () => repairClock(visit)];
-        assert.equal(visit.area.objective, initialProgress);
+        assert.deepEqual(visit.area.missionStatus.missions, initialProgress);
         order.forEach((mission, i) => {
           play[mission]();
-          assert.equal(visit.area.objective.includes('Arendelle Village Complete!'), i === 2);
+          assert.equal(visit.area.missionStatus.missions.filter(mission => mission.complete).length, i + 1);
+          assert.equal(missionHud.toast.textContent.includes('Arendelle Village Complete!'), i === 2);
           assert.equal(progress.has(ID), replay || i === 2);
         });
       }
@@ -465,7 +480,7 @@ test('any order completes the village only after all three missions and replay p
       const repeat = worlds.load(ID);
       playVisit(repeat, true);
       worlds.reset();
-      assert.equal(repeat.area.objective, initialProgress);
+      assert.deepEqual(repeat.area.missionStatus.missions, initialProgress);
       assert.deepEqual(completions, [ID]);
       assert.deepEqual(writes, [['garden', 'wooden-house', 'snow', ID]]);
     } finally {

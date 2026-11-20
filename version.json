@@ -1,5 +1,5 @@
 {
-  "version": "a8ca68079ced198a574a7c1c04e5b433e8ee342f3c20e30309ec89efd8b4a14c",
+  "version": "07f5a2ce167b6abbaf50790351d3894b4a8827d7997094c63530869f8196fefb",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./areas/arendelle-village/clock-mission.js",
-      "revision": "996a99e90598eb2400630b3fde9062d9a2571c0d4443f7f23936735eda413a2e"
+      "revision": "cca9c651662ae0d790ac38015c062e41f15bdd4dc26c98f9a533b9b107004ce7"
     },
     {
       "path": "./areas/arendelle-village/decorations.js",
@@ -15,7 +15,7 @@
     },
     {
       "path": "./areas/arendelle-village/fishing.js",
-      "revision": "6c39ab70e457e7f005bc4d53008b60bb4160be196acb5345ff3029b7651c4f48"
+      "revision": "cb88807451ebd5e3b605d31a81a93a7c9994ca6969a5715f31611fbf3e3fa621"
     },
     {
       "path": "./areas/arendelle-village/fountain.js",
@@ -27,7 +27,7 @@
     },
     {
       "path": "./areas/arendelle-village/index.js",
-      "revision": "f1b0119ae77c3c5693eacd08c21ce8deb0d3351907a429a247afc22513096e11"
+      "revision": "4350368621782f28bc67498e61a9dc5c71baf124dca930007435b3e92650c306"
     },
     {
       "path": "./areas/arendelle-village/interactions.js",
@@ -35,11 +35,11 @@
     },
     {
       "path": "./areas/arendelle-village/missions.js",
-      "revision": "cf4a1205ecd0698953e58ff951c949481f61f3030743ad1cdff2dc3031a0719d"
+      "revision": "b7bfa869d2e9225cedcf68916ace874727ff8e0d3108d57ee575bffd96b6dba5"
     },
     {
       "path": "./areas/arendelle-village/reindeer.js",
-      "revision": "fd900a29e558e5f464112eb5de898b210b69aa4c3d0af3c520e365aabb102241"
+      "revision": "3266b44e4198dee8696f1ef8aa80eff905516a0627faa3ab7a7dbaf7d62fc1ad"
     },
     {
       "path": "./areas/arendelle-village/scenery.js",
@@ -63,7 +63,7 @@
     },
     {
       "path": "./areas/flower-garden/garden-orchard.js",
-      "revision": "e94af23e914926dbcb05c8222e6f2f36fa069e6249e3924bc9bed47c54dd6c90"
+      "revision": "3b84ba4e8143d9d8d8efe7f84d112243a928821e0fb455c1b6c92de18ec87710"
     },
     {
       "path": "./areas/flower-garden/garden-pond.js",
@@ -75,11 +75,11 @@
     },
     {
       "path": "./areas/flower-garden/index.js",
-      "revision": "80c5dc166fde12433c61d8e2cfda805bb1eb89fde48bca47c8367574f6b7f353"
+      "revision": "9f7b68e65b3d3c4ccc2ce9677a1a459a7df50efa6ea4d0b9186cb4c9cdc63add"
     },
     {
       "path": "./areas/frozen-castle/activities.js",
-      "revision": "66246eb549c14ae7f7e53cb7cedf032ca8215e6dbacc02ba1770580637ea4239"
+      "revision": "d2e58b42c91b1b1a6d734641c1698699841ace993fb54ac90cbc63f2e0130108"
     },
     {
       "path": "./areas/frozen-castle/decorations.js",
@@ -87,7 +87,7 @@
     },
     {
       "path": "./areas/frozen-castle/index.js",
-      "revision": "fdcdfd41e774851244122b55f31f95c00111c3acc03253c1da935d560c05b6b9"
+      "revision": "c6cf4abcbecdbd1d8187db9b72e90a27f9f8e752b8883f573ed69797632f046a"
     },
     {
       "path": "./areas/frozen-castle/palace.js",
@@ -123,7 +123,7 @@
     },
     {
       "path": "./areas/secret-apartment/elevator.js",
-      "revision": "2d280bc50ea5e7e314e686c1a9b4474ac4aeaf85f6a8362e40612f6fbd349120"
+      "revision": "3cdc4e1e6b78f492ec978396536ad249953ac2d94bfaa90d31a3709f989173b8"
     },
     {
       "path": "./areas/secret-apartment/floor17.js",
@@ -139,11 +139,11 @@
     },
     {
       "path": "./areas/secret-apartment/index.js",
-      "revision": "1ae1d4d1f838467992a0ef22aeb43beeb1b5074ad0c2630f5e58b3bdcc9ad059"
+      "revision": "622485bc73fc148330eff0ae9174c9e0caeddaab084ce495c1ff789ac77ba3ff"
     },
     {
       "path": "./areas/secret-apartment/missions.js",
-      "revision": "f37a53cfd6e26a0d5150bb4139db54b825253c0f161a197c64fc4b43676c89dc"
+      "revision": "ebadac6632ee490831b97cc01a80357247be3bac20d83e08e5979c95b56ae541"
     },
     {
       "path": "./areas/secret-apartment/pool.js",
@@ -155,7 +155,7 @@
     },
     {
       "path": "./areas/snow-basin.js",
-      "revision": "5f3f19d1332a5d4e31a93439ed4bf440adf94d847a933be31d55e1bf3fa91e47"
+      "revision": "caf33731eae462b45441e4f59c8b467dbda7bdf3f068478bc0a7424382b78faa"
     },
     {
       "path": "./areas/snow-basin/activity.js",
@@ -171,7 +171,7 @@
     },
     {
       "path": "./areas/wooden-house/cleaning.js",
-      "revision": "76db0dd06c781aa4952db6a6c05a6ea040996f268f990bbbdb9502ebfb820494"
+      "revision": "fa76bb01af18febd4eb99e89943aac82285dcb0b67992f08a81cbd5646e0a74a"
     },
     {
       "path": "./areas/wooden-house/furniture.js",
@@ -179,7 +179,7 @@
     },
     {
       "path": "./areas/wooden-house/index.js",
-      "revision": "a228a8078f563bf815a028fb1c7a6cb77aaf15e15eee8a735a4557c4ecdf4bce"
+      "revision": "06c53b5b4709d2b3ee8b26028ca4c6ce80ada03876440a44fc90e32ba14abcf9"
     },
     {
       "path": "./areas/wooden-house/interior.js",
@@ -207,11 +207,15 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "4c8bbe9f67479996729176b2a07c01c96dabffc4fb3bff75eb559649f8b258d9"
+      "revision": "dd262ba1abc9be0af413979ca91c749b91dc3919008d2ceb9fc444588e5d0106"
     },
     {
       "path": "./core/geometry.js",
       "revision": "504cfb8d9104e31d4dd20a961b9721a4a7abbe656c50168979d2600ca6e55734"
+    },
+    {
+      "path": "./core/hud.js",
+      "revision": "46225a8a28e0b3e6cba8c237b37833d72fbbe33d0ed0861c09bb402be5d789b0"
     },
     {
       "path": "./core/interaction-clearance.js",
@@ -224,6 +228,10 @@
     {
       "path": "./core/level-progress.js",
       "revision": "63f09d20a6565cfb95cdc70f431dbcaf2392036e0b957bcdaf05324cf8079511"
+    },
+    {
+      "path": "./core/missions.js",
+      "revision": "87e5f23b3bee4d2dc49f215f49065f5f46013c50597ca74d55333b9bddb31faf"
     },
     {
       "path": "./core/movement.js",
@@ -247,7 +255,7 @@
     },
     {
       "path": "./index.html",
-      "revision": "084c695a7e9b0a8d0a62d2fecda5593a22ed4a50a1b740bb16f91738628033a4"
+      "revision": "d8b5d5ec76737346087bec0270704ff46f9725e09dfeeb81c1ab966ad7054160"
     },
     {
       "path": "./manifest.webmanifest",
@@ -279,7 +287,7 @@
     },
     {
       "path": "./style.css",
-      "revision": "d690e7aeecad60955fd8c9f01acb1f4f48700f5c0a9a75ff2ccef1e507e03762"
+      "revision": "7b2ed4c308a24bbb7894a3d72f5016e8e329a386d931549444997c3849303321"
     },
     {
       "path": "./vendor/three.LICENSE",

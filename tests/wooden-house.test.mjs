@@ -13,13 +13,13 @@ const house = 'wooden-house';
 const labels = {
   bed: 'Make bed', dishes: 'Wash dishes', painting: 'Straighten painting', tv: 'Turn off TV', toys: 'Put away toys',
 };
-function progressText(completed = []) {
-  const lines = Object.entries(labels).map(([id, label]) => `${label} · ${Number(completed.includes(id))}/1`);
-  if (completed.length === lines.length) lines.push('Great job! The house is sparkling clean!');
-  return lines.join('\n');
+function missionProgress(completed = []) {
+  return Object.entries(labels).map(([id, title]) => ({
+    id, title, current: Number(completed.includes(id)), total: 1, complete: completed.includes(id),
+  }));
 }
 
-const success = progressText(Object.keys(labels));
+const success = missionProgress(Object.keys(labels));
 
 function fixture(saved = []) {
   let data = JSON.stringify(saved);
@@ -34,6 +34,7 @@ function fixture(saved = []) {
   const progress = createLevelProgress(areas, getStorage);
   const completions = [];
   const cues = [];
+  const notifications = [];
   const camera = new THREE.PerspectiveCamera();
   let reduced = false;
   const worlds = createWorldManager(THREE, {
@@ -41,6 +42,7 @@ function fixture(saved = []) {
     services: {
       reducedMotion: () => reduced,
       playCue: notes => cues.push(notes),
+      notify: message => notifications.push(message),
       isLevelComplete: progress.has,
       completeLevel(id) {
         completions.push(id);
@@ -48,7 +50,7 @@ function fixture(saved = []) {
       },
     },
   });
-  return { worlds, camera, completions, cues, progress, getStorage, writes, reduceMotion() { reduced = true; } };
+  return { worlds, camera, completions, cues, notifications, progress, getStorage, writes, reduceMotion() { reduced = true; } };
 }
 
 function missions(area) {
@@ -190,7 +192,7 @@ test('each mission makes its actual furniture tidy exactly once and only after t
   assert.deepEqual(Object.fromEntries(Object.values(tasks).map(task => [task.id, task.label])), labels);
   for (const [id, task] of Object.entries(tasks)) {
     worlds.reset();
-    assert.equal(area.objective, progressText());
+    assert.deepEqual(area.missionStatus.missions, missionProgress());
     for (const [key, isTidy] of Object.entries(tidy)) {
       assert.equal(isTidy(model), false, key);
       assert.ok(tasks[key].active);
@@ -199,15 +201,15 @@ test('each mission makes its actual furniture tidy exactly once and only after t
     task.act();
     task.act();
     assert.equal(task.active, false);
-    assert.equal(area.objective, progressText());
+    assert.deepEqual(area.missionStatus.missions, missionProgress());
     if (id === 'dishes') assert.ok(model.water.visible);
     worlds.update(0.2);
-    assert.equal(area.objective, progressText());
+    assert.deepEqual(area.missionStatus.missions, missionProgress());
     assert.equal(tidy[id](model), false);
     worlds.update(1.2);
     task.act();
     worlds.update(2);
-    assert.equal(area.objective, progressText([id]));
+    assert.deepEqual(area.missionStatus.missions, missionProgress([id]));
     assert.equal(tidy[id](model), true, id);
     assert.equal(cues.length, initialCues + 1);
     for (const other of Object.keys(tasks).filter(key => key !== id)) {
@@ -282,7 +284,7 @@ test('every mission works from different positions outside its clearance while f
 });
 
 test('all five tasks can finish in different orders, record once per visit and remain replayable', () => {
-  const { worlds, getStorage, writes, completions, progress, cues } = fixture(['garden', 'snow']);
+  const { worlds, getStorage, writes, completions, progress, cues, notifications } = fixture(['garden', 'snow']);
   for (const order of [
     ['toys', 'painting', 'tv', 'bed', 'dishes'],
     ['dishes', 'bed', 'toys', 'tv', 'painting'],
@@ -290,12 +292,12 @@ test('all five tasks can finish in different orders, record once per visit and r
     const { area, scene } = worlds.active ?? worlds.load(house);
     const tasks = missions(area);
     const model = models(scene);
-    assert.equal(area.objective, progressText());
+    assert.deepEqual(area.missionStatus.missions, missionProgress());
     assert.ok(!model.stars.visible);
     order.forEach((id, i) => {
       tasks[id].act();
       worlds.update(1.3);
-      assert.equal(area.objective, progressText(order.slice(0, i + 1)));
+      assert.deepEqual(area.missionStatus.missions, missionProgress(order.slice(0, i + 1)));
     });
     for (const [id, task] of Object.entries(tasks)) {
       assert.ok(tidy[id](model), id);
@@ -305,21 +307,22 @@ test('all five tasks can finish in different orders, record once per visit and r
     assert.ok(model.stars.visible);
     worlds.update(2);
     assert.equal(model.stars.visible, false);
-    assert.equal(area.objective, success);
+    assert.deepEqual(area.missionStatus.missions, success);
     assert.ok(progress.has(house));
     const reopened = createLevelProgress(areas, getStorage);
     assert.ok(reopened.has(house));
     assert.ok(reopened.has('garden') && reopened.has('snow'));
     worlds.reset();
-    assert.equal(area.objective, progressText());
+    assert.deepEqual(area.missionStatus.missions, missionProgress());
     assert.ok(Object.values(tidy).every(isTidy => !isTidy(model)));
   }
   assert.deepEqual(completions, [house, house]);
+  assert.deepEqual(notifications, Array(2).fill('Great job! The house is sparkling clean!'));
   assert.equal(writes.length, 1);
   assert.equal(cues.length, 12);
   worlds.load('garden');
   const revisit = worlds.load(house);
-  assert.equal(revisit.area.objective, progressText());
+  assert.deepEqual(revisit.area.missionStatus.missions, missionProgress());
   assert.ok(Object.values(missions(revisit.area)).every(task => task.active));
   worlds.unload();
 });
@@ -339,7 +342,7 @@ test('unload cancels running missions and releases their resources', () => {
   worlds.reset();
   assert.equal(model.water.visible, false);
   assert.equal(model.screen.visible, false);
-  assert.equal(first.area.objective, progressText());
+  assert.deepEqual(first.area.missionStatus.missions, missionProgress());
   tasks.dishes.act();
   tasks.tv.act();
   worlds.load('garden');
@@ -353,7 +356,7 @@ test('unload cancels running missions and releases their resources', () => {
   assert.equal(cues.length, 4);
   assert.deepEqual(completions, []);
   const next = worlds.load(house);
-  assert.equal(next.area.objective, progressText());
+  assert.deepEqual(next.area.missionStatus.missions, missionProgress());
   worlds.unload();
 });
 
@@ -368,7 +371,7 @@ test('reduced motion keeps the TV still and applies tidy poses without animated 
   assert.ok(cloud.position.equals(cloudPosition));
   for (const task of Object.values(missions(area))) task.act();
   assert.ok(Object.values(tidy).every(isTidy => isTidy(model)));
-  assert.equal(area.objective, success);
+  assert.deepEqual(area.missionStatus.missions, success);
   assert.deepEqual(completions, [house]);
   const star = model.stars.children[0];
   const starPosition = star.position.clone();

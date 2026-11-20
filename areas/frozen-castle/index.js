@@ -30,7 +30,7 @@ export const frozenCastle = {
 };
 
 function loadCastle({ THREE, scene, hud, signal, playCue = () => {}, reducedMotion = () => false,
-  isLevelComplete = () => false, completeLevel = () => {} }) {
+  isLevelComplete = () => false, completeLevel = () => {}, notify }) {
   const obstacles = [];
   const builder = createPalaceBuilder(THREE, scene, obstacles);
   buildPalace(THREE, scene, builder, hud?.ownerDocument);
@@ -53,6 +53,7 @@ function loadCastle({ THREE, scene, hud, signal, playCue = () => {}, reducedMoti
       celebration = 2.4;
       playCue(unlockCue);
       pose(0);
+      notify?.(`Castle Magic Restored! ${villageName} unlocked!`);
     },
   });
   builder.batchArchitecture();
@@ -113,11 +114,7 @@ function loadCastle({ THREE, scene, hud, signal, playCue = () => {}, reducedMoti
       return blocksSummitEdge(x, z, radius) || activity.staircase.blocksGround(x, z, radius, feet, from);
     },
     getGroundHeight: activity.staircase.getGroundHeight,
-    get objective() {
-      const lines = activity.missionProgress;
-      if (isComplete()) lines.push('Castle Magic Restored!', `${villageName} unlocked!`);
-      return lines.join('\n');
-    },
+    get missionStatus() { return activity.missionStatus; },
     reset,
     update(dt) {
       if (!isActive()) return;

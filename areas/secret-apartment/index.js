@@ -35,7 +35,7 @@ function inZone(id, x, z, doorZ) {
   return x >= 0.8 && x <= 10.68 && z <= 3.33;
 }
 
-function loadApartment({ THREE, scene, camera, hud, signal, playCue = () => {}, reducedMotion = () => false }) {
+function loadApartment({ THREE, scene, camera, hud, signal, playCue = () => {}, reducedMotion = () => false, notify }) {
   const architecture = createArchitecture(THREE);
   const zones = Object.fromEntries(Object.entries(PLACEMENT).map(([id, placement]) => {
     const root = architecture.group(scene, id, placement.x);
@@ -43,7 +43,7 @@ function loadApartment({ THREE, scene, camera, hud, signal, playCue = () => {}, 
     const b = architecture.builder(root, solids);
     return [id, { ...placement, root, b, solids }];
   }));
-  const mission = createApartmentMission(playCue, signal);
+  const mission = createApartmentMission(playCue, signal, notify);
   const basement = buildBasement(THREE, architecture, zones.basement, mission, reducedMotion, camera.position);
   const floor8 = buildFloor8(THREE, architecture, zones.floor8, reducedMotion, mission);
   const floor17 = buildFloor17(THREE, architecture, zones.floor17, reducedMotion, mission);
@@ -76,18 +76,26 @@ function loadApartment({ THREE, scene, camera, hud, signal, playCue = () => {}, 
     reducedMotion,
     accessMessage: mission.accessMessage,
     notify: mission.notify,
-    onDepart() { playCue(travelCue); },
+    onDepart(destination) {
+      playCue(travelCue);
+      mission.notify(`Elevator in transit to ${destination}.`);
+    },
     enabled: () => !signal?.aborted && !mission.cinematic,
   });
   for (const { b } of Object.values(zones)) b.finish();
 
+  const missionStatus = {
+    missions: mission.missionStatus.missions,
+    get inventory() { return mission.missionStatus.inventory; },
+    get hint() {
+      const destination = elevator.destination;
+      return destination ? `Wait for the elevator to reach ${destination}.` : mission.missionStatus.hint;
+    },
+  };
   return {
     obstacles: [],
     interactions: [...elevator.interactions, ...basement.interactions, ...floor8.interactions, ...floor17.interactions],
-    get objective() {
-      const destination = elevator.destination;
-      return mission.objective(destination && ('Elevator in transit · ' + destination));
-    },
+    get missionStatus() { return missionStatus; },
     blocksGround(x, z) {
       const zone = zones[active];
       const localX = x - zone.x;

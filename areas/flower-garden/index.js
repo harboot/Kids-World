@@ -197,7 +197,7 @@ export const flowerGarden = {
   load: loadGarden,
 };
 
-function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelComplete, completeLevel, reducedMotion, playCue }) {
+function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelComplete, completeLevel, reducedMotion, playCue, notify }) {
   const { width, depth } = flowerGarden;
   const obstacles = [];
   const gates = [];
@@ -464,6 +464,7 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelCompl
     unlocked = true;
     completeLevel?.('garden');
     passage.refresh();
+    notify?.('Flower Garden complete! Snow Basin is unlocked!');
   }
 
   const animals = createAnimals(THREE, scene, playerRadius, () => finishMission('cow'));
@@ -476,19 +477,35 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelCompl
     feedFish: () => finishMission('fish'),
   });
   addGlacier(THREE, { mesh, facet, matte });
+  const missionStatus = {
+    missions: [
+      {
+        id: 'apples', title: 'Collect and deliver apples', total: orchard.appleTarget,
+        get current() { return orchard.collectedApples; },
+        get complete() { return missions.apples; },
+      },
+      {
+        id: 'fish', title: 'Feed the pond fish', total: 1,
+        get current() { return Number(missions.fish); },
+        get complete() { return missions.fish; },
+      },
+      {
+        id: 'cow', title: 'Greet a cow', total: 1,
+        get current() { return Number(missions.cow); },
+        get complete() { return missions.cow; },
+      },
+    ],
+    get hint() {
+      if (!missions.apples) return orchard.deliveryHint;
+      if (!missions.fish) return 'Feed the fish from the pond shore.';
+      if (!missions.cow) return 'Find a cow and greet it.';
+      return '';
+    },
+  };
   return {
     obstacles,
     arrivals: { cabin: cabin.arrival },
-    get objective() {
-      const lines = [
-        orchard.progress,
-        `Feed the fish · ${Number(missions.fish)}/1`,
-        `Greet a cow · ${Number(missions.cow)}/1`,
-      ];
-      if (!missions.apples) lines.push(orchard.deliveryHint);
-      else if (missions.fish && missions.cow) lines.push('Flower Garden complete! Snow Basin is unlocked!');
-      return lines.join('\n');
-    },
+    get missionStatus() { return missionStatus; },
     getGroundHeight(x, z) {
       return Math.max(getTerrainHeight(x, z), bridgeDeckHeight(x, z));
     },

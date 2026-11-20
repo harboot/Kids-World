@@ -166,15 +166,17 @@ export function createFishing({ THREE, scene, viewmodel, kit, terrain, isActive,
       coins.visible = true;
       useRod();
       playCue(coinsCue);
-      notify('Fish seller: Thank you for the fresh fish!');
-      onComplete();
+      onComplete('Fish seller: Thank you for the fresh fish!');
     },
   }];
 
   return {
     interactions,
-    get complete() { return state === 'sold'; },
-    get progress() { return `Catch and sell fish · ${count}/${fishNeeded}${state === 'sold' ? ' ✓' : ''}`; },
+    mission: {
+      id: 'fishing', title: 'Catch and sell fish', total: fishNeeded,
+      get current() { return count; },
+      get complete() { return state === 'sold'; },
+    },
     get hint() { return count === fishNeeded && state !== 'sold' ? 'Take your fish to the Fish Shop.' : ''; },
     reset() {
       state = 'no rod';

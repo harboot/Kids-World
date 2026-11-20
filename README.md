@@ -73,6 +73,19 @@ Link-only areas open via a direct URL such as `?area=secret-apartment`. The leve
 
 The shared engine handles rendering, player controls, world transitions, and resource cleanup.
 
+Expose `missionStatus` from the loaded area. The shared Missions panel starts closed and shows numeric progress, actual completion, and an optional hint or inventory.
+
+```js
+get missionStatus() {
+  return {
+    missions: [{ id: 'fish', title: 'Catch and sell fish', current: fishCaught, total: 3, complete: fishSold }],
+    hint: fishCaught === 3 && !fishSold ? 'Take your fish to the Fish Shop.' : '',
+  };
+}
+```
+
+Keep mission IDs stable and derive counters and completion from the current visit. For brief feedback, call the shared `notify(message)` service from a gameplay event.
+
 See the [3D geometry guidelines](docs/geometry-guidelines.md) when building a world.
 
 **Focus on creating the adventure — not rebuilding the engine.**

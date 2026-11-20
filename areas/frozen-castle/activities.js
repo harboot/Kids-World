@@ -159,15 +159,36 @@ export function createCastleActivities(THREE, builder, document, { playCue, redu
     crystal.marker.visible = crystal.played;
   }
 
+  const missionStatus = {
+    missions: [
+      {
+        id: 'crystals', title: 'Activate ice crystals', total: activation.length,
+        get current() { return activation.reduce((count, crystal) => count + Number(crystal.active), 0); },
+        get complete() { return missions.crystals; },
+      },
+      {
+        id: 'stairs', title: 'Build the ice staircase', total: segments.length,
+        get current() { return segments.reduce((count, section) => count + Number(section.growth !== null), 0); },
+        get complete() { return missions.stairs; },
+      },
+      {
+        id: 'melody', title: 'Play the crystal melody', total: music.length,
+        get current() { return music.reduce((count, crystal) => count + Number(crystal.played), 0); },
+        get complete() { return missions.melody; },
+      },
+    ],
+    get hint() {
+      if (!missions.crystals) return 'Find the crystals at the four terrace corners.';
+      if (!missions.stairs) return segments.some(section => section.growth === null)
+        ? 'Build the staircase from the hall.' : 'Wait for the ice staircase to finish forming.';
+      if (!missions.melody) return 'Play the three tuning crystals in the hall.';
+      return '';
+    },
+  };
+
   return {
     missions, interactions, staircase,
-    get missionProgress() {
-      return [
-        `Activate ice crystals · ${activation.filter(crystal => crystal.active).length}/${activation.length}`,
-        `Build the ice staircase · ${segments.filter(section => section.growth !== null).length}/${segments.length}`,
-        `Play crystal melody · ${music.filter(crystal => crystal.played).length}/${music.length}`,
-      ];
-    },
+    missionStatus,
     reset() {
       for (const crystal of activation) {
         Object.assign(crystal, { active: false, charge: 0, burst: 0 });

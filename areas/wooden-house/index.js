@@ -17,7 +17,7 @@ export const woodenHouse = {
   load: loadHouse,
 };
 
-function loadHouse({ THREE, scene, signal, playCue = () => {}, reducedMotion = () => false, completeLevel }) {
+function loadHouse({ THREE, scene, signal, playCue = () => {}, reducedMotion = () => false, completeLevel, notify }) {
   const obstacles = [];
   const builder = createHouseBuilder(THREE, scene, obstacles);
   const exit = buildInterior(THREE, scene, builder);
@@ -29,6 +29,7 @@ function loadHouse({ THREE, scene, signal, playCue = () => {}, reducedMotion = (
     celebrate(finalTask) {
       completeLevel?.(ID);
       sparkles.show(finalTask, reducedMotion());
+      notify?.('Great job! The house is sparkling clean!');
     },
   });
 
@@ -36,7 +37,7 @@ function loadHouse({ THREE, scene, signal, playCue = () => {}, reducedMotion = (
     obstacles,
     blocksGround: cleaning.blocksGround,
     interactions: [...cleaning.interactions, exit],
-    get objective() { return cleaning.objective; },
+    get missionStatus() { return cleaning.missionStatus; },
     reset() {
       cleaning.reset();
       sparkles.hide();

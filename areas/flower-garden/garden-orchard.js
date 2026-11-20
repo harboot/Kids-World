@@ -149,9 +149,8 @@ export function addOrchard(THREE, { scene, viewmodel, mesh, box, facet, matte, o
 
   return {
     interactions,
-    get progress() {
-      return `Collect apples · ${Math.min(appleCount, APPLES_TO_DELIVER)}/${APPLES_TO_DELIVER}`;
-    },
+    appleTarget: APPLES_TO_DELIVER,
+    get collectedApples() { return Math.min(appleCount, APPLES_TO_DELIVER); },
     get deliveryHint() {
       if (basketState !== 'carried') {
         return basketState === 'ground' ? 'Pick up the basket by the apple tree' : 'Pick up your basket for more apples';
