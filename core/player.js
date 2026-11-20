@@ -1,6 +1,6 @@
 import { advanceFall, floorHeight, PLAYER_RADIUS, walkElevation } from './movement.js';
 
-const EYE_HEIGHT = 1.68;
+export const EYE_HEIGHT = 1.68;
 const HEAD_HEIGHT = EYE_HEIGHT + 0.14;
 const JUMP_SPEED = 6.3;
 const WALK_SPEED = 4.6;
@@ -107,6 +107,7 @@ export function createPlayer(THREE, camera) {
 
   return {
     get seated() { return seated !== null; },
+    get grounded() { return grounded && !seated; },
     reset, sit, stand, jump, look, move,
     stop() { speed.set(0, 0); },
   };

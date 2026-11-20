@@ -49,7 +49,7 @@ function fixture({ saved = [], still = false } = {}) {
   };
 }
 
-const completionNotice = 'Castle Magic Restored! Arendelle Village unlocked!';
+const completionNotice = 'Castle Magic Restored! Arendelle Village and Princess Gallery unlocked!';
 
 function assertProgress(area, { crystals = 0, stairs = 0, melody = 0, stairsFinished = stairs === 3 } = {}) {
   assert.deepEqual(area.missionStatus.missions, [

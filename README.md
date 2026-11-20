@@ -39,6 +39,10 @@ Players explore connected worlds, interact with objects, and complete simple mis
 - Find and return the lost reindeer.
 - Collect three gears and repair the Clock Tower.
 
+### Princess Gallery — Interactive Exhibits
+- Rapunzel: Jump onto the observation platform to make Rapunzel wave.
+- Nine additional princess exhibitions are coming soon.
+
 ## Built for Expansion
 
 Kids World is designed around a reusable game engine and independent world modules.
