@@ -2,7 +2,7 @@ export const PLAYER_RADIUS = 0.34;
 const STEP_HEIGHT = 0.225;
 const MAX_GRADE = 0.76;
 const GRAVITY = 15;
-export const FLAT_GROUND = () => 0;
+const FLAT_GROUND = () => 0;
 
 export function overlaps(obstacle, x, z) {
   if (obstacle.touches) return obstacle.touches(x, z);

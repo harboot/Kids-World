@@ -1,5 +1,5 @@
-import { SURFACE_GAP } from '../../core/geometry.js';
-import { PLAYER_ONLY_LAYER } from '../../core/renderer.js';
+import { addGroup, addMesh, rectangleBounds, SURFACE_GAP } from '../../core/geometry.js';
+import { PLAYER_ONLY_LAYER } from '../../core/render-layers.js';
 
 export const PALACE_WIDTH = 28;
 export const PALACE_DEPTH = 28;
@@ -35,19 +35,11 @@ export function createPalaceBuilder(THREE, scene, obstacles) {
   };
 
   function group(name, x = 0, y = 0, z = 0, parent = scene) {
-    const model = new THREE.Group();
-    model.name = name;
-    model.position.set(x, y, z);
-    parent.add(model);
-    return model;
+    return addGroup(THREE, parent, name, x, y, z);
   }
 
   function part(parent, shape, material, x, y, z, width, height, depth) {
-    const mesh = new THREE.Mesh(shapes[shape], material);
-    mesh.position.set(x, y, z);
-    mesh.scale.set(width, height, depth);
-    parent.add(mesh);
-    return mesh;
+    return addMesh(THREE, parent, shapes[shape], material, x, y, z, width, height, depth);
   }
 
   function beam(parent, material, [x1, y1, z1], [x2, y2, z2], width, depth = width) {
@@ -58,7 +50,7 @@ export function createPalaceBuilder(THREE, scene, obstacles) {
   }
 
   function solid(x, z, width, depth, height) {
-    obstacles.push({ left: x - width / 2, right: x + width / 2, front: z - depth / 2, back: z + depth / 2, height });
+    obstacles.push({ ...rectangleBounds(x, z, width, depth), height });
   }
 
   function batchParts(source, target) {

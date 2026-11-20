@@ -1,6 +1,6 @@
 import { SURFACE_GAP } from '../../core/geometry.js';
 import { CITY_PIER, FISHING_PIER, QUAY, shorelineX } from './terrain.js';
-import { randomFrom } from './scenery.js';
+import { seededRandom } from '../../core/random.js';
 
 export const SEA_LEVEL = -0.48;
 export const CITY_SIGN = { x: 30.7, z: 17.25 };
@@ -136,7 +136,7 @@ function buildSea(THREE, scene, { group, part }) {
   water.receiveShadow = true;
   scene.add(water);
   const waves = group('Water ripples', 0, 0, 0);
-  const random = randomFrom(761);
+  const random = seededRandom(761);
   const placed = [];
   for (let i = 0; i < 252; i++) {
     const x = 22.9 + random() * (i < 145 ? 26 : 85);

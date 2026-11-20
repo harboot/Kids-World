@@ -1,4 +1,5 @@
-import { PLAYER_ONLY_LAYER } from '../../core/renderer.js';
+import { addGroup, addMesh, rectangleBounds } from '../../core/geometry.js';
+import { PLAYER_ONLY_LAYER } from '../../core/render-layers.js';
 
 export const HOUSE_WIDTH = 12.8;
 export const HOUSE_DEPTH = 10.8;
@@ -28,19 +29,12 @@ export function createHouseBuilder(THREE, scene, obstacles) {
   const staticParts = [];
 
   function group(name, x, y, z, parent = architecture) {
-    const node = new THREE.Group();
-    node.name = name;
-    node.position.set(x, y, z);
-    parent.add(node);
-    return node;
+    return addGroup(THREE, parent, name, x, y, z);
   }
 
   function part(parent, color, x, y, z, width, height, depth, shape = 'box', lit = true) {
     const template = lit ? matte : bright;
-    const mesh = new THREE.Mesh(shapes[shape], template);
-    mesh.position.set(x, y, z);
-    mesh.scale.set(width, height, depth);
-    parent.add(mesh);
+    const mesh = addMesh(THREE, parent, shapes[shape], template, x, y, z, width, height, depth);
     let root = parent;
     while (root.parent && root !== scene) root = root.parent;
     if (root === architecture) {
@@ -81,7 +75,7 @@ export function createHouseBuilder(THREE, scene, obstacles) {
   }
 
   function solid(x, z, width, depth, height) {
-    obstacles.push({ left: x - width / 2, right: x + width / 2, front: z - depth / 2, back: z + depth / 2, height });
+    obstacles.push({ ...rectangleBounds(x, z, width, depth), height });
   }
 
   return { group, part, solid, batchArchitecture };

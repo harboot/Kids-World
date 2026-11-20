@@ -1,5 +1,5 @@
 import { SURFACE_GAP } from '../../core/geometry.js';
-import { randomFrom } from './scenery.js';
+import { seededRandom } from '../../core/random.js';
 
 export const QUAY = 23;
 export const FISHING_PIER = { left: 22.5, right: 39, front: -6, back: 0 };
@@ -54,7 +54,7 @@ function bridgeHeight(x) {
 }
 
 export function buildTerrain(THREE, scene, kit) {
-  const random = randomFrom(209);
+  const random = seededRandom(209);
   const cellsX = landWidth * 2;
   const cellsZ = landDepth * 2;
   const stride = cellsX + 1;
@@ -164,7 +164,7 @@ function buildShore(THREE, scene) {
 }
 
 function cobbles(THREE, kit) {
-  const random = randomFrom(61);
+  const random = seededRandom(61);
   const map = kit.paintedTexture(256, 256, ink => {
     const colors = ['#ada295', '#b4aa97', '#a6998a', '#bab09b', '#9a9288', '#c4b6a0', '#aca292', '#b1a79a'];
     ink.fillStyle = '#80796e';
@@ -259,7 +259,7 @@ function buildBridge(THREE, { group, box, solid }) {
 
 function buildHorizon(THREE, { group, part }) {
   const vista = group('Fjord mountains', 0, 0, 0);
-  const random = randomFrom(1607);
+  const random = seededRandom(1607);
   const positions = [];
   const colors = [];
   const rock = new THREE.Color();

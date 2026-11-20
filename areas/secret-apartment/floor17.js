@@ -4,8 +4,8 @@ import { COLORS } from './geometry.js';
 import { STEP } from './missions.js';
 import { buildUnit17E, unitCeiling } from './unit17e.js';
 
-export const ENTRY_X = 4.75;
-export const ENTRY_WIDTH = 1.43;
+const ENTRY_X = 4.75;
+const ENTRY_WIDTH = 1.43;
 
 export function buildFloor17(THREE, architecture, zone, reducedMotion, mission) {
   const { b, x: offset } = zone;

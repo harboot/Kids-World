@@ -1,4 +1,4 @@
-import { addIceDoor } from './ice-door.js';
+import { addIceDoor } from './shared/ice-door.js';
 import { CHOPS, CHOP_COOLDOWN, FALL_DURATION, SNOWMAN_COUNT, createSnowActivity, snowMissionsComplete } from './snow-basin/activity.js';
 import { addAxe, addCastleDoor, addChopTree, addFrozenKey, addSnowPlay, showSnowmen } from './snow-basin/props.js';
 import { addWinterScenery } from './snow-basin/scenery.js';
