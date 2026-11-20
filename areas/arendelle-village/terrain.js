@@ -11,7 +11,7 @@ const landWidth = 65;
 const landDepth = 72;
 const paving = [
   // The entrance avenue, plaza, and north lane around the clock tower.
-  [-3, 3, 8, 34], [-8, 8, -8, 9], [2.5, 5.5, -25, -8],
+  [-3, 3, 8, 34], [-8, 8, -8, 9], [2.5, 5.5, -28, -8],
   [-15, 14, -25, -21.5], [-6, 8, -11, -8],
   // The west residential lanes form a loop with a branch to the stable.
   [-28.5, -7, 3, 7.5], [-27, -7, -12.5, -9],

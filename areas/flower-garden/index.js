@@ -1,5 +1,6 @@
 import { addMesh, rectangleBounds } from '../../core/geometry.js';
 import { seededRandom } from '../../core/random.js';
+import { addGardenVillageGate } from '../shared/garden-village-gate.js';
 import { addIceDoor } from '../shared/ice-door.js';
 import { addCabin } from './garden-cabin.js';
 import { addOrchard } from './garden-orchard.js';
@@ -199,7 +200,8 @@ export const flowerGarden = {
   load: loadGarden,
 };
 
-function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelComplete, completeLevel, reducedMotion, playCue, notify }) {
+function loadGarden({ THREE, scene, viewmodel, hud, signal, touch, playerRadius, isLevelComplete,
+  completeLevel, reducedMotion, playCue, notify }) {
   const { width, depth } = flowerGarden;
   const obstacles = [];
   const gates = [];
@@ -246,7 +248,7 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelCompl
   mesh(box, grass, 0, -0.54, 0, 170, 0.1, 160);
   drawTerrain(THREE, scene, terrain);
   addHillPath(THREE, { scene, getTerrainHeight, instances, matte });
-  mesh(box, path, 0, 0.005, -1.5, 1.56, 0.01, 40);
+  mesh(box, path, 0, 0.005, 0.55, 1.56, 0.01, 44.1);
   mesh(box, path, -7.1, 0.007, 4.18, 14.3, 0.014, 1.35);
   mesh(box, path, -14.0, 0.009, 4.65, 2.55, 0.018, 1.27);
   mesh(box, path, 8.9, 0.006, -21.0, 19.4, 0.012, 1.65);
@@ -443,6 +445,9 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelCompl
     mesh(facet, cloud, x + 2.1, y + 0.5, z, 2.65, 1.57, 1.3);
   }
 
+  const villageGate = addGardenVillageGate(THREE, scene, obstacles, {
+    area: 'garden', ground: getTerrainHeight, document: hud?.ownerDocument, signal, isLevelComplete,
+  });
   const cabin = addCabin(THREE, { scene, mesh, box, matte, obstacles, collision });
   let unlocked = false;
   const missions = { apples: false, fish: false, cow: false };
@@ -499,7 +504,7 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelCompl
   };
   return {
     obstacles,
-    arrivals: { cabin: cabin.arrival },
+    arrivals: { cabin: cabin.arrival, 'arendelle-village': villageGate.arrival },
     get missionStatus() { return missionStatus; },
     getGroundHeight(x, z) {
       return Math.max(getTerrainHeight(x, z), bridgeDeckHeight(x, z));
@@ -507,9 +512,10 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelCompl
     blocksGround: blocksPondTravel,
     animals,
     interactions: [...gates.map(gate => gate.door), ...animals.interactions, ...orchard.interactions,
-      pond.feedingSpot, cabin.bench, cabin.entrance, passage],
+      pond.feedingSpot, cabin.bench, cabin.entrance, passage, villageGate.interaction],
     update(dt, player) {
       passage.refresh(dt);
+      villageGate.refresh();
       animals.update(dt, player);
       orchard.update(dt);
       pond.update(dt);
@@ -523,6 +529,7 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius, isLevelCompl
       for (const gate of gates) gate.reset();
       passage.refresh();
       passage.resetHighlight();
+      villageGate.refresh();
     },
   };
 }

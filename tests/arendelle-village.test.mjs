@@ -642,3 +642,59 @@ test('the larger fountain animates its droplets, toggles from its valve, and res
   fountain.act();
   assert.equal(fountain.active, false);
 });
+
+test('the Flower Garden and village gates share the saved village unlock and travel both ways', t => {
+  const { worlds, camera, progress } = fixture('garden');
+  t.after(worlds.unload);
+  const player = createPlayer(THREE, camera);
+  const trips = [];
+  function travel(id, heardCue, arrival) {
+    trips.push({ id, heardCue, arrival });
+    const visit = worlds.load(id);
+    const spawn = visit.area.arrivals[arrival];
+    assert.ok(spawn, 'each gate has a named arrival in the other area');
+    player.reset(spawn, visit.area);
+    const feet = visit.area.getGroundHeight(spawn.x, spawn.z);
+    assert.equal(walkElevation(visit.area, spawn, spawn.x, spawn.z, feet, true), feet);
+    assert.equal(nearestInteraction(visit.area.interactions, camera.position), null, 'the arrival leaves room by the gate');
+  }
+
+  const gardenGate = find(worlds.active, 'Enter Arendelle Village');
+  assert.ok(progress.has('garden'));
+  assert.equal(gardenGate.active, false);
+  assert.equal(worlds.active.scene.getObjectByName('Locked gate bar').visible, true);
+  gardenGate.act({ travel });
+  const village = worlds.load(ID);
+  const villageGate = find(village, 'Enter Flower Garden');
+  assert.equal(villageGate.active, false);
+  deliverFish(village, worlds);
+  repairClock(village);
+  villageGate.act({ travel });
+  assert.equal(villageGate.active, false);
+  assert.deepEqual(trips, []);
+
+  escort(village, worlds, camera);
+  assert.ok(progress.has(ID) && villageGate.active);
+  assert.equal(village.scene.getObjectByName('Locked gate bar').visible, false);
+  assert.equal(gardenGate.active, false, 'an unloaded visit stays inactive even after unlocking');
+
+  worlds.reset();
+  assert.equal(villageGate.active, true, 'restart preserves the shared unlock');
+  player.reset(village.definition.spawn, village.area);
+  followPath(player, camera, village, [[0, 12], [3.43, 7], [3.43, -23.5], [4, -26.4]]);
+  assert.equal(nearestInteraction(village.area.interactions, camera.position), villageGate);
+  villageGate.act({ travel, heardCue: true });
+
+  const garden = worlds.active;
+  const returnGate = find(garden, 'Enter Arendelle Village');
+  assert.equal(returnGate.active, true);
+  assert.equal(garden.scene.getObjectByName('Locked gate bar').visible, false);
+  followPath(player, camera, garden, [[0, 20.9]]);
+  assert.equal(nearestInteraction(garden.area.interactions, camera.position), returnGate);
+  returnGate.act({ travel, heardCue: false });
+  assert.equal(worlds.active.id, ID);
+  assert.deepEqual(trips, [
+    { id: 'garden', heardCue: true, arrival: ID },
+    { id: ID, heardCue: false, arrival: 'garden' },
+  ]);
+});
