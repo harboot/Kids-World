@@ -1,4 +1,5 @@
 import { SURFACE_GAP } from '../../core/geometry.js';
+import { PLAYER_ONLY_LAYER } from '../../core/renderer.js';
 
 export const COLORS = {
   cream: 0xe8ddc9, ivory: 0xf9f1df, plaster: 0xe0d2ba, grout: 0xb0a291,
@@ -31,9 +32,9 @@ export function createArchitecture(THREE) {
 
   function builder(root, solids = []) {
     const batches = new Map();
-    function part(color, x, y, z, w, h, d, { shape = 'box', pitch = 0, yaw = 0, roll = 0, glow = false } = {}) {
-      const key = glow ? 'glow-' + shape : shape;
-      if (!batches.has(key)) batches.set(key, { shape, glow, parts: [] });
+    function part(color, x, y, z, w, h, d, { shape = 'box', pitch = 0, yaw = 0, roll = 0, glow = false, playerOnly = false } = {}) {
+      const key = `${shape}:${glow}:${playerOnly}`;
+      if (!batches.has(key)) batches.set(key, { shape, glow, playerOnly, parts: [] });
       matrix.position.set(x, y, z);
       matrix.rotation.set(pitch, yaw, roll, 'YXZ');
       matrix.scale.set(w, h, d);
@@ -52,10 +53,11 @@ export function createArchitecture(THREE) {
 
     function finish({ independentMaterials = false } = {}) {
       const materials = new Map();
-      for (const { shape, glow, parts } of batches.values()) {
+      for (const { shape, glow, playerOnly, parts } of batches.values()) {
         const template = glow ? lit : matte;
         if (!materials.has(template)) materials.set(template, independentMaterials ? template.clone() : template);
         const batch = new THREE.InstancedMesh(shapes[shape], materials.get(template), parts.length);
+        if (playerOnly) batch.layers.set(PLAYER_ONLY_LAYER);
         parts.forEach(({ transform, color }, i) => {
           batch.setMatrixAt(i, transform);
           batch.setColorAt(i, tint.setHex(color));
@@ -148,8 +150,8 @@ export function tileFloor(b, x, z, w, d, tile, colors, y = 0) {
 }
 
 export function ceilingLight(b, x, z, w, d, y, color = COLORS.warmLight) {
-  b.part(COLORS.steel, x, y - 0.033, z, w + 0.09, 0.066, d + 0.09);
-  b.part(color, x, y - 0.071, z, w, 0.035, d, { glow: true });
+  b.part(COLORS.steel, x, y - 0.033, z, w + 0.09, 0.066, d + 0.09, { playerOnly: true });
+  b.part(color, x, y - 0.071, z, w, 0.035, d, { glow: true, playerOnly: true });
 }
 
 export function pointLight(THREE, parent, x, y, z, color, intensity, range) {

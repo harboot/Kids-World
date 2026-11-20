@@ -71,6 +71,19 @@
       <span id="interaction-label" class="interaction-label"></span>
     </button>
 
+    <div id="drone-marker" class="drone-marker" aria-hidden="true" hidden></div>
+    <aside id="drone-panel" class="drone-panel" aria-labelledby="drone-title" hidden>
+      <h2 id="drone-title">Drone View</h2>
+      <p id="drone-area" class="drone-area"></p>
+      <output id="drone-coordinates" class="drone-coordinates" hidden></output>
+      <p id="drone-feedback" class="drone-feedback" role="status"></p>
+      <div class="drone-actions">
+        <button id="drone-copy" type="button" disabled>Copy Coordinates</button>
+        <button id="drone-reset" type="button">Reset View</button>
+        <button id="drone-exit" type="button">Exit Drone</button>
+      </div>
+    </aside>
+
     <section id="menu" class="menu" aria-labelledby="menu-title">
       <div class="menu-content">
         <h1 id="menu-title">Flower <span>Garden</span></h1>
@@ -78,6 +91,7 @@
         <button id="start" class="start-button" type="button" disabled>
           <span id="start-label">Explore</span><span aria-hidden="true">→</span>
         </button>
+        <button id="open-drone" class="drone-entry" type="button" hidden>Drone View</button>
         <p id="notice" class="notice" role="status">Loading the garden…</p>
         <div class="guide desktop-guide" aria-label="Desktop controls">
           <div><kbd>W A S D</kbd><span>Move</span></div>

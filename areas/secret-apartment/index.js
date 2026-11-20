@@ -96,6 +96,18 @@ function loadApartment({ THREE, scene, camera, hud, signal, playCue = () => {}, 
     obstacles: [],
     interactions: [...elevator.interactions, ...basement.interactions, ...floor8.interactions, ...floor17.interactions],
     get missionStatus() { return missionStatus; },
+    get droneView() {
+      const zone = zones[active];
+      if (!zone.droneView) {
+        const { min, max } = new THREE.Box3().setFromObject(zone.root);
+        zone.droneView = {
+          center: { x: (min.x + max.x) / 2, z: (min.z + max.z) / 2 },
+          width: max.x - min.x,
+          depth: max.z - min.z,
+        };
+      }
+      return zone.droneView;
+    },
     blocksGround(x, z) {
       const zone = zones[active];
       const localX = x - zone.x;

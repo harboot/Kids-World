@@ -284,10 +284,10 @@ export function buildUnit17E(THREE, architecture, { root, solids }, { entryX, en
   b.part(0xe9e1d3, DIVIDER, 2.7, -2.645, 0.22, 0.44, 1.93);
   for (const z of [-3.6, -1.69]) b.part(COLORS.walnut, DIVIDER, 1.176, z, 0.263, 2.35, 0.069);
   b.part(COLORS.walnut, DIVIDER, 2.365, -2.645, 0.263, 0.078, 1.98);
-  b.part(0xeee5d7, midpoint, CEILING + 0.079, (front + BACK) / 2, RIGHT - LEFT, 0.158, longest);
+  b.part(0xeee5d7, midpoint, CEILING + 0.079, (front + BACK) / 2, RIGHT - LEFT, 0.158, longest, { playerOnly: true });
   b.part(0xb99673, LEFT + 0.14, 0.075, (front + BACK) / 2, 0.041, 0.15, longest - 0.2);
   b.part(0xb99673, midpoint, 0.075, BACK - 0.138, RIGHT - LEFT - 0.2, 0.15, 0.041);
-  b.part(0xf0e9d7, 3.69, CEILING - 0.055, -0.34, 4.38, 0.11, 4.29);
+  b.part(0xf0e9d7, 3.69, CEILING - 0.055, -0.34, 4.38, 0.11, 4.29, { playerOnly: true });
   for (const [x, z] of [[2.22, -1.91], [5.04, -1.91], [2.22, 1.28], [5.04, 1.28]]) {
     ceilingLight(b, x, z, 0.31, 0.31, CEILING - 0.11);
   }

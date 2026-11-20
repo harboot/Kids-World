@@ -10,6 +10,7 @@ export function createControls(THREE, { game, canvas, joystick, thumb, playing, 
   const motion = new THREE.Vector2();
   let stickPointer = null;
   let lookPointer = null;
+  let mouseLocked = false;
 
   function resetStick() {
     stickPointer = null;
@@ -29,6 +30,11 @@ export function createControls(THREE, { game, canvas, joystick, thumb, playing, 
     resetStick();
   }
 
+  function releaseMouse() {
+    mouseLocked = false;
+    if (document.pointerLockElement === canvas) document.exitPointerLock();
+  }
+
   canvas.addEventListener('click', () => {
     if (!playing() || touchMode() || document.pointerLockElement === canvas) return;
     // The arrow keys and the interaction button are available without a lock.
@@ -36,9 +42,12 @@ export function createControls(THREE, { game, canvas, joystick, thumb, playing, 
   });
   document.addEventListener('pointerlockchange', () => {
     if (document.pointerLockElement === canvas) {
-      if (!playing()) document.exitPointerLock();
-    } else if (playing() && !touchMode()) {
-      pause();
+      if (playing()) mouseLocked = true;
+      else releaseMouse();
+    } else {
+      const wasLocked = mouseLocked;
+      mouseLocked = false;
+      if (wasLocked && playing() && !touchMode()) pause();
     }
   });
 
@@ -50,7 +59,7 @@ export function createControls(THREE, { game, canvas, joystick, thumb, playing, 
 
   window.addEventListener('keydown', event => {
     if (event.code === 'Escape' && playing()) {
-      pause();
+      if (!event.repeat) pause();
       return;
     }
     if (!playing()) return;
@@ -156,8 +165,6 @@ export function createControls(THREE, { game, canvas, joystick, thumb, playing, 
   return {
     clear: clearInput,
     sample,
-    releaseMouse() {
-      if (document.pointerLockElement === canvas) document.exitPointerLock();
-    },
+    releaseMouse,
   };
 }

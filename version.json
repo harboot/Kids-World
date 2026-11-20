@@ -1,5 +1,5 @@
 {
-  "version": "07f5a2ce167b6abbaf50790351d3894b4a8827d7997094c63530869f8196fefb",
+  "version": "1b7821473c5a4a47ffe9c62fb5b5eed257edc5fc0cd9b410ceb79f4b37ecfa3f",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
@@ -91,7 +91,7 @@
     },
     {
       "path": "./areas/frozen-castle/palace.js",
-      "revision": "bfbceb3ac915f979041e663dac6a8805735e00997df3a2a7a087d91fe3b07bf8"
+      "revision": "a664b1fd96e21e76ea5447140f3f17682506db75fb4110aed10c6eeeb720fb78"
     },
     {
       "path": "./areas/frozen-castle/staircase.js",
@@ -107,7 +107,7 @@
     },
     {
       "path": "./areas/secret-apartment/basement.js",
-      "revision": "ff54408df1730e6aa6cfb1a370cafeb47610c8ac78b51adc199694e700f29575"
+      "revision": "342056807268d4fb22b18bb598b604f01b6b575a781da035d8a26f9cfc15b94c"
     },
     {
       "path": "./areas/secret-apartment/car-door.js",
@@ -119,11 +119,11 @@
     },
     {
       "path": "./areas/secret-apartment/corridor.js",
-      "revision": "2800a3e13f1b98c1b625c7e3b7b1bfa19e2c4a325be4b2843a083edb2b72f82a"
+      "revision": "13374a63957185e2999363a3cd8c3c30dc1cd3fd29f552ffedb83f72e805bd71"
     },
     {
       "path": "./areas/secret-apartment/elevator.js",
-      "revision": "3cdc4e1e6b78f492ec978396536ad249953ac2d94bfaa90d31a3709f989173b8"
+      "revision": "ead6fadfc668334071f521633e7957aeb47266bb14af37b0307a426ab8242262"
     },
     {
       "path": "./areas/secret-apartment/floor17.js",
@@ -135,11 +135,11 @@
     },
     {
       "path": "./areas/secret-apartment/geometry.js",
-      "revision": "3f0bae4dd90ece9e3d704efe66a928a90606270970090b400e68e0e253dccf97"
+      "revision": "dc37651883c93912371763af64cb88844e5f68bb7a8d311939fdda47b6d783c0"
     },
     {
       "path": "./areas/secret-apartment/index.js",
-      "revision": "622485bc73fc148330eff0ae9174c9e0caeddaab084ce495c1ff789ac77ba3ff"
+      "revision": "766078407ff5d46a0aca5b3cc1d00dbf4e740606cbb7a7a45efad22091c274a3"
     },
     {
       "path": "./areas/secret-apartment/missions.js",
@@ -151,7 +151,7 @@
     },
     {
       "path": "./areas/secret-apartment/unit17e.js",
-      "revision": "f64150a4322a7bc728b716c205735dcb817b247ac3629696eb19230a259d2c26"
+      "revision": "41c0400c669413d4e52e5eb3c404ae1b7e66d5c262e4a8c2324522a7ce5b1062"
     },
     {
       "path": "./areas/snow-basin.js",
@@ -183,7 +183,7 @@
     },
     {
       "path": "./areas/wooden-house/interior.js",
-      "revision": "e50f4a0c3c29bd9aaf38086ff2c871d5042b0793b49adf1d37aa0fef22408fe2"
+      "revision": "7d37dbe183b88a3717a59661497c204b89b77ac76efeded74abf59c634605bdf"
     },
     {
       "path": "./assets/icons/icon-192.png",
@@ -203,11 +203,19 @@
     },
     {
       "path": "./core/controls.js",
-      "revision": "6149fa3b8e0d96c557a6f796b4bfb1d5a3f10e89e30f417cbbe302e44cc843df"
+      "revision": "f9d6e91ac3bc65f05bf1d20209e89394d0ca868363c379dc8251bb23efbb8fd7"
+    },
+    {
+      "path": "./core/coordinate-picker.js",
+      "revision": "99704df5913c6effc7b6131bedb06a1ef0c25480cf83653241a3a3e3f5a1d37c"
+    },
+    {
+      "path": "./core/drone-view.js",
+      "revision": "a9a13504ddaf82296c889a8cdb8d39d3874d5ef0cdcf7b5125d9f09fc323fbb8"
     },
     {
       "path": "./core/game.js",
-      "revision": "dd262ba1abc9be0af413979ca91c749b91dc3919008d2ceb9fc444588e5d0106"
+      "revision": "4ddd1fd8fb9b918b8f15d70f1bfe997e4865c64b78e011f907ad11b18ae55c44"
     },
     {
       "path": "./core/geometry.js",
@@ -243,7 +251,7 @@
     },
     {
       "path": "./core/renderer.js",
-      "revision": "a99358b8afdad40bdb3b6410eadfde165cc95bc73790b5441ac8170c538593dd"
+      "revision": "755e68711d5020dbb15a4fbc2431135d105ec5f2c66ddc17b16c26789f83c1d3"
     },
     {
       "path": "./core/world-manager.js",
@@ -255,7 +263,7 @@
     },
     {
       "path": "./index.html",
-      "revision": "d8b5d5ec76737346087bec0270704ff46f9725e09dfeeb81c1ab966ad7054160"
+      "revision": "95e4ada45509b0a4e19ece1a76a17324b09c72aae2624da25b69381beab579ac"
     },
     {
       "path": "./manifest.webmanifest",
@@ -287,7 +295,7 @@
     },
     {
       "path": "./style.css",
-      "revision": "7b2ed4c308a24bbb7894a3d72f5016e8e329a386d931549444997c3849303321"
+      "revision": "f81475dfc6c00bbe6807c29dc0a3e709b40e9a490a8ed761c0e97898bba71523"
     },
     {
       "path": "./vendor/three.LICENSE",

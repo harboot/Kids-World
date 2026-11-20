@@ -38,8 +38,8 @@ export function buildCorridor(THREE, architecture, { b, doorZ }, level, southDoo
   for (const x of [-halfWidth, halfWidth]) wallZ(b, COLORS.plaster, x, doorZ, south, height);
   const middle = (doorZ + south) / 2;
   tileFloor(b, 0, middle, halfWidth * 2, south - doorZ, 0.78, tileColors);
-  b.part(0xf0e7d2, 0, height + 0.08, middle, halfWidth * 2, 0.16, south - doorZ + 0.13);
-  b.part(0xc6b59d, 0, height - 0.07, doorZ + 0.33, halfWidth * 2, 0.14, 0.44);
+  b.part(0xf0e7d2, 0, height + 0.08, middle, halfWidth * 2, 0.16, south - doorZ + 0.13, { playerOnly: true });
+  b.part(0xc6b59d, 0, height - 0.07, doorZ + 0.33, halfWidth * 2, 0.14, 0.44, { playerOnly: true });
   for (const x of [-8.8, -5.25, -1.75, 1.75, 5.25, 8.8]) {
     ceilingLight(b, x, middle, 1.24, 0.48, height);
   }
