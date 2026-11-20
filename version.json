@@ -1,5 +1,5 @@
 {
-  "version": "1e38cc20c00a4c96d8f017307da80f610a0aa797d18c2c6c2ce11403877485ec",
+  "version": "7fdc143de278ca42dae4acd13ae139466ca29af9cdad29e2abc31f317b7006d5",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
@@ -87,7 +87,7 @@
     },
     {
       "path": "./areas/frozen-castle/index.js",
-      "revision": "c6cf4abcbecdbd1d8187db9b72e90a27f9f8e752b8883f573ed69797632f046a"
+      "revision": "9c5483a7a3bbb0b3a6d2bae4db15cfacb31ae1b957dc0654e11f9e74996d1c5f"
     },
     {
       "path": "./areas/frozen-castle/palace.js",
@@ -100,6 +100,30 @@
     {
       "path": "./areas/frozen-castle/summit.js",
       "revision": "cf5cc7ccd4a26a36f73206e00e35a954f484352bdf2c1999a1c85e09bbcc6529"
+    },
+    {
+      "path": "./areas/princess-gallery/exhibits.js",
+      "revision": "9bf521e26dabe0d25d84c38a67eb58ec83e4b77836f3604d62acd1db9cb72449"
+    },
+    {
+      "path": "./areas/princess-gallery/gallery.js",
+      "revision": "80fcc5fa18faeeb17f6136ac3256edac8a835fb020e83b1a4581e35179e597ee"
+    },
+    {
+      "path": "./areas/princess-gallery/index.js",
+      "revision": "00424b07ed0dfed232134d7521826f13e50783e4ed78d36325bfa4d038e5d80a"
+    },
+    {
+      "path": "./areas/princess-gallery/parts.js",
+      "revision": "7cc822d083745593627492fa80d0a8d5c85a0c0c2bbcdd18cdf33d83d73dc6be"
+    },
+    {
+      "path": "./areas/princess-gallery/rapunzel-tower.js",
+      "revision": "3e5365572f168ce98baabbd1f5bd297307801c1e0587308aef7e1d18a6c35864"
+    },
+    {
+      "path": "./areas/princess-gallery/rapunzel.js",
+      "revision": "4d644aef65f17b6612eb9a7c3d210665ca14d552e62bc1423c4fcd40f7817a2c"
     },
     {
       "path": "./areas/secret-apartment/basement.js",
@@ -156,6 +180,10 @@
     {
       "path": "./areas/shared/ice-door.js",
       "revision": "046a5eb469413eb7554b2225aa31dfbb90204c84e3a0da55b7ad43fae8adb68e"
+    },
+    {
+      "path": "./areas/shared/royal-gateway.js",
+      "revision": "2e4bd3ff74647a909d0a228ffb6372ceb358f701772a30347af16bd4cb66eb78"
     },
     {
       "path": "./areas/snow-basin.js",
@@ -219,7 +247,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "ff83ab3a7fb9650367f9786fdd194d07a9204e5f9de6f12557e00548dfe16e74"
+      "revision": "89e3dadd3b2f9348f2f01501ce6a49b0a80765fef749c2d7fceb275908a51bc3"
     },
     {
       "path": "./core/geometry.js",
@@ -251,7 +279,7 @@
     },
     {
       "path": "./core/player.js",
-      "revision": "6246c06bb972e9181b2f7c3ffd2287ea8b5adbdd30837832f915c32596b26ac8"
+      "revision": "e5f205bd0bc08612a851db0d1bc325dd1f92b86850b11f77fea1765cbd08bedb"
     },
     {
       "path": "./core/random.js",
@@ -271,7 +299,7 @@
     },
     {
       "path": "./game.js",
-      "revision": "25ebda1890c4df4c1f313557fb1432c4eb90da7ff1aa3809538e5cc5a0cb19de"
+      "revision": "f5705e4b6eaac0daa8db8adfb2b267fccb35a2f25bab852a5e01175c22db8d41"
     },
     {
       "path": "./index.html",

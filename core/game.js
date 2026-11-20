@@ -112,11 +112,13 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   const { camera } = view;
   const audio = createAudio(game.querySelector('#sound'));
   const progress = createLevelProgress(areas);
+  const player = createPlayer(THREE, camera);
   const worlds = createWorldManager(THREE, {
     areas, camera, touch: touchDevice, playerRadius: PLAYER_RADIUS,
     services: {
       hud: game, isPlaying: playerInput, playCue: audio.playCue, notify: missionHud.notify,
       reducedMotion: () => motionPreference.matches,
+      isPlayerGrounded: () => player.grounded,
       isLevelComplete: progress.has,
       completeLevel(id) {
         progress.complete(id);
@@ -124,7 +126,6 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
       },
     },
   });
-  const player = createPlayer(THREE, camera);
   const interactions = createInteractions(THREE, {
     button: game.querySelector('#interaction'),
     glyph: game.querySelector('#interaction-glyph'),
