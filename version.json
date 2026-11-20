@@ -1,5 +1,5 @@
 {
-  "version": "39949b7fcf468bb2161125df337cb653ac59a8d2a9cca4e38851d3e4a8010a94",
+  "version": "cfd57514b1cbafcf1c7c4d4a689f29868aaf1a7a78e49635e0ace26f5953949b",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
@@ -111,7 +111,7 @@
     },
     {
       "path": "./areas/princess-gallery/gallery.js",
-      "revision": "469cfba9679b7ff8c4c9740b8472a5952cd29e1fc4a8c6b2fdba6089cbf54680"
+      "revision": "d555d283cf0c92e491255755603329c15311d3bf92ecf51bc6b528d5b2f87b55"
     },
     {
       "path": "./areas/princess-gallery/index.js",
