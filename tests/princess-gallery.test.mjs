@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import * as THREE from '../vendor/three.module.min.js';
 import { areas } from '../game.js';
+import { ATRIUM_RADII } from '../areas/princess-gallery/atrium.js';
 import { exhibits, exhibitOutline } from '../areas/princess-gallery/exhibits.js';
 import { spaceTransform } from '../areas/princess-gallery/parts.js';
 import { observationPlatform } from '../areas/princess-gallery/rapunzel.js';
@@ -287,6 +288,28 @@ test('landscape barriers close the rear gaps behind the exhibits', t => {
   assert.ok(scene.getObjectByName('Twilight canopy').layers.isEnabled(PLAYER_ONLY_LAYER));
   assert.ok(scene.getObjectByName('Woodland stone and ivy facade'));
   assert.ok(scene.getObjectByName('Royal palace facade'));
+});
+
+test('the atrium ice mountain covers the roof opening and tapers down over the fountain', t => {
+  const { worlds } = fixture();
+  t.after(worlds.unload);
+  const { scene } = worlds.load(ID);
+  const ice = scene.getObjectByName('Inverted ice mountain');
+  assert.ok(ice.layers.isEnabled(PLAYER_ONLY_LAYER));
+  const roofY = scene.getObjectByName('Twilight canopy').position.y;
+  const bounds = new THREE.Box3().setFromObject(ice);
+  assert.ok(bounds.max.y <= roofY && bounds.max.y > roofY - .1);
+  assert.ok(bounds.min.y > 9 && bounds.min.y < 11);
+
+  const ray = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, 1, 0));
+  ray.layers.set(PLAYER_ONLY_LAYER);
+  assert.ok(ray.intersectObject(ice)[0]?.point.y < 12);
+  for (let i = 0; i < 16; i++) {
+    const angle = i * Math.PI / 8;
+    ray.ray.origin.set(ATRIUM_RADII[0] * Math.cos(angle) * .999, 0, ATRIUM_RADII[1] * Math.sin(angle) * .999);
+    const edge = ray.intersectObject(ice)[0];
+    assert.ok(edge?.point.y > roofY - .5, 'covers the rim at angle ' + angle);
+  }
 });
 
 test('the drone camera sees the gallery floor and picks surfaces below the ceiling', t => {

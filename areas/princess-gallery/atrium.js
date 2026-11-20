@@ -1,9 +1,9 @@
 import { addGroup, SURFACE_GAP } from '../../core/geometry.js';
 import { PLAYER_ONLY_LAYER } from '../../core/render-layers.js';
+import { buildIceCanopy } from './ice-canopy.js';
 import { addGallerySign, addRoundSolid, addSolid } from './parts.js';
 
 export const ATRIUM_RADII = [21.5, 19.5];
-const domeRise = 10.5;
 
 export function buildAtrium({ THREE, document, shell, parts, colors, obstacles, ceiling }) {
   const { part, beam, batch, matte } = parts;
@@ -15,19 +15,14 @@ export function buildAtrium({ THREE, document, shell, parts, colors, obstacles, 
     return mesh;
   }
   const [rx, rz] = ATRIUM_RADII;
-  const domeMaterial = matte(0x647c9f, { side: THREE.BackSide, vertexColors: true });
-  const dome = new THREE.SphereGeometry(1, 48, 16, 0, 2 * Math.PI, 0, Math.PI / 2);
-  const domeColors = [];
-  for (let row = 0; row <= 16; row++) {
-    for (let column = 0; column <= 48; column++) {
-      const shade = .96 - .36 * row / 16 + .028 * Math.cos(column * Math.PI / 3);
-      domeColors.push(shade, shade + .025, shade + .08);
-    }
+  const ice = overhead(buildIceCanopy(THREE, atrium, parts, ATRIUM_RADII, ceiling));
+  ice.updateWorldMatrix(true, false);
+  const mount = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, 1, 0));
+  mount.layers.enable(PLAYER_ONLY_LAYER);
+  function mountHeight(x, z) {
+    mount.ray.origin.set(x, 0, z);
+    return mount.intersectObject(ice, false)[0]?.point.y ?? ceiling;
   }
-  dome.setAttribute('color', new THREE.Float32BufferAttribute(domeColors, 3));
-  overhead(part(atrium, dome, domeMaterial, 0, ceiling, 0, rx + .06, domeRise, rz + .06));
-  const domePoint = (angle, arc) => [(rx - .11) * Math.cos(angle) * Math.sin(arc),
-    ceiling + (domeRise - .12) * Math.cos(arc), (rz - .11) * Math.sin(angle) * Math.sin(arc)];
 
   function ellipseRing(y, radiusX, radiusZ, material, width) {
     for (let n = 0; n < 64; n++) {
@@ -39,29 +34,14 @@ export function buildAtrium({ THREE, document, shell, parts, colors, obstacles, 
 
   for (const [offset, width, depth, material, edge] of [
     [0, rx - .07, rz - .07, gold, .43], [-.42, rx - .09, rz - .09, wine, .46],
-    [-.78, rx - .13, rz - .13, ivory, .22], [6.2, rx * .804, rz * .804, gold, .11],
-    [9.8, rx * .334, rz * .334, gold, .13],
+    [-.78, rx - .13, rz - .13, ivory, .22],
   ]) ellipseRing(ceiling + offset, width, depth, material, edge);
 
-  for (let i = 0; i < 12; i++) {
-    const angle = i * Math.PI / 6;
-    for (let j = 0; j < 14; j++) {
-      overhead(beam(components, gold, domePoint(angle, j * Math.PI / 28),
-        domePoint(angle, (j + 1) * Math.PI / 28), .16));
-    }
-    for (const arc of [.57, .89, 1.18, 1.39]) {
-      const [x, y, z] = domePoint(angle + Math.PI / 12, arc);
-      overhead(part(components, 'gem', cream, x * .993, y - .22, z * .991, .21, .12, .31));
-      overhead(part(components, 'sphere', glow, x * .987, y - .24, z * .986, .08, .085, .075));
-    }
-  }
-
   const chandelierRing = new THREE.TorusGeometry(1, .043, 7, 38);
-  for (const [x, y, z, scale] of [[0, 17.1, 0, 1.72], [-10, 15.1, 6, .88],
-    [10, 15.1, -6, .88], [0, 12.2, 49, 1.07]]) {
+  for (const [x, y, z, scale] of [[-14, 14.4, 7.8, .88], [14, 14.4, -7.8, .88], [0, 12.2, 49, 1.07]]) {
     const lamp = addGroup(THREE, components, 'Crystal chandelier', x, y, z);
     lamp.scale.setScalar(scale);
-    const crownY = z === 49 ? ceiling : ceiling + domeRise * Math.sqrt(1 - (x / rx) ** 2 - (z / rz) ** 2);
+    const crownY = mountHeight(x, z);
     overhead(beam(components, gold, [x, y + scale * 1.2, z], [x, crownY, z], .095));
     for (const [radius, level] of [[1.68, 0], [1.03, .58], [.58, 1.02]]) {
       overhead(part(lamp, chandelierRing, gold, 0, level, 0, radius, radius, radius)).rotation.x = Math.PI / 2;

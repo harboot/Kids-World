@@ -161,9 +161,9 @@ export function buildGallery(THREE, scene, document, obstacles, services) {
   galleryFloor(THREE, document, parts, shell);
 
   const roofShape = new THREE.Shape(shellOutline.map(([x, z]) => new THREE.Vector2(x, -z)));
-  const [domeX, domeZ] = ATRIUM_RADII;
+  const [atriumX, atriumZ] = ATRIUM_RADII;
   const roofHole = new THREE.Path();
-  roofHole.absellipse(0, 0, domeX, domeZ, 0, Math.PI * 2, true);
+  roofHole.absellipse(0, 0, atriumX, atriumZ, 0, Math.PI * 2, true);
   roofShape.holes.push(roofHole);
   const canopy = new THREE.ShapeGeometry(roofShape, 32);
   const roof = part(shell, canopy, canopyMaterial(THREE, document, GALLERY_WIDTH, GALLERY_DEPTH, canopy),

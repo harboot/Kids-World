@@ -1,5 +1,5 @@
 {
-  "version": "7dda2162701782d2a6e9a5d927c229586bdb3f1c4a48d44652b8ac58cc4126c8",
+  "version": "f8eabbca565e4cf6b748967bedc8d9e92a8d788cc9d2b6f629d9e96ffae767aa",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
@@ -103,7 +103,7 @@
     },
     {
       "path": "./areas/princess-gallery/atrium.js",
-      "revision": "13558e60135308daea64df9ee041cb1c9da064b17001c74ca197df8e681a55e3"
+      "revision": "a34eadd7f9ded5e15c18900966daccaab9ec6528c36938417586684addbb5149"
     },
     {
       "path": "./areas/princess-gallery/cinderella.js",
@@ -123,11 +123,15 @@
     },
     {
       "path": "./areas/princess-gallery/gallery.js",
-      "revision": "0dee49cabde6ce09f3b4f089290a362be9529f68967b44ef1973247b14140168"
+      "revision": "dc094eb335fcb2e0519a0b91fb6b84c812636b45bbbd5c8f75b40c88b2f7180f"
     },
     {
       "path": "./areas/princess-gallery/hanging-decor.js",
       "revision": "35d5ce118b7c671554bd70f89096dce7276329f46d11554bfc8af2b9d200eb59"
+    },
+    {
+      "path": "./areas/princess-gallery/ice-canopy.js",
+      "revision": "a4cfcddf302fd0c1c0efe041fb1ca5c30cf71c7ecb60a2fb7d802945a8fd808c"
     },
     {
       "path": "./areas/princess-gallery/index.js",
