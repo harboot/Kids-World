@@ -2,7 +2,8 @@ import { addGroup, paintCanvasTexture, SURFACE_GAP } from '../../core/geometry.j
 import { EYE_HEIGHT } from '../../core/player.js';
 import { seededRandom } from '../../core/random.js';
 import { PLAYER_ONLY_LAYER } from '../../core/render-layers.js';
-import { addSolid, spaceTransform } from './parts.js';
+import { buildCinderellaCharacter } from './cinderella-character.js';
+import { addRoundSolid, addSolid, spaceTransform } from './parts.js';
 
 const treadCount = 24;
 const rise = .18;
@@ -545,6 +546,8 @@ export function buildCinderella({ THREE, document, bay, exhibit, parts, obstacle
   const site = buildGrandStaircase(THREE, details, parts, palette, exhibit, obstacles);
   buildClock(THREE, document, details, parts, palette);
   batch(details, ballroom);
+  const { position: princess } = buildCinderellaCharacter(THREE, parts, ballroom, landingHeight);
+  addRoundSolid(obstacles, ...toWorld(princess.x, princess.z), .66, princess.y + 2.8);
   const slipper = buildGlassSlipper(THREE, ballroom, parts, palette, site);
   return {
     reset: slipper.reset,

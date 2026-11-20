@@ -294,6 +294,7 @@ export function buildGallery(THREE, scene, document, obstacles, services) {
   batch(components, shell);
 
   const exhibitVisits = [];
+  const reducedMotion = services?.reducedMotion?.() ?? false;
   for (const exhibit of exhibits) {
     const { id, title, accent, wing, position, rotation, bounds, build, entrance, status } = exhibit;
     const bay = addGroup(THREE, scene, id + ' exhibit', position.x, 0, position.z, rotation);
@@ -304,14 +305,17 @@ export function buildGallery(THREE, scene, document, obstacles, services) {
     const outline = exhibitOutline(exhibit);
     const woodland = wing === 'woodland';
     const enclosed = id === 'rapunzel';
-    const fullWalls = enclosed || id === 'cinderella';
+    const sleepingChamber = id === 'aurora';
+    const fullWalls = enclosed || sleepingChamber || id === 'cinderella';
     const height = fullWalls ? bounds.height : id === 'snow-white' ? 4.25 : wing === 'royal' ? 4.5 : 2.85;
+    const wallMaterial = sleepingChamber ? blush : woodland && !fullWalls ? moss : ivory;
+    const wallBase = enclosed || sleepingChamber ? blush : wingMaterials[wing];
     const thickness = enclosed ? .44 : .55;
     const interiorFace = front - thickness / 2;
 
     function partition(a, b, index) {
-      wall(local, a, b, height + (fullWalls ? 0 : .26 * (index % 3)), enclosed ? ivory : woodland ? moss : ivory,
-        enclosed ? blush : wingMaterials[wing], transform, thickness, !woodland || enclosed);
+      wall(local, a, b, height + (fullWalls ? 0 : .26 * (index % 3)), wallMaterial,
+        wallBase, transform, thickness, !woodland || fullWalls);
       const [ax, az] = a, [bx, bz] = b;
       if (fullWalls || (id === 'snow-white' && index >= 3 && index <= 9)) return;
       const length = Math.hypot(bx - ax, bz - az);
@@ -370,7 +374,7 @@ export function buildGallery(THREE, scene, document, obstacles, services) {
     }
 
     batch(local, bay);
-    if (build) exhibitVisits.push(build({ THREE, document, bay, exhibit, parts, obstacles, interiorFace, outline }));
+    if (build) exhibitVisits.push(build({ THREE, document, bay, exhibit, parts, obstacles, interiorFace, outline, reducedMotion }));
   }
   buildScenicEdges({ THREE, parent: shell, parts, obstacles });
   const walkway = buildWalkway({ THREE, document, parent: shell, parts, exhibits, ceiling });

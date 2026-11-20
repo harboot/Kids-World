@@ -4,9 +4,9 @@ import { seededRandom } from '../../core/random.js';
 export function buildExhibitFacade({ THREE, document, bay, parts, exhibit, outline, thickness,
   opening, deckBottom, upperLintel }) {
   const { id, bounds, entrance } = exhibit;
-  const woodland = id === 'rapunzel';
+  const woodland = id === 'rapunzel' || id === 'aurora';
   const { part, beam, batch, matte } = parts;
-  const [base, joints, stones] = woodland
+  const [base, joints, stones] = id === 'rapunzel'
     ? ['#ae9b88', '#877d76', ['#a89382', '#b39e8a', '#ab9d8e', '#b3a396']]
     : ['#c5b5b6', '#ab9da8', ['#ccbabe', '#c4b3b6', '#b8abb4', '#c5b7b1']];
   const map = paintCanvasTexture(THREE, document, 512, 512, (ink, w, h) => {

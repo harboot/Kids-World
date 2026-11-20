@@ -6,6 +6,7 @@ import { ATRIUM_RADII } from '../areas/princess-gallery/atrium.js';
 import { exhibits, exhibitOutline } from '../areas/princess-gallery/exhibits.js';
 import { spaceTransform } from '../areas/princess-gallery/parts.js';
 import { observationPlatform } from '../areas/princess-gallery/rapunzel.js';
+import { WALKWAY_HEIGHT } from '../areas/princess-gallery/walkway.js';
 import { createCoordinatePicker } from '../core/coordinate-picker.js';
 import { createDroneCamera, isDroneView } from '../core/drone-view.js';
 import { nearestInteraction } from '../core/interactions.js';
@@ -20,6 +21,7 @@ const CASTLE = 'frozen-castle';
 const hall = areas[ID];
 const rapunzel = exhibits.find(entry => entry.id === 'rapunzel');
 const snowWhite = exhibits.find(entry => entry.id === 'snow-white');
+const aurora = exhibits.find(entry => entry.id === 'aurora');
 const storageKey = 'kids-world-completed-levels';
 
 function worldPoint(x, z) {
@@ -73,6 +75,8 @@ test('public gallery opens by normal and drone URLs with no castle progress', t 
     assert.match(visit.area.missionStatus.hint, /Visit Rapunzel and jump onto the observation platform/);
     assert.match(visit.area.missionStatus.hint, /Approach Snow White and the seven dwarfs/);
     assert.match(visit.area.missionStatus.hint, /Cinderella’s glass slipper on the ballroom stairs/);
+    assert.match(visit.area.missionStatus.hint, /Approach the enchanted rose to wake Aurora/);
+    assert.ok(visit.area.interactions.every(({ label }) => !/Aurora|rose|Cinderella|slipper/i.test(label)));
     assert.equal(game.progress.has(CASTLE), false);
     assert.equal(game.progress.has(ID), false);
     assert.equal(game.progress.canSelect(ID), false);
@@ -212,8 +216,8 @@ test('ten distinct and nonoverlapping footprints surround the Central Atrium', t
     'rapunzel', 'snow-white', 'cinderella', 'aurora', 'ariel', 'belle', 'jasmine', 'mulan', 'tiana', 'moana',
   ]));
   assert.deepEqual(exhibits.filter(entry => entry.status === 'complete' && entry.build).map(entry => entry.id),
-    ['rapunzel', 'snow-white', 'cinderella']);
-  assert.equal(exhibits.filter(entry => entry.status === 'coming-soon' && !entry.build).length, 7);
+    ['rapunzel', 'snow-white', 'aurora', 'cinderella']);
+  assert.equal(exhibits.filter(entry => entry.status === 'coming-soon' && !entry.build).length, 6);
   assert.ok(new Set(exhibits.map(entry => entry.shape)).size >= 5);
   assert.ok(new Set(exhibits.map(entry => entry.rotation)).size >= 8);
   for (const key of ['width', 'depth', 'height']) {
@@ -556,6 +560,141 @@ test('Snow White supports static greetings and resets all actors on unload', () 
   assert.deepEqual(actors.map(entry => entry.pose()), idle);
 });
 
+function auroraScene(scene) {
+  const room = scene.getObjectByName('Aurora royal sleeping chamber');
+  const bed = room.getObjectByName('Aurora royal bed');
+  const character = room.getObjectByName('Aurora character');
+  const rose = room.getObjectByName('Enchanted rose');
+  const body = character.getObjectByName('Aurora upper body');
+  const head = character.getObjectByName('Aurora head');
+  const eyes = head.getObjectByName('Open eyes');
+  const lids = head.getObjectByName('Sleeping eyelids');
+  const light = room.getObjectByName('Aurora magic light');
+  const particles = room.getObjectByName('Aurora magical particles');
+  const { toWorld } = spaceTransform(aurora);
+  const atRose = (distance, elevation = 0) => {
+    const [x, z] = toWorld(rose.position.x, rose.position.z + distance);
+    return { x, y: EYE_HEIGHT + elevation, z };
+  };
+  return { room, bed, character, rose, body, head, eyes, lids, light, particles, atRose };
+}
+
+test('Aurora starts asleep on a solid bed with a walkable route to the rose', t => {
+  const { worlds } = fixture();
+  t.after(worlds.unload);
+  const { scene, area } = worlds.load(ID);
+  const { room, bed, character, rose, body, head, eyes, lids, particles, atRose } = auroraScene(scene);
+  assert.ok(bed.children.some(child => child.isInstancedMesh));
+  assert.ok(character.getObjectByName('Aurora skirt'));
+  assert.ok(rose.children.some(child => child.isInstancedMesh));
+  assert.ok(head.getWorldPosition(new THREE.Vector3()).y > 1.48);
+  assert.ok(body.rotation.x < -1.4 && lids.visible && !eyes.visible);
+  assert.ok(particles.geometry.drawRange.count > 0);
+  assert.ok(room.getObjectByName('Aurora oval ceiling').layers.isEnabled(PLAYER_ONLY_LAYER));
+
+  const near = atRose(1.6);
+  const { toWorld } = spaceTransform(aurora);
+  assertWalkable(area, toWorld(0, 10.25), [near.x, near.z], 'Aurora rose approach');
+  assertWalkable(area, toWorld(0, 10.25), toWorld(0, -.8), 'Aurora foot of bed');
+  assertWalkable(area, toWorld(-3.35, -.8), toWorld(-3.35, -8.5), 'Aurora bed flank');
+  for (const furniture of [bed, rose]) {
+    const { x, z } = furniture.getWorldPosition(new THREE.Vector3());
+    assert.equal(walkElevation(area, near, x, z, 0, true), null, furniture.name);
+  }
+  const [postX, postZ] = toWorld(bed.position.x + 2.36, bed.position.z + 3.48);
+  assert.equal(walkElevation(area, near, postX, postZ, 1.24, false), null);
+});
+
+test('Aurora wakes smoothly, stays awake across the exit margin, and sleeps and wakes again', t => {
+  const { worlds } = fixture();
+  t.after(worlds.unload);
+  const { scene } = worlds.load(ID);
+  const { body, head, eyes, lids, light, particles, atRose } = auroraScene(scene);
+  const asleep = body.rotation.x;
+  const idleLight = light.intensity;
+  const idleCount = particles.geometry.drawRange.count;
+  const idleParticles = particles.geometry.getAttribute('position').array.slice(0, idleCount * 3);
+  const headOnPillow = head.getWorldPosition(new THREE.Vector3());
+  const advance = (seconds, point) => {
+    for (let frame = 0; frame < Math.round(seconds * 60); frame++) worlds.update(1 / 60, point);
+  };
+  const near = atRose(2.32);
+  const margin = atRose(2.66);
+  const away = atRose(3.03);
+
+  advance(2.1, atRose(2.32, WALKWAY_HEIGHT));
+  advance(2.1, margin);
+  assert.ok(Math.abs(body.rotation.x - asleep) < .02 && !eyes.visible, 'upper floor and entry margin stay idle');
+  const hinge = body.getWorldPosition(new THREE.Vector3());
+  advance(.75, near);
+  const rising = body.rotation.x;
+  assert.ok(rising > asleep + .22 && rising < -.85);
+  assert.ok(eyes.visible && eyes.scale.y < 1, 'eyes begin opening during the transition');
+  assert.ok(light.intensity > idleLight && particles.geometry.drawRange.count > idleCount);
+  advance(1.2, near);
+  assert.ok(body.rotation.x > -.40 && eyes.visible && !lids.visible && eyes.scale.y === 1);
+  assert.ok(head.getWorldPosition(new THREE.Vector3()).y > headOnPillow.y + .65);
+  assert.ok(body.getWorldPosition(new THREE.Vector3()).distanceTo(hinge) < 1e-6, 'Aurora stays on the mattress');
+  const awakeLight = light.intensity;
+  advance(3, margin);
+  assert.equal(light.intensity, awakeLight);
+  assert.ok(body.rotation.x > -.40 && eyes.visible);
+
+  advance(.75, away);
+  assert.ok(body.rotation.x < -.6 && body.rotation.x > asleep + .4);
+  advance(1.2, away);
+  assert.ok(Math.abs(body.rotation.x - asleep) < .02 && lids.visible && !eyes.visible);
+  assert.equal(light.intensity, idleLight);
+  assert.equal(particles.geometry.drawRange.count, idleCount);
+  advance(2, near);
+  assert.equal(light.intensity, awakeLight, 'another approach wakes Aurora fully');
+  advance(2, atRose(2.32, WALKWAY_HEIGHT));
+  assert.equal(light.intensity, idleLight, 'directly above the rose also releases an already awake Aurora');
+  advance(.8, near);
+  worlds.reset();
+  assert.equal(body.rotation.x, asleep);
+  assert.equal(light.intensity, idleLight);
+  assert.deepEqual(particles.geometry.getAttribute('position').array.slice(0, idleCount * 3), idleParticles);
+  advance(2, near);
+  assert.equal(light.intensity, awakeLight);
+});
+
+test('Aurora respects reduced motion, resets and releases scene resources on travel', () => {
+  const { worlds } = fixture({ reduced: true });
+  const visit = worlds.load(ID);
+  const { body, eyes, lids, light, particles, atRose } = auroraScene(visit.scene);
+  const near = atRose(1.5);
+  const sleeping = [body.rotation.x, light.intensity];
+  assert.equal(particles.visible, false);
+  worlds.update(1 / 60, near);
+  const awake = [body.rotation.x, light.intensity];
+  assert.ok(awake[0] > -.4 && eyes.visible && !lids.visible && !particles.visible);
+  worlds.update(.2, near);
+  assert.deepEqual([body.rotation.x, light.intensity], awake);
+  worlds.update(1 / 60, atRose(3.1));
+  assert.deepEqual([body.rotation.x, light.intensity], sleeping);
+  worlds.update(1 / 60, near);
+  worlds.reset();
+  assert.deepEqual([body.rotation.x, light.intensity], sleeping);
+  assert.ok(lids.visible && !eyes.visible && !particles.visible);
+  worlds.update(1 / 60, near);
+  assert.deepEqual([body.rotation.x, light.intensity], awake);
+
+  const material = body.children.find(child => child.isInstancedMesh).material;
+  const disposed = { material: 0, particles: 0 };
+  material.addEventListener('dispose', () => disposed.material++);
+  particles.geometry.addEventListener('dispose', () => disposed.particles++);
+  worlds.load(CASTLE);
+  assert.deepEqual(disposed, { material: 1, particles: 1 });
+  visit.area.update(1, near);
+  assert.deepEqual([body.rotation.x, light.intensity], sleeping);
+  assert.ok(lids.visible && !eyes.visible);
+  const again = auroraScene(worlds.load(ID).scene);
+  assert.deepEqual([again.body.rotation.x, again.light.intensity], sleeping);
+  assert.ok(again.lids.visible && !again.particles.visible);
+  worlds.unload();
+});
+
 test('Cinderella’s curved staircase can be walked in both directions and the slipper responds on approach', t => {
   const { worlds, player, camera } = fixture();
   t.after(worlds.unload);
@@ -566,6 +705,15 @@ test('Cinderella’s curved staircase can be walked in both directions and the s
   const slipper = scene.getObjectByName('Cinderella glass slipper');
   const sparkles = scene.getObjectByName('Cinderella slipper sparkles');
   const rest = slipper.position.y;
+  const cinderella = scene.getObjectByName('Cinderella character');
+  assert.ok(cinderella.getObjectByName('Cinderella ball gown'));
+  assert.ok(cinderella.getObjectByName('Cinderella head').getObjectByName('Open eyes').visible);
+  const dancer = cinderella.getWorldPosition(new THREE.Vector3());
+  const hem = new THREE.Box3().setFromObject(cinderella);
+  assert.ok(Math.abs(hem.min.y - dancer.y) < 1e-6);
+  assert.equal(floorHeight(area, dancer.x, dancer.z, dancer.y), dancer.y);
+  assert.ok(dancer.distanceTo(slipper.getWorldPosition(new THREE.Vector3())) > 6);
+  const staticPose = cinderella.matrixWorld.toArray();
   const [x, z] = toWorld(0, 9.75);
   player.reset({ x, z }, area);
 
@@ -626,6 +774,8 @@ test('Cinderella’s curved staircase can be walked in both directions and the s
   worlds.reset();
   assert.equal(slipper.position.y, rest);
   assert.equal(sparkles.visible, false);
+  cinderella.updateWorldMatrix(true, true);
+  assert.deepEqual(cinderella.matrixWorld.toArray(), staticPose);
 });
 
 test('Cinderella’s slipper holds a static sparkle in reduced motion and clears on unload', () => {
@@ -646,11 +796,16 @@ test('Cinderella’s slipper holds a static sparkle in reduced motion and clears
   worlds.update(1, near);
   assert.deepEqual([slipper.position.y, slipper.rotation.y, sparkles.children[0].position.toArray()], pose);
 
+  const cinderella = visit.scene.getObjectByName('Cinderella character');
+  const dress = cinderella.getObjectByName('Cinderella ball gown').children[0];
+  let dressDisposed = 0;
+  dress.geometry.addEventListener('dispose', () => dressDisposed++);
   const glass = slipper.children.find(object => object.isMesh);
   let disposed = 0;
   glass.material.addEventListener('dispose', () => disposed++);
   worlds.unload();
   assert.equal(disposed, 1);
+  assert.equal(dressDisposed, 1);
   assert.equal(slipper.position.y, rest);
   assert.equal(sparkles.visible, false);
   visit.area.update(1, near);
@@ -674,6 +829,7 @@ test('both staircases connect the main level to the glass loop and all ten overl
     rapunzel: [0, 7.5, -5.15],
     'snow-white': [-1, 3.35, -7.33],
     cinderella: [0, 9.54, -10.65],
+    aurora: [3.76, 2.63, -.35],
   };
 
   function walkTo(x, z) {

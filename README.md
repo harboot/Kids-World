@@ -44,7 +44,8 @@ Players explore connected worlds, interact with objects, and complete simple mis
 - Rapunzel — Jump onto the observation platform to make Rapunzel wave.
 - Snow White — Approach Snow White and the seven dwarfs to see them react.
 - Cinderella — Approach the glass slipper on the ballroom stairs to make it float and sparkle.
-- Seven additional princess exhibits coming soon.
+- Aurora — Approach the enchanted rose to wake Aurora. Move away to let her sleep.
+- Six additional princess exhibits coming soon.
 
 ## Built for Expansion
 
