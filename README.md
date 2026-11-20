@@ -83,6 +83,10 @@ node --test
 
 Open `?area=garden&view=drone` (or use any registered area ID) and select **Play**. Drag to pan, use the mouse wheel or a two-finger pinch to zoom, and click or tap a surface to select its world coordinates. **Copy Coordinates** copies the selection as `{ x: 12.45, y: 2.10, z: -8.20 }`. Use **Reset View** to restore the overview or **Exit Drone** (Esc) to resume play. After exiting, use **Drone View** in the pause menu to inspect the same visit again.
 
+### Frame-time overlay
+
+Open `?area=princess-gallery&view=fps` and select **Play**. The overlay updates about once per second with the P95 time between rendered frames over the last five seconds and its equivalent FPS. A P95 of 33.3 ms means that 95% of sampled frame intervals were at most 33.3 ms, equivalent to a cadence of about 30 FPS. Pausing, hiding the tab, or switching areas starts a fresh sample window when play resumes.
+
 ## Publishing Updates
 
 After changing game files, regenerate the offline release manifest:
