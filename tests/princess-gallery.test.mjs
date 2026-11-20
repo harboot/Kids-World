@@ -71,6 +71,7 @@ test('public gallery opens by normal and drone URLs with no castle progress', t 
     assert.deepEqual(visit.area.missionStatus.missions, []);
     assert.match(visit.area.missionStatus.hint, /Visit Rapunzel and jump onto the observation platform/);
     assert.match(visit.area.missionStatus.hint, /Approach Snow White and the seven dwarfs/);
+    assert.match(visit.area.missionStatus.hint, /Cinderella’s glass slipper on the ballroom stairs/);
     assert.equal(game.progress.has(CASTLE), false);
     assert.equal(game.progress.has(ID), false);
   }
@@ -201,8 +202,8 @@ test('ten distinct and nonoverlapping footprints surround the Central Atrium', t
     'rapunzel', 'snow-white', 'cinderella', 'aurora', 'ariel', 'belle', 'jasmine', 'mulan', 'tiana', 'moana',
   ]));
   assert.deepEqual(exhibits.filter(entry => entry.status === 'complete' && entry.build).map(entry => entry.id),
-    ['rapunzel', 'snow-white']);
-  assert.equal(exhibits.filter(entry => entry.status === 'coming-soon' && !entry.build).length, 8);
+    ['rapunzel', 'snow-white', 'cinderella']);
+  assert.equal(exhibits.filter(entry => entry.status === 'coming-soon' && !entry.build).length, 7);
   assert.ok(new Set(exhibits.map(entry => entry.shape)).size >= 5);
   assert.ok(new Set(exhibits.map(entry => entry.rotation)).size >= 8);
   for (const key of ['width', 'depth', 'height']) {
@@ -499,4 +500,105 @@ test('Snow White supports static greetings and resets all actors on unload', () 
   assert.deepEqual(actors.map(entry => entry.pose()), idle);
   visit.area.update(.1, near);
   assert.deepEqual(actors.map(entry => entry.pose()), idle);
+});
+
+test('Cinderella’s curved staircase can be walked in both directions and the slipper responds on approach', t => {
+  const { worlds, player, camera } = fixture();
+  t.after(worlds.unload);
+  const visit = worlds.load(ID);
+  const { area, scene } = visit;
+  const exhibit = exhibits.find(entry => entry.id === 'cinderella');
+  const { toWorld } = spaceTransform(exhibit);
+  const slipper = scene.getObjectByName('Cinderella glass slipper');
+  const sparkles = scene.getObjectByName('Cinderella slipper sparkles');
+  const rest = slipper.position.y;
+  const [x, z] = toWorld(0, 9.75);
+  player.reset({ x, z }, area);
+
+  function walkTo(localX, localZ) {
+    const [x, z] = toWorld(localX, localZ);
+    const direction = new THREE.Vector2();
+    for (let frame = 0; frame < 220; frame++) {
+      direction.set(x - camera.position.x, z - camera.position.z);
+      if (direction.length() < .12) return;
+      player.move(1 / 60, direction.normalize(), visit);
+      worlds.update(1 / 60, camera.position);
+    }
+    assert.fail('could not walk to ' + localX + ', ' + localZ);
+  }
+
+  function standStill(frames) {
+    player.stop();
+    for (let frame = 0; frame < frames; frame++) worlds.update(1 / 60, camera.position);
+  }
+
+  walkTo(3.4, 3.15);
+  assert.equal(slipper.position.y, rest);
+  assert.equal(sparkles.visible, false);
+  walkTo(4.44, .09);
+  walkTo(6.72, -2.28);
+  assert.ok(player.grounded);
+  assert.ok(camera.position.y > EYE_HEIGHT + 1.8);
+  standStill(45);
+  assert.ok(slipper.position.y > rest + .65);
+  assert.equal(sparkles.visible, true);
+  const floating = slipper.position.y;
+  standStill(20);
+  assert.notEqual(slipper.position.y, floating);
+
+  walkTo(9.01, -4.64);
+  walkTo(10.05, -7.96);
+  walkTo(0, -8.36);
+  assert.ok(Math.abs(camera.position.y - EYE_HEIGHT - 4.32) < 1e-6);
+  assert.ok(player.grounded);
+  const [railX, railZ] = toWorld(0, -7.04);
+  assert.equal(walkElevation(area, camera.position, railX, railZ, camera.position.y - EYE_HEIGHT, true), null);
+  standStill(70);
+  assert.equal(slipper.position.y, rest);
+  assert.equal(sparkles.visible, false);
+
+  walkTo(-10.05, -8.1);
+  walkTo(-9.01, -4.64);
+  walkTo(-6.72, -2.28);
+  walkTo(-4.44, .09);
+  walkTo(-3.4, 3.3);
+  assert.ok(Math.abs(camera.position.y - EYE_HEIGHT) < 1e-6);
+  walkTo(3.4, 3.15);
+  walkTo(4.44, .09);
+  walkTo(6.72, -2.28);
+  standStill(45);
+  assert.ok(slipper.position.y > rest + .65, 'returning reactivates the slipper');
+  assert.equal(sparkles.visible, true);
+  worlds.reset();
+  assert.equal(slipper.position.y, rest);
+  assert.equal(sparkles.visible, false);
+});
+
+test('Cinderella’s slipper holds a static sparkle in reduced motion and clears on unload', () => {
+  const { worlds } = fixture({ reduced: true });
+  const visit = worlds.load(ID);
+  const slipper = visit.scene.getObjectByName('Cinderella glass slipper');
+  const sparkles = visit.scene.getObjectByName('Cinderella slipper sparkles');
+  const rest = slipper.position.y;
+  const location = slipper.parent.getWorldPosition(new THREE.Vector3());
+  const near = location.clone();
+  near.y += EYE_HEIGHT;
+  worlds.update(.1, { ...near, y: EYE_HEIGHT });
+  assert.equal(slipper.position.y, rest, 'the stair height matters for proximity');
+  worlds.update(.1, near);
+  const pose = [slipper.position.y, slipper.rotation.y, sparkles.children[0].position.toArray()];
+  assert.ok(pose[0] > rest);
+  assert.equal(sparkles.visible, true);
+  worlds.update(1, near);
+  assert.deepEqual([slipper.position.y, slipper.rotation.y, sparkles.children[0].position.toArray()], pose);
+
+  const glass = slipper.children.find(object => object.isMesh);
+  let disposed = 0;
+  glass.material.addEventListener('dispose', () => disposed++);
+  worlds.unload();
+  assert.equal(disposed, 1);
+  assert.equal(slipper.position.y, rest);
+  assert.equal(sparkles.visible, false);
+  visit.area.update(1, near);
+  assert.equal(slipper.position.y, rest);
 });

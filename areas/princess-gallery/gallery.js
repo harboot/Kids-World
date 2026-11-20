@@ -305,15 +305,16 @@ export function buildGallery(THREE, scene, document, obstacles) {
     const outline = exhibitOutline(exhibit);
     const woodland = wing === 'woodland';
     const enclosed = id === 'rapunzel';
-    const height = enclosed ? bounds.height : id === 'snow-white' ? 4.25 : wing === 'royal' ? 4.5 : 2.85;
+    const fullWalls = enclosed || id === 'cinderella';
+    const height = fullWalls ? bounds.height : id === 'snow-white' ? 4.25 : wing === 'royal' ? 4.5 : 2.85;
     const thickness = enclosed ? .44 : .55;
     const interiorFace = front - thickness / 2;
 
     function partition(a, b, index) {
-      wall(local, a, b, height + (enclosed ? 0 : .26 * (index % 3)), enclosed ? ivory : woodland ? moss : ivory,
+      wall(local, a, b, height + (fullWalls ? 0 : .26 * (index % 3)), enclosed ? ivory : woodland ? moss : ivory,
         enclosed ? blush : wingMaterials[wing], transform, thickness, !woodland || enclosed);
       const [ax, az] = a, [bx, bz] = b;
-      if (enclosed || (id === 'snow-white' && index >= 3 && index <= 9)) return;
+      if (fullWalls || (id === 'snow-white' && index >= 3 && index <= 9)) return;
       const length = Math.hypot(bx - ax, bz - az);
       const count = Math.max(1, Math.round(length / 3.8));
       const yaw = Math.atan2(az - bz, bx - ax);
@@ -341,11 +342,11 @@ export function buildGallery(THREE, scene, document, obstacles) {
       addSolid(obstacles, ...transform.toWorld(side * (entrance / 2 + .22), front + .12), .94, .94, 3.7, rotation);
     }
 
-    if (enclosed) {
+    if (fullWalls) {
       const opening = 6.75;
       part(local, 'box', ivory, 0, (bounds.height + opening) / 2, front,
         entrance + .24, bounds.height - opening, thickness);
-      overhead(part(local, 'box', blush, 0, bounds.height + .06, 0, bounds.width, .12, bounds.depth));
+      if (enclosed) overhead(part(local, 'box', blush, 0, bounds.height + .06, 0, bounds.width, .12, bounds.depth));
     } else if (!build) {
       // Small accent medallion reserves the scene and leaves the entire floor walkable.
       const displayZ = -bounds.depth * .24;
