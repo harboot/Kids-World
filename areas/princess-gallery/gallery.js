@@ -3,10 +3,13 @@ import { PLAYER_ONLY_LAYER } from '../../core/render-layers.js';
 import { seededRandom } from '../../core/random.js';
 import { buildAtrium, ATRIUM_RADII } from './atrium.js';
 import { buildConcessions } from './concessions.js';
+import { buildExhibitFacade } from './exhibit-facades.js';
 import { GALLERY_DEPTH, GALLERY_WIDTH, exhibitOutline, exhibits, wings } from './exhibits.js';
 import { buildHangingDecor } from './hanging-decor.js';
 import { addGallerySign, addSolid, createParts, spaceTransform } from './parts.js';
+import { buildPromenadeFurniture } from './promenade-furniture.js';
 import { buildPublicSpaces } from './public-spaces.js';
+import { buildScenicBackdrops, buildScenicEdges, canopyMaterial, paintScenicGround } from './scenic-perimeter.js';
 import { buildGalleryPeople } from './visitors.js';
 import { buildWalkway, WALKWAY_HEIGHT, walkwayStairs } from './walkway.js';
 
@@ -43,6 +46,7 @@ function galleryFloor(THREE, document, parts, parent) {
         ink.stroke();
       }
     }
+    paintScenicGround(ink, halfWidth, halfDepth);
 
     for (const exhibit of exhibits) {
       if (exhibit.build) continue;
@@ -135,8 +139,8 @@ function galleryFloor(THREE, document, parts, parent) {
 }
 
 export function buildGallery(THREE, scene, document, obstacles, services) {
-  scene.background = new THREE.Color(0xd1b4bf);
-  scene.fog = new THREE.Fog(0xd1b4bf, 64, 112);
+  scene.background = new THREE.Color(0xaab8c9);
+  scene.fog = new THREE.Fog(0xaab8c9, 72, 124);
   scene.add(new THREE.HemisphereLight(0xffecd7, 0xc2a9dc, 2.18));
   const key = new THREE.DirectionalLight(0xffebc7, 1.45);
   key.position.set(-18, 30, 16);
@@ -161,8 +165,10 @@ export function buildGallery(THREE, scene, document, obstacles, services) {
   const roofHole = new THREE.Path();
   roofHole.absellipse(0, 0, domeX, domeZ, 0, Math.PI * 2, true);
   roofShape.holes.push(roofHole);
-  const roof = part(shell, new THREE.ShapeGeometry(roofShape, 32), matte(0xc5a3b3, { side: THREE.DoubleSide }),
+  const canopy = new THREE.ShapeGeometry(roofShape, 32);
+  const roof = part(shell, canopy, canopyMaterial(THREE, document, GALLERY_WIDTH, GALLERY_DEPTH, canopy),
     0, ceiling, 0, 1, 1, 1);
+  roof.name = 'Twilight canopy';
   roof.rotation.x = -Math.PI / 2;
   overhead(roof);
 
@@ -184,23 +190,10 @@ export function buildGallery(THREE, scene, document, obstacles, services) {
       yaw + (transform?.rotation ?? 0));
   }
 
-  for (let i = 0; i < shellOutline.length; i++) {
-    const [ax, az] = shellOutline[i];
-    const [bx, bz] = shellOutline[(i + 1) % shellOutline.length];
-    wall(components, [ax, az], [bx, bz], ceiling, ivory, wine, null, 1.0);
-    const length = Math.hypot(bx - ax, bz - az);
-    const bays = Math.round(length / 10);
-    for (let j = 0; j < bays; j++) {
-      const t = (j + .5) / bays;
-      const model = addGroup(THREE, components, 'Perimeter window', ax + (bx - ax) * t, 0,
-        az + (bz - az) * t, Math.atan2(az - bz, bx - ax) + Math.PI);
-      part(model, 'box', wine, 0, 14.15, .57, 3.06, 6.5, .16);
-      part(model, 'box', glow, 0, 14.17, .68, 2.68, 6.08, .08);
-      part(model, 'sphere', glow, 0, 17.25, .678, 1.34, 1.17, .05);
-      part(model, 'box', gold, 0, 14.20, .74, .085, 6.16, .07);
-      for (const y of [12.4, 14.8, 16.85]) part(model, 'box', gold, 0, y, .74, 2.66, .11, .07);
-    }
+  for (const [index, point] of shellOutline.entries()) {
+    wall(components, point, shellOutline[(index + 1) % shellOutline.length], ceiling, ivory, wine, null, 1, false);
   }
+  buildScenicBackdrops({ THREE, document, parent: shell, parts, outline: shellOutline, ceiling });
 
   function gateway(parent, title, subtitle, span, height, accent, { reverse = false } = {}) {
     const model = addGroup(THREE, parent, title + ' arch');
@@ -365,6 +358,7 @@ export function buildGallery(THREE, scene, document, obstacles, services) {
       part(local, 'box', gold, 0, upperLintel + .12, frameZ,
         entrance + .69, .24, .16);
       if (enclosed) overhead(part(local, 'box', blush, 0, bounds.height + .06, 0, bounds.width, .12, bounds.depth));
+      buildExhibitFacade({ THREE, document, bay, parts, exhibit, outline, thickness, opening, deckBottom, upperLintel });
     } else if (!build) {
       // Small accent medallion reserves the scene and leaves the entire floor walkable.
       const displayZ = -bounds.depth * .24;
@@ -378,8 +372,10 @@ export function buildGallery(THREE, scene, document, obstacles, services) {
     batch(local, bay);
     if (build) exhibitVisits.push(build({ THREE, document, bay, exhibit, parts, obstacles, interiorFace, outline }));
   }
+  buildScenicEdges({ THREE, parent: shell, parts, obstacles });
   const walkway = buildWalkway({ THREE, document, parent: shell, parts, exhibits, ceiling });
   buildPublicSpaces({ THREE, parent: shell, parts, colors, obstacles });
+  buildPromenadeFurniture({ THREE, parent: shell, parts, colors, obstacles });
   const carts = buildConcessions({ THREE, document, parent: shell, parts, obstacles, ...services });
   buildHangingDecor({ THREE, parent: shell, parts, colors, ceiling });
   const people = buildGalleryPeople({ THREE, parent: shell, parts, obstacles, vendors: carts.vendors });
