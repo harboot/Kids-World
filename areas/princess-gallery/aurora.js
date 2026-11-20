@@ -83,7 +83,7 @@ function buildRose(THREE, document, room, parts, exhibit, obstacles, palette, gl
       .rotation.set(.91, angle, 0, 'YXZ');
   }
   batch(display, rose);
-  addRoundSolid(obstacles, ...spaceTransform(exhibit).toWorld(roseSite.x, roseSite.z), .762, 1.57);
+  addRoundSolid(obstacles, ...spaceTransform(exhibit).toWorld(roseSite.x, roseSite.z), 1.01, 2.72);
 
   const aura = glowMap && new THREE.Sprite(new THREE.SpriteMaterial({
     map: glowMap, color: 0xff69b2, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
@@ -169,7 +169,7 @@ export function buildAurora({ THREE, document, bay, exhibit, parts, obstacles, o
   const poseMagic = buildMagic(THREE, room, glowMap);
   const light = new THREE.PointLight(0xe4a4ff, 6, 9.2);
   light.name = 'Aurora bedlight';
-  light.position.set(1.1, 3.95, -4.1);
+  light.position.set(1.1, 3.65, -4.1);
   room.add(light);
   const sleepingLight = new THREE.Color(0xc28aff);
   const wakingLight = new THREE.Color(0xff9bd2);
@@ -210,6 +210,7 @@ export function buildAurora({ THREE, document, bay, exhibit, parts, obstacles, o
         time += dt;
       }
       pose(still);
+      return nearby && blend >= .92;
     },
   };
 }

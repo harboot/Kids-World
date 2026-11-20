@@ -224,6 +224,7 @@ export function buildRapunzel({ THREE, document, bay, exhibit, parts, obstacles,
         Math.abs(localX(player.x, player.z) - platform.x) <= padWidth / 2 &&
         Math.abs(localZ(player.x, player.z) - platform.z) <= padDepth / 2;
       rapunzel.update(dt, onPlatform, reducedMotion);
+      return onPlatform;
     },
     reset: rapunzel.reset,
   };

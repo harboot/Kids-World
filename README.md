@@ -39,13 +39,13 @@ Players explore connected worlds, interact with objects, and complete simple mis
 - Find and return the lost reindeer.
 - Collect three gears and repair the Clock Tower.
 
-### Princess Gallery — Interactive Exhibits
+### Princess Gallery — 10 Exhibits to Explore
 - Glass Walkway — Take the stairs by the Grand Lobby or in the Royal Wing to look into every exhibit from above.
 - Rapunzel — Jump onto the observation platform to make Rapunzel wave.
 - Snow White — Approach Snow White and the seven dwarfs to see them react.
 - Cinderella — Approach the glass slipper on the ballroom stairs to make it float and sparkle.
 - Aurora — Approach the enchanted rose to wake Aurora. Move away to let her sleep again.
-- Six additional princess exhibits coming soon.
+- Approach the story displays for Belle, Jasmine, Mulan, Ariel, Moana, and Tiana to complete the other six missions while their full exhibits are in development.
 
 ## Built for Expansion
 

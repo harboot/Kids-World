@@ -3,7 +3,7 @@ import { EYE_HEIGHT } from '../../core/player.js';
 import { seededRandom } from '../../core/random.js';
 import { PLAYER_ONLY_LAYER } from '../../core/render-layers.js';
 import { buildCinderellaCharacter } from './cinderella-character.js';
-import { addSolid, spaceTransform } from './parts.js';
+import { addRoundSolid, addSolid, spaceTransform } from './parts.js';
 
 const treadCount = 24;
 const rise = .18;
@@ -151,8 +151,8 @@ function buildGrandStaircase(THREE, details, parts, palette, exhibit, obstacles)
   }
 
   const progress = (shoeTread - .5) / treadCount;
-  const [x, z] = stairPoint(1, progress, -.57);
-  const [nx, nz] = stairPoint(1, progress, .43);
+  const [x, z] = stairPoint(1, progress, -.98);
+  const [nx, nz] = stairPoint(1, progress, .02);
   return { x, z, y: shoeTread * rise, rotation: Math.atan2(z - nz, nx - x) };
 }
 
@@ -402,6 +402,7 @@ function buildGlassSlipper(THREE, parent, parts, palette, site) {
   const { part } = parts;
   const { navy, gold, crystal } = palette;
   const display = addGroup(THREE, parent, 'Cinderella slipper display', site.x, site.y, site.z, site.rotation);
+  display.scale.setScalar(.78);
   const cushion = part(display, new THREE.SphereGeometry(1, 20, 10), navy, 0, .073, 0, .72, .093, .22);
   cushion.name = 'Slipper cushion';
   const seam = part(display, new THREE.TorusGeometry(1, .035, 6, 32), gold, 0, .064, 0, .687, .211, .18);
@@ -546,15 +547,23 @@ export function buildCinderella({ THREE, document, bay, exhibit, parts, obstacle
   const site = buildGrandStaircase(THREE, details, parts, palette, exhibit, obstacles);
   buildClock(THREE, document, details, parts, palette);
   batch(details, ballroom);
-  buildCinderellaCharacter(THREE, ballroom, parts, exhibit, obstacles);
+  const character = buildCinderellaCharacter(THREE, ballroom, parts, exhibit, obstacles);
+  addRoundSolid(obstacles, ...toWorld(site.x, site.z), .39, site.y + 1.36);
   const slipper = buildGlassSlipper(THREE, ballroom, parts, palette, site);
+  const local = [0, 0];
   return {
-    reset: slipper.reset,
+    reset() {
+      slipper.reset();
+      character.reset();
+    },
     update(dt, player, _grounded, reducedMotion) {
-      const [x, z] = toLocal(player.x, player.z);
+      const [x, z] = toLocal(player.x, player.z, local);
+      const feet = player.y - EYE_HEIGHT;
+      character.update(dt, x, z, player.y, feet, reducedMotion);
       const nearby = (x - site.x) ** 2 + (z - site.z) ** 2 <= approachRadius ** 2 &&
-        Math.abs(player.y - EYE_HEIGHT - site.y) < 1.24;
+        Math.abs(feet - site.y) < 1.24;
       slipper.update(dt, nearby, reducedMotion);
+      return nearby;
     },
   };
 }
