@@ -306,14 +306,16 @@ export function buildGallery(THREE, scene, document, obstacles, services) {
     const woodland = wing === 'woodland';
     const enclosed = id === 'rapunzel';
     const sleepingChamber = id === 'aurora';
-    const fullWalls = enclosed || sleepingChamber || id === 'cinderella';
+    const undersea = id === 'ariel';
+    const fullWalls = enclosed || sleepingChamber || undersea || id === 'cinderella';
     const height = fullWalls ? bounds.height : id === 'snow-white' ? 4.25 : wing === 'royal' ? 4.5 : 2.85;
     const thickness = enclosed ? .44 : .55;
     const interiorFace = front - thickness / 2;
+    const partitionMaterial = undersea ? matte(0x3b7688) : fullWalls || !woodland ? ivory : moss;
 
     function partition(a, b, index) {
-      wall(local, a, b, height + (fullWalls ? 0 : .26 * (index % 3)), fullWalls || !woodland ? ivory : moss,
-        enclosed || sleepingChamber ? blush : wingMaterials[wing], transform, thickness, fullWalls || !woodland);
+      wall(local, a, b, height + (fullWalls ? 0 : .26 * (index % 3)), partitionMaterial,
+        enclosed || sleepingChamber ? blush : wingMaterials[wing], transform, thickness, !undersea && (fullWalls || !woodland));
       const [ax, az] = a, [bx, bz] = b;
       if (fullWalls || (id === 'snow-white' && index >= 3 && index <= 9)) return;
       const length = Math.hypot(bx - ax, bz - az);
@@ -349,7 +351,7 @@ export function buildGallery(THREE, scene, document, obstacles, services) {
       const deckBottom = WALKWAY_HEIGHT - .26;
       const upperLintel = WALKWAY_HEIGHT + 3.2;
       for (const [bottom, top] of [[opening, deckBottom], [upperLintel, bounds.height]]) {
-        part(local, 'box', ivory, 0, (bottom + top) / 2, front,
+        part(local, 'box', undersea ? partitionMaterial : ivory, 0, (bottom + top) / 2, front,
           entrance + .24, top - bottom, thickness);
       }
       const frameZ = front + thickness / 2 + SURFACE_GAP.detail;

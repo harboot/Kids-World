@@ -33,13 +33,6 @@ const props = {
     }
     part(group, 'gem', gold, 0, .069, .056, .074, .080, .034);
   },
-  ariel({ part, ivory, accent, model: shell }) {
-    for (let i = -3; i <= 3; i++) {
-      part(shell, 'sphere', i % 2 ? ivory : accent, i * .12, .25, .03 * Math.abs(i),
-        .122, .317 - Math.abs(i) * .028, .109).rotation.z = -i * .25;
-    }
-    part(shell, 'sphere', ivory, 0, .12, .16, .105, .11, .11);
-  },
   moana({ part, beam, gold, ivory, accent, model: paddle }) {
     beam(paddle, gold, [-.46, .08, 0], [.28, .68, 0], .095);
     part(paddle, 'sphere', accent, .36, .73, 0, .158, .303, .055).rotation.z = -.71;

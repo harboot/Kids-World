@@ -83,7 +83,7 @@ export function buildPublicSpaces({ THREE, parent, parts, colors, obstacles }) {
     addRoundSolid(obstacles, x, z, .97, 2.15);
   }
 
-  for (const [x, z, yaw] of [[-24.65, 21.05, 2.68], [-24.30, -8.34, 2.58], [-18.65, -12.3, -Math.PI / 2]]) {
+  for (const [x, z, yaw] of [[-24.65, 21.05, 2.68], [-24.30, -8.34, 2.58], [-17.15, -12.3, Math.PI / 2]]) {
     place('Woodland bench', x, z, yaw, group => {
       for (const side of [-1, 1]) {
         const a = side * 1.0;

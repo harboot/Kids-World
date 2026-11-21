@@ -45,7 +45,8 @@ Players explore connected worlds, interact with objects, and complete simple mis
 - Snow White — Approach Snow White and the seven dwarfs to see them react.
 - Cinderella — Approach the glass slipper on the ballroom stairs to make it float and sparkle.
 - Aurora — Approach the enchanted rose to wake Aurora. Move away to let her sleep again.
-- Approach the story displays for Belle, Jasmine, Mulan, Ariel, Moana, and Tiana to complete the other six missions while their full exhibits are in development.
+- Ariel — Walk up the shipwreck’s gangplank and stand on deck to see Ariel swim around you.
+- Approach the story displays for Belle, Jasmine, Mulan, Moana, and Tiana to complete the other five missions while their full exhibits are in development.
 
 ## Built for Expansion
 

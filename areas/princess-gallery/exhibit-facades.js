@@ -5,9 +5,11 @@ export function buildExhibitFacade({ THREE, document, bay, parts, exhibit, outli
   opening, deckBottom, upperLintel }) {
   const { id, bounds, entrance } = exhibit;
   const woodland = id === 'rapunzel';
+  const undersea = id === 'ariel';
   const { part, beam, batch, matte } = parts;
   const [base, joints, stones] = woodland
     ? ['#ae9b88', '#877d76', ['#a89382', '#b39e8a', '#ab9d8e', '#b3a396']]
+    : undersea ? ['#4b8493', '#386778', ['#548899', '#578d99', '#4b7e92', '#5d8c9a']]
     : ['#c5b5b6', '#ab9da8', ['#ccbabe', '#c4b3b6', '#b8abb4', '#c5b7b1']];
   const map = paintCanvasTexture(THREE, document, 512, 512, (ink, w, h) => {
     const random = seededRandom(218);
@@ -66,7 +68,7 @@ export function buildExhibitFacade({ THREE, document, bay, parts, exhibit, outli
   const random = seededRandom(woodland ? 736 : 198);
   const greens = [0x486b60, 0x6c8a68, 0x7b9367].map(color => matte(color));
   const ivyStem = matte(0x5c6250);
-  const banner = matte(id === 'aurora' ? 0x985782 : 0x526b9b);
+  const banner = matte(id === 'aurora' ? 0x985782 : undersea ? 0x3c878c : 0x526b9b);
   const bannerShape = new THREE.Shape([
     new THREE.Vector2(-1, 1), new THREE.Vector2(-1, -.58), new THREE.Vector2(0, -1),
     new THREE.Vector2(1, -.58), new THREE.Vector2(1, 1),

@@ -5,7 +5,7 @@ function drapedSkirt(THREE) {
   const profiles = [
     // Distance along the mattress, width, and height of the cloth above its center.
     [-.17, .216, .122], [.01, .292, .155], [.26, .423, .169], [.52, .546, .175],
-    [.78, .661, .131], [.97, .702, .090], [1.045, .700, .076], [1.09, .668, .079],
+    [.78, .641, .131], [.98, .680, .103], [1.09, .664, .088], [1.14, .632, .083],
   ];
   const radial = 32;
   const vertices = [], colors = [], indices = [];
@@ -21,7 +21,7 @@ function drapedSkirt(THREE) {
       const y = -.129 + up * (up > 0 ? height + .023 * pleat : .095);
       vertices.push(Math.cos(angle) * (width + .033 * pleat * z), y, z + Math.max(0, z) * .022 * pleat);
       shade.copy(deep).lerp(silk, .24 + .24 * pleat + .25 * Math.max(0, up));
-      if (z >= 1.045) shade.lerp(hem, z > 1.05 ? .77 : .41);
+      if (z >= 1.09) shade.lerp(hem, z > 1.10 ? .77 : .41);
       colors.push(shade.r, shade.g, shade.b);
     }
   }
@@ -60,16 +60,17 @@ export function buildAuroraCharacter(THREE, bed, parts, mattressTop) {
   part(actor, drapedSkirt(THREE), matte(0xffffff, { vertexColors: true }), 0, 0, 0, 1, 1, 1);
   for (const side of [-1, 1]) {
     const label = side < 0 ? 'left' : 'right';
-    const leg = addGroup(THREE, actor, 'Aurora ' + label + ' leg', side * .157, -.153, 1.023 + side * .042);
-    leg.rotation.y = side * .135;
-    part(leg, 'sphere', collar, 0, 0, .071, .077, .075, .19);
-    part(leg, 'sphere', skin, 0, .014, .185, .068, .062, .099);
-    part(leg, 'sphere', rose, 0, -.043, .243, .079, .039, .144);
-    part(leg, 'sphere', dress, 0, -.010, .280, .075, .046, .111);
-    part(leg, 'sphere', dress, 0, -.019, .150, .063, .059, .061);
-    const strap = part(leg, 'sphere', silk, 0, .016, .228, .073, .041, .028);
-    strap.rotation.x = -.21;
-    part(leg, 'gem', gold, 0, .052, .233, .025, .020, .025);
+    const leg = addGroup(THREE, actor, 'Aurora ' + label + ' leg', side * .133, -.153, .88 + side * .042);
+    leg.rotation.y = side * .072;
+    part(leg, 'sphere', collar, 0, .006, .092, .087, .071, .246);
+    part(leg, 'sphere', collar, 0, -.004, .273, .064, .060, .132);
+    const foot = addGroup(THREE, leg, 'Aurora ' + label + ' slipper', 0, -.01, .351);
+    foot.rotation.x = -.61 - side * .08;
+    part(foot, 'sphere', rose, 0, -.020, .050, .070, .043, .120);
+    part(foot, 'sphere', dress, 0, .009, .084, .069, .060, .094);
+    part(foot, 'sphere', collar, 0, .029, -.008, .064, .046, .063);
+    part(foot, 'sphere', silk, 0, .051, .052, .071, .023, .028);
+    part(foot, 'gem', gold, 0, .072, .058, .023, .014, .022);
   }
 
   const body = addGroup(THREE, actor, 'Aurora upper body');
