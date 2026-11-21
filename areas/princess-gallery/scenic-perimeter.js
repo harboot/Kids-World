@@ -247,10 +247,11 @@ function ridgeGeometry(THREE, length, height, tint, random) {
 
 export function buildScenicEdges({ THREE, parent, parts, obstacles }) {
   const group = addGroup(THREE, parent, 'Enchanted landscape borders');
-  const { part, batch, matte } = parts;
+  const { part, beam, batch, matte } = parts;
   const rock = matte(0xffffff, { vertexColors: true, side: THREE.DoubleSide });
   const bark = matte(0x654b5c);
   const trees = [0x395f62, 0x5a8075, 0x6f8c79].map(color => matte(color));
+  const reef = [0x8e648b, 0xc47793].map(color => matte(color));
   const hues = {
     grove: [0x566761, 0x688474, 0x83966e, 0x637b67, 0x4f655f],
     ridge: [0x676e88, 0x8389a1, 0xc6ccd3, 0x989eb5, 0x676e8b],
@@ -281,12 +282,25 @@ export function buildScenicEdges({ THREE, parent, parts, obstacles }) {
     const border = addGroup(THREE, group, (from ?? 'lobby') + ' to ' + (to ?? 'lobby') + ' scenic barrier', x, 0, z, yaw);
     part(model, ridgeGeometry(THREE, length + .20, height, palette[theme], random), rock, 0, 0, 0, 1, 1, 1);
 
+    const undersea = from === 'ariel' || to === 'ariel';
     const saplings = Math.max(2, Math.round(length / 2.4));
     for (let i = 0; i < saplings; i++) {
       const px = length * ((i + .5) / saplings - .5);
       if (theme === 'grove' || i % 3 === 1) {
         const size = theme === 'grove' ? 3.5 + random() * 2.75 : 2.2 + random() * 1.6;
-        pine(model, px, height * .72, -1.26 - random() * .68, size, i * .47);
+        const pz = -1.26 - random() * .68;
+        const y = height * .71;
+        if (undersea) {
+          const fork = [px + .12, y + size * .34, pz];
+          beam(model, reef[0], [px, y, pz], fork, .19);
+          for (const side of [-1, 0, 1]) {
+            const end = [fork[0] + side * size * .24, y + size * (.69 - .16 * Math.abs(side)), pz - side * .25];
+            beam(model, reef[1], fork, end, .128);
+            part(model, 'sphere', reef[1], ...end, .083, .102, .087);
+          }
+        } else {
+          pine(model, px, y + height * .01, pz, size, i * .47);
+        }
       } else {
         const surface = part(model, 'ball', highlights[theme], px, height * .79, -1.3,
           1.10, 1.30 + random(), .96);

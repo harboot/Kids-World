@@ -1,3 +1,4 @@
+import { buildAriel } from './ariel.js';
 import { buildAurora } from './aurora.js';
 import { buildCinderella } from './cinderella.js';
 import { buildRapunzel } from './rapunzel.js';
@@ -76,10 +77,10 @@ export const exhibits = [
   },
   {
     id: 'ariel', title: 'Ariel — The Little Mermaid', accent: 0x6fa3a4, wing: 'adventure',
-    mission: 'Discover Ariel’s seashell', display: 'Seashell',
+    mission: 'Board the shipwreck to meet Ariel',
     position: { x: 53, z: 10 }, rotation: -1.49,
     bounds: { width: 24, depth: 22, height: 19 }, shape: 'oval', entrance: 7.4,
-    approach: [33, 10], status: 'coming-soon',
+    approach: [33, 10], status: 'complete', build: buildAriel,
   },
   {
     id: 'moana', title: 'Moana', accent: 0x638eac, wing: 'adventure',

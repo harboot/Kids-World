@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import * as THREE from '../vendor/three.module.min.js';
 import { areas } from '../game.js';
+import { wreckDeck } from '../areas/princess-gallery/ariel-wreck.js';
 import { ATRIUM_RADII } from '../areas/princess-gallery/atrium.js';
 import { exhibits, exhibitOutline } from '../areas/princess-gallery/exhibits.js';
 import { spaceTransform } from '../areas/princess-gallery/parts.js';
@@ -76,6 +77,7 @@ test('public gallery opens by normal and drone URLs with no castle progress', t 
     assert.match(visit.area.missionStatus.hint, /Approach Snow White and the seven dwarfs/);
     assert.match(visit.area.missionStatus.hint, /Cinderella’s glass slipper on the ballroom stairs/);
     assert.match(visit.area.missionStatus.hint, /Approach the enchanted rose to wake Aurora/);
+    assert.match(visit.area.missionStatus.hint, /Board Ariel’s shipwreck/);
     assert.equal(game.progress.has(CASTLE), false);
     assert.equal(game.progress.has(ID), false);
     assert.equal(game.progress.canSelect(ID), false);
@@ -215,8 +217,8 @@ test('ten distinct and nonoverlapping footprints surround the Central Atrium', t
     'rapunzel', 'snow-white', 'cinderella', 'aurora', 'ariel', 'belle', 'jasmine', 'mulan', 'tiana', 'moana',
   ]));
   assert.deepEqual(exhibits.filter(entry => entry.status === 'complete' && entry.build).map(entry => entry.id),
-    ['rapunzel', 'snow-white', 'aurora', 'cinderella']);
-  assert.equal(exhibits.filter(entry => entry.status === 'coming-soon' && !entry.build).length, 6);
+    ['rapunzel', 'snow-white', 'aurora', 'cinderella', 'ariel']);
+  assert.equal(exhibits.filter(entry => entry.status === 'coming-soon' && !entry.build).length, 5);
   assert.ok(new Set(exhibits.map(entry => entry.shape)).size >= 5);
   assert.ok(new Set(exhibits.map(entry => entry.rotation)).size >= 8);
   for (const key of ['width', 'depth', 'height']) {
@@ -477,6 +479,11 @@ test('Snow White has eight distinct actors visitors can walk up to, with one sha
     return [...colors].sort().join(':');
   });
   assert.equal(new Set(appearances).size, 8);
+  scene.updateMatrixWorld(true);
+  const princess = actors[0].actor;
+  const skirt = new THREE.Box3().setFromObject(princess.getObjectByName('Snow White fitted skirt'), true);
+  const bodice = new THREE.Box3().setFromObject(princess.getObjectByName('Snow White fitted bodice'), true);
+  assert.ok(skirt.max.y - bodice.min.y > .035, 'the fitted bodice and skirt meet under the waist trim');
   assert.equal(scene.getObjectByName('snow-white exhibit').children.filter(child => snowCharacters.includes(child.name)).length, 8);
   for (const entry of actors) {
     const point = approachActor(entry, area);
@@ -609,6 +616,8 @@ test('Aurora’s bed and rose are solid with a clear approach from the gallery e
     const bounds = new THREE.Box3().setFromObject(foot, true);
     assert.ok(bounds.min.y >= mattress.max.y && bounds.min.y <= mattress.max.y + .03,
       foot.name + ' rests on the lowered bed');
+    const slipper = foot.children.find(object => object.isGroup);
+    assert.ok(slipper.rotation.x < -.45 && slipper.rotation.x > -.75, 'the toes lift naturally from the bed');
   }
   for (const name of ['Aurora dressing table and mirror', 'Aurora velvet bench', 'Aurora bedside bouquet']) {
     const furniture = room.getObjectByName(name);
@@ -916,6 +925,116 @@ test('Cinderella’s slipper holds a static sparkle in reduced motion and clears
   assert.equal(slipper.position.y, rest);
 });
 
+test('Ariel appears from the shipwreck and swims around the player only while the deck is occupied', t => {
+  const { worlds, player, camera } = fixture();
+  t.after(worlds.unload);
+  const visit = worlds.load(ID);
+  const { area, scene } = visit;
+  const exhibit = exhibits.find(entry => entry.id === 'ariel');
+  const toHullWorld = (x, z) => spaceTransform(exhibit).toWorld(...spaceTransform(wreckDeck).toWorld(x, z));
+  const room = scene.getObjectByName('Ariel undersea kingdom');
+  const character = room.getObjectByName('Ariel character');
+  const tail = character.getObjectByName('Ariel articulated tail tip');
+  const deck = room.getObjectByName('Shipwreck deck');
+  const fish = room.getObjectByName('Ariel schools of fish');
+  const chest = room.getObjectByName('Ariel treasure chest');
+  const ceiling = room.getObjectByName('Ariel overhead water canopy');
+  assert.ok(ceiling.layers.isEnabled(PLAYER_ONLY_LAYER));
+  for (const name of ['Ariel underwater palace', 'Ariel coral reef', 'Ariel treasure chest']) {
+    assert.ok(room.getObjectByName(name).children.some(mesh => mesh.isInstancedMesh), name);
+  }
+  assert.ok(fish.children.reduce((sum, batch) => sum + batch.count, 0) >= 27);
+  const chestPoint = chest.getWorldPosition(new THREE.Vector3());
+  assert.equal(walkElevation(area, chestPoint, chestPoint.x, chestPoint.z, 0, true), null);
+  assert.equal(character.visible, false);
+
+  function walkTo(localX, localZ) {
+    const destination = toHullWorld(localX, localZ);
+    const direction = new THREE.Vector2();
+    for (let i = 0; i < 320; i++) {
+      direction.set(destination[0] - camera.position.x, destination[1] - camera.position.z);
+      if (direction.length() < .12) {
+        player.stop();
+        return;
+      }
+      player.move(1 / 60, direction.normalize(), visit);
+      worlds.update(1 / 60, camera.position);
+    }
+    assert.fail('could not walk to the ship coordinates ' + [localX, localZ]);
+  }
+  function wait(frames) {
+    for (let i = 0; i < frames; i++) worlds.update(1 / 60, camera.position);
+  }
+  function offsetFromPlayer() {
+    const position = character.getWorldPosition(new THREE.Vector3()).sub(camera.position);
+    assert.ok(Math.hypot(position.x, position.z) > 3.15 && Math.hypot(position.x, position.z) < 3.8);
+    return position;
+  }
+
+  const middle = deck.getWorldPosition(new THREE.Vector3());
+  for (const level of [0, 15.6]) {
+    worlds.update(1, { x: middle.x, y: level + EYE_HEIGHT, z: middle.z });
+    assert.equal(character.visible, false);
+  }
+  const [x, z] = toHullWorld(0, wreckDeck.rampEnd + .7);
+  player.reset({ x, z }, area);
+  walkTo(0, 4.0);
+  assert.ok(camera.position.y > EYE_HEIGHT + .9);
+  assert.equal(character.visible, false, 'the gangplank does not trigger Ariel');
+  walkTo(0, .57);
+  wait(50);
+  assert.ok(player.grounded);
+  assert.ok(Math.abs(camera.position.y - EYE_HEIGHT - wreckDeck.height) < 1e-6);
+  assert.ok(character.visible);
+  const start = offsetFromPlayer();
+  const initialBend = tail.rotation.x;
+  wait(120);
+  assert.ok(offsetFromPlayer().distanceTo(start) > 3.0);
+  assert.notEqual(tail.rotation.x, initialBend);
+  assert.equal(area.missionStatus.missions.find(mission => mission.id === 'ariel').complete, true);
+  assert.equal(nearestInteraction(area.interactions, camera.position), null);
+  walkTo(-.66, -.51);
+  offsetFromPlayer();
+  walkTo(0, wreckDeck.rampEnd + .60);
+  wait(60);
+  assert.equal(character.visible, false);
+  walkTo(0, .57);
+  wait(50);
+  assert.ok(character.visible, 'reboarding brings Ariel back');
+  worlds.reset();
+  assert.equal(character.visible, false);
+  assert.equal(area.missionStatus.missions.find(mission => mission.id === 'ariel').complete, false);
+});
+
+test('Ariel holds a steady greeting in reduced motion and unload releases the exhibit', t => {
+  const { worlds, player, camera } = fixture({ reduced: true });
+  t.after(worlds.unload);
+  const visit = worlds.load(ID);
+  const deck = visit.scene.getObjectByName('Shipwreck deck').getWorldPosition(new THREE.Vector3());
+  const ariel = visit.scene.getObjectByName('Ariel character');
+  const tail = ariel.getObjectByName('Ariel articulated tail tip');
+  const school = visit.scene.getObjectByName('Ariel schools of fish').children[0];
+  const fishMatrix = school.instanceMatrix.array.slice();
+  player.reset({ x: deck.x, z: deck.z }, visit.area);
+  assert.ok(player.jump());
+  worlds.update(.1, camera.position);
+  assert.equal(ariel.visible, false, 'valid deck coordinates require a grounded player');
+  player.reset({ x: deck.x, z: deck.z }, visit.area);
+  worlds.update(1 / 60, camera.position);
+  assert.ok(ariel.visible);
+  const state = [ariel.position.toArray(), tail.rotation.toArray()];
+  worlds.update(3, camera.position);
+  assert.deepEqual([ariel.position.toArray(), tail.rotation.toArray()], state);
+  assert.deepEqual(school.instanceMatrix.array, fishMatrix);
+  let disposed = 0;
+  school.geometry.addEventListener('dispose', () => disposed++);
+  worlds.load(CASTLE);
+  assert.equal(disposed, 1);
+  assert.equal(ariel.visible, false);
+  visit.area.update(.2, camera.position);
+  assert.equal(ariel.visible, false);
+});
+
 test('the ten gallery missions record one interaction per exhibit and replay after reset', t => {
   const game = fixture({ reduced: true });
   const { worlds, progress, notices } = game;
@@ -968,6 +1087,13 @@ test('the ten gallery missions record one interaction per exhibit and replay aft
           position = point(exhibit, x, z + 2.25);
           break;
         }
+        case 'ariel': {
+          const deck = scene.getObjectByName('Shipwreck deck').getWorldPosition(new THREE.Vector3());
+          step({ x: deck.x, y: EYE_HEIGHT, z: deck.z });
+          assert.deepEqual(completed(), expected, 'standing on the seabed does not count');
+          position = { x: deck.x, y: EYE_HEIGHT + deck.y, z: deck.z };
+          break;
+        }
         case 'cinderella': {
           const site = scene.getObjectByName('Cinderella slipper display');
           step(point(exhibit, site.position.x, site.position.z + 1.2));
@@ -1012,6 +1138,7 @@ test('both staircases connect the main level to the glass loop and all ten overl
     'snow-white': [-1, 3.35, -7.33],
     cinderella: [0, 9.54, -10.65],
     aurora: [0, 1.7, -6.35],
+    ariel: [0, 4.8, -8.05],
   };
 
   function walkTo(x, z) {
@@ -1113,6 +1240,20 @@ test('the three wings have their own public landmarks with room to walk around t
   assert.ok(compass?.children.some(child => child.geometry?.hasAttribute('color')));
   const { x, z } = compass.position;
   assertWalkable(area, [x - 1.6, z], [x + 1.6, z], 'compass mosaic');
+});
+
+test('the Woodland bench at the second flower garden faces the path with a walking gap behind it', t => {
+  const { worlds } = fixture();
+  t.after(worlds.unload);
+  const { area, scene } = worlds.load(ID);
+  const landmarks = scene.getObjectByName('Gallery public spaces');
+  const flowerGarden = landmarks.getObjectByName('Woodland flower garden 2');
+  const bench = landmarks.children.find(child => child.name === 'Woodland bench' && child.position.x > -20);
+  const front = bench.getWorldDirection(new THREE.Vector3());
+  assert.ok(front.dot(bench.position.clone().sub(flowerGarden.position).normalize()) > .9);
+  const { x, z } = bench.position;
+  assertWalkable(area, [x + 3.0, z], [x + .85, z], 'bench approach');
+  assertWalkable(area, [x - 1.05, z - 1.65], [x - 1.05, z + 1.65], 'gap between the planter and bench');
 });
 
 test('gallery guests include guards, a child with their parents, and a parent with an occupied stroller', t => {

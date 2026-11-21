@@ -66,14 +66,30 @@ function createActor({ THREE, parts, bay, ground, profile, toWorld, obstacles, p
   const bodyY = princess ? 1.41 : .77;
   const shoulderY = princess ? 1.64 : .96;
   if (princess) {
-    const skirt = part(torso, 'cone', trim, 0, .59, 0, .59, 1.12, .46);
-    skirt.rotation.y = Math.PI / 12;
-    part(torso, 'drum', trim, 0, .17, 0, .55, .10, .44);
-    for (let i = -2; i <= 2; i++) {
-      part(torso, 'sphere', trim, i * .16, .52, .33 - .05 * Math.abs(i), .12, .35, .08).rotation.z = i * .18;
+    const waistY = 1.145;
+    const skirtShape = new THREE.LatheGeometry([
+      [.52, .055], [.56, .088], [.57, .16], [.553, .27], [.495, .51],
+      [.414, .77], [.317, .96], [.258, 1.09], [.239, waistY], [.235, 1.19],
+    ].map(([r, y]) => new THREE.Vector2(r, y)), 48);
+    const folds = skirtShape.getAttribute('position');
+    for (let i = 0; i < folds.count; i++) {
+      const x = folds.getX(i);
+      const z = folds.getZ(i);
+      const falloff = Math.max(0, 1 - folds.getY(i) / waistY);
+      const fold = 1 + .086 * falloff * Math.cos(Math.atan2(x, z) * 8);
+      folds.setX(i, x * fold);
+      folds.setZ(i, z * fold);
     }
-    part(torso, 'sphere', coat, 0, bodyY, 0, .30, .38, .22);
-    part(torso, 'drum', gold, 0, 1.105, 0, .25, .079, .195);
+    skirtShape.computeVertexNormals();
+    part(torso, skirtShape, trim, 0, 0, 0, 1, 1, .78).name = 'Snow White fitted skirt';
+
+    const bodiceShape = new THREE.LatheGeometry([
+      [.231, 1.105], [.241, waistY], [.243, 1.24], [.274, 1.41],
+      [.286, 1.54], [.262, 1.63], [.209, 1.707], [.127, 1.746],
+    ].map(([r, y]) => new THREE.Vector2(r, y)), 32);
+    part(torso, bodiceShape, coat, 0, 0, 0, 1, 1, .78).name = 'Snow White fitted bodice';
+    const piping = new THREE.TorusGeometry(1, .052, 6, 32);
+    part(torso, piping, gold, 0, waistY, 0, .247, .193, .268).rotation.x = Math.PI / 2;
     part(torso, 'sphere', white, 0, 1.75, -.08, .28, .141, .19);
     part(torso, 'gem', gold, 0, 1.53, .226, .079, .11, .044);
   } else {
