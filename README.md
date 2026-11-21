@@ -10,6 +10,8 @@ Players explore worlds, interact with objects, and complete simple missions. Ope
 
 **[Play Kids World](https://harboot.github.io/Kids-World/)**
 
+[Area Statistics](https://harboot.github.io/Kids-World/stats.html) lists map dimensions and repository file statistics for every registered area.
+
 ## Worlds & Missions
 
 ### Flower Garden — 5 Missions
@@ -104,9 +106,10 @@ Open `?area=princess-gallery&view=fps` and select **Play**. The overlay updates 
 
 ## Publishing Updates
 
-After changing game files, regenerate the offline release manifest:
+To preview the current area inventory and refresh the offline release manifest locally, run:
 
 ```bash
+node scripts/generate-area-stats.mjs
 node scripts/generate-pwa-manifest.mjs
 ```
 
@@ -117,6 +120,10 @@ node scripts/generate-pwa-manifest.mjs --check
 ```
 
 GitHub Actions checks release metadata and runs automated tests on pull requests.
+
+Area statistics count regular files under each registered area's folder and its entry module. JavaScript LOC counts physical lines, including blank lines and comments. The generator reads declared dimensions from literals and named constants. Unresolved dimensions appear as a dash in the dashboard.
+
+On pushes to `main`, the area statistics workflow regenerates the dashboard data and PWA release, commits changed outputs, and deploys that validated snapshot in the same run. Set the publishing source in **Settings → Pages → Build and deployment** to **GitHub Actions** when adopting this workflow so it is the sole publisher. If GitHub rejects a generated commit, the workflow reports the failure and stops before deployment.
 
 ## Contributing
 

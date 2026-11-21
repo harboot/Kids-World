@@ -1,0 +1,92 @@
+name: Generate area statistics and publish release
+
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: kids-world-main-release
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    outputs:
+      publish: ${{ steps.release.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - run: node scripts/generate-area-stats.mjs
+      - run: node scripts/generate-pwa-manifest.mjs
+      - run: node scripts/generate-pwa-manifest.mjs --check
+      - run: node --test
+      - name: Commit generated files and stage the validated release
+        id: release
+        shell: bash
+        run: |
+          base=$(git rev-parse HEAD)
+          remote_main() {
+            git ls-remote --exit-code origin refs/heads/main | cut -f 1
+          }
+          remote=$(remote_main)
+          if [[ "$remote" != "$base" ]]; then
+            echo "::notice::main moved during validation. A newer push will publish the release."
+            exit 0
+          fi
+
+          git add -- area-stats.json version.json sw.js
+          if ! git diff --cached --quiet; then
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              commit -m 'Update generated area statistics and PWA release'
+            if ! git push origin HEAD:refs/heads/main; then
+              remote=$(remote_main)
+              if [[ "$remote" == "$base" ]]; then
+                echo "::error::Could not push generated files to main. Check branch protection, rulesets, and GITHUB_TOKEN contents:write access."
+                exit 1
+              fi
+              if [[ "$remote" != "$(git rev-parse HEAD)" ]]; then
+                echo "::notice::main advanced during the push. A newer push will publish the release."
+                exit 0
+              fi
+            fi
+          fi
+
+          remote=$(remote_main)
+          if [[ "$remote" != "$(git rev-parse HEAD)" ]]; then
+            echo "::notice::main moved before packaging. A newer push will publish the release."
+            exit 0
+          fi
+          release_dir="$RUNNER_TEMP/kids-world-pages"
+          mkdir -p "$release_dir"
+          git archive HEAD | tar -x -C "$release_dir"
+          echo "publish=true" >> "$GITHUB_OUTPUT"
+      - name: Upload the generated Pages release
+        if: steps.release.outputs.publish == 'true'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ${{ runner.temp }}/kids-world-pages
+
+  deploy:
+    if: needs.generate.outputs.publish == 'true'
+    needs: generate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish the same release to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

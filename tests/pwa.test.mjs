@@ -45,6 +45,8 @@ test('checked-in release matches every runtime file and the worker version chang
   });
   assert.ok(manifest.files.some(file => file.path === './vendor/three.core.min.js'));
   assert.ok(manifest.files.some(file => file.path === './areas/snow-basin.js'));
+  assert.ok(manifest.files.some(file => file.path === './stats.html'));
+  assert.ok(manifest.files.some(file => file.path === './area-stats.json'));
   assert.ok(manifest.files.every(file => !file.path.startsWith('./tests/')));
 });
 
@@ -89,11 +91,15 @@ test('rejects invalid, duplicate, missing and out-of-scope manifest entries', as
   await assert.rejects(validateManifest({ version: '1.0.0', files: [] }));
   for (const files of [
     manifest.files.filter(file => file.path !== './areas/snow-basin.js'),
+    manifest.files.filter(file => file.path !== './area-stats.json'),
+    manifest.files.filter(file => file.path !== './stats.html'),
     [...manifest.files, manifest.files.at(-1)],
     [{ path: './pwa/../version.json', revision: manifest.files[0].revision }, ...manifest.files],
   ]) {
     await assert.rejects(validateManifest({ version: await versionFor(files), files }));
   }
+  const previousFiles = manifest.files.filter(file => !['./stats.html', './area-stats.json'].includes(file.path));
+  await validateManifest({ version: await versionFor(previousFiles), files: previousFiles });
 });
 
 test('stages a verified release, reports only stored files, and reuses matching revisions', async () => {
@@ -176,18 +182,20 @@ test('a stalled download can time out and retry without publishing a partial rel
   assert.equal((await cache.ready())[0].tag, ready.tag);
 });
 
-test('the worker shares a concurrent download and uses its cache for area URLs offline', async t => {
+test('the worker shares a concurrent download and serves the game and versioned statistics offline', async t => {
   const shell = '<script type="module" src="./pwa/bootstrap.js"></script>';
-  const release = await fixture({ './index.html': shell });
+  const stats = '<html data-stats-url="./area-stats.json">';
+  let release = await fixture({ './index.html': shell, './stats.html': stats, './area-stats.json': '{"revision":1}' });
   const storage = new MemoryStorage();
   const events = new Map();
   const client = { id: 'test-client', url: scope.href };
+  let offline = false;
   const simulatedWorker = {
     registration: { scope: scope.href },
+    navigator: { get onLine() { return !offline; } },
     addEventListener(name, listener) { events.set(name, listener); },
   };
   const requests = [];
-  let offline = false;
   const network = async resource => {
     const url = String(resource);
     requests.push(url);
@@ -215,20 +223,37 @@ test('the worker shares a concurrent download and uses its cache for area URLs o
     });
   }
 
+  function request(path, mode = 'navigate') {
+    return new Promise(resolve => events.get('fetch')({
+      request: { method: 'GET', mode, url: new URL(path, scope).href },
+      respondWith: resolve,
+      waitUntil() {},
+    }));
+  }
+
   const [first, second] = await Promise.all([prepare(), prepare()]);
   assert.equal(first.tag, second.tag);
   assert.equal(requests.length, release.manifest.files.length + 1);
   assert.equal((await storage.keys()).length, 1);
   offline = true;
   assert.equal((await prepare(true)).tag, first.tag);
-  const response = await new Promise(resolve => events.get('fetch')({
-    request: { method: 'GET', mode: 'navigate', url: new URL('index.html?area=snow', scope).href },
-    respondWith: resolve,
-  }));
+  const response = await request('index.html?area=snow');
   assert.equal(response.status, 200);
   assert.ok((await response.text()).includes(assetBase(scope, first.tag).pathname + 'pwa/bootstrap.js'));
+  const firstData = new URL('area-stats.json', assetBase(scope, first.tag));
+  assert.equal(await (await request('stats.html')).text(), `<html data-stats-url="${firstData.pathname}">`);
+  assert.deepEqual(await (await request(firstData, 'cors')).json(), { revision: 1 });
   assert.equal(requests.length, release.manifest.files.length + 1);
   assert.equal((await storage.keys()).length, 1);
+
+  offline = false;
+  release = await fixture({ './index.html': shell, './stats.html': stats, './area-stats.json': '{"revision":2}' });
+  const newPage = await (await request('stats.html')).text();
+  const newData = newPage.match(/data-stats-url="([^"]+)"/)[1];
+  assert.notEqual(newData, firstData.pathname);
+  assert.deepEqual(await (await request(newData, 'cors')).json(), { revision: 2 });
+  assert.deepEqual(await (await request(firstData, 'cors')).json(), { revision: 1 });
+  assert.deepEqual(requests.slice(-2), [new URL('version.json', scope).href, new URL('area-stats.json', scope).href]);
 });
 
 test('ignores incomplete caches and prunes scoped caches while preserving the selected release', async () => {

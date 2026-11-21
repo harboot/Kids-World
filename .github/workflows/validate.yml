@@ -18,5 +18,10 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: '22'
+      - name: Prepare the release generated for this push
+        if: github.event_name == 'push'
+        run: |
+          node scripts/generate-area-stats.mjs
+          node scripts/generate-pwa-manifest.mjs
       - run: node scripts/generate-pwa-manifest.mjs --check
       - run: node --test

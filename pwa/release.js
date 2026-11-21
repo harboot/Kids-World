@@ -2,6 +2,7 @@ export const releaseRoute = '__kids-world__/';
 export const releaseTag = /^[a-f0-9]{64}-[a-f0-9-]{36}$/;
 const digest = /^[a-f0-9]{64}$/;
 const safePath = /^\.\/(?:[a-zA-Z0-9_-][a-zA-Z0-9_.-]*\/)*[a-zA-Z0-9_-][a-zA-Z0-9_.-]*$/;
+const statsPaths = ['./stats.html', './area-stats.json'];
 const requiredPaths = [
   './index.html', './style.css', './game.js', './snow.html',
   './core/game.js', './areas/flower-garden/index.js', './areas/snow-basin.js',
@@ -36,7 +37,10 @@ export async function validateManifest(manifest) {
     previous = file.path;
   }
 
-  if (requiredPaths.some(path => !paths.has(path)) || await versionFor(manifest.files) !== manifest.version) {
+  // Keep releases that predate the dashboard usable as an offline fallback.
+  const missingStatsFile = statsPaths.some(path => paths.has(path)) && statsPaths.some(path => !paths.has(path));
+  if (requiredPaths.some(path => !paths.has(path)) || missingStatsFile ||
+      await versionFor(manifest.files) !== manifest.version) {
     throw new Error('Release manifest is incomplete or its fingerprint does not match');
   }
   return manifest;

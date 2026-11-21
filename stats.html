@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en" data-stats-url="./area-stats.json">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#e9eedc">
+  <title>Area Statistics · Kids World</title>
+  <link rel="icon" href="./assets/icons/icon-192.png">
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: system-ui, sans-serif;
+      color: #253e29;
+      background: #e9eedc;
+      --ink: #253e29;
+      --muted: #51614f;
+      --surface: #fffdf5;
+      --line: #d9e0cd;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; }
+    a { color: #315d3c; }
+    :focus-visible { outline: 2px solid #286b54; outline-offset: 3px; }
+    .wrap { width: min(100% - 2rem, 90rem); margin-inline: auto; }
+    .site-header { border-bottom: 1px solid var(--line); background: #f7f8ed; }
+    .site-header .wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      min-height: 4.25rem;
+    }
+    .wordmark { display: flex; align-items: center; gap: .65rem; font-weight: 850; }
+    .wordmark img { width: 2.25rem; height: 2.25rem; border-radius: .65rem; }
+    .game-link { padding-block: .6rem; font-size: .9rem; font-weight: 750; }
+    main { padding-block: clamp(1.5rem, 4vw, 3.5rem) 3rem; }
+    h1 { margin: 0; font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1.1; letter-spacing: -.045em; }
+    h2 { margin: 0; font-size: 1.3rem; letter-spacing: -.02em; }
+    .description { margin: .7rem 0 1.5rem; color: var(--muted); }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(10rem, 100%), 1fr));
+      gap: .65rem;
+      margin: 0 0 1.5rem;
+    }
+    .summary > div {
+      display: flex;
+      flex-direction: column;
+      gap: .38rem;
+      min-width: 0;
+      padding: .85rem 1rem;
+      border: 1px solid var(--line);
+      border-radius: .85rem;
+      background: var(--surface);
+    }
+    dt { color: var(--muted); font-size: .78rem; font-weight: 750; }
+    dd { margin: 0; font-size: 1.3rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .largest dd { font-size: .94rem; }
+    .largest small { display: block; margin-top: .24rem; color: var(--muted); font-size: .78rem; }
+    .inventory { border: 1px solid var(--line); border-radius: 1rem; background: var(--surface); }
+    .inventory-header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: .8rem 1.5rem;
+      padding: 1rem;
+    }
+    .controls { display: flex; flex-wrap: wrap; gap: .75rem; }
+    label { display: grid; gap: .25rem; color: var(--muted); font-size: .78rem; font-weight: 750; }
+    input, select {
+      min-height: 2.5rem;
+      padding: .4rem .65rem;
+      border: 1px solid #a6b39c;
+      border-radius: .45rem;
+      background: #fff;
+      color: var(--ink);
+      font: 1rem system-ui, sans-serif;
+    }
+    input { width: min(15rem, 100%); }
+    .table-scroll { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      white-space: nowrap;
+      font-size: .86rem;
+      font-variant-numeric: tabular-nums;
+    }
+    th, td { padding: .77rem .55rem; border-block-start: 1px solid var(--line); text-align: right; }
+    tr > :nth-child(-n+2), tr > :last-child { text-align: left; }
+    thead th { padding: 0; background: #eff3e5; }
+    thead button {
+      display: flex;
+      align-items: center;
+      justify-content: end;
+      gap: .25rem;
+      width: 100%;
+      padding: .77rem .55rem;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      text-align: inherit;
+      cursor: pointer;
+    }
+    thead th:nth-child(-n+2) button, thead th:last-child button { justify-content: start; }
+    thead button:hover, thead th[aria-sort] { background: #e3ecd6; }
+    thead button:focus-visible { outline-offset: -3px; }
+    .sort-icon { width: .8em; color: #63745d; }
+    tbody tr:nth-child(even) { background: #f8f9ee; }
+    tbody a { text-underline-offset: .18em; }
+    .visibility { display: inline-block; padding: .18rem .52rem; border-radius: 1rem; font-weight: 700; }
+    .public { background: #e2eedc; color: #2c542f; }
+    .hidden { background: #f2e9db; color: #6c4b2b; }
+    .status { margin: 0; padding: .8rem 1rem; border-block-start: 1px solid var(--line); color: var(--muted); font-size: .86rem; }
+    @media (max-width: 36rem) {
+      .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .summary > div { padding-inline: .7rem; }
+      .summary > div:first-child { grid-column: 1 / -1; }
+      .controls { width: 100%; }
+      .search-label { flex: 1; min-width: 8rem; }
+      input { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <div class="wordmark"><img src="./assets/icons/icon-192.png" alt=""> Kids World</div>
+      <a href="./" class="game-link">Open game</a>
+    </div>
+  </header>
+  <main class="wrap">
+    <h1>Area Statistics</h1>
+    <p class="description">Figures describe repository files and declared map dimensions. Runtime benchmarks are excluded.</p>
+    <dl class="summary" aria-label="Area summary" hidden>
+      <div><dt>Total Areas</dt><dd id="total-areas"></dd></div>
+      <div><dt>Public / Hidden Areas</dt><dd id="visibility-counts"></dd></div>
+      <div><dt>Total Area Files</dt><dd id="total-files"></dd></div>
+      <div><dt>Total Area Size</dt><dd id="total-size"></dd></div>
+      <div><dt>Total JavaScript LOC</dt><dd id="total-loc"></dd></div>
+      <div class="largest"><dt>Largest Map</dt><dd id="largest-map"></dd></div>
+      <div class="largest"><dt>Largest Folder</dt><dd id="largest-folder"></dd></div>
+    </dl>
+    <section class="inventory" aria-labelledby="area-list-heading">
+      <div class="inventory-header">
+        <h2 id="area-list-heading">Areas</h2>
+        <div class="controls">
+          <label class="search-label">Search area name <input type="search" id="search" placeholder="e.g. Snow Basin" disabled></label>
+          <label>Visibility
+            <select id="filter" disabled>
+              <option value="">All</option>
+              <option value="Public">Public</option>
+              <option value="Hidden">Hidden</option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <div class="table-scroll" role="region" aria-label="Area statistics table" tabindex="0" hidden>
+        <table aria-labelledby="area-list-heading">
+          <thead>
+            <tr>
+              <th scope="col" aria-sort="ascending"><button type="button" data-sort="name">Area Name <span class="sort-icon" aria-hidden="true">↑</span></button></th>
+              <th scope="col"><button type="button" data-sort="visibility">Visibility <span class="sort-icon" aria-hidden="true">↕</span></button></th>
+              <th scope="col"><button type="button" data-sort="dimensions">Map Dimensions <span class="sort-icon" aria-hidden="true">↕</span></button></th>
+              <th scope="col"><button type="button" data-sort="mapArea">Map Area <span class="sort-icon" aria-hidden="true">↕</span></button></th>
+              <th scope="col"><button type="button" data-sort="folderBytes">Folder Size <span class="sort-icon" aria-hidden="true">↕</span></button></th>
+              <th scope="col"><button type="button" data-sort="totalFiles">Total Files <span class="sort-icon" aria-hidden="true">↕</span></button></th>
+              <th scope="col"><button type="button" data-sort="jsFiles">JS Files <span class="sort-icon" aria-hidden="true">↕</span></button></th>
+              <th scope="col"><button type="button" data-sort="jsBytes">JS Size <span class="sort-icon" aria-hidden="true">↕</span></button></th>
+              <th scope="col"><button type="button" data-sort="jsLines">Lines of Code <span class="sort-icon" aria-hidden="true">↕</span></button></th>
+              <th scope="col"><button type="button" data-sort="imageFiles">Image Files <span class="sort-icon" aria-hidden="true">↕</span></button></th>
+              <th scope="col"><button type="button" data-sort="imageBytes">Image Size <span class="sort-icon" aria-hidden="true">↕</span></button></th>
+              <th scope="col"><button type="button" data-sort="imageFormats">Image Formats <span class="sort-icon" aria-hidden="true">↕</span></button></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p id="status" class="status" role="status">Loading area statistics…</p>
+      <noscript><p class="status">Enable JavaScript to view area statistics.</p></noscript>
+    </section>
+  </main>
+  <script type="module">
+    const number = new Intl.NumberFormat('en', { maximumFractionDigits: 3 });
+    const collator = new Intl.Collator('en', { numeric: true });
+    const unavailable = '—';
+    const size = bytes => bytes >= 1_000_000
+      ? `${number.format(bytes / 1_000_000)} MB`
+      : `${number.format(bytes / 1_000)} KB`;
+    const units = value => value === null ? unavailable : number.format(value);
+    const squareUnits = value => value === null ? unavailable : `${units(value)} wu²`;
+
+    const search = document.getElementById('search');
+    const filter = document.getElementById('filter');
+    const status = document.getElementById('status');
+    const sortButtons = document.querySelectorAll('button[data-sort]');
+    const body = document.querySelector('tbody');
+    let sortBy = 'name';
+    let ascending = true;
+
+    function showSummary(summary) {
+      const values = {
+        'total-areas': number.format(summary.totalAreas),
+        'visibility-counts': `${number.format(summary.publicAreas)} / ${number.format(summary.hiddenAreas)}`,
+        'total-files': number.format(summary.totalFiles),
+        'total-size': size(summary.totalBytes),
+        'total-loc': number.format(summary.totalJsLines),
+      };
+      for (const [id, value] of Object.entries(values)) document.getElementById(id).textContent = value;
+      const map = summary.largestMap;
+      const folder = summary.largestFolder;
+      for (const [id, item, detail] of [
+        ['largest-map', map, map && squareUnits(map.mapArea)],
+        ['largest-folder', folder, folder && size(folder.folderBytes)],
+      ]) {
+        const card = document.getElementById(id);
+        card.textContent = item?.name ?? unavailable;
+        if (item) card.append(Object.assign(document.createElement('small'), { textContent: detail }));
+      }
+      document.querySelector('.summary').hidden = false;
+    }
+
+    function sortValue(area) {
+      if (sortBy === 'dimensions') return area.width === null || area.depth === null ? null : area.width;
+      if (sortBy === 'imageFormats') return area.imageFormats.join(', ');
+      return area[sortBy];
+    }
+
+    function compareAreas(first, second) {
+      const left = sortValue(first);
+      const right = sortValue(second);
+      if (left === null) return right === null ? 0 : 1;
+      if (right === null) return -1;
+      let comparison = typeof left === 'number' ? left - right : collator.compare(left, right);
+      if (sortBy === 'dimensions' && comparison === 0) comparison = first.depth - second.depth;
+      return comparison * (ascending ? 1 : -1) || collator.compare(first.name, second.name);
+    }
+
+    function areaRow(area) {
+      const row = document.createElement('tr');
+      const nameCell = document.createElement('th');
+      nameCell.scope = 'row';
+      const link = document.createElement('a');
+      link.href = `./?area=${encodeURIComponent(area.id)}`;
+      link.textContent = area.name;
+      nameCell.append(link);
+      row.append(nameCell);
+
+      const badge = document.createElement('span');
+      badge.classList.add('visibility', area.visibility.toLowerCase());
+      badge.textContent = area.visibility;
+      row.insertCell().append(badge);
+
+      const dimensions = area.width === null && area.depth === null
+        ? unavailable : `${units(area.width)} × ${units(area.depth)} wu`;
+      for (const value of [
+        dimensions, squareUnits(area.mapArea), size(area.folderBytes), number.format(area.totalFiles),
+        number.format(area.jsFiles), size(area.jsBytes), number.format(area.jsLines),
+        number.format(area.imageFiles), size(area.imageBytes), area.imageFormats.join(', ') || unavailable,
+      ]) row.insertCell().textContent = value;
+      return row;
+    }
+
+    function showAreas(areas) {
+      const query = search.value.trim().toLowerCase();
+      const matching = areas.filter(area => area.name.toLowerCase().includes(query) &&
+        (!filter.value || area.visibility === filter.value)).sort(compareAreas);
+      body.replaceChildren(...matching.map(areaRow));
+      status.textContent = matching.length
+        ? `Showing ${number.format(matching.length)} of ${number.format(areas.length)} areas · wu = world units`
+        : 'No areas match your search and visibility filter.';
+      for (const button of sortButtons) {
+        const active = button.dataset.sort === sortBy;
+        if (active) button.parentElement.setAttribute('aria-sort', ascending ? 'ascending' : 'descending');
+        else button.parentElement.removeAttribute('aria-sort');
+        button.querySelector('.sort-icon').textContent = active ? (ascending ? '↑' : '↓') : '↕';
+      }
+    }
+
+    try {
+      const response = await fetch(document.documentElement.dataset.statsUrl, { cache: 'no-cache' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const { areas, summary } = await response.json();
+      const render = () => showAreas(areas);
+      showSummary(summary);
+      render();
+      document.querySelector('.table-scroll').hidden = false;
+      search.disabled = false;
+      filter.disabled = false;
+      search.addEventListener('input', render);
+      filter.addEventListener('change', render);
+      for (const button of sortButtons) {
+        button.addEventListener('click', () => {
+          ascending = button.dataset.sort === sortBy ? !ascending : true;
+          sortBy = button.dataset.sort;
+          render();
+        });
+      }
+    } catch (error) {
+      console.error('Kids World could not load area statistics.', error);
+      status.textContent = 'Could not load area statistics.';
+    }
+  </script>
+</body>
+</html>
