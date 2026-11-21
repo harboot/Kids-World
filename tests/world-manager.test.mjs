@@ -234,3 +234,159 @@ test('history URLs keep the area, other query parameters and hash', () => {
     assert.equal(areaURL(url, id).href, url.href);
   }
 });
+
+test('a throwing unload hook and disposer leave the next scene active and clean the rest once', async t => {
+  const log = t.mock.method(console, 'error', () => {});
+  const released = [];
+  let oldObject;
+  const camera = new Node();
+  const world = createWorldManager(THREE, {
+    camera,
+    areas: {
+      garden: registered('garden', {
+        load({ scene, onCleanup }) {
+          oldObject = Object.assign(new Node(), {
+            geometry: { dispose() { released.push('geometry'); throw new Error('disposer failed'); } },
+            material: { dispose() { released.push('material'); } },
+          });
+          scene.add(oldObject);
+          onCleanup(() => released.push('off-scene cleanup'));
+          return {
+            unload() {
+              oldObject.removeFromParent();
+              throw new Error('unload failed');
+            },
+          };
+        },
+      }),
+      snow: registered('snow', { load: () => ({}) }),
+    },
+  });
+  assert.equal(world.state, 'unloaded');
+  const old = await world.load('garden');
+  const next = await world.load('snow');
+  assert.equal(old.state, 'disposed');
+  assert.equal(next.state, 'active');
+  assert.equal(world.active, next);
+  assert.equal(camera.parent, next.scene);
+  assert.equal(log.mock.callCount(), 2);
+  assert.deepEqual(released, ['off-scene cleanup', 'geometry', 'material']);
+  world.unload();
+  world.unload();
+  assert.deepEqual(released, ['off-scene cleanup', 'geometry', 'material']);
+  assert.equal(next.state, 'disposed');
+});
+
+test('keeps shared scene, shader, render target, and camera resources until their last owner leaves', async () => {
+  const disposed = [];
+  const resource = (name, fields = {}) => ({ ...fields, dispose() { disposed.push(name); } });
+  const geometry = resource('geometry');
+  const image = resource('texture', { isTexture: true });
+  const target = resource('target', { isRenderTarget: true });
+  const attachment = resource('attachment', { isTexture: true, renderTarget: target });
+  const permanent = resource('camera geometry');
+  const camera = new Node();
+  camera.add(Object.assign(new Node(), { geometry: permanent }));
+  let firstMesh;
+
+  const worlds = createWorldManager(THREE, {
+    camera,
+    areas: {
+      garden: registered('garden', {
+        load({ scene }) {
+          firstMesh = Object.assign(new Node(), {
+            geometry, isInstancedMesh: true, morphTexture: image,
+            dispose() {
+              disposed.push('instance');
+              this.morphTexture?.dispose();
+            },
+            material: [resource('garden material', { map: image }), resource('target material', { map: attachment })],
+            shadow: { map: target, mapPass: target, dispose() { target.dispose(); target.dispose(); } },
+          });
+          scene.add(firstMesh);
+          return {};
+        },
+      }),
+      snow: registered('snow', {
+        load({ viewmodel }) {
+          viewmodel.add(Object.assign(new Node(), {
+            geometry,
+            material: resource('snow material', { uniforms: { inputs: { value: [image, attachment] } } }),
+          }));
+          return {};
+        },
+      }),
+    },
+  });
+  await worlds.load('garden');
+  await worlds.load('snow');
+  assert.deepEqual(disposed.sort(), ['garden material', 'instance', 'target material']);
+  assert.equal(firstMesh.morphTexture, null);
+  worlds.unload();
+  worlds.unload();
+  assert.deepEqual(disposed.sort(), ['garden material', 'geometry', 'instance', 'snow material', 'target',
+    'target material', 'texture']);
+  assert.equal(camera.children.length, 1);
+});
+
+test('failed preparation aborts and cleans the candidate, preserving resources and guarded services of the old visit', async () => {
+  let oldServices;
+  let rejectedServices;
+  const events = [];
+  const shared = { dispose() { events.push('shared disposed'); } };
+  const temp = { dispose() { events.push('temporary disposed'); } };
+  const worlds = createWorldManager(THREE, {
+    camera: new Node(),
+    services: {
+      playCue: () => events.push('sound'),
+      completeLevel: () => events.push('completed'),
+    },
+    prepare(visit) {
+      if (visit.id === 'snow') throw new Error('preflight failed');
+    },
+    areas: {
+      garden: registered('garden', {
+        load(context) {
+          oldServices = context;
+          context.scene.add(Object.assign(new Node(), { geometry: shared }));
+          return {};
+        },
+      }),
+      snow: registered('snow', {
+        load(context) {
+          rejectedServices = context;
+          context.scene.add(Object.assign(new Node(), { geometry: shared, material: temp }));
+          context.onCleanup(() => events.push('candidate cleanup'));
+          context.completeLevel();
+          return {};
+        },
+      }),
+    },
+  });
+  const old = await worlds.load('garden');
+  await assert.rejects(worlds.load('snow'), /preflight failed/);
+  assert.equal(worlds.active, old);
+  assert.equal(rejectedServices.signal.aborted, true);
+  rejectedServices.playCue();
+  rejectedServices.completeLevel();
+  oldServices.playCue();
+  assert.deepEqual(events, ['candidate cleanup', 'temporary disposed', 'sound']);
+  worlds.unload();
+  oldServices.completeLevel();
+  assert.deepEqual(events, ['candidate cleanup', 'temporary disposed', 'sound', 'shared disposed']);
+});
+
+test('cancel settles immediately and a late rejected import cannot run a scene hook', async () => {
+  const importResult = Promise.withResolvers();
+  const worlds = createWorldManager(THREE, {
+    camera: new Node(), areas: { garden: { loadModule: () => importResult.promise } },
+  });
+  const result = worlds.load('garden');
+  assert.equal(worlds.state, 'loading');
+  worlds.cancelLoad();
+  assert.equal(await result, null);
+  assert.equal(worlds.state, 'unloaded');
+  importResult.reject(new Error('late import error'));
+  await Promise.resolve();
+  assert.equal(worlds.active, null);
+});

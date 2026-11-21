@@ -61,18 +61,21 @@ test('the village and house own clearance markers and preserve inclusive boundar
   }
 });
 
-test('the player renderer includes the normal and player-only layers and the drone keeps the normal layer', t => {
+function mockViewEnvironment(t, Observer) {
   const previousWindow = globalThis.window;
   const previousObserver = globalThis.ResizeObserver;
   globalThis.window = new EventTarget();
-  globalThis.ResizeObserver = class { observe() {} };
+  globalThis.ResizeObserver = Observer;
   t.after(() => {
     if (previousWindow === undefined) delete globalThis.window;
     else globalThis.window = previousWindow;
     if (previousObserver === undefined) delete globalThis.ResizeObserver;
     else globalThis.ResizeObserver = previousObserver;
   });
+}
 
+test('the player renderer includes the normal and player-only layers and the drone keeps the normal layer', t => {
+  mockViewEnvironment(t, class { observe() {} });
   const renders = [];
   class Renderer {
     shadowMap = {};
@@ -101,4 +104,34 @@ test('the player renderer includes the normal and player-only layers and the dro
   assert.equal(view.render(scene, true, drone.camera), true);
   assert.deepEqual(renders, [[floor, ceiling], [floor]]);
   assert.equal(ceiling.visible, true);
+});
+
+test('context loss fences renderer calls and renderer disposal is idempotent', t => {
+  let observed = 0;
+  let resized = 0;
+  let rendered = 0;
+  let closed = 0;
+  let loss = 0;
+  mockViewEnvironment(t, class {
+    observe() {}
+    disconnect() { observed++; }
+  });
+  class Renderer {
+    shadowMap = {};
+    renderLists = { dispose() {} };
+    setSize() { resized++; }
+    setPixelRatio() {}
+    render() { rendered++; }
+    dispose() { closed++; }
+  }
+  const canvas = Object.assign(new EventTarget(), { clientWidth: 800, clientHeight: 400 });
+  const view = createView({ ...THREE, WebGLRenderer: Renderer }, { game: {}, canvas, contextLost() { loss++; } });
+  assert.equal(view.render(new THREE.Scene(), true), true);
+  canvas.dispatchEvent(new Event('webglcontextlost', { cancelable: true }));
+  canvas.dispatchEvent(new Event('webglcontextlost', { cancelable: true }));
+  window.dispatchEvent(new Event('resize'));
+  assert.equal(view.render(new THREE.Scene(), true), false);
+  view.dispose();
+  view.dispose();
+  assert.deepEqual([rendered, resized, observed, closed, loss], [1, 1, 1, 1, 1]);
 });

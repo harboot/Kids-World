@@ -1,4 +1,5 @@
 import { createCoordinatePicker, formatCoordinate, formatCoordinates } from './coordinate-picker.js';
+import { releaseCapture } from './controls.js';
 
 const fitMargin = 1.12;
 const minZoom = 0.8;
@@ -95,9 +96,7 @@ export function bindDroneControls(canvas, { signal, enabled, pan, zoom, select }
   function clear() {
     const ids = [...pointers.keys()];
     pointers.clear();
-    for (const id of ids) {
-      if (canvas.hasPointerCapture(id)) canvas.releasePointerCapture(id);
-    }
+    for (const id of ids) releaseCapture(canvas, id);
   }
 
   canvas.addEventListener('pointerdown', event => {

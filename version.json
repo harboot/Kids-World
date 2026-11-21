@@ -1,5 +1,5 @@
 {
-  "version": "adfbb8d8d7a318d3fa3fb9f4a1236467eee78b1a2152ffb14caba655ae8ac795",
+  "version": "392e16d9fb8a2135360927519561d81043623289836917392c9dc584d9897264",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "bbc9915cd815b4fc0175ae8c5fadf003ce6adf31dd92f15e50b1d6c515dcfcd1"
+      "revision": "91725f5067f801502a4d0d4ae725cb9cfd9c0f9b234f0c83d0d86dac92e57257"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -407,7 +407,7 @@
     },
     {
       "path": "./areas/snow-basin/index.js",
-      "revision": "47a4ba6a7b9e056ae2f68bab128f4dd623084c83914129692018040d70a3ede9"
+      "revision": "6417477215f8dfbf910614638f4314c5a6cca27b5a120c1399eafdb2f5f0ba2c"
     },
     {
       "path": "./areas/snow-basin/metadata.js",
@@ -479,11 +479,11 @@
     },
     {
       "path": "./core/audio.js",
-      "revision": "9558728a9b6c0288b5040076dd38463706ef5135167c9eed0d13b5b2c829be3a"
+      "revision": "3e1cd5d3f61c7eee11f71f74f4b0fc375b819b63eac482890b38b3cb2605bee6"
     },
     {
       "path": "./core/controls.js",
-      "revision": "f9d6e91ac3bc65f05bf1d20209e89394d0ca868363c379dc8251bb23efbb8fd7"
+      "revision": "c1f373e93d043b72b0a4c225c1ad283c9059858cabdf26860d55636c8b31ab17"
     },
     {
       "path": "./core/coordinate-picker.js",
@@ -491,7 +491,7 @@
     },
     {
       "path": "./core/drone-view.js",
-      "revision": "a9a13504ddaf82296c889a8cdb8d39d3874d5ef0cdcf7b5125d9f09fc323fbb8"
+      "revision": "c10625ed1592cfe4f29ed68dcfd734ad354c362a370b794dc61940a6ff19cfbc"
     },
     {
       "path": "./core/frame-meter.js",
@@ -499,7 +499,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "c52d350bbf3a9f71fd59fac9c7dfd58588b3a9698debf2111cbe8e5b3e822319"
+      "revision": "ce03b3610c3d68ad163562904ce9a65bd8ffcea3fac2de9f7fdc0802f542c28f"
     },
     {
       "path": "./core/geometry.js",
@@ -527,7 +527,7 @@
     },
     {
       "path": "./core/player.js",
-      "revision": "f872e950e2bdcf22800e5e8dc34652ddaec1726313672f273cfd127f543bafc7"
+      "revision": "3b49d401308f40f55f582bc51e197ac5d44667d5341deb7d6faa97e61346d29d"
     },
     {
       "path": "./core/random.js",
@@ -539,11 +539,11 @@
     },
     {
       "path": "./core/renderer.js",
-      "revision": "3a43b3e726af571e0bd70b94f6e55021e8a53483a005cbd01ebc4f90d7a2f0d1"
+      "revision": "1fa28c44c95dd123d817d30b080387bce67ca5145dfc972c4b7dc91300f469ea"
     },
     {
       "path": "./core/world-manager.js",
-      "revision": "0283c2d132a2925247e20e60936ac0c0d5ac7c4caa5f4d4daf450e033e8e186d"
+      "revision": "4ed90d5c99ed365eeade5cfd0d5aad58940e8bba638f58110a68d324a25a1890"
     },
     {
       "path": "./game.js",
@@ -551,7 +551,7 @@
     },
     {
       "path": "./index.html",
-      "revision": "2eaed0ec1ec4b36865bc776b4c119fb95325f80a2de221d945961b0af143c868"
+      "revision": "d8237361139d2d150c4c83108c6dfeaf07f243aebe03d796f574035c08bdc843"
     },
     {
       "path": "./manifest.webmanifest",
@@ -637,7 +637,7 @@
     },
     {
       "path": "./areas/secret-apartment/index.js",
-      "revision": "d0f4488059e306f8c8829134e82636cdad585e9a2cca29ee09c88c788b7b5c41"
+      "revision": "e511c6308b1861cf7606a0ea7f6e936e0e7ba0a24c9200c352e602496cd8bd64"
     },
     {
       "path": "./areas/secret-apartment/metadata.js",

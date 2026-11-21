@@ -301,3 +301,22 @@ test('unavailable Web Audio APIs and a rejected audio unlock leave playback cont
   assert.equal(renders.length, 0);
   assert.equal(effectsOnly.effect('jump'), true);
 });
+
+test('pending mission sounds stop and disconnect as soon as gameplay stops or the score changes', t => {
+  const { contexts } = setup(t);
+  const audio = createAudio(new SoundButton());
+  audio.unlock();
+  audio.setPlaying(true);
+  const notes = [[62, { duration: 0.4, level: 0.12 }, 0.5]];
+  assert.equal(audio.playCue(notes), true);
+  const [pending] = contexts[0].cues;
+  audio.setPlaying(false);
+  assert.equal(pending.stopTime, 1);
+  assert.equal(pending.disconnected, true);
+  assert.equal(pending.onended, null);
+
+  assert.equal(audio.playCue(notes), true);
+  const [, second] = contexts[0].cues;
+  audio.setScore(gardenMusic);
+  assert.equal(second.disconnected, true);
+});

@@ -48,9 +48,18 @@ Export the area's original score as `music` from its own `music.js` and pass tha
 - `obstacles` is required and can be an empty array. An ordinary obstacle has `left`, `right`, `front`, `back`, and a top `height` in world units.
 - `missionStatus` is required. Return `{ missions, hint?, inventory? }` with an array of `{ id, title, current, total, complete }` rows. Use unique stable IDs, a positive integer total, and integer progress from zero to the total. `complete` is a separate boolean, so a full counter can still require a delivery or sale. Use one contextual hint and an optional array of inventory item names. An area without missions can return `{ missions: [] }`.
 - `interactions` is optional. Each item needs `x` and `z` in world space, a `label`, and `act(context)`. Optional fields include `active`, `radius`, `anchorY`, `requiresView`, `reachable(position)`, and `silent`. The action context provides `relocate(spawn)` and `sit(pose, standLabel)`.
-- `reset()` is called after load and on restart if supplied. Reset mutable area and mission state here. Optional `update(dt, player, elapsed)` receives elapsed seconds, with `dt` capped for simulation. Optional `unload()` cleans up area-owned resources outside the scene.
+- See the visit lifecycle below for `reset()`, `update(dt, player, elapsed)`, `unload()`, and resource ownership.
 - Optional `getGroundHeight(x, z, feet)`, `blocksGround(x, z, radius, feet, from)`, and `getCeilingHeight(x, z)` support slopes, elevated surfaces, and specialized collision. The default terrain is flat at zero.
 - Optional `droneView` overrides the default fit with `{ center: { x, z }, width, depth }`. A getter can return different bounds when the active zone changes, as in Secret Apartment.
+
+### Visit lifecycle and ownership
+
+- `load(context)` builds a visit synchronously. Attach models to `scene` and first-person props to `viewmodel` as they are created. Keep the shared player camera and other visits untouched during construction. Core prepares one candidate scene while holding the previous scene so a failed build can return the player to their working visit.
+- `update(dt, player, elapsed)` runs for the active visit during gameplay. `player` is the eye position. Use `dt` for movement and collision. It is capped at 50 ms. `elapsed` is capped at 250 ms for animations that can tolerate a larger frame step. The first frame after resuming starts with zero elapsed time.
+- `reset()` runs once after construction and again on restart. Restore the visit's mutable state, stop animations or timers from the previous attempt, and clear any temporary interaction state. The same visit signal stays valid across resets, so keep attempt-specific work separately cancellable.
+- Use the visit's `signal` with `addEventListener` and cancellable async APIs. Check `signal.aborted` after an `await` before touching the visit. Use `onCleanup(fn)` immediately when creating a temporary overlay, timer, animation callback, or other resource outside the scene. Core runs registered cleanup even when `load` or initial `reset` throws.
+- `unload()` is called once for a visit that returned from `load`, after its signal is aborted. Use it to stop visit-specific work. Keep independent cleanup steps in separate `onCleanup` callbacks so they can still run if another throws.
+- Core disposes scene and viewmodel geometries, materials, textures, instancing resources, and attached shadow or render targets. It preserves instances still referenced by the surviving visit or persistent camera. Use `onCleanup` to dispose resources Core cannot reach, such as a detached render target, and release those only when you own them.
 
 ## Minimal example
 
@@ -125,11 +134,11 @@ Add this registry entry to `game.js`, regenerate the release, then open `?area=e
 
 The engine provides the renderer, cameras, movement, input, generic interactions, URL routing, scene cleanup, drone controls, and the Mission HUD. An area supplies its environment, mission state, and gameplay. The HUD formats the progress and starts closed on a new or restarted visit.
 
-- `load(context)` supplies `THREE`, `scene`, `viewmodel`, and the real player `camera`, along with `touch`, `playerRadius`, and the visit's `signal`. Attach scene objects to `scene` or first-person props to `viewmodel` so Core can dispose of their geometries, materials, and textures. Use `{ signal }` for visit-specific listeners.
+- `load(context)` supplies `THREE`, `scene`, `viewmodel`, and the real player `camera`, along with `touch`, `playerRadius`, `signal`, and `onCleanup`.
 - An interaction can call `guideCamera(look?)` for a guided ride. Core pauses walking, jumping, and interaction prompts and routes look deltas to the optional callback. The area poses the camera during its update and calls the returned function with a safe standing spawn when the ride ends. Core clears the camera lock on restart and travel.
 - For a moving platform, call `carryPlayer(deltaY)` from the area update while the player is aboard. Keep the platform’s ground and ceiling queries in sync with its position.
 - Use `isPlayerGrounded()` for interactions that require the player to stand on a surface. The position passed to `update()` is the player's eye position. Subtract `EYE_HEIGHT` from `core/player.js` to find the foot height.
 - Call `notify(message)` for short feedback from gameplay events. Core handles replacement, timing, and cleanup. Use `playCue(notes)` for distinctive area sounds, and use `completeLevel(id)` and `isLevelComplete(id)` for public area completion records.
-- For a specialized button or cinematic, attach its DOM to the supplied `hud`, use `isPlaying()` for gameplay input, honor `reducedMotion()` for effects, and remove the custom UI in `unload()`. Snow Basin's throw button and Secret Apartment's overlays are examples.
+- For a specialized button or cinematic, attach its DOM to the supplied `hud`, use `isPlaying()` for gameplay input, honor `reducedMotion()` for effects, and register its removal with `onCleanup`. Snow Basin's throw button and Secret Apartment's overlays are examples.
 - `core/geometry.js` provides `rectangleBounds` for centered XZ footprints, `addGroup` and `addMesh` for local placement, and `paintCanvasTexture` for painted sRGB textures. Use `SURFACE_GAP` with the project’s geometry guidance for overlapping detail. [3D geometry guidelines](geometry-guidelines.md)
 - `core/random.js` provides `seededRandom(seed)` for deterministic scenery. For overhead geometry that should appear only in normal play, use `PLAYER_ONLY_LAYER` from `core/render-layers.js`. Reusable in-world content lives in `areas/shared/`.
