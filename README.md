@@ -93,6 +93,7 @@ Open **http://localhost:8000**.
 Run the tests (Node.js 22 or later):
 
 ```bash
+npm ci
 node --test
 ```
 
@@ -109,6 +110,7 @@ Open `?area=princess-gallery&view=fps` and select **Play**. The overlay updates 
 To preview the current area inventory and refresh the offline release manifest locally, run:
 
 ```bash
+npm ci
 node scripts/generate-area-stats.mjs
 node scripts/generate-pwa-manifest.mjs
 ```

@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import { createGame } from '../core/game.js';
 import * as THREE from '../vendor/three.module.min.js';
 
-test('importing the entry loads only area metadata and each lazy module stays in its own area', async t => {
+test('importing the entry loads the central catalog and each lazy module stays in its own area', async t => {
   const areaRoot = new URL('../areas/', import.meta.url).href;
   const loaded = [];
   const hooks = registerHooks({
@@ -16,14 +16,15 @@ test('importing the entry loads only area metadata and each lazy module stays in
   });
   t.after(() => hooks.deregister());
   const { areas } = await import('../game.js');
-  assert.equal(loaded.length, Object.keys(areas).length);
-  assert.ok(loaded.every(file => file.endsWith('/metadata.js')), loaded.join(', '));
+  assert.deepEqual(loaded, []);
+  assert.equal(areas['secret-apartment'].show, false);
 
   for (const [id, folder] of [['secret-apartment', 'secret-apartment'], ['snow', 'snow-basin']]) {
     loaded.length = 0;
     const module = await areas[id].loadModule();
     assert.equal(module.default.id, id);
     assert.ok(loaded.includes(folder + '/index.js'));
+    assert.ok(loaded.includes(folder + '/metadata.js'));
     assert.ok(loaded.includes(folder + '/music.js'));
     assert.ok(loaded.every(file => file.startsWith(folder + '/')), loaded.join(', '));
   }

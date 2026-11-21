@@ -18,6 +18,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: '22'
+      - run: npm ci
       - name: Prepare the release generated for this push
         if: github.event_name == 'push'
         run: |

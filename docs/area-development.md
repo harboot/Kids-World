@@ -4,19 +4,22 @@
 
 1. Create an area folder under `areas/`. Export a static `metadata` object from `metadata.js` with the stable area ID and the fields below. Keep this module free of scene, mission, and audio imports.
 2. Default-export a definition from `index.js` that spreads `metadata` and supplies `load(context)`. The engine imports the module asynchronously, then calls `load` synchronously to build the scene and return the visit.
-3. Import the metadata in `game.js`. Use the metadata ID as the registry key and declare `loadModule: () => import('./areas/<folder>/index.js')` with a literal path. Use `publicArea(metadata, folder, loadModule)` to register a public area and its thumbnail.
+3. Use the metadata ID as the registry key in `game.js`. Read its metadata from `areaMetadata['<id>']` and declare `loadModule: () => import('./areas/<folder>/index.js')` with a literal path. Use `publicArea(metadata, folder, loadModule)` to register a public area and its thumbnail.
 4. For a public area, add a 16:9 JPEG named after the folder, such as `areas/princess-gallery/princess-gallery.jpg`.
 5. Open `?area=<id>` locally and add `&view=drone` to inspect surfaces. Add regression tests for routing, reset, and mission completion.
 6. Regenerate the area statistics and PWA manifest, then validate the release.
 
 ```sh
+npm ci
 node scripts/generate-area-stats.mjs
 node scripts/generate-pwa-manifest.mjs
 node scripts/generate-pwa-manifest.mjs --check
 node --test
 ```
 
-`show: true` makes an area visible in the picker and eligible for public completion badges. `show: false` makes it link-only, such as `?area=secret-apartment`. Both use the same lazy loader and remain in the PWA precache until Phase 2, so every area can still open offline from a complete release.
+`show: true` makes an area visible in the picker and eligible for public completion badges. Its files are precached in every release. `show: false` makes it link-only, such as `?area=secret-apartment`. Hidden files are verified and cached as they are requested. Open a hidden area online before visiting it offline. The release generator builds `area-catalog.js` from the area metadata sources.
+
+Use literal relative JavaScript imports and `new URL('./asset.ext', import.meta.url)` for area assets. The release generator checks transitive dependencies, including imports across area folders. Files needed by a public area are precached even when a hidden area also uses them.
 
 ## Area metadata
 
@@ -108,11 +111,11 @@ export default {
 };
 ```
 
-Import `{ metadata as exampleYard }` from `./areas/example-yard/metadata.js` in `game.js`. Add this registry entry and open `?area=example-yard`.
+Add this registry entry to `game.js`, regenerate the release, then open `?area=example-yard`.
 
 ```js
 'example-yard': {
-  ...exampleYard,
+  ...areaMetadata['example-yard'],
   show: false,
   loadModule: () => import('./areas/example-yard/index.js'),
 },

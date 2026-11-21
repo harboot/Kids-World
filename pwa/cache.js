@@ -1,23 +1,31 @@
 import { releaseTag, sha256, validateManifest } from './release.js';
 
-const usable = response => response?.status === 200 && !['opaque', 'opaqueredirect', 'error'].includes(response.type);
+const usable = response => response?.status === 200 && !response.redirected &&
+  !['opaque', 'opaqueredirect', 'error'].includes(response.type);
+const matches = async (response, revision) => usable(response) && await sha256(await response.clone().arrayBuffer()) === revision;
 
 export function createReleaseCache({ scope, storage = caches, fetchAsset = fetch, downloadTimeout = 45000 }) {
   const prefix = `kids-world:${encodeURIComponent(scope.pathname)}:`;
   const marker = new URL('__kids-world__/complete', scope).href;
+  const manifests = new Map();
+  const pendingAssets = new Map();
 
   async function metadata(cacheName) {
     const response = await storage.match(marker, { cacheName });
-    if (!response) return null;
-    try {
-      const data = await response.json();
-      const tag = cacheName.slice(prefix.length);
-      await validateManifest(data, { allowPreviousSnowEntry: true });
-      if (!tag.startsWith(data.version + '-') || !Number.isFinite(data.completedAt)) return null;
-      return { ...data, tag, cacheName };
-    } catch {
+    if (!response) {
+      manifests.delete(cacheName);
       return null;
     }
+    if (!manifests.has(cacheName)) {
+      const release = response.json().then(async data => {
+        const tag = cacheName.slice(prefix.length);
+        await validateManifest(data, { allowPreviousSnowEntry: true });
+        if (!tag.startsWith(data.version + '-') || !Number.isFinite(data.completedAt)) return null;
+        return { ...data, tag, cacheName };
+      }).catch(() => null);
+      manifests.set(cacheName, release);
+    }
+    return manifests.get(cacheName);
   }
 
   async function filesPresent(cacheName, files) {
@@ -42,6 +50,56 @@ export function createReleaseCache({ scope, storage = caches, fetchAsset = fetch
     return storage.match(url, { cacheName });
   }
 
+  async function loadOptional({ cacheName }, file, url) {
+    const cached = await storage.match(url, { cacheName });
+    if (await matches(cached, file.revision)) return { response: cached };
+
+    const abort = new AbortController();
+    const timer = setTimeout(() => abort.abort(), 10000);
+    try {
+      const response = await fetchAsset(url, {
+        cache: 'no-store', redirect: 'error', mode: 'same-origin', signal: abort.signal,
+      });
+      if (!usable(response) || (response.url && response.url !== url)) return { status: 503 };
+      if (!await matches(response, file.revision)) return { status: 409 };
+
+      // Optional writes may fail independently of the already complete release.
+      try {
+        if (await storage.match(marker, { cacheName })) {
+          const cache = await storage.open(cacheName);
+          await cache.put(url, response.clone());
+        }
+      } catch (error) {
+        console.info('Kids World could not cache an on-demand file.', error);
+      }
+      return { response };
+    } catch {
+      return { status: 503 };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function readAsset(tag, path) {
+    if (!releaseTag.test(tag)) return { status: 404 };
+    const release = await metadata(prefix + tag);
+    const mandatory = release?.files.some(file => file.path === path);
+    const optional = release?.onDemandFiles?.find(file => file.path === path);
+    if (!mandatory && !optional) return { status: 404 };
+
+    const url = new URL(path, scope).href;
+    if (mandatory) {
+      const response = await storage.match(url, { cacheName: release.cacheName });
+      return usable(response) ? { response } : { status: 503 };
+    }
+    const key = tag + path;
+    if (!pendingAssets.has(key)) {
+      pendingAssets.set(key, loadOptional(release, optional, url).finally(() => pendingAssets.delete(key)));
+    }
+    const result = await pendingAssets.get(key);
+    return result.response ? { response: result.response.clone() } : result;
+  }
+
   async function install(manifest, previous, report) {
     const tag = `${manifest.version}-${crypto.randomUUID()}`;
     const cacheName = prefix + tag;
@@ -63,11 +121,11 @@ export function createReleaseCache({ scope, storage = caches, fetchAsset = fetch
       let reused = false;
       if (revisions.get(file.path) === file.revision) {
         response = await storage.match(url, { cacheName: previous.cacheName });
-        reused = usable(response) && await sha256(await response.clone().arrayBuffer()) === file.revision;
+        reused = await matches(response, file.revision);
       }
       if (!reused) {
         response = await fetchAsset(url, { cache: 'no-store', redirect: 'error', signal: abort.signal });
-        if (!usable(response) || await sha256(await response.clone().arrayBuffer()) !== file.revision) {
+        if (!await matches(response, file.revision)) {
           throw new Error(`Download verification failed for ${file.path}`);
         }
       }
@@ -112,8 +170,11 @@ export function createReleaseCache({ scope, storage = caches, fetchAsset = fetch
     const names = await storage.keys();
     if (!await canPrune()) return;
     await Promise.all(names.filter(name => name.startsWith(prefix) && releaseTag.test(name.slice(prefix.length)) &&
-      !keep.has(name)).map(name => storage.delete(name)));
+      !keep.has(name)).map(async name => {
+      await storage.delete(name);
+      manifests.delete(name);
+    }));
   }
 
-  return { ready, read, install, prune };
+  return { ready, read, readAsset, install, prune };
 }
