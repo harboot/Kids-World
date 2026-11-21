@@ -81,6 +81,7 @@ test('public gallery opens by normal and drone URLs with no castle progress', t 
     assert.match(visit.area.missionStatus.hint, /Cinderella’s glass slipper on the ballroom stairs/);
     assert.match(visit.area.missionStatus.hint, /Approach the enchanted rose to wake Aurora/);
     assert.match(visit.area.missionStatus.hint, /Board Ariel’s shipwreck/);
+    assert.match(visit.area.missionStatus.hint, /Approach Belle’s enchanted tea table/);
     assert.equal(game.progress.has(CASTLE), false);
     assert.equal(game.progress.has(ID), false);
     assert.equal(game.progress.canSelect(ID), false);
@@ -220,8 +221,8 @@ test('ten distinct and nonoverlapping footprints surround the Central Atrium', t
     'rapunzel', 'snow-white', 'cinderella', 'aurora', 'ariel', 'belle', 'jasmine', 'mulan', 'tiana', 'moana',
   ]));
   assert.deepEqual(exhibits.filter(entry => entry.status === 'complete' && entry.build).map(entry => entry.id),
-    ['rapunzel', 'snow-white', 'aurora', 'cinderella', 'ariel']);
-  assert.equal(exhibits.filter(entry => entry.status === 'coming-soon' && !entry.build).length, 5);
+    ['rapunzel', 'snow-white', 'aurora', 'belle', 'cinderella', 'ariel']);
+  assert.equal(exhibits.filter(entry => entry.status === 'coming-soon' && !entry.build).length, 4);
   assert.ok(new Set(exhibits.map(entry => entry.shape)).size >= 5);
   assert.ok(new Set(exhibits.map(entry => entry.rotation)).size >= 8);
   for (const key of ['width', 'depth', 'height']) {
@@ -934,6 +935,30 @@ test('Cinderella’s slipper holds a static sparkle in reduced motion and clears
   assert.equal(slipper.position.y, rest);
 });
 
+test('the shipwreck’s deck and gangplank have one visible surface at the walking height', t => {
+  const { worlds } = fixture();
+  t.after(worlds.unload);
+  const { area, scene } = worlds.load(ID);
+  scene.updateMatrixWorld(true);
+  const ship = scene.getObjectByName('Ariel shipwreck');
+  const deck = ship.getObjectByName('Shipwreck deck boards');
+  const ramp = ship.getObjectByName('Shipwreck gangplank boards');
+  const hull = ship.getObjectByName('Shipwreck hull planking');
+  for (const mesh of [deck, ramp, hull]) assert.ok(mesh.geometry.hasAttribute('color'));
+  const down = new THREE.Vector3(0, -1, 0);
+  for (const z of [wreckDeck.rear + .12, -.48, wreckDeck.front - .085, wreckDeck.front + .085,
+    3.14, wreckDeck.rampEnd - .094]) {
+    const eye = ship.localToWorld(new THREE.Vector3(.173, 5, z));
+    const hits = new THREE.Raycaster(eye, down).intersectObjects([deck, ramp], false);
+    assert.equal(hits.length, 1, 'one timber surface at ship depth ' + z);
+    assert.ok(Math.abs(hits[0].point.y - area.getGroundHeight(eye.x, eye.z, hits[0].point.y)) < 1e-6);
+  }
+  // The beam looks through both sides once; the seams belong to those same faces.
+  const eye = ship.localToWorld(new THREE.Vector3(4.3, 1.15, .82));
+  const inside = ship.localToWorld(new THREE.Vector3(0, 1.15, .82)).sub(eye).normalize();
+  assert.equal(new THREE.Raycaster(eye, inside).intersectObject(hull, false).length, 2);
+});
+
 test('Ariel slowly circles the shipwreck only while the deck is occupied', t => {
   const { worlds, player, camera } = fixture();
   t.after(worlds.unload);
@@ -1096,6 +1121,113 @@ test('Ariel’s treasure chest opens and closes with a repeatable interaction an
   assert.equal(Math.abs(lid.rotation.x), 0);
 });
 
+test('Belle’s library has a walkable staircase, solid furniture, and both characters', t => {
+  const { worlds, player, camera } = fixture();
+  t.after(worlds.unload);
+  const visit = worlds.load(ID);
+  const { area, scene } = visit;
+  const exhibit = exhibits.find(entry => entry.id === 'belle');
+  const { toWorld } = spaceTransform(exhibit);
+  const room = scene.getObjectByName('Belle castle library');
+  const table = room.getObjectByName('Belle enchanted tea table');
+  assert.ok(room.getObjectByName('Belle library ceiling').layers.isEnabled(PLAYER_ONLY_LAYER));
+  assert.ok(room.getObjectByName('Belle library staircase').children.some(child => child.isInstancedMesh));
+  assert.ok(room.getObjectByName('Belle library bookcases').children.some(child => child.count > 10));
+  for (const name of ['Belle reading', 'The Beast in the library', 'Belle enchanted tea table']) {
+    const model = room.getObjectByName(name);
+    const center = model.getWorldPosition(new THREE.Vector3());
+    assert.equal(walkElevation(area, center, center.x, center.z, 0, true), null, name + ' is solid');
+  }
+  assert.ok(new THREE.Box3().setFromObject(room.getObjectByName('Beast horned head')).max.y > 3.2);
+  const approach = toWorld(table.position.x, table.position.z + 2.18);
+  assertWalkable(area, toWorld(0, 10.4), approach, 'Belle entrance and tea table');
+
+  function walkTo(lx, lz) {
+    const [x, z] = toWorld(lx, lz);
+    const direction = new THREE.Vector2();
+    for (let i = 0; i < 340; i++) {
+      direction.set(x - camera.position.x, z - camera.position.z);
+      if (direction.length() < .12) {
+        player.stop();
+        return;
+      }
+      player.move(1 / 60, direction.normalize(), visit);
+      worlds.update(1 / 60, camera.position);
+    }
+    assert.fail('could not reach the library coordinates ' + [lx, lz] + ' from ' + camera.position.toArray());
+  }
+  const [x, z] = toWorld(6.16, 4.0);
+  player.reset({ x, z }, area);
+  walkTo(6.16, -6.38);
+  assert.ok(player.grounded && Math.abs(camera.position.y - EYE_HEIGHT - 3.42) < 1e-6);
+  walkTo(0, -6.38);
+  assert.ok(Math.abs(camera.position.y - EYE_HEIGHT - 3.42) < 1e-6);
+  walkTo(6.16, -6.38);
+  walkTo(6.16, 4.0);
+  assert.ok(player.grounded && Math.abs(camera.position.y - EYE_HEIGHT) < 1e-6);
+});
+
+test('Belle’s teapot and cups dance on approach, settle on departure, and reset on unload', t => {
+  const { worlds } = fixture();
+  t.after(worlds.unload);
+  const visit = worlds.load(ID);
+  const { area, scene } = visit;
+  const table = scene.getObjectByName('Belle enchanted tea table');
+  const pot = table.getObjectByName('Belle dancing teapot');
+  const cups = table.children.filter(child => child.name.startsWith('Belle dancing cup'));
+  const candles = table.getObjectByName('Belle magic candles');
+  assert.equal(cups.length, 3);
+  assert.ok(candles.children.some(mesh => mesh.material?.emissiveIntensity > .5));
+  const shapes = [pot, ...cups];
+  const pose = () => shapes.map(piece => [piece.position.toArray(), piece.rotation.toArray()]);
+  const rest = pose();
+  const at = (z, height = EYE_HEIGHT) => table.localToWorld(new THREE.Vector3(0, height, z));
+  const near = at(2.62);
+  const away = at(5.0);
+  const mission = area.missionStatus.missions.find(entry => entry.id === 'belle');
+  worlds.update(1, at(2.62, EYE_HEIGHT + WALKWAY_HEIGHT));
+  assert.deepEqual(pose(), rest);
+  assert.equal(mission.complete, false);
+  assert.equal(nearestInteraction(area.interactions, near), null);
+
+  worlds.update(.14, near);
+  const started = pose();
+  assert.notDeepEqual(started, rest);
+  assert.equal(mission.complete, false);
+  worlds.update(.30, near);
+  assert.ok(shapes.every((piece, i) => piece.position.y > rest[i][0][1]));
+  assert.notDeepEqual(pose(), started);
+  assert.equal(mission.complete, true);
+  worlds.update(.8, at(4.14));
+  assert.notDeepEqual(pose(), rest, 'the outer edge has a stable exit threshold');
+  worlds.update(.8, away);
+  assert.deepEqual(pose(), rest);
+  worlds.update(.8, near);
+  assert.notDeepEqual(pose(), rest);
+  worlds.unload();
+  assert.deepEqual(pose(), rest);
+  visit.area.update(.8, near);
+  assert.deepEqual(pose(), rest);
+});
+
+test('Belle’s table presents a steady greeting in reduced motion', t => {
+  const { worlds } = fixture({ reduced: true });
+  t.after(worlds.unload);
+  const { area, scene } = worlds.load(ID);
+  const table = scene.getObjectByName('Belle enchanted tea table');
+  const pot = table.getObjectByName('Belle dancing teapot');
+  const near = table.localToWorld(new THREE.Vector3(0, EYE_HEIGHT, 2.0));
+  const rest = pot.position.y;
+  worlds.update(1 / 60, near);
+  assert.ok(pot.position.y > rest);
+  const pose = [pot.position.toArray(), pot.rotation.toArray()];
+  worlds.update(.8, near);
+  assert.deepEqual([pot.position.toArray(), pot.rotation.toArray()], pose);
+  assert.equal(area.missionStatus.missions.find(entry => entry.id === 'belle').complete, true);
+  worlds.reset();
+  assert.equal(pot.position.y, rest);
+});
+
 test('the ten gallery missions record one interaction per exhibit and replay after reset', t => {
   const game = fixture({ reduced: true });
   const { worlds, progress, notices } = game;
@@ -1146,6 +1278,11 @@ test('the ten gallery missions record one interaction per exhibit and replay aft
         case 'aurora': {
           const { x, z } = scene.getObjectByName('Enchanted rose').position;
           position = point(exhibit, x, z + 2.25);
+          break;
+        }
+        case 'belle': {
+          const tea = scene.getObjectByName('Belle enchanted tea table');
+          position = point(exhibit, tea.position.x, tea.position.z + 2.55);
           break;
         }
         case 'ariel': {
@@ -1235,8 +1372,8 @@ test('the Glass Walkway lift can be called from either landing and carries the p
   const gaze = camera.rotation.toArray();
   ride.act();
   assert.equal(ride.active, false);
-  wait(140);
-  assert.ok(cabin.position.y > 4.5 && cabin.position.y < WALKWAY_HEIGHT);
+  wait(300);
+  assert.ok(cabin.position.y > 8 && cabin.position.y < WALKWAY_HEIGHT * .82, 'the slower lift is still between floors after five seconds');
   assertFloor(cabin.position.y);
   assert.deepEqual(camera.rotation.toArray(), gaze, 'the camera keeps its look orientation');
   assert.ok(groundDoor.visible && upperDoor.visible);
@@ -1244,7 +1381,7 @@ test('the Glass Walkway lift can be called from either landing and carries the p
   assert.ok(player.jump());
   wait(31);
   assert.ok(camera.position.y - EYE_HEIGHT >= cabin.position.y, 'jumping mid-trip keeps the moving floor underneath');
-  wait(220);
+  wait(245);
   assertFloor(WALKWAY_HEIGHT);
   assert.equal(upperDoor.visible, false);
   assert.equal(groundDoor.visible, true);
@@ -1255,7 +1392,7 @@ test('the Glass Walkway lift can be called from either landing and carries the p
   walkTo(x, z);
   assert.equal(ride.label, 'Ride lift to ground floor');
   ride.act();
-  wait(360);
+  wait(565);
   assertFloor(0);
   walkTo(landingX, z);
   assert.equal(Math.abs(camera.position.y - EYE_HEIGHT), 0);
@@ -1265,7 +1402,7 @@ test('the Glass Walkway lift can be called from either landing and carries the p
   assert.equal(nearestInteraction(area.interactions, camera.position), callUpper);
   assert.ok(area.blocksGround(front, z, PLAYER_RADIUS, WALKWAY_HEIGHT), 'an empty shaft is blocked');
   callUpper.act();
-  wait(360);
+  wait(565);
   assertFloor(WALKWAY_HEIGHT);
   assert.equal(cabin.position.y, WALKWAY_HEIGHT);
   assert.equal(upperDoor.visible, false);
@@ -1275,7 +1412,7 @@ test('the Glass Walkway lift can be called from either landing and carries the p
   assert.equal(nearestInteraction(area.interactions, camera.position), callGround);
   assert.ok(area.blocksGround(front, z, PLAYER_RADIUS, 0), 'the lower shaft is blocked when the cabin is upstairs');
   callGround.act();
-  wait(360);
+  wait(565);
   assertFloor(0);
   assert.equal(cabin.position.y, 0);
   walkTo(x, z);
@@ -1325,6 +1462,7 @@ test('both staircases connect the main level to the glass loop and all ten overl
     'snow-white': [-1, 3.35, -7.33],
     cinderella: [0, 9.54, -10.65],
     aurora: [0, 1.7, -6.35],
+    belle: [0, 8.21, -8.93],
     ariel: [0, 4.8, -8.05],
   };
 

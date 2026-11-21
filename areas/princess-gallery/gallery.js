@@ -310,7 +310,7 @@ export function buildGallery(THREE, scene, document, obstacles, services) {
     const enclosed = id === 'rapunzel';
     const sleepingChamber = id === 'aurora';
     const undersea = id === 'ariel';
-    const fullWalls = enclosed || sleepingChamber || undersea || id === 'cinderella';
+    const fullWalls = enclosed || sleepingChamber || undersea || id === 'cinderella' || id === 'belle';
     const height = fullWalls ? bounds.height : id === 'snow-white' ? 4.25 : wing === 'royal' ? 4.5 : 2.85;
     const thickness = enclosed ? .44 : .55;
     const interiorFace = front - thickness / 2;

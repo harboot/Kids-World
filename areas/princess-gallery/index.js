@@ -5,14 +5,14 @@ import { buildGallery } from './gallery.js';
 const CASTLE_ID = 'frozen-castle';
 const spawn = { x: 0, z: 54.3 };
 const returnSite = { x: 0, z: 58.67 };
-const hint = 'Visit Rapunzel and jump onto the observation platform to make her wave. Approach Snow White and the seven dwarfs to see them react. Find Cinderella’s glass slipper on the ballroom stairs. Approach the enchanted rose to wake Aurora. Move away to let her sleep again. Take the stairs or the Adventure Wing lift to the Glass Walkway, or stop at a snack cart for a taste. Board Ariel’s shipwreck and open the treasure chest. Approach the story displays in the five preview rooms.';
+const hint = 'Visit Rapunzel and jump onto the observation platform to make her wave. Approach Snow White and the seven dwarfs to see them react. Find Cinderella’s glass slipper on the ballroom stairs. Approach the enchanted rose to wake Aurora. Move away to let her sleep again. Take the stairs or the Adventure Wing lift to the Glass Walkway, or stop at a snack cart for a taste. Board Ariel’s shipwreck and open the treasure chest. Approach Belle’s enchanted tea table to see it dance. Approach the story displays in the four preview rooms.';
 
 export const princessGallery = {
   id: 'princess-gallery',
   title: 'Princess Gallery',
   heading: ['Princess', 'Gallery'],
   description: 'Explore the Central Atrium, then take the Glass Walkway for a view into every exhibit.',
-  canvasLabel: '3D enchanted exhibition park with Rapunzel, Snow White, Cinderella, Aurora, and Ariel',
+  canvasLabel: '3D enchanted exhibition park with Rapunzel, Snow White, Cinderella, Aurora, Ariel, and Belle',
   themeColor: '#705184',
   music: 'garden',
   width: GALLERY_WIDTH,

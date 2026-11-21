@@ -25,67 +25,111 @@ export function buildShipwreck({ THREE, document, room, parts, exhibit, obstacle
     [-1.18, 2.14, height - .055], [.53, 2.14, height - .055], [front, 2.04, height - .055],
     [2.50, 1.74, .66],
   ];
-  const positions = [], shades = [];
-  const wood = [0x52383b, 0x70474a, 0x8a5450, 0x69403f, 0x93654e].map(color => new THREE.Color(color));
+  const wood = [0x52383b, 0x70474a, 0x8a5450, 0x69403f, 0x93654e, 0x402f35]
+    .map(color => new THREE.Color(color));
+  const woodMaterial = matte(0xffffff, { vertexColors: true, side: THREE.DoubleSide });
+
+  function panels(parent, name) {
+    const positions = [], shades = [];
+    return {
+      quad(a, b, c, d, color) {
+        for (const point of [a, b, c, a, c, d]) {
+          positions.push(...point);
+          shades.push(color.r, color.g, color.b);
+        }
+      },
+      finish() {
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(shades, 3));
+        geometry.computeVertexNormals();
+        part(parent, geometry, woodMaterial, 0, 0, 0, 1, 1, 1).name = name;
+      },
+    };
+  }
+  const hullPanels = panels(ship, 'Shipwreck hull planking');
+  const { quad } = hullPanels;
 
   function vertex([z, width, y], side, level) {
     return [side * width * (.43 + .57 * Math.sin(level * Math.PI / 2)), .095 + (y - .095) * level, z];
   }
-  const layers = [0, .20, .40, .60, .80, 1];
-  for (const side of [-1, 1]) {
-    for (let i = 0; i < hull.length - 1; i++) {
-      for (let row = 0; row < layers.length - 1; row++) {
-        const a = vertex(hull[i], side, layers[row]);
-        const b = vertex(hull[i + 1], side, layers[row]);
-        const c = vertex(hull[i + 1], side, layers[row + 1]);
-        const d = vertex(hull[i], side, layers[row + 1]);
-        const color = wood[(row + (i % 3 === 0 ? 1 : 0)) % wood.length];
-        for (const point of (side > 0 ? [a, d, b, b, d, c] : [a, b, d, b, c, d])) {
-          positions.push(...point);
-          shades.push(color.r, color.g, color.b);
-        }
-        if (row > 0) {
-          a[0] += side * SURFACE_GAP.detail;
-          b[0] += side * SURFACE_GAP.detail;
-          beam(details, timber[0], a, b, .046);
-        }
-      }
-    }
-  }
-  const shell = new THREE.BufferGeometry();
-  shell.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-  shell.setAttribute('color', new THREE.Float32BufferAttribute(shades, 3));
-  shell.computeVertexNormals();
-  part(details, shell, matte(0xffffff, { vertexColors: true }), 0, 0, 0, 1, 1, 1);
 
-  // Timber deck and the sloping gangplank use the same dimensions as their walkable surfaces.
-  const deck = addGroup(THREE, ship, 'Shipwreck deck', 0, height, (front + rear) / 2);
-  const decking = new THREE.Group();
-  for (let i = 0; i < 12; i++) {
-    const width = halfWidth * 2 / 12;
-    const x = -halfWidth + (i + .5) * width;
-    const shade = timber[i % 2 ? 2 : 4];
-    for (const [z, length] of [[-deckLength * .29, deckLength * .42], [deckLength * .21, deckLength * .58]]) {
-      part(decking, 'box', shade, x, -.075, z, width - .013, .15, length - .012);
-      part(decking, 'box', timber[1], x - width * .25, SURFACE_GAP.detail, z, .021, .013, length * .57);
-      for (const dz of [-length * .38, length * .40]) {
-        part(decking, 'drum', iron, x + .076, SURFACE_GAP.detail, z + dz, .025, .021, .025);
-      }
+  // The dark seams are adjacent strips in the hull itself, including on the closed ends.
+  function plank(a, b, sideA, sideB, row, color) {
+    const low = row / 5;
+    const high = (row + 1) / 5;
+    const seam = high - .012;
+    function span(bottom, top, shade) {
+      quad(vertex(a, sideA, bottom), vertex(a, sideA, top),
+        vertex(b, sideB, top), vertex(b, sideB, bottom), shade);
+    }
+    span(low, seam, color);
+    span(seam, high, wood[5]);
+  }
+  for (let row = 0; row < 5; row++) {
+    for (let i = 0; i < hull.length - 1; i++) {
+      const color = wood[(row + (i % 3 === 0 ? 1 : 0)) % 5];
+      plank(hull[i], hull[i + 1], 1, 1, row, color);
+      plank(hull[i + 1], hull[i], -1, -1, row, color);
+    }
+    for (const [section, side] of [[hull[0], -1], [hull.at(-1), 1]]) {
+      plank(section, section, side, -side, row, wood[row]);
     }
   }
-  batch(decking, deck);
-  const angle = Math.atan2(height, rampLength);
-  const slopeLength = Math.hypot(height, rampLength);
-  const mid = (front + rampEnd) / 2;
-  for (let i = 0; i < 9; i++) {
-    const width = rampHalfWidth * 2 / 9;
-    const x = -rampHalfWidth + (i + .5) * width;
-    part(details, 'box', timber[i % 3 + 1], x, height / 2 - Math.cos(angle) * .058, mid - Math.sin(angle) * .058,
-      width - .018, .116, slopeLength - .025).rotation.x = angle;
+  for (let i = 0; i < hull.length - 1; i++) {
+    quad(vertex(hull[i], -1, 0), vertex(hull[i + 1], -1, 0),
+      vertex(hull[i + 1], 1, 0), vertex(hull[i], 1, 0), wood[5]);
   }
-  for (let z = front + .34; z < rampEnd - .19; z += .45) {
-    part(details, 'box', timber[4], 0, rampHeight(z) + SURFACE_GAP.detail, z, rampHalfWidth * 2 + .05,
-      .045, .091).rotation.x = angle;
+  hullPanels.finish();
+
+  // Each walking surface includes the plank faces, seams, and edges in one mesh.
+  function buildDeckSurface(parent, name, width, count, start, end, elevation, underside, capStart = true) {
+    const surface = panels(parent, name);
+    const plankWidth = width / count;
+    function top(left, right, first, last, color) {
+      surface.quad([left, elevation(first), first], [left, elevation(last), last],
+        [right, elevation(last), last], [right, elevation(first), first], color);
+    }
+    for (let i = 0; i < count; i++) {
+      const left = -width / 2 + i * plankWidth;
+      const right = left + plankWidth;
+      const joint = THREE.MathUtils.lerp(start, end, .38 + (i % 3) * .11);
+      const seamWidth = SURFACE_GAP.detail;
+      top(left, right - seamWidth, start, joint, wood[(i + 2) % 5]);
+      top(left, right - seamWidth, joint, joint + seamWidth, wood[5]);
+      top(left, right - seamWidth, joint + seamWidth, end, wood[(i + 4) % 5]);
+      top(right - seamWidth, right, start, end, wood[5]);
+    }
+    for (const side of [-1, 1]) {
+      const x = side * width / 2;
+      surface.quad([x, elevation(start), start], [x, underside(start), start],
+        [x, underside(end), end], [x, elevation(end), end], wood[0]);
+    }
+    for (const z of capStart ? [start, end] : [end]) {
+      surface.quad([-width / 2, elevation(z), z], [width / 2, elevation(z), z],
+        [width / 2, underside(z), z], [-width / 2, underside(z), z], wood[0]);
+    }
+    surface.finish();
+  }
+
+  const deckZ = (front + rear) / 2;
+  const deck = addGroup(THREE, ship, 'Shipwreck deck', 0, height, deckZ);
+  buildDeckSurface(deck, 'Shipwreck deck boards', halfWidth * 2, 12, rear - deckZ, front - deckZ,
+    () => 0, () => -.15);
+  buildDeckSurface(ship, 'Shipwreck gangplank boards', rampHalfWidth * 2, 9, front, rampEnd,
+    rampHeight, z => rampHeight(z) - .116, false);
+  const angle = Math.atan2(height, rampLength);
+  for (let z = front + .37; z < rampEnd - .26; z += .48) {
+    const offset = SURFACE_GAP.trim;
+    part(details, 'box', timber[4], 0, rampHeight(z) + Math.cos(angle) * offset, z + Math.sin(angle) * offset,
+      rampHalfWidth * 2 - .055, .06, .092).rotation.x = angle;
+  }
+  const port = new THREE.TorusGeometry(1, .135, 6, 24);
+  for (const side of [-1, 1]) {
+    for (const z of [-1.28, -.04, 1.09]) {
+      part(details, 'drum', iron, side * 1.902, 1.22, z, .15, .195, .15).rotation.z = Math.PI / 2;
+      part(details, port, gold, side * 2.0, 1.22, z, .158, .158, .128).rotation.y = side * Math.PI / 2;
+    }
   }
   for (const side of [-1, 1]) {
     beam(details, timber[0], [side * 1.27, height - .10, front], [side * 1.27, -.08, rampEnd], .17);
