@@ -7,13 +7,17 @@ import { princessGallery } from './areas/princess-gallery/index.js';
 import { secretApartment } from './areas/secret-apartment/index.js';
 import { createGame } from './core/game.js';
 
+function publicArea(area, folder) {
+  return { ...area, show: true, thumbnail: new URL(`./areas/${folder}/${folder}.jpg`, import.meta.url).href };
+}
+
 export const areas = {
-  garden: { ...flowerGarden, show: true },
-  snow: { ...snowBasin, show: true },
-  'wooden-house': { ...woodenHouse, show: true },
-  'frozen-castle': { ...frozenCastle, show: true },
-  'arendelle-village': { ...arendelleVillage, show: true },
-  'princess-gallery': { ...princessGallery, show: true, menuUnlockAfter: 'frozen-castle' },
+  garden: publicArea(flowerGarden, 'flower-garden'),
+  snow: publicArea(snowBasin, 'snow-basin'),
+  'wooden-house': publicArea(woodenHouse, 'wooden-house'),
+  'frozen-castle': publicArea(frozenCastle, 'frozen-castle'),
+  'arendelle-village': publicArea(arendelleVillage, 'arendelle-village'),
+  'princess-gallery': publicArea(princessGallery, 'princess-gallery'),
   'secret-apartment': { ...secretApartment, show: false },
 };
 

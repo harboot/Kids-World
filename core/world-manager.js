@@ -21,10 +21,6 @@ export function areaURL(url, id) {
   return target;
 }
 
-export function historyArrival(id, state) {
-  if (state?.area === id && typeof state.arrival === 'string') return state.arrival;
-}
-
 export function createWorldManager(THREE, { areas, camera, touch, playerRadius, services }) {
   let active = null;
 

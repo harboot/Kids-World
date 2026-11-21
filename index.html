@@ -47,7 +47,7 @@
       <p id="mission-toast" class="mission-toast" role="status"></p>
       <div class="hud-actions">
         <button id="sound" class="hud-button sound-button" type="button" aria-label="Mute sound" aria-pressed="false" hidden>♪</button>
-        <button id="choose-level" class="hud-button" type="button" aria-label="Choose level" title="Choose level" aria-haspopup="dialog" disabled>☷</button>
+        <button id="choose-level" class="hud-button" type="button" aria-label="Choose area" title="Choose area" aria-haspopup="dialog" disabled>☷</button>
         <button id="fullscreen" class="hud-button" type="button" aria-label="Fullscreen" title="Fullscreen" hidden>⛶</button>
       </div>
       <details id="mission-hud" class="mission-hud">
@@ -114,10 +114,10 @@
 
     <dialog id="level-picker" aria-labelledby="level-picker-title">
       <header class="level-picker-header">
-        <h2 id="level-picker-title">Choose level</h2>
-        <form method="dialog"><button class="hud-button" aria-label="Close level picker" autofocus>×</button></form>
+        <h2 id="level-picker-title">Choose area</h2>
+        <form method="dialog"><button class="hud-button" aria-label="Close area picker" autofocus>×</button></form>
       </header>
-      <div id="completed-levels" class="completed-levels"></div>
+      <div id="area-list" class="area-list"></div>
       <button id="restart" class="restart-level" type="button" disabled>Restart area</button>
     </dialog>
 

@@ -4,9 +4,9 @@
 
 Kids World is a lightweight, browser-based 3D exploration game for kids, built with **JavaScript, Three.js, HTML, and CSS**.
 
-Players explore connected worlds, interact with objects, and complete simple missions. Each world has its own environment, activities, and challenges.
+Players explore worlds, interact with objects, and complete simple missions. Open **Choose area** to visit any public world and see which areas have all their missions complete.
 
-**The goal is simple: make it easy for developers to create and connect new worlds.**
+**The goal is simple: make it easy for developers to create new worlds.**
 
 **[Play Kids World](https://harboot.github.io/Kids-World/)**
 
@@ -55,7 +55,7 @@ Kids World is designed around a reusable game engine and independent world modul
 
 - **Modular worlds** — Each area owns its environment, missions, and interactions.
 - **Shared engine** — Movement, camera, collision, audio, and controls are reusable.
-- **Mission progression** — Complete objectives to unlock new worlds.
+- **Mission progress** — Complete objectives in each world and see your progress in the area picker.
 - **Desktop & mobile** — Keyboard, mouse, and touchscreen controls.
 - **Offline-ready PWA** — Install and play without an internet connection after downloading.
 - **No complex setup** — Native JavaScript and Three.js, without a backend or large framework.

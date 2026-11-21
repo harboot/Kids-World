@@ -11,7 +11,6 @@ export function addCabin(THREE, { scene, mesh, box, matte, obstacles, collision 
   const roof = matte(0x974e41);
   const glass = matte(0x9ec4c5);
   const warmGlass = matte(0xc6dfca);
-  const brass = matte(0xe0af61);
 
   function part(color, px, py, pz, sx, sy, sz, parent = scene) {
     return mesh(box, color, px, py, pz, sx, sy, sz, parent, true);
@@ -57,22 +56,24 @@ export function addCabin(THREE, { scene, mesh, box, matte, obstacles, collision 
   }
   part(roof, x, deck + 2.63, -14.73, 7.24, 0.19, 2.11).rotation.x = 0.11;
 
-  const door = new THREE.Group();
-  door.name = 'Cabin entrance';
-  door.position.set(x, deck, front + 0.08);
-  scene.add(door);
-  part(darkWood, 0, 1.12, 0, 1.52, 2.24, 0.14, door);
-  part(wood, 0, 1.07, 0.09, 1.25, 2.11, 0.10, door);
-  for (const side of [-1, 1]) {
-    const thresholdTop = 0.14;
-    const headerBottom = 2.23 - 0.15 / 2;
-    part(paleWood, side * 0.68, (thresholdTop + headerBottom) / 2, 0.149, 0.12, headerBottom - thresholdTop, 0.18, door);
+  const window = new THREE.Group();
+  window.name = 'Cabin flower window';
+  window.position.set(x, deck + 1.56, front);
+  scene.add(window);
+  part(darkWood, 0, 0, .061, 1.61, 1.37, .125, window);
+  part(glass, 0, .01, .132, 1.40, 1.18, .042, window);
+  part(warmGlass, -.31, .19, .161, .43, .46, .016, window);
+  part(paleWood, 0, 0, .177, .071, 1.21, .051, window);
+  part(paleWood, 0, 0, .177, 1.42, .071, .051, window);
+  part(wood, 0, -.66, .182, 1.74, .222, .341, window);
+  const leaves = matte(0x6c8953);
+  const petals = matte(0xe99d80);
+  for (let index = -2; index <= 2; index++) {
+    const px = index * .286;
+    part(leaves, px, -.505, .211, .213, .154, .18, window).rotation.z = index * .12;
+    part(petals, px + .02, -.38 + Math.cos(index * 1.4) * .042, .228, .102, .098, .104, window);
   }
-  part(paleWood, 0, 2.23, 0.149, 1.55, 0.15, 0.18, door);
-  part(darkWood, 0, 0.07, 0.149, 1.60, 0.14, 0.18, door);
-  part(glass, 0, 1.73, 0.154, 0.55, 0.36, 0.035, door);
-  part(brass, 0.43, 1.04, 0.178, 0.13, 0.12, 0.12, door);
-  obstacles.push(collision(x, front + 0.2, 1.6, 0.24, deck + 2.31));
+  obstacles.push(collision(x, front + .22, 1.74, .32, deck + 1.29));
 
   part(paleWood, benchX, deck + 0.47, porchZ, 1.62, 0.115, 0.5);
   for (const legX of [benchX - 0.59, benchX + 0.59]) {
@@ -95,12 +96,6 @@ export function addCabin(THREE, { scene, mesh, box, matte, obstacles, collision 
 
   return {
     table,
-    arrival: { x: stepX, z: deckFront + steps * stepDepth + 0.52, yaw: Math.PI },
-    entrance: {
-      x, z: front + 0.34, anchorY: deck + 1.28, radius: 1.52, label: 'Enter Wooden House',
-      reachable: player => onPorch(player) && player.z >= front + 0.47 && Math.abs(player.x - x) < 1.24,
-      act({ travel, heardCue }) { travel('wooden-house', heardCue); },
-    },
     bench: {
       x: benchX, z: porchZ, radius: 1.58, anchorY: deck + 0.96, label: 'Sit on bench',
       reachable: onPorch,

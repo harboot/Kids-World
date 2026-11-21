@@ -2,7 +2,6 @@ import { SURFACE_GAP } from '../../core/geometry.js';
 import { gabledRoof } from './buildings.js';
 import { seededRandom } from '../../core/random.js';
 
-export const GATE = { x: 0, z: 26.85 };
 const oak = 0x714b34;
 const bronze = 0x553c2b;
 const cream = 0xdfb980;
@@ -10,7 +9,7 @@ const gray = 0x9a8e7d;
 
 export function decorateVillage(kit, height) {
   const { group, part, box, solid } = kit;
-  entrance(kit, height);
+  trailLanterns(kit, height);
   square(kit, height);
   stable(kit, height);
 
@@ -65,34 +64,18 @@ export function decorateVillage(kit, height) {
   }
 }
 
-function entrance(kit, height) {
-  const { group, box, beam, part, solid, sign } = kit;
-  const gate = group('Village gateway', GATE.x, height(GATE.x, GATE.z), GATE.z);
-  for (const side of [-1, 1]) {
-    const x = side * 3.22;
-    box(gate, 0x8d7e70, x, 0.28, 0, 1.34, 0.56, 1.25, { shadow: true });
-    for (let row = 0; row < 8; row++) {
-      box(gate, [0xad9a81, 0x9b8c7b, 0xb7a48a][(row + side + 3) % 3], x, 0.54 + row * 0.43, 0,
-        row % 2 ? 1.06 : 1.16, 0.414, row % 2 ? 0.95 : 1.06, { shadow: true });
-    }
-    box(gate, 0xcdba96, x, 3.7, 0, 1.23, 0.23, 1.10);
-    solid(gate, 1.34, 1.25, 4.9, x);
-    lantern(kit, gate, x, 2.25, 0.78);
-    lantern(kit, gate, x, 2.25, -0.78);
-    const wing = side * 4.52;
-    box(gate, gray, wing, 0.61, 0, 1.78, 1.22, 0.78, { shadow: true });
-    box(gate, 0xc7ad88, wing, 1.23, 0, 1.86, 0.18, 0.87);
-    solid(gate, 1.86, 0.87, 1.7, wing);
+function trailLanterns(kit, height) {
+  const { group, box, solid, sign } = kit;
+  for (const x of [-3.27, 3.27]) {
+    const z = 26.85;
+    const post = group('Village trail lantern', x, height(x, z), z);
+    box(post, 0x8d7e70, 0, .21, 0, .86, .42, .85, { shadow: true });
+    box(post, oak, 0, 1.38, 0, .19, 2.23, .20, { shadow: true });
+    box(post, cream, 0, 2.42, .08, .62, .075, .58);
+    lantern(kit, post, 0, 2.03, .36);
+    if (x < 0) sign(post, 'Village Square', .10, 1.46, .145, 1.31, .31, { background: '#2b5049' });
+    solid(post, .86, .85, 2.60);
   }
-  for (let i = 0; i < 12; i++) {
-    const point = n => [3.18 * Math.cos(n * Math.PI / 12), 3.62 + 1.78 * Math.sin(n * Math.PI / 12), 0];
-    // Recess alternating stones on both sides where the angled joints overlap.
-    const depth = i % 2 ? 1.06 - 2 * SURFACE_GAP.trim : 1.06;
-    beam(gate, i % 2 ? 0xb7a389 : 0xc2ad91, point(i), point(i + 1), 0.58, depth, { shadow: true });
-  }
-  part(gate, 'gem', 0xe7c78e, 0, 5.82, 0, 0.29, 0.4, 0.27);
-  sign(gate, 'Arendelle Village', 0, 4.72, 0.63, 3.42, 0.62, { background: '#2b5049' });
-  sign(gate, 'Frozen Castle', 0, 4.72, -0.63, 2.9, 0.59, { background: '#304a59', yaw: Math.PI });
 }
 
 function square(kit, height) {

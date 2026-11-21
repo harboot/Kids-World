@@ -5,9 +5,9 @@ import * as THREE from '../vendor/three.module.min.js';
 import { areas } from '../game.js';
 import { createInteractions, nearestInteraction } from '../core/interactions.js';
 import { createLevelProgress } from '../core/level-progress.js';
-import { floorHeight, overlaps, PLAYER_RADIUS, walkElevation } from '../core/movement.js';
+import { PLAYER_RADIUS, walkElevation } from '../core/movement.js';
 import { createPlayer } from '../core/player.js';
-import { areaURL, createWorldManager, historyArrival, resolveArea } from '../core/world-manager.js';
+import { areaURL, createWorldManager, resolveArea } from '../core/world-manager.js';
 
 const house = 'wooden-house';
 const labels = {
@@ -87,72 +87,28 @@ const tidy = {
   toys: model => model.toys.every(toy => !toy.visible) && model.lid.rotation.x === 0,
 };
 
-test('direct URLs, the porch door and the inside door route through the registered areas', () => {
+test('the house opens by URL and the Garden cabin keeps its porch activities', t => {
   const direct = new URL('https://example.test/Kids-World/index.html?area=wooden-house');
   assert.equal(resolveArea(direct, areas, 'garden', 'snow'), house);
   assert.equal(resolveArea(new URL('./', direct), areas, 'garden', house), house);
   assert.equal(areaURL(direct, 'garden').search, '?area=garden');
-  assert.equal(historyArrival('garden', { area: 'garden', arrival: 'cabin' }), 'cabin');
-  assert.equal(historyArrival(house, { area: 'garden', arrival: 'cabin' }), undefined);
-  assert.equal(historyArrival('garden', null), undefined);
 
   const { worlds, camera, completions } = fixture();
+  t.after(worlds.unload);
   const player = createPlayer(THREE, camera);
-  const { area: garden } = worlds.load('garden');
-  const enter = garden.interactions.find(item => item.label === 'Enter Wooden House');
-  assert.ok(enter);
-  assert.equal(garden.interactions.find(item => item.label === 'Enter Snow Basin').active, false);
-  for (const position of [
-    { x: enter.x, y: 2.7, z: enter.z - 0.5 },
-    { x: enter.x, y: 1.68, z: enter.z + 0.7 },
-    { x: enter.x, y: 2.7, z: enter.z + 2.7 },
-  ]) {
-    assert.equal(nearestInteraction([enter], position), null);
-  }
-  const travel = (id, heardCue, arrival) => {
-    assert.ok(heardCue);
-    const { definition, area } = worlds.load(id);
-    player.reset(area.arrivals?.[arrival] ?? definition.spawn, area);
-  };
-  const porch = { x: enter.x, y: 2.7, z: -14.97 };
+  const { area: garden, scene } = worlds.load('garden');
+  assert.ok(scene.getObjectByName('Cabin flower window'));
   garden.interactions.find(item => item.label === 'Pick up basket' && item.active).act();
-  assert.equal(nearestInteraction(garden.interactions, porch), enter);
   for (const label of ['Sit on bench', 'Place basket']) {
     const item = garden.interactions.find(item => item.label === label);
-    assert.ok(item);
     const position = { x: item.x, y: 2.7, z: item.z + 0.54 };
     assert.equal(nearestInteraction(garden.interactions, position), item);
   }
-  enter.act({ travel, heardCue: true });
-  assert.equal(worlds.active.id, house);
+  const { area, definition } = worlds.load(resolveArea(direct, areas, 'garden'));
+  player.reset(definition.spawn, area);
+  assert.deepEqual(camera.position.toArray(), [definition.spawn.x, 1.68, definition.spawn.z]);
+  assert.deepEqual(area.missionStatus.missions, missionProgress());
   assert.deepEqual(completions, []);
-  assert.equal(camera.position.z, areas[house].spawn.z);
-
-  const exit = nearestInteraction(worlds.active.area.interactions, { x: 0, y: 1.68, z: 4.4 });
-  assert.equal(exit.label, 'Return to Flower Garden');
-  exit.act({ travel, heardCue: true });
-  assert.equal(worlds.active.id, 'garden');
-  const returned = worlds.active.area;
-  const spawn = returned.arrivals.cabin;
-  assert.equal(camera.position.x, spawn.x);
-  assert.equal(camera.position.z, spawn.z);
-  assert.equal(camera.rotation.y, Math.PI);
-  const feet = returned.getGroundHeight(spawn.x, spawn.z);
-  assert.equal(floorHeight(returned, spawn.x, spawn.z, feet), feet);
-  assert.ok(returned.obstacles.every(obstacle => !obstacle.height || !overlaps(obstacle, spawn.x, spawn.z)));
-  assert.ok(Math.hypot(spawn.x - enter.x, spawn.z - enter.z) < 5);
-
-  let z = spawn.z;
-  let elevation = feet;
-  while (z > porch.z) {
-    const nextZ = z - 0.04;
-    const next = walkElevation(returned, { x: spawn.x, z }, spawn.x, nextZ, elevation, true);
-    assert.notEqual(next, null, 'the return position leads back up the playable steps');
-    z = nextZ;
-    elevation = next;
-  }
-  assert.equal(nearestInteraction(returned.interactions, { x: spawn.x, y: elevation + 1.68, z }).label, enter.label);
-  worlds.unload();
 });
 
 test('the open layout connects the spawn to every interaction and blocks walls and major furniture', () => {
@@ -180,7 +136,7 @@ test('the open layout connects the spawn to every interaction and blocks walls a
       queue.push([col + dx, row + dz]);
     }
   }
-  assert.deepEqual([...reachable].sort(), [...Object.values(labels), 'Return to Flower Garden'].sort());
+  assert.deepEqual([...reachable].sort(), Object.values(labels).sort());
   worlds.unload();
 });
 

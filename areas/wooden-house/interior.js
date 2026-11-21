@@ -170,16 +170,7 @@ export function buildInterior(THREE, scene, { group, part, solid }) {
   window(right, 1.68, 2.36, 1.85, mint);
   window(left, 3.93, 2.48, 1.5);
 
-  const exit = group('Inside of cabin door', 0, 0, 0.18, front);
-  solid(0, HALF_DEPTH - 0.29, 1.76, 0.27, 2.44);
-  part(exit, walnut, 0, 1.22, 0, 1.76, 2.44, 0.17);
-  part(exit, honey, 0, 1.17, 0.103, 1.41, 2.29, 0.11);
-  for (const x of [-0.46, 0.46]) part(exit, oak, x, 0.75, 0.164, 0.35, 0.94, 0.032);
-  part(exit, walnut, 0, 1.771, 0.172, 0.76, 0.55, 0.042);
-  part(exit, 0xb6dfe7, 0, 1.771, 0.2, 0.63, 0.42, 0.025, 'box', false);
-  part(exit, linen, 0, 1.77, 0.224, 0.037, 0.42, 0.035);
-  part(exit, gold, -0.57, 1.02, 0.221, 0.125, 0.125, 0.115, 'ball');
-  rug({ group, part }, 0, 4.57, 1.56, 0.61, walnut, oak);
+  window(front, 0, 2.23, 1.72);
 
   for (const [x, z] of [[-2.8, -1.75], [2.8, 0.15]]) {
     part(room, walnut, x, 3.5, z, 0.055, 0.55, 0.055, 'round');
@@ -196,12 +187,6 @@ export function buildInterior(THREE, scene, { group, part, solid }) {
     const angle = i * Math.PI / 6;
     part(clock, walnut, 0.192 * Math.sin(angle), 0.192 * Math.cos(angle), 0.101, 0.026, 0.038, 0.02).rotation.z = -angle;
   }
-
-  return {
-    x: 0, z: HALF_DEPTH - 0.38, anchorY: 1.28, radius: 1.45, label: 'Return to Flower Garden',
-    reachable: player => player.z < HALF_DEPTH - 0.35 && Math.abs(player.x) < 1.25,
-    act({ travel, heardCue }) { travel('garden', heardCue, 'cabin'); },
-  };
 }
 
 export function rug({ group, part }, x, z, width, depth, edge, field) {
