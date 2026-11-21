@@ -3,7 +3,7 @@ import { sha256, validateManifest, versionFor } from '../pwa/release.js';
 
 const root = new URL('../', import.meta.url);
 const roots = ['areas', 'assets', 'core', 'pwa', 'vendor'];
-const entryFiles = ['game.js', 'index.html', 'manifest.webmanifest', 'snow.html', 'style.css'];
+const entryFiles = ['area-stats.json', 'game.js', 'index.html', 'manifest.webmanifest', 'snow.html', 'stats.html', 'style.css'];
 const developmentDirs = new Set(['docs', 'test', 'tests', '__tests__', 'node_modules']);
 const developmentFile = /\.(?:md|markdown|map)$|\.(?:test|spec)\.[cm]?js$/i;
 

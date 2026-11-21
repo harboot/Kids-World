@@ -7,6 +7,7 @@ const publicAssets = new Set([
   'manifest.webmanifest', 'assets/icons/icon-192.png', 'assets/icons/icon-512.png',
 ]);
 const shellAssets = ['./pwa/loading.css', './pwa/bootstrap.js', './style.css'];
+const documents = new Set(['', 'index.html', 'snow.html', 'stats.html']);
 const storageErrors = new Set(['QuotaExceededError', 'SecurityError', 'NotAllowedError']);
 let checking;
 let pruning;
@@ -55,8 +56,10 @@ async function prepare({ offline, preferred, cachedOnly }, report) {
 
 function sharePreparation(options, port) {
   if (options.cachedOnly || options.offline) return prepare(options, () => {});
-  subscribers.add(port);
-  if (progress) port.postMessage(progress);
+  if (port) {
+    subscribers.add(port);
+    if (progress) port.postMessage(progress);
+  }
   checking ??= Promise.resolve(pruning).catch(() => {}).then(() => prepare(options, status => {
     progress = status;
     for (const subscriber of subscribers) subscriber.postMessage(status);
@@ -133,7 +136,7 @@ async function cachedDocument(url, relative) {
   const requested = url.searchParams.get('__kw_release');
   const selected = available.findIndex(release => release.tag === requested);
   if (selected > 0) available.unshift(...available.splice(selected, 1));
-  const document = relative === 'snow.html' ? 'snow.html' : 'index.html';
+  const document = relative || 'index.html';
   for (const release of available) {
     try {
       const cached = await releases.read(release.tag, new URL(document, scope));
@@ -141,8 +144,13 @@ async function cachedDocument(url, relative) {
       if (document === 'snow.html') return cached;
       let html = await cached.text();
       const base = assetBase(scope, release.tag);
-      for (const file of shellAssets) {
-        html = html.replace(`="${file}"`, `="${new URL(file, base).pathname}"`);
+      if (document === 'stats.html') {
+        const data = new URL('area-stats.json', base).pathname;
+        html = html.replace('data-stats-url="./area-stats.json"', `data-stats-url="${data}"`);
+      } else {
+        for (const file of shellAssets) {
+          html = html.replace(`="${file}"`, `="${new URL(file, base).pathname}"`);
+        }
       }
       return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     } catch (error) {
@@ -168,10 +176,20 @@ async function navigate(request, url, relative) {
     const response = await fetchFromNetwork(request);
     if (response.ok) return response;
     console.warn(`Kids World page returned HTTP ${response.status}.`);
-    return retryPage('Your adventure could not open. Try again!');
+    return retryPage(relative === 'stats.html' ? 'Area statistics could not open.' : 'Your adventure could not open. Try again!');
   } catch {
-    return retryPage('Connect to the internet to download your adventure.');
+    return retryPage(relative === 'stats.html' ? 'Connect to the internet to open area statistics.' :
+      'Connect to the internet to download your adventure.');
   }
+}
+
+async function navigateStats(event, url, relative) {
+  if (self.navigator?.onLine !== false) {
+    const update = sharePreparation({}).catch(error => console.info('Kids World release check deferred.', error));
+    event.waitUntil(update);
+    await withTimeout(update, 2500, 'Kids World release check still running').catch(() => {});
+  }
+  return navigate(event.request, url, relative);
 }
 
 async function publicAsset(request, url) {
@@ -194,8 +212,8 @@ self.addEventListener('fetch', event => {
   if (url.origin !== scope.origin || !url.pathname.startsWith(scope.pathname)) return;
   const relative = url.pathname.slice(scope.pathname.length);
   if (relative.startsWith(releaseRoute)) event.respondWith(releasedAsset(relative));
-  else if (request.mode === 'navigate' && ['', 'index.html', 'snow.html'].includes(relative)) {
-    event.respondWith(navigate(request, url, relative));
+  else if (request.mode === 'navigate' && documents.has(relative)) {
+    event.respondWith(relative === 'stats.html' ? navigateStats(event, url, relative) : navigate(request, url, relative));
   } else if (publicAssets.has(relative)) {
     event.respondWith(publicAsset(request, new URL(relative, scope)));
   }
