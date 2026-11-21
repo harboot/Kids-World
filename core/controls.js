@@ -2,6 +2,14 @@ const moveCodes = { KeyW: 'forward', KeyA: 'left', KeyS: 'backward', KeyD: 'righ
 const lookCodes = { ArrowUp: 'lookUp', ArrowDown: 'lookDown', ArrowLeft: 'lookLeft', ArrowRight: 'lookRight' };
 const inputCodes = { ...moveCodes, ...lookCodes };
 
+export function releaseCapture(element, pointerId) {
+  try {
+    if (element.hasPointerCapture(pointerId)) element.releasePointerCapture(pointerId);
+  } catch (error) {
+    if (error.name !== 'NotFoundError') throw error;
+  }
+}
+
 export function createControls(THREE, { game, canvas, joystick, thumb, playing, seated, touchMode, look, jump, interact, pause }) {
   const keys = new Set();
   const presses = new Map();
@@ -20,25 +28,33 @@ export function createControls(THREE, { game, canvas, joystick, thumb, playing, 
 
   function clearInput() {
     keys.clear();
-    for (const pointerId of presses.keys()) {
-      if (canvas.hasPointerCapture(pointerId)) canvas.releasePointerCapture(pointerId);
-    }
+    const pointerIds = [...presses.keys()];
     presses.clear();
     lookPointer = null;
     mouseDelta.set(0, 0);
-    if (stickPointer !== null && joystick.hasPointerCapture(stickPointer)) joystick.releasePointerCapture(stickPointer);
+    const capturedStick = stickPointer;
     resetStick();
+    for (const pointerId of pointerIds) releaseCapture(canvas, pointerId);
+    if (capturedStick !== null) releaseCapture(joystick, capturedStick);
   }
 
   function releaseMouse() {
     mouseLocked = false;
-    if (document.pointerLockElement === canvas) document.exitPointerLock();
+    try {
+      if (document.pointerLockElement === canvas) document.exitPointerLock?.()?.catch(() => {});
+    } catch {
+      // The document can lose pointer lock while it is being suspended.
+    }
   }
 
   canvas.addEventListener('click', () => {
     if (!playing() || touchMode() || document.pointerLockElement === canvas) return;
     // The arrow keys and the interaction button are available without a lock.
-    canvas.requestPointerLock?.()?.catch(() => {});
+    try {
+      canvas.requestPointerLock?.()?.catch(() => {});
+    } catch {
+      // Arrow keys remain available if the browser declines pointer lock.
+    }
   });
   document.addEventListener('pointerlockchange', () => {
     if (document.pointerLockElement === canvas) {
@@ -142,10 +158,6 @@ export function createControls(THREE, { game, canvas, joystick, thumb, playing, 
     if (playing()) event.preventDefault();
   });
   window.addEventListener('blur', clearInput);
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden || !playing()) return;
-    pause();
-  });
 
   function sample(dt) {
     const horizontal = Number(keys.has('lookRight')) - Number(keys.has('lookLeft'));

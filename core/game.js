@@ -5,14 +5,16 @@ import { createControls } from './controls.js';
 import { createDroneView, isDroneView, replaceDroneView } from './drone-view.js';
 import { createFrameMeter, isFpsView } from './frame-meter.js';
 import { createMissionHud } from './hud.js';
+import { normalizeMissionStatus } from './missions.js';
 import { createInteractions } from './interactions.js';
 import { createLevelProgress } from './level-progress.js';
 import { PLAYER_RADIUS } from './movement.js';
 import { createPlayer } from './player.js';
 import { createView } from './renderer.js';
-import { areaURL, createWorldManager, resolveArea } from './world-manager.js';
+import { AreaInitializationError, areaURL, createWorldManager, resolveArea } from './world-manager.js';
 
 const areaKey = 'kids-world-last-area';
+const areaLoadTimeout = 30_000;
 
 function savedArea() {
   try {
@@ -44,6 +46,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   const restart = game.querySelector('#restart');
   const menuMessage = game.querySelector('#menu-message');
   const notice = game.querySelector('#notice');
+  const retryArea = game.querySelector('#area-retry');
   const heading = game.querySelector('#menu-title');
   const areaName = game.querySelector('.wordmark small');
   const missionHud = createMissionHud(game);
@@ -57,9 +60,15 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   let drone;
   let route;
   let transition;
+  let activeURL;
+  let terminal = false;
+  let suspended = false;
+  let frameId = null;
+  let previousFrame = null;
+  let interactionRevision = 0;
   let finishStartup;
   const ready = new Promise(resolve => { finishStartup = resolve; });
-  const playing = () => game.dataset.state === 'playing';
+  const playing = () => !terminal && !suspended && !document.hidden && game.dataset.state === 'playing';
   const playerInput = () => playing() && !drone?.camera;
   const touchMode = () => game.dataset.input === 'touch';
 
@@ -70,9 +79,12 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     game.dataset.state = 'error';
     menuMessage.textContent = message;
     notice.textContent = '';
-    start.hidden = true;
+    startLabel.textContent = 'Reload game';
+    start.hidden = false;
+    start.disabled = false;
     restart.disabled = true;
     chooseLevel.disabled = true;
+    retryArea.hidden = true;
   }
 
   function showArea(id) {
@@ -105,12 +117,9 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   let view;
   try {
     view = createView(THREE, {
-      game, canvas, fullscreen: game.querySelector('#fullscreen'), touchDevice,
+      game, canvas, fullscreen: game.querySelector('#fullscreen'), touchDevice, onInvalidate: scheduleFrame,
       contextLost() {
-        cancelTransition();
-        stopPlaying();
-        showError('The WebGL context was lost. Reload the page to continue exploring.');
-        finishStartup();
+        terminate('The WebGL context was lost. Reload the page to continue exploring.');
       },
     });
   } catch {
@@ -123,14 +132,17 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   const progress = createLevelProgress(areas);
   const player = createPlayer(THREE, camera);
   const worlds = createWorldManager(THREE, {
-    areas, camera, touch: touchDevice, playerRadius: PLAYER_RADIUS,
+    areas, camera, touch: touchDevice, playerRadius: PLAYER_RADIUS, prepare: preparePresentation,
     services: {
-      hud: game, isPlaying: playerInput, playCue: audio.playCue, notify: missionHud.notify,
+      hud: game, isPlaying: playerInput,
+      playCue: notes => playing() && audio.playCue(notes),
+      notify: message => { if (playing()) missionHud.notify(message); },
       reducedMotion: () => motionPreference.matches,
       isPlayerGrounded: () => player.grounded,
-      carryPlayer: player.carryVertically,
+      carryPlayer: distance => { if (playing()) player.carryVertically(distance); },
       isLevelComplete: progress.has,
       completeLevel(id) {
+        if (!playing()) return;
         progress.complete(id);
         view.sceneChanged();
       },
@@ -142,8 +154,20 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     label: game.querySelector('#interaction-label'),
     camera, playing: () => playerInput() && !player.guided, touchMode,
     runAction(item) {
-      if (!item.silent) audio.effect('interact');
-      item.act({ sit, guideCamera, relocate });
+      const visit = worlds.active;
+      const revision = interactionRevision;
+      const current = () => worlds.active === visit && visit.state === 'active' && revision === interactionRevision;
+      try {
+        if (!item.silent) audio.effect('interact');
+        item.act({
+          sit: (...args) => { if (current()) sit(...args); },
+          guideCamera: look => current() ? guideCamera(look, current) : () => {},
+          relocate: spawn => { if (current()) relocate(spawn); },
+        });
+      } catch (error) {
+        console.error(error);
+        terminate('This interaction could not finish. Reload the game to try again.');
+      }
     },
   });
   const controls = createControls(THREE, {
@@ -153,8 +177,6 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     jump() { if (player.jump()) audio.effect('jump'); },
     pause() { menu(true); },
   });
-  let previousFrame = null;
-
   function syncFrameMeter() {
     frameMeter.setActive(Boolean(route?.fps && playerInput() && !document.hidden));
   }
@@ -178,10 +200,13 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
 
   function changeDroneView(enabled) {
     replaceDroneView(new URL(location.href), history, enabled);
+    activeURL = new URL(location.href);
     syncView();
+    previousFrame = null;
   }
 
   function stopPlaying() {
+    stopFrames();
     frameMeter.setActive(false);
     audio.setPlaying(false);
     controls.clear();
@@ -201,6 +226,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     startLabel.textContent = paused ? 'Resume exploring' : 'Explore';
     menuMessage.textContent = paused ? 'Take a break, then continue exploring.' : worlds.active.definition.description;
     notice.textContent = '';
+    retryArea.hidden = true;
     view.invalidate();
     if (!paused) syncView();
   }
@@ -210,82 +236,137 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     player.reset(spawn, worlds.active.area);
   }
 
-  function prepareVisit() {
+  function preparePresentation({ definition, area }) {
+    const { spawn } = definition;
+    const ground = area.getGroundHeight?.(spawn.x, spawn.z, spawn.elevation) ?? 0;
+    const items = area.interactions ?? [];
+    if (!Number.isFinite(ground) || !Array.isArray(items)) throw new TypeError('Invalid area spawn or interactions.');
+    if (isDroneView(new URL(location.href))) {
+      // Prepare the area bounds before discarding a working visit.
+      void area.droneView;
+    }
+    return { ground, items, missionStatus: normalizeMissionStatus(area.missionStatus) };
+  }
+
+  function prepareVisit({ ground, items, missionStatus }) {
     const { definition, area } = worlds.active;
-    player.reset(definition.spawn, area);
+    player.reset(definition.spawn, area, ground);
     delete game.dataset.seated;
-    interactions.setItems(area.interactions ?? []);
-    missionHud.update(area.missionStatus);
+    interactions.setItems(items);
+    missionHud.update(missionStatus);
   }
 
   function clearVisitPresentation() {
+    interactionRevision++;
     if (levelPicker.open) levelPicker.close();
     missionHud.reset();
     drone?.stop();
+    interactions.setItems([]);
   }
 
   function resetArea() {
-    if (transition || !worlds.active) return;
+    if (terminal || suspended || transition || !worlds.active) return;
+    stopPlaying();
     clearVisitPresentation();
-    worlds.reset();
-    prepareVisit();
-    menu(false);
+    try {
+      prepareVisit(worlds.reset());
+      view.sceneChanged();
+      menu(false);
+    } catch (error) {
+      console.error(error);
+      terminate('This area could not restart. Reload the game to try again.');
+    }
   }
 
   function cancelTransition() {
+    clearTimeout(transition?.timer);
     transition = undefined;
     worlds.cancelLoad();
   }
 
+  function disposeView() {
+    try {
+      view.dispose();
+    } catch (error) {
+      console.error('Could not finish renderer cleanup.', error);
+    }
+  }
+
+  function terminate(message) {
+    if (terminal) return;
+    terminal = true;
+    cancelTransition();
+    stopPlaying();
+    clearVisitPresentation();
+    worlds.unload();
+    disposeView();
+    showError(message);
+    finishStartup();
+  }
+
   async function enterArea(id, historyMode) {
+    if (terminal || suspended) return;
     if (transition?.id === id) {
       // A history navigation to the same pending area already chose its URL.
       transition.historyMode = historyMode;
       return;
     }
-    const request = { id, historyMode };
+    cancelTransition();
+    const request = { id, historyMode, url: areaURL(new URL(location.href), id) };
     transition = request;
-    game.dataset.state = 'traveling';
-    stopPlaying();
-    if (levelPicker.open) levelPicker.close();
-    drone?.stop();
-    droneEntry.hidden = true;
-    start.hidden = true;
-    start.disabled = true;
-    restart.disabled = true;
-    chooseLevel.disabled = true;
-    notice.textContent = areas[id].loadingMessage ?? `Loading ${areas[id].title}…`;
-    view.invalidate();
-
     try {
+      game.dataset.state = 'traveling';
+      stopPlaying();
+      if (levelPicker.open) levelPicker.close();
+      drone?.stop();
+      droneEntry.hidden = true;
+      retryArea.hidden = true;
+      start.hidden = true;
+      start.disabled = true;
+      restart.disabled = true;
+      chooseLevel.disabled = true;
+      notice.textContent = areas[id].loadingMessage ?? `Loading ${areas[id].title}…`;
+      view.invalidate();
+
+      request.timer = setTimeout(() => {
+        if (transition === request) worlds.cancelLoad();
+      }, areaLoadTimeout);
       const visit = await worlds.load(id);
-      if (transition !== request || !visit) return;
+      if (transition !== request) return;
+      if (!visit) throw new Error('Area loading timed out.');
       clearVisitPresentation();
-      prepareVisit();
+      prepareVisit(visit.presentation);
+      delete visit.presentation;
       audio.setScore(visit.definition.music);
       view.sceneChanged();
       showArea(id);
       if (request.historyMode) history[request.historyMode](null, '', areaURL(new URL(location.href), id));
+      activeURL = new URL(location.href);
       rememberArea(areas, id);
       menu(false);
     } catch (error) {
       if (transition !== request) return;
       console.error(error);
       const { title, show } = areas[id];
-      const message = show ? `${title} could not load.` : navigator.onLine === false
-        ? `${title} is unavailable offline. Connect to the internet and reload.`
-        : `${title} is unavailable for this release. Reload to check for an update.`;
+      const initializationFailed = error instanceof AreaInitializationError;
+      let message = `${title} could not load.`;
+      if (initializationFailed) message = `${title} could not initialize.`;
+      else if (!show) {
+        message = navigator.onLine === false
+          ? `${title} is unavailable offline. Connect to the internet and reload.`
+          : `${title} is unavailable for this release. Reload to check for an update.`;
+      }
       if (worlds.active && worlds.active.id !== id) {
-        const url = new URL(location.href);
-        if (!request.historyMode && resolveArea(url, areas, defaultArea) !== worlds.active.id) {
-          history.replaceState(null, '', areaURL(url, worlds.active.id));
-        }
+        if (activeURL && location.href !== activeURL.href) history.replaceState(null, '', activeURL);
         menu(false);
         notice.textContent = `${message} You can keep exploring ${worlds.active.definition.title}.`;
+        retryArea.href = request.url.href;
+        retryArea.hidden = false;
       } else {
-        showError(show ? `${message} Reload the page to try again.` : message);
+        terminate(show || initializationFailed ? `${message} Reload the page to try again.` : message);
       }
     } finally {
+      clearTimeout(request.timer);
       if (transition === request) {
         transition = undefined;
         finishStartup();
@@ -307,26 +388,27 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     levelPicker.showModal();
   });
 
-  function guideCamera(look) {
-    const visit = worlds.active;
+  function guideCamera(look, current) {
     const stop = player.guide(look);
     game.dataset.seated = 'true';
     controls.clear();
     interactions.hide();
     return spawn => {
-      if (!stop()) return;
+      if (!current() || !stop()) return;
       delete game.dataset.seated;
-      if (worlds.active === visit) relocate(spawn);
+      relocate(spawn);
     };
   }
 
   function sit(pose, standLabel) {
+    const revision = interactionRevision;
     player.sit(pose);
     game.dataset.seated = 'true';
     controls.clear();
     interactions.pin({
       label: standLabel,
       act() {
+        if (revision !== interactionRevision || !player.seated) return;
         player.stand();
         delete game.dataset.seated;
         controls.clear();
@@ -336,7 +418,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   }
 
   function startPlaying(pointerType) {
-    if (!worlds.active || !['menu', 'paused'].includes(game.dataset.state)) return;
+    if (terminal || suspended || document.hidden || !worlds.active || !['menu', 'paused'].includes(game.dataset.state)) return;
     audio.unlock();
     if (game.dataset.state === 'menu' && pointerType) {
       game.dataset.input = pointerType === 'mouse' ? 'mouse' : 'touch';
@@ -344,6 +426,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     controls.clear();
     interactions.hide();
     start.blur();
+    previousFrame = null;
     game.dataset.state = 'playing';
     syncFrameMeter();
     missionHud.update(worlds.active.area.missionStatus);
@@ -351,14 +434,18 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     audio.setPlaying(true);
   }
 
-  start.addEventListener('click', event => startPlaying(event.pointerType));
+  start.addEventListener('click', event => {
+    if (game.dataset.state === 'error') location.reload();
+    else startPlaying(event.pointerType);
+  });
   droneEntry.addEventListener('click', () => {
     if (droneEntry.hidden || transition) return;
     changeDroneView(true);
     startPlaying();
   });
 
-  function restoreArea() {
+  function restoreArea(fromCache = false) {
+    if (terminal || suspended) return;
     const url = new URL(location.href);
     const id = resolveArea(url, areas, defaultArea);
     if (worlds.active?.id !== id) {
@@ -367,6 +454,12 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     }
     const wasTraveling = Boolean(transition);
     cancelTransition();
+    activeURL = url;
+    if (fromCache) {
+      menu(game.dataset.state === 'paused');
+      syncView(url);
+      return;
+    }
     if (route && (route.drone !== isDroneView(url) || route.fps !== isFpsView(url))) {
       if (wasTraveling) menu(false);
       else syncView(url);
@@ -377,36 +470,80 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   }
 
   restart.addEventListener('click', resetArea);
-  document.addEventListener('visibilitychange', syncFrameMeter);
-  window.addEventListener('popstate', restoreArea);
-  window.addEventListener('pagehide', () => {
-    stopPlaying();
+  document.addEventListener('visibilitychange', () => {
+    if (terminal || suspended) return;
+    if (document.hidden) {
+      if (game.dataset.state === 'playing') menu(true);
+      else stopPlaying();
+    } else {
+      previousFrame = null;
+      view.invalidate();
+    }
+    syncFrameMeter();
+  });
+  window.addEventListener('popstate', () => restoreArea());
+  window.addEventListener('pagehide', event => {
+    suspended = true;
+    cancelTransition();
+    if (game.dataset.state === 'playing') menu(true);
+    else stopPlaying();
+    if (levelPicker.open) levelPicker.close();
     drone?.stop();
     missionHud.clearNotification();
+    if (!event.persisted) {
+      clearVisitPresentation();
+      worlds.unload();
+      disposeView();
+    }
   });
   window.addEventListener('pageshow', event => {
-    if (event.persisted) restoreArea();
+    if (!event.persisted) return;
+    suspended = false;
+    restoreArea(true);
   });
 
+  function scheduleFrame() {
+    if (!view || terminal || suspended || document.hidden || !worlds.active || frameId !== null) return;
+    const scheduled = requestAnimationFrame(stamp => {
+      if (frameId !== scheduled) return;
+      frameId = null;
+      frame(stamp);
+    });
+    frameId = scheduled;
+  }
+
+  function stopFrames() {
+    if (frameId !== null) cancelAnimationFrame(frameId);
+    frameId = null;
+    previousFrame = null;
+  }
+
   function frame(stamp) {
-    const elapsed = previousFrame === null ? 0 : (stamp - previousFrame) / 1000;
-    const dt = Math.min(elapsed, 0.05);
-    previousFrame = stamp;
-    const activePlayer = playerInput();
-    if (activePlayer) {
-      player.move(dt, controls.sample(dt), worlds.active);
-      worlds.update(dt, camera.position, elapsed);
-      missionHud.update(worlds.active.area.missionStatus);
-      interactions.update();
+    const visit = worlds.active;
+    if (terminal || suspended || document.hidden || visit?.state !== 'active') return;
+    try {
+      const activePlayer = playerInput();
+      if (activePlayer) {
+        const elapsed = previousFrame === null ? 0 : Math.min(0.25, Math.max(0, (stamp - previousFrame) / 1000));
+        const dt = Math.min(elapsed, 0.05);
+        previousFrame = stamp;
+        player.move(dt, controls.sample(dt), visit);
+        worlds.update(dt, camera.position, elapsed);
+        if (worlds.active !== visit || terminal) return;
+        missionHud.update(visit.area.missionStatus);
+        interactions.update();
+      }
+      drone?.update();
+      const rendered = view.render(visit.scene, activePlayer, drone?.camera);
+      if (rendered && route?.fps) frameMeter.sample(stamp);
+      if (playerInput()) scheduleFrame();
+    } catch (error) {
+      console.error(error);
+      terminate('The game could not continue. Reload the page to try again.');
     }
-    drone?.update();
-    const rendered = view.render(worlds.active?.scene, activePlayer, drone?.camera);
-    if (rendered && route?.fps) frameMeter.sample(stamp);
-    requestAnimationFrame(frame);
   }
 
   const url = new URL(location.href);
   enterArea(url.href === initialURL.href ? initialArea : resolveArea(url, areas, defaultArea), 'replaceState');
   await ready;
-  requestAnimationFrame(frame);
 }

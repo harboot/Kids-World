@@ -38,7 +38,7 @@ export const snowBasin = {
 
 export default snowBasin;
 
-function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlaying, playCue, playerRadius = 0.34,
+function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, hud, isPlaying, playCue, playerRadius = 0.34,
   completeLevel, reducedMotion, notify }) {
   const { width, depth, spawn } = snowBasin;
   const kit = addWinterScenery({ THREE, scene, touch, width, depth });
@@ -122,6 +122,8 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
   }
 
   if (hud) panel = addSnowHud(hud, signal, throwBall);
+  const removePanel = () => panel?.root.remove();
+  onCleanup?.(removePanel);
 
   function updateThrowControls() {
     if (!panel) return;
@@ -249,9 +251,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
       updateModels(dt);
     },
     reset,
-    unload() {
-      panel?.root.remove();
-    },
+    unload: onCleanup ? undefined : removePanel,
   };
 }
 

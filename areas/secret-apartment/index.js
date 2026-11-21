@@ -33,7 +33,7 @@ function inZone(id, x, z, doorZ) {
   return x >= 0.8 && x <= 10.68 && z <= 3.33;
 }
 
-function loadApartment({ THREE, scene, camera, hud, signal, playCue = () => {}, reducedMotion = () => false, notify }) {
+function loadApartment({ THREE, scene, camera, hud, signal, onCleanup, playCue = () => {}, reducedMotion = () => false, notify }) {
   const architecture = createArchitecture(THREE);
   const zones = Object.fromEntries(Object.entries(PLACEMENT).map(([id, placement]) => {
     const root = architecture.group(scene, id, placement.x);
@@ -47,6 +47,7 @@ function loadApartment({ THREE, scene, camera, hud, signal, playCue = () => {}, 
   const floor17 = buildFloor17(THREE, architecture, zones.floor17, reducedMotion, mission);
   const features = { basement, floor8, floor17 };
   const cinematic = createApartmentCinematic(THREE, architecture, hud, floor17.unit, mission, reducedMotion);
+  onCleanup?.(cinematic.unload);
   let active;
   const sky = new THREE.Color(0xafd0df);
   const garageBackground = new THREE.Color(0x555e61);
@@ -132,8 +133,6 @@ function loadApartment({ THREE, scene, camera, hud, signal, playCue = () => {}, 
       features[active].update(animationDt);
       cinematic.render(active === 'floor17' && floor17.unit.contains(position.x - zones.floor17.x, position.z));
     },
-    unload() {
-      cinematic.unload();
-    },
+    unload: onCleanup ? undefined : cinematic.unload,
   };
 }

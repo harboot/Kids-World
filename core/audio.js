@@ -19,6 +19,7 @@ function tone(context, destination, at, pitch, { endPitch = pitch, duration, lev
   oscillator.connect(envelope).connect(destination);
   oscillator.start(at);
   oscillator.stop(at + duration);
+  return { oscillator, envelope };
 }
 
 const jumpCue = [[60, { endPitch: 77, duration: 0.17, level: 0.22, wave: 'triangle' }]];
@@ -64,6 +65,7 @@ export function createAudio(button) {
   let context;
   let master;
   const buffers = new WeakMap();
+  const cues = new Set();
   let score;
   let track;
   let playing = false;
@@ -162,12 +164,14 @@ export function createAudio(button) {
 
   function setPlaying(active) {
     playing = active;
+    if (!active) stopCues();
     syncMusic();
   }
 
   function setScore(next) {
     if (score === next) return;
     stopMusic();
+    stopCues();
     score = next;
     syncMusic();
   }
@@ -175,8 +179,30 @@ export function createAudio(button) {
   function playCue(notes) {
     if (muted || !master || context.state !== 'running') return false;
     const now = context.currentTime + 0.004;
-    for (const [pitch, note, offset = 0] of notes) tone(context, master, now + offset, pitch, note);
+    for (const [pitch, note, offset = 0] of notes) {
+      const cue = tone(context, master, now + offset, pitch, note);
+      cues.add(cue);
+      cue.oscillator.onended = () => releaseCue(cue);
+    }
     return true;
+  }
+
+  function releaseCue(cue) {
+    cues.delete(cue);
+    cue.oscillator.onended = null;
+    cue.oscillator.disconnect();
+    cue.envelope.disconnect();
+  }
+
+  function stopCues() {
+    for (const cue of cues) {
+      try {
+        cue.oscillator.stop(context.currentTime);
+      } catch {
+        // A cue may have ended while entering the menu.
+      }
+      releaseCue(cue);
+    }
   }
 
   function effect(name) {
@@ -194,6 +220,7 @@ export function createAudio(button) {
         // Keep the in-memory preference for this page.
       }
       syncButton();
+      if (muted) stopCues();
       if (master) master.gain.setTargetAtTime(muted ? minVolume : masterVolume, context.currentTime, 0.01);
       unlock();
       syncMusic();

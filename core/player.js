@@ -23,12 +23,12 @@ export function createPlayer(THREE, camera) {
     camera.updateMatrixWorld();
   }
 
-  function reset(spawn, world) {
+  function reset(spawn, world, ground = world.getGroundHeight?.(spawn.x, spawn.z, spawn.elevation) ?? 0) {
     seated = null;
     guidedView = null;
     yaw = spawn.yaw ?? 0;
     pitch = 0;
-    elevation = world.getGroundHeight?.(spawn.x, spawn.z, spawn.elevation) ?? 0;
+    elevation = ground;
     verticalSpeed = 0;
     grounded = true;
     speed.set(0, 0);

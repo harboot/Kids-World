@@ -31,7 +31,7 @@ test('importing the entry loads the central catalog and each lazy module stays i
 });
 
 class Element extends EventTarget {
-  style = {};
+  style = { setProperty() {} };
   dataset = {};
   firstChild = {};
   children = [];
@@ -48,10 +48,11 @@ class Element extends EventTarget {
   append(...children) { this.children.push(...children); }
   showModal() { this.open = true; }
   close() { this.open = false; }
+  blur() {}
   click() { this.dispatchEvent(new Event('click')); }
 }
 
-function gameFixture(t, areas, startingArea) {
+function gameFixture(t, areas, startingArea, { online = true } = {}) {
   const window = new EventTarget();
   const document = new Element();
   document.createElement = () => new Element();
@@ -59,6 +60,12 @@ function gameFixture(t, areas, startingArea) {
   game.ownerDocument = document;
   const location = new URL(`https://example.test/Kids-World/?area=${startingArea}`);
   const writes = [];
+  const frames = new Map();
+  const renders = [];
+  let disposed = 0;
+  let nextFrame = 1;
+  let reloads = 0;
+  location.reload = () => { reloads++; };
   const history = {
     pushState(state, title, url) { location.href = url; writes.push(['push', location.href]); },
     replaceState(state, title, url) { location.href = url; writes.push(['replace', location.href]); },
@@ -68,7 +75,9 @@ function gameFixture(t, areas, startingArea) {
     window, document, history, location,
     matchMedia: () => ({ matches: false }),
     ResizeObserver: class { observe() {} },
-    requestAnimationFrame: () => {},
+    navigator: { maxTouchPoints: 0, onLine: online },
+    requestAnimationFrame(callback) { const id = nextFrame++; frames.set(id, callback); return id; },
+    cancelAnimationFrame(id) { frames.delete(id); },
     localStorage: { getItem: () => null, setItem: () => {} },
   })) {
     const previous = Object.getOwnPropertyDescriptor(globalThis, name);
@@ -81,11 +90,21 @@ function gameFixture(t, areas, startingArea) {
   class WebGLRenderer {
     shadowMap = {};
     renderLists = { dispose() {} };
+    render(scene, camera) { renders.push({ scene, position: camera.position.clone() }); }
+    dispose() { disposed++; }
   }
 
   return {
     ready: createGame({ game, loadThree: async () => ({ ...THREE, WebGLRenderer }), areas, defaultArea: 'garden' }),
-    game, location, writes,
+    game, location, writes, frames, renders, window, document,
+    get disposed() { return disposed; },
+    get reloads() { return reloads; },
+    tick(stamp) {
+      // Requests inside a frame run on the next tick.
+      for (const [id, callback] of [...frames]) {
+        if (frames.delete(id)) callback(stamp);
+      }
+    },
     go(id) {
       location.searchParams.set('area', id);
       window.dispatchEvent(new Event('popstate'));
@@ -185,4 +204,203 @@ test('picker and history transitions handle failure and keep the newest destinat
   assert.equal(game.dataset.level, 'newest');
   assert.equal(location.searchParams.get('area'), 'newest');
   assert.equal(writes.length, 1, 'only successful startup rewrote history');
+});
+
+function send(target, type, fields = {}) {
+  target.dispatchEvent(Object.assign(new Event(type, { cancelable: true }), fields));
+}
+
+test('one frame loop bounds elapsed time and preserves the visit through pause and BFCache', async t => {
+  const updates = [];
+  let resets = 0;
+  const garden = area('garden', async () => ({
+    default: { ...garden, load: () => ({
+      obstacles: [], missionStatus: { missions: [] },
+      update(dt, position, elapsed) { updates.push([dt, elapsed]); },
+      reset() { resets++; },
+    }) },
+  }));
+  const f = gameFixture(t, { garden }, 'garden');
+  await f.ready;
+  assert.equal(resets, 1);
+  assert.equal(f.frames.size, 1);
+  f.tick(0);
+  assert.equal(f.frames.size, 0, 'an idle menu renders only when invalidated');
+  f.game.querySelector('#start').click();
+  assert.equal(f.frames.size, 1);
+  f.tick(16);
+  f.tick(10_000);
+  assert.deepEqual(updates, [[0, 0], [0.05, 0.25]]);
+  assert.equal(f.frames.size, 1);
+
+  const stale = [...f.frames.values()][0];
+  f.document.hidden = true;
+  send(f.document, 'visibilitychange');
+  assert.equal(f.game.dataset.state, 'paused');
+  assert.equal(f.frames.size, 0);
+  f.document.hidden = false;
+  send(f.document, 'visibilitychange');
+  stale(15_000);
+  assert.equal(f.frames.size, 1);
+  f.tick(16_000);
+  assert.equal(updates.length, 2);
+
+  f.game.querySelector('#start').click();
+  f.tick(20_000);
+  assert.deepEqual(updates.at(-1), [0, 0]);
+  send(f.window, 'pagehide', { persisted: true });
+  assert.equal(f.frames.size, 0);
+  send(f.window, 'pageshow', { persisted: true });
+  send(f.window, 'pageshow', { persisted: true });
+  assert.equal(f.frames.size, 1);
+  f.tick(90_000);
+  assert.equal(updates.length, 3);
+  assert.equal(resets, 1);
+  f.game.querySelector('#restart').click();
+  f.game.querySelector('#restart').click();
+  assert.equal(resets, 3);
+  assert.equal(f.frames.size, 1);
+});
+
+test('a hidden load failure restores the complete working URL and exposes the requested area for reload', async t => {
+  t.mock.method(console, 'error', () => {});
+  const scenes = [];
+  const garden = area('garden', async () => ({ default: visit(garden, scenes) }));
+  const secret = area('secret', async () => { throw new TypeError('module unavailable'); }, false);
+  const f = gameFixture(t, { garden, secret }, 'garden&source=park#gate', { online: false });
+  await f.ready;
+  const prior = f.location.href;
+  f.location.searchParams.set('source', 'hidden');
+  f.go('secret');
+  await setImmediate();
+  assert.equal(f.location.href, prior);
+  assert.match(f.game.querySelector('#notice').textContent, /unavailable offline/);
+  const retry = f.game.querySelector('#area-retry');
+  assert.equal(retry.hidden, false);
+  assert.match(retry.href, /area=secret/);
+  assert.match(retry.href, /source=hidden/);
+  assert.deepEqual(scenes, ['garden']);
+  assert.equal(f.game.querySelector('#choose-level').disabled, false);
+});
+
+test('context loss cancels an in-flight import and offers a reload without further render calls', async t => {
+  const waiting = Promise.withResolvers();
+  const scenes = [];
+  let unloaded = 0;
+  const garden = area('garden', async () => ({
+    default: { ...garden, load: () => ({ obstacles: [], missionStatus: { missions: [] }, unload() { unloaded++; } }) },
+  }));
+  const snow = area('snow', () => waiting.promise);
+  const f = gameFixture(t, { garden, snow }, 'garden');
+  await f.ready;
+  f.tick(0);
+  f.game.querySelector('#start').click();
+  f.go('snow');
+  assert.equal(f.game.dataset.state, 'traveling');
+  send(f.game.querySelector('#view'), 'webglcontextlost');
+  waiting.resolve({ default: visit(snow, scenes) });
+  await setImmediate();
+  assert.equal(f.disposed, 1);
+  assert.equal(unloaded, 1);
+  assert.equal(f.frames.size, 0);
+  assert.deepEqual(scenes, []);
+  assert.equal(f.game.dataset.state, 'error');
+  assert.match(f.game.querySelector('#menu-message').textContent, /WebGL context was lost/);
+  f.game.querySelector('#start').click();
+  assert.equal(f.reloads, 1);
+});
+
+test('travel clears camera guidance and pointer lock before the next area receives controls', async t => {
+  let finishRide;
+  let oldUpdates = 0;
+  let newUpdates = 0;
+  const garden = area('garden', async () => ({
+    default: {
+      ...garden,
+      load() {
+        return {
+          obstacles: [], missionStatus: { missions: [] },
+          update() { oldUpdates++; },
+          interactions: [{
+            x: 0, z: 0,
+            act({ guideCamera }) { finishRide = guideCamera(); },
+          }],
+        };
+      },
+    },
+  }));
+  const snow = area('snow', async () => ({
+    default: { ...snow, load: () => ({ obstacles: [], missionStatus: { missions: [] }, update() { newUpdates++; } }) },
+  }));
+  const f = gameFixture(t, { garden, snow }, 'garden');
+  await f.ready;
+  f.game.querySelector('#start').click();
+  const canvas = f.game.querySelector('#view');
+  f.document.pointerLockElement = canvas;
+  f.document.exitPointerLock = () => { f.document.pointerLockElement = null; };
+  send(f.document, 'pointerlockchange');
+  send(f.window, 'keydown', { code: 'KeyM' });
+  assert.equal(f.game.dataset.seated, 'true');
+  assert.equal(typeof finishRide, 'function');
+
+  f.go('snow');
+  assert.equal(f.document.pointerLockElement, null);
+  await setImmediate();
+  finishRide({ x: 3, z: 3 });
+  assert.equal(f.game.dataset.seated, undefined);
+  f.game.querySelector('#start').click();
+  send(f.window, 'keydown', { code: 'KeyW' });
+  f.tick(0);
+  f.tick(16);
+  assert.equal(oldUpdates, 0);
+  assert.equal(newUpdates, 2);
+  assert.equal(f.renders.at(-1).position.x, 0);
+  assert.ok(f.renders.at(-1).position.z < 0);
+  assert.equal(f.game.querySelector('#interaction').hidden, true);
+});
+
+test('a stalled transition times out, ignores restart while pending and restores the last scene', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  t.mock.method(console, 'error', () => {});
+  const slow = Promise.withResolvers();
+  let resets = 0;
+  const scenes = [];
+  const garden = area('garden', async () => ({
+    default: { ...garden, load: () => ({ obstacles: [], missionStatus: { missions: [] }, reset() { resets++; } }) },
+  }));
+  const snow = area('snow', () => slow.promise);
+  const f = gameFixture(t, { garden, snow }, 'garden');
+  await f.ready;
+  f.go('snow');
+  f.game.querySelector('#restart').click();
+  assert.equal(resets, 1);
+  t.mock.timers.tick(30_000);
+  await setImmediate();
+  assert.equal(f.game.dataset.state, 'menu');
+  assert.equal(f.location.searchParams.get('area'), 'garden');
+  assert.equal(f.game.querySelector('#restart').disabled, false);
+  assert.match(f.game.querySelector('#notice').textContent, /snow could not load/);
+  slow.resolve({ default: visit(snow, scenes) });
+  await setImmediate();
+  assert.deepEqual(scenes, []);
+});
+
+test('hidden scene initialization errors are distinct from unavailable downloads', async t => {
+  t.mock.method(console, 'error', () => {});
+  let cleaned = 0;
+  const garden = area('garden', async () => { throw new Error('unrelated'); });
+  const secret = area('secret', async () => ({
+    default: {
+      ...secret,
+      load({ onCleanup }) {
+        onCleanup(() => { cleaned++; });
+        return { obstacles: [], missionStatus: null };
+      },
+    },
+  }), false);
+  const f = gameFixture(t, { garden, secret }, 'secret', { online: false });
+  await f.ready;
+  assert.equal(cleaned, 1);
+  assert.equal(f.game.dataset.state, 'error');
+  assert.match(f.game.querySelector('#menu-message').textContent, /secret could not initialize/);
 });
