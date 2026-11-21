@@ -1,5 +1,5 @@
 {
-  "version": "a57448b44c00a9fcc40e3d5797a53b312d1084e2b40a3d71fa5f7df39d362982",
+  "version": "cf7b4eb76560d8312022dff4ffc8dd4e3754394f6596571bbd3571764f05ec39",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
@@ -107,15 +107,19 @@
     },
     {
       "path": "./areas/princess-gallery/ariel-reef.js",
-      "revision": "8aa2964a0dcdbb8f82f68735b1f56ff8ceeb1025ada3829adda35e4a84aad103"
+      "revision": "49e671759318a14c4a4d5a9d57022bee99cf6a79f1673401819e283f70ae8394"
+    },
+    {
+      "path": "./areas/princess-gallery/ariel-treasure.js",
+      "revision": "307e467fe607a98b91b747df37c8b78764cd275f26172931772f87e387dfcca3"
     },
     {
       "path": "./areas/princess-gallery/ariel-wreck.js",
-      "revision": "af13760043a3e932c2006035fdf439de19ccdc75ea573d1a33498e3f3265a5d2"
+      "revision": "530fa5b9e9a02e7b70822a4f3656c42754503e88e93ab08c339f5769ce3333fa"
     },
     {
       "path": "./areas/princess-gallery/ariel.js",
-      "revision": "70d2f7fd50c948a6ddb406bf6ba45933de2687c19bcea02ae6330d7811997873"
+      "revision": "33cb9ad93cac26b4e3b08d16a0c9a934e9b60301c0c94c5881e7c0069f910d02"
     },
     {
       "path": "./areas/princess-gallery/atrium.js",
@@ -135,11 +139,11 @@
     },
     {
       "path": "./areas/princess-gallery/cinderella-character.js",
-      "revision": "3646a4347c83f648ed8e7763aad15226717bfddf5eba29bceb6895c2fdff9162"
+      "revision": "764e29b8dd0ef0a6cb65180db7e5a9ed53ec69d52e247f866fdc994ef69cfe3f"
     },
     {
       "path": "./areas/princess-gallery/cinderella.js",
-      "revision": "add1cb6987bcb3bcf211bf49abd05d29c7f5737b467d43f56f9f0c2a31314e36"
+      "revision": "0c8b1e44e6846e40b59305a40a8f0e5c3cb6eae56d1802402956e962d970cb92"
     },
     {
       "path": "./areas/princess-gallery/concessions.js",
@@ -155,7 +159,7 @@
     },
     {
       "path": "./areas/princess-gallery/gallery.js",
-      "revision": "255ed4d4992b52ef812daeb177f61bcec1500b642c271a0a6695b80aacf96b23"
+      "revision": "8c7f228d69023b63021d93c516bc21e958bf7de5f861e51d718572ba53445039"
     },
     {
       "path": "./areas/princess-gallery/hanging-decor.js",
@@ -167,7 +171,7 @@
     },
     {
       "path": "./areas/princess-gallery/index.js",
-      "revision": "0b64a25a1383c971d8639051b9c066b14f185c731eeffb51f88cc50b8ae4f79c"
+      "revision": "79b499eaed6d645d5510757febe9213ffca03da0b400a5d9c3c9bd4370cabec3"
     },
     {
       "path": "./areas/princess-gallery/parts.js",
@@ -218,8 +222,12 @@
       "revision": "2bbf4245eb12678175bc3953ca40674d2e4ee85ef9c7f5c811d93c346c27133a"
     },
     {
+      "path": "./areas/princess-gallery/walkway-lift.js",
+      "revision": "25ec1c4e726ad14c85a2023d9aa66e8fa8e5b95c5ccc425c217b7975b42657f2"
+    },
+    {
       "path": "./areas/princess-gallery/walkway.js",
-      "revision": "417f2cb4d1bce51efdd73cf868c87e0012d4bbdf54b325522e7418178860a0c7"
+      "revision": "d2b0ebbf3fb1339fadf4bc87ada7b05f5dc70e93a3470c8d8d29e61bc9061264"
     },
     {
       "path": "./areas/secret-apartment/basement.js",
@@ -347,7 +355,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "67e22794bb6efed431aa0953644c343de1d4b05af00a6c38c36fc9af4478db90"
+      "revision": "6f197a45e34fb59f604bfbca6e13d726aa625807e8f619e999e52e8299538b74"
     },
     {
       "path": "./core/geometry.js",
@@ -379,7 +387,7 @@
     },
     {
       "path": "./core/player.js",
-      "revision": "e5f205bd0bc08612a851db0d1bc325dd1f92b86850b11f77fea1765cbd08bedb"
+      "revision": "81f80f39de72342fbde183252104229802e7dede294cd0e0d8d4b32dfd413b5b"
     },
     {
       "path": "./core/random.js",

@@ -5,7 +5,7 @@ import { buildGallery } from './gallery.js';
 const CASTLE_ID = 'frozen-castle';
 const spawn = { x: 0, z: 54.3 };
 const returnSite = { x: 0, z: 58.67 };
-const hint = 'Visit Rapunzel and jump onto the observation platform to make her wave. Approach Snow White and the seven dwarfs to see them react. Find Cinderella’s glass slipper on the ballroom stairs. Approach the enchanted rose to wake Aurora. Move away to let her sleep again. Take the Glass Walkway for a view from above, or stop at a snack cart for a taste. Board Ariel’s shipwreck and approach the story displays in the five preview rooms.';
+const hint = 'Visit Rapunzel and jump onto the observation platform to make her wave. Approach Snow White and the seven dwarfs to see them react. Find Cinderella’s glass slipper on the ballroom stairs. Approach the enchanted rose to wake Aurora. Move away to let her sleep again. Take the stairs or the Adventure Wing lift to the Glass Walkway, or stop at a snack cart for a taste. Board Ariel’s shipwreck and open the treasure chest. Approach the story displays in the five preview rooms.';
 
 export const princessGallery = {
   id: 'princess-gallery',
@@ -19,7 +19,7 @@ export const princessGallery = {
   depth: GALLERY_DEPTH,
   spawn,
   load({ THREE, scene, viewmodel, camera, hud, signal, playCue = () => {},
-    reducedMotion = () => false, isPlayerGrounded = () => true,
+    reducedMotion = () => false, isPlayerGrounded = () => true, carryPlayer = () => {},
     isLevelComplete = () => false, completeLevel = () => {}, notify = () => {} }) {
     const document = hud?.ownerDocument;
     const obstacles = [];
@@ -36,11 +36,12 @@ export const princessGallery = {
       }
       people.reset();
       carts.reset();
+      lift.reset();
       for (const visit of exhibitVisits) visit.reset?.();
     }
     const isActive = () => !released && !signal?.aborted;
-    const { exhibitVisits, ceiling, walkway, people, carts } = buildGallery(THREE, scene, document, obstacles, {
-      viewmodel, camera, playCue, reducedMotion, isActive,
+    const { exhibitVisits, ceiling, walkway, lift, people, carts } = buildGallery(THREE, scene, document, obstacles, {
+      viewmodel, camera, playCue, reducedMotion, isActive, carryPlayer,
     });
     const setReturnGlow = buildRoyalGateway(THREE, scene, document, obstacles, {
       ...returnSite, yaw: Math.PI, title: 'Return to Frozen Castle',
@@ -57,12 +58,14 @@ export const princessGallery = {
         act({ travel, heardCue }) {
           if (this.active) travel(CASTLE_ID, heardCue, princessGallery.id);
         },
-      }, ...carts.interactions],
+      }, ...lift.interactions, ...carts.interactions, ...exhibitVisits.flatMap(visit => visit.interactions ?? [])],
       missionStatus: { missions, hint },
-      getCeilingHeight: () => ceiling - 0.4,
-      blocksGround: walkway.blocksGround,
+      getCeilingHeight: (x, z) => lift.getCeilingHeight(x, z) ?? ceiling - 0.4,
+      blocksGround(x, z, radius, feet) {
+        return lift.blocksGround(x, z, radius, feet) || walkway.blocksGround(x, z, radius, feet);
+      },
       getGroundHeight(x, z, feet) {
-        const upper = walkway.getGroundHeight(x, z, feet);
+        const upper = lift.getGroundHeight(x, z, feet) ?? walkway.getGroundHeight(x, z, feet);
         if (upper !== undefined) return upper;
         for (const visit of exhibitVisits) {
           const ground = visit.getGroundHeight?.(x, z);
@@ -74,6 +77,7 @@ export const princessGallery = {
         if (!isActive() || !player) return;
         const grounded = isPlayerGrounded();
         const still = reducedMotion();
+        lift.update(dt, player);
         people.update(dt, still, player);
         carts.update(dt, still);
         for (const visit of exhibitVisits) {

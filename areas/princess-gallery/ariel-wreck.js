@@ -140,6 +140,7 @@ export function buildShipwreck({ THREE, document, room, parts, exhibit, obstacle
     return Math.abs(x) <= halfWidth && z >= rear && z <= front;
   }
   return {
+    ship,
     toLocal: local.toLocal,
     onDeck,
     surface(x, z) {

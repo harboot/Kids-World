@@ -121,6 +121,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
       hud: game, isPlaying: playerInput, playCue: audio.playCue, notify: missionHud.notify,
       reducedMotion: () => motionPreference.matches,
       isPlayerGrounded: () => player.grounded,
+      carryPlayer: player.carryVertically,
       isLevelComplete: progress.has,
       completeLevel(id) {
         progress.complete(id);

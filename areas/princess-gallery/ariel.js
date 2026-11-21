@@ -2,14 +2,15 @@ import { addGroup } from '../../core/geometry.js';
 import { EYE_HEIGHT } from '../../core/player.js';
 import { buildArielCharacter } from './ariel-character.js';
 import { buildCoralReef, buildReefFish, buildSeascape, buildUnderseaKingdom } from './ariel-reef.js';
+import { buildArielTreasure } from './ariel-treasure.js';
 import { buildShipwreck, wreckDeck } from './ariel-wreck.js';
 import { spaceTransform } from './parts.js';
 
 const initialPhase = -Math.PI * .32;
-const orbitRadius = 3.65;
+const orbit = { centerZ: -.70, radiusX: 4.55, radiusZ: 5.33, speed: .37 };
 
 export function buildAriel(context) {
-  const { THREE, bay, exhibit, parts, reducedMotion = () => false } = context;
+  const { THREE, bay, exhibit, parts, reducedMotion, camera, isActive } = context;
   const { matte } = parts;
   const { clamp, smoothstep } = THREE.MathUtils;
   const room = addGroup(THREE, bay, 'Ariel undersea kingdom');
@@ -21,42 +22,42 @@ export function buildAriel(context) {
     aqua: matte(0x49b6ad, { emissive: 0x267a84, emissiveIntensity: .20 }),
     deep: matte(0x12435c),
   };
-  const scene = { ...context, room, palette };
-  buildSeascape(scene);
-  buildUnderseaKingdom(scene);
-  buildCoralReef(scene);
-  const wreck = buildShipwreck(scene);
-  const fish = buildReefFish(scene);
-  const { actor, pose } = buildArielCharacter(THREE, room, parts);
+  const roomContext = { ...context, room, palette };
+  buildSeascape(roomContext);
+  buildUnderseaKingdom(roomContext);
+  buildCoralReef(roomContext);
+  const treasure = buildArielTreasure({ ...roomContext, camera, isActive, reducedMotion });
+  const wreck = buildShipwreck(roomContext);
+  const fish = buildReefFish(roomContext);
+  const { actor, pose } = buildArielCharacter(THREE, wreck.ship, parts);
   const { toLocal } = spaceTransform(exhibit);
   const roomPoint = [0, 0];
   const shipPoint = [0, 0];
   let blend = 0;
   let phase = initialPhase;
   let elapsed = 0;
-  let centerX = 0;
-  let centerZ = 0;
 
   function reset() {
     blend = elapsed = 0;
     phase = initialPhase;
-    centerX = wreckDeck.position.x;
-    centerZ = wreckDeck.position.z;
-    actor.position.set(centerX, 0, centerZ);
+    actor.position.set(0, 0, 0);
     actor.rotation.set(0, 0, 0);
     actor.visible = false;
     pose(0, reducedMotion());
     fish.reset();
+    treasure.reset();
   }
   reset();
   return {
     reset,
+    interactions: [treasure.interaction],
     getGroundHeight(x, z) {
       toLocal(x, z, roomPoint);
       wreck.toLocal(roomPoint[0], roomPoint[1], shipPoint);
       return wreck.surface(shipPoint[0], shipPoint[1]);
     },
     update(dt, player, grounded, still) {
+      treasure.update(dt, still);
       toLocal(player.x, player.z, roomPoint);
       const [x, z] = roomPoint;
       // Pause the schools out of view. The nearby walkway still has a view into the kingdom.
@@ -65,10 +66,6 @@ export function buildAriel(context) {
       const onDeck = grounded && wreck.onDeck(shipPoint[0], shipPoint[1]) &&
         Math.abs(player.y - EYE_HEIGHT - wreckDeck.height) < .12;
       if (!onDeck && blend === 0) return false;
-      if (onDeck) {
-        centerX = x;
-        centerZ = z;
-      }
       blend = still ? Number(onDeck) : clamp(blend + dt * (onDeck ? 1.37 : -1.80), 0, 1);
       actor.visible = blend > 0;
       if (!actor.visible) {
@@ -80,15 +77,15 @@ export function buildAriel(context) {
       if (still) phase = initialPhase;
       else {
         elapsed += dt;
-        phase = (phase + dt * .81) % (Math.PI * 2);
+        phase = (phase + dt * orbit.speed) % (Math.PI * 2);
       }
       const sin = Math.sin(phase), cos = Math.cos(phase);
-      const dx = orbitRadius * cos, dz = orbitRadius * .90 * sin;
+      const dx = orbit.radiusX * cos, dz = orbit.radiusZ * sin;
       const rise = smoothstep(blend, 0, 1);
       const bob = still ? 0 : Math.sin(elapsed * 2.57) * .14;
-      actor.position.set(centerX + dx, wreckDeck.height - 1.03 + rise * 2.02 + bob, centerZ + dz);
-      actor.rotation.y = still ? Math.atan2(-dx, -dz) : Math.atan2(-sin, cos * .90) - .66;
-      pose(elapsed, still);
+      actor.position.set(dx, wreckDeck.height - 1.03 + rise * 2.02 + bob, orbit.centerZ + dz);
+      actor.rotation.y = still ? Math.atan2(-dx, -dz) : Math.atan2(-orbit.radiusX * sin, orbit.radiusZ * cos) - .66;
+      pose(elapsed * .85, still);
       return onDeck && blend >= .7;
     },
   };

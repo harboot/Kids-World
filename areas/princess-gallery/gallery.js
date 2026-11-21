@@ -12,6 +12,7 @@ import { buildPromenadeFurniture } from './promenade-furniture.js';
 import { buildPublicSpaces } from './public-spaces.js';
 import { buildScenicBackdrops, buildScenicEdges, canopyMaterial, paintScenicGround } from './scenic-perimeter.js';
 import { buildGalleryPeople } from './visitors.js';
+import { buildWalkwayLift, walkwayLiftSite } from './walkway-lift.js';
 import { buildWalkway, WALKWAY_HEIGHT, walkwayStairs } from './walkway.js';
 
 const halfWidth = GALLERY_WIDTH / 2;
@@ -91,6 +92,8 @@ function galleryFloor(THREE, document, parts, parent) {
       route(link, 7.1, wings[wing].path);
     }
     for (const stair of walkwayStairs) route(stair.floorApproach, 3.9, '#7793a3');
+    const lift = walkwayLiftSite;
+    route([lift.entry, [lift.x + lift.halfDepth, lift.z]], 3.65, '#7793a3');
     route(lobby, 9.2, '#b7808e');
     for (const [rx, rz, color] of [[5.0, 3.4, '#765071'], [4.81, 3.22, '#d0a361'], [4.54, 2.96, '#f2dfcb']]) {
       ink.fillStyle = color;
@@ -367,16 +370,17 @@ export function buildGallery(THREE, scene, document, obstacles, services) {
 
     batch(local, bay);
     const context = { THREE, document, bay, exhibit, parts, obstacles, interiorFace, outline,
-      reducedMotion: services.reducedMotion };
+      reducedMotion: services.reducedMotion, camera: services.camera, isActive: services.isActive };
     const visit = build ? build(context) : buildPreviewDisplay({ ...context, palette: { gold, ivory, plum } });
     exhibitVisits.push({ id, ...visit });
   }
   buildScenicEdges({ THREE, parent: shell, parts, obstacles });
   const walkway = buildWalkway({ THREE, document, parent: shell, parts, exhibits, ceiling });
+  const lift = buildWalkwayLift({ THREE, document, parent: shell, parts, height: WALKWAY_HEIGHT, ...services });
   buildPublicSpaces({ THREE, parent: shell, parts, colors, obstacles });
   buildPromenadeFurniture({ THREE, parent: shell, parts, colors, obstacles });
   const carts = buildConcessions({ THREE, document, parent: shell, parts, obstacles, ...services });
   buildHangingDecor({ THREE, parent: shell, parts, colors, ceiling });
   const people = buildGalleryPeople({ THREE, parent: shell, parts, obstacles, vendors: carts.vendors });
-  return { exhibitVisits, ceiling, walkway, people, carts };
+  return { exhibitVisits, ceiling, walkway, lift, people, carts };
 }

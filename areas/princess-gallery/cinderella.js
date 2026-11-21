@@ -547,7 +547,7 @@ export function buildCinderella({ THREE, document, bay, exhibit, parts, obstacle
   const site = buildGrandStaircase(THREE, details, parts, palette, exhibit, obstacles);
   buildClock(THREE, document, details, parts, palette);
   batch(details, ballroom);
-  const character = buildCinderellaCharacter(THREE, ballroom, parts, exhibit, obstacles);
+  const character = buildCinderellaCharacter(THREE, ballroom, parts, exhibit, obstacles, landingHeight);
   addRoundSolid(obstacles, ...toWorld(site.x, site.z), .39, site.y + 1.36);
   const slipper = buildGlassSlipper(THREE, ballroom, parts, palette, site);
   const local = [0, 0];

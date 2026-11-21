@@ -156,37 +156,6 @@ export function buildUnderseaKingdom({ THREE, room, parts, exhibit, obstacles, p
   addSolid(obstacles, ...toWorld(0, -8.06), 11.80, 3.58, 8.5, exhibit.rotation);
 }
 
-function chest(THREE, room, parts, palette) {
-  const { part, batch, matte } = parts;
-  const { gold, teal, ivory, deep } = palette;
-  const wood = matte(0x785344);
-  const openChest = addGroup(THREE, room, 'Ariel treasure chest', 5.29, 0, -2.72, -.38);
-  const details = new THREE.Group();
-  part(details, 'box', wood, 0, .37, 0, 1.64, .64, 1.02);
-  part(details, 'box', deep, 0, .70, 0, 1.42, .045, .85);
-  for (const x of [-.69, .69]) {
-    part(details, 'box', gold, x, .37, .519, .125, .65, .05);
-    part(details, 'box', gold, x, .67, 0, .137, .06, 1.065);
-  }
-  const lid = addGroup(THREE, details, '', 0, .70, -.50);
-  lid.rotation.x = -1.08;
-  part(lid, 'box', wood, 0, 0, .50, 1.66, .21, 1.04);
-  part(lid, 'box', teal, 0, -.113, .56, 1.37, .04, .79);
-  for (const x of [-.59, .59]) part(lid, 'box', gold, x, .119, .52, .10, .033, 1.02);
-  part(details, 'box', gold, 0, .55, .539, .206, .24, .061);
-  part(details, 'gem', deep, 0, .55, .577, .039, .068, .024);
-  const random = seededRandom(142);
-  for (let i = 0; i < 25; i++) {
-    part(details, 'drum', gold, (random() - .5) * 1.23, .733 + random() * .066, (random() - .5) * .74,
-      .086, .019, .086).rotation.z = random() * .56 - .28;
-  }
-  for (const [x, z, color] of [[-.43, .13, ivory], [.31, .06, teal], [0, -.14, ivory]]) {
-    part(details, 'gem', color, x, .84, z, .14, .22, .13).rotation.z = x;
-  }
-  batch(details, openChest);
-  return openChest;
-}
-
 export function buildCoralReef({ THREE, room, parts, exhibit, obstacles, palette }) {
   const { part, beam, batch, matte } = parts;
   const { teal, ivory, rock } = palette;
@@ -251,10 +220,6 @@ export function buildCoralReef({ THREE, room, parts, exhibit, obstacles, palette
     part(details, 'sphere', coral[0], x, .041, z, scale * .24, .077, scale * .24);
   }
   batch(details, reef);
-
-  const treasure = chest(THREE, room, parts, palette);
-  addSolid(obstacles, ...toWorld(treasure.position.x, treasure.position.z),
-    1.85, 1.28, 1.72, exhibit.rotation + treasure.rotation.y);
 }
 
 export function buildReefFish({ THREE, room, parts }) {
