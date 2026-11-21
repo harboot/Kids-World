@@ -1,4 +1,4 @@
-import { insideClearance } from '../../core/interaction-clearance.js';
+import { insideClearance } from './clearance.js';
 import { SURFACE_GAP } from '../../core/geometry.js';
 
 const balcony = { x: -23.1, z: -12.5, width: 5.8, depth: 1.92 };

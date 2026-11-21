@@ -3,9 +3,11 @@ export const releaseTag = /^[a-f0-9]{64}-[a-f0-9-]{36}$/;
 const digest = /^[a-f0-9]{64}$/;
 const safePath = /^\.\/(?:[a-zA-Z0-9_-][a-zA-Z0-9_.-]*\/)*[a-zA-Z0-9_-][a-zA-Z0-9_.-]*$/;
 const statsPaths = ['./stats.html', './area-stats.json'];
+const snowEntry = './areas/snow-basin/index.js';
+const previousSnowEntry = './areas/snow-basin.js';
 const requiredPaths = [
   './index.html', './style.css', './game.js', './snow.html',
-  './core/game.js', './areas/flower-garden/index.js', './areas/snow-basin.js',
+  './core/game.js', './areas/flower-garden/index.js',
   './manifest.webmanifest', './assets/icons/icon-192.png', './assets/icons/icon-512.png',
   './pwa/bootstrap.js', './pwa/loading.css', './pwa/release.js', './pwa/cache.js', './pwa/worker.js',
   './vendor/three.module.min.js', './vendor/three.core.min.js', './vendor/three.LICENSE',
@@ -20,7 +22,7 @@ export function versionFor(files) {
   return sha256(new TextEncoder().encode(JSON.stringify(files)));
 }
 
-export async function validateManifest(manifest) {
+export async function validateManifest(manifest, { allowPreviousSnowEntry = false } = {}) {
   if (!manifest || !digest.test(manifest.version) || !Array.isArray(manifest.files)) {
     throw new Error('Invalid release manifest');
   }
@@ -37,9 +39,12 @@ export async function validateManifest(manifest) {
     previous = file.path;
   }
 
-  // Keep releases that predate the dashboard usable as an offline fallback.
+  // Keep releases that predate the Snow Basin move or the dashboard usable offline.
+  const validSnowEntry = paths.has(snowEntry)
+    ? !paths.has(previousSnowEntry)
+    : allowPreviousSnowEntry && paths.has(previousSnowEntry);
   const missingStatsFile = statsPaths.some(path => paths.has(path)) && statsPaths.some(path => !paths.has(path));
-  if (requiredPaths.some(path => !paths.has(path)) || missingStatsFile ||
+  if (requiredPaths.some(path => !paths.has(path)) || !validSnowEntry || missingStatsFile ||
       await versionFor(manifest.files) !== manifest.version) {
     throw new Error('Release manifest is incomplete or its fingerprint does not match');
   }

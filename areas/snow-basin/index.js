@@ -1,6 +1,7 @@
-import { CHOPS, CHOP_COOLDOWN, FALL_DURATION, SNOWMAN_COUNT, createSnowActivity, snowMissionsComplete } from './snow-basin/activity.js';
-import { addAxe, addIceSculpture, addChopTree, addFrozenKey, addSnowPlay, showSnowmen } from './snow-basin/props.js';
-import { addWinterScenery } from './snow-basin/scenery.js';
+import { CHOPS, CHOP_COOLDOWN, FALL_DURATION, SNOWMAN_COUNT, createSnowActivity, snowMissionsComplete } from './activity.js';
+import { addAxe, addIceSculpture, addChopTree, addFrozenKey, addSnowPlay, showSnowmen } from './props.js';
+import { addWinterScenery } from './scenery.js';
+import { music } from './music.js';
 
 const axeSite = { x: 0.9, z: 5.9 };
 const treeSite = { x: 7.5, z: -1.85 };
@@ -34,7 +35,7 @@ export const snowBasin = {
   description: 'Throw snowballs at three snowmen and chop the pine from the pond side. Find the Frozen Key after the tree falls.',
   canvasLabel: '3D snow basin',
   themeColor: '#e2f0f5',
-  music: 'snow',
+  music,
   width: 32,
   depth: 30,
   spawn: { x: 0, z: 9.4 },

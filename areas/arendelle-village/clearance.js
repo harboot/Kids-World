@@ -1,4 +1,4 @@
-import { SURFACE_GAP } from './geometry.js';
+import { SURFACE_GAP } from '../../core/geometry.js';
 
 export function insideClearance({ x, z, width, depth }, px, pz) {
   return Math.abs(px - x) <= width / 2 && Math.abs(pz - z) <= depth / 2;

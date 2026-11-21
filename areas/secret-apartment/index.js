@@ -8,6 +8,7 @@ import { buildFloor17 } from './floor17.js';
 import { createArchitecture } from './geometry.js';
 import { createApartmentMission, travelCue } from './missions.js';
 import { TERRACE } from './pool.js';
+import { music } from './music.js';
 
 const PLACEMENT = {
   basement: { x: -88, doorZ: -9.75 },
@@ -21,6 +22,7 @@ export const secretApartment = {
   description: 'Explore the underground parking, the pool terrace on Floor 8, and Unit 17E.',
   canvasLabel: '3D apartment building with underground parking, pool terrace and Unit 17E',
   themeColor: '#e5dac6',
+  music,
   width: 220,
   depth: 84,
   spawn: { x: PLACEMENT.basement.x + 0.24, z: 9.5, yaw: -0.12 },

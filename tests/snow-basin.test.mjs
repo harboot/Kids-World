@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import * as THREE from '../vendor/three.module.min.js';
-import { snowBasin } from '../areas/snow-basin.js';
+import { snowBasin } from '../areas/snow-basin/index.js';
 import { CHOP_COOLDOWN, CHOPS, FALL_DURATION, SNOWMAN_COUNT, sweepSphere, createSnowActivity, snowMissionsComplete } from '../areas/snow-basin/activity.js';
 import { nearestInteraction } from '../core/interactions.js';
 import { walkElevation } from '../core/movement.js';

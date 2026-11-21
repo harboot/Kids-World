@@ -12,7 +12,7 @@ export function createReleaseCache({ scope, storage = caches, fetchAsset = fetch
     try {
       const data = await response.json();
       const tag = cacheName.slice(prefix.length);
-      await validateManifest(data);
+      await validateManifest(data, { allowPreviousSnowEntry: true });
       if (!tag.startsWith(data.version + '-') || !Number.isFinite(data.completedAt)) return null;
       return { ...data, tag, cacheName };
     } catch {

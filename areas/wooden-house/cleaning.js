@@ -1,4 +1,4 @@
-import { addClearanceOutline, clearanceMaterial, insideClearance } from '../../core/interaction-clearance.js';
+import { addClearanceOutline, clearanceMaterial, insideClearance } from './clearance.js';
 
 const cues = {
   bed: [

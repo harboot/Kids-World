@@ -2,13 +2,14 @@
 
 ## Create and test an area
 
-1. Add a folder or module under `areas/` and export its definition. Build the terrain, objects, collisions, interactions, and mission rules inside its synchronous `load(context)` function.
+1. Add an area folder under `areas/` and export its definition from `index.js`, as in `areas/snow-basin/index.js`. Build the terrain, objects, collisions, interactions, and mission rules inside its synchronous `load(context)` function.
 2. Return the loaded area's obstacles and structured `missionStatus`, plus the interactions and lifecycle hooks the area uses. Implement `reset()` for any state that changes during a visit.
 3. Import the definition in `game.js` and register it under a stable ID. Use `publicArea(definition, folder)` for a public area or set `show: false` for a link-only area. The registry key is the area ID used by the picker, direct links, and completion records.
 4. Open `?area=<id>` locally to play the area. Add `&view=drone` to inspect surfaces and copy world coordinates. Test reset, the area picker or direct entry, and each mission's completion conditions.
 5. Add regression tests and update the offline release.
 
 ```sh
+node scripts/generate-area-stats.mjs
 node scripts/generate-pwa-manifest.mjs
 node scripts/generate-pwa-manifest.mjs --check
 node --test
@@ -27,7 +28,17 @@ The picker lists all public areas from the start and marks areas whose missions 
 | `load(context)` | Constructs the visit and returns its runtime interface |
 | `show` | Explicit boolean set on the entry in `game.js` |
 
-`music` can name an existing track, such as `'garden'`. `loadingMessage` can override the default loading text. Set or increment `completionRevision` when a changed mission list requires a new completion badge.
+`loadingMessage` can override the default loading text. Set or increment `completionRevision` when a changed mission list requires a new completion badge.
+
+### Background music
+
+Export the area's original score as `music` from its own `music.js` and pass that object in the area definition. The audio engine renders and caches the loop on demand after audio unlock.
+
+- `beat` is seconds per beat. `beatsPerBar` defaults to four.
+- Each bar contains a `chord` of MIDI pitches and a `melody` of `[beatOffset, midiPitch]` pairs.
+- Optional `accompaniment` parts select zero-based chord `voices`. Use `offset` for the first onset and `spread` for the interval between voices, both in beats.
+- Optional `melody` parts play each bar's melody, and optional `rhythm` parts repeat their own `notes` pairs in each bar. Parts can specify an `offset` in beats and a `transpose` in semitones.
+- Each part sets a `duration` in beats and a gain `level`. Optional `attack` and `delay` are in seconds, `wave` defaults to `'sine'`, and `endPitch` bends the oscillator toward a MIDI pitch. See `areas/arendelle-village/music.js` for a compact example.
 
 ### Loaded visit
 

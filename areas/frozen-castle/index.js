@@ -2,6 +2,7 @@ import { createCastleActivities } from './activities.js';
 import { buildDecorations } from './decorations.js';
 import { buildPalace, createPalaceBuilder } from './palace.js';
 import { blocksSummitEdge, buildSummit, SUMMIT_SIZE } from './summit.js';
+import { music } from './music.js';
 
 const ID = 'frozen-castle';
 const completionCue = [
@@ -18,7 +19,7 @@ export const frozenCastle = {
   description: 'Explore the palace and its mountain terrace. Activate four corner crystals, build an ice staircase and play a crystal melody.',
   canvasLabel: '3D crystal palace and mountaintop terrace',
   themeColor: '#dce9fb',
-  music: ID,
+  music,
   width: SUMMIT_SIZE,
   depth: SUMMIT_SIZE,
   spawn: { x: 0, z: 11.17 },
