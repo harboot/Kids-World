@@ -102,23 +102,31 @@ self.addEventListener('message', event => {
   }));
 });
 
-async function releasedAsset(relative) {
+async function releasedAsset(relative, search) {
   const path = relative.slice(releaseRoute.length);
   const separator = path.indexOf('/');
   const tag = path.slice(0, separator);
   const file = path.slice(separator + 1);
-  if (separator < 0 || !releaseTag.test(tag) || !file || file === 'sw.js') {
+  if (separator < 0 || !releaseTag.test(tag) || !file || file === 'sw.js' || search) {
     return new Response('Game file not found', { status: 404 });
   }
   const url = new URL(file, scope);
   if (!url.href.startsWith(scope.href) || url.pathname !== scope.pathname + file) {
     return new Response('Game file not found', { status: 404 });
   }
-  const cached = await releases.read(tag, url);
-  if (!cached) return new Response('Game file unavailable', { status: 503 });
+  const { response, status } = await releases.readAsset(tag, './' + file).catch(error => {
+    console.warn('Kids World could not read a release file.', error);
+    return { status: 503 };
+  });
+  if (!response) {
+    const message = status === 409 ? 'Game file changed. Reload to check for updates.' : 'Game file unavailable';
+    return new Response(message, { status, headers: { 'Cache-Control': 'no-store' } });
+  }
   // Use the versioned request URL as the base for relative module imports.
-  return new Response(cached.body, {
-    headers: { 'Content-Type': cached.headers.get('Content-Type') ?? 'application/octet-stream' },
+  const contentType = /\.[cm]?js$/i.test(file) ? 'text/javascript; charset=utf-8'
+    : response.headers.get('Content-Type') ?? 'application/octet-stream';
+  return new Response(response.body, {
+    headers: { 'Content-Type': contentType },
   });
 }
 
@@ -211,7 +219,7 @@ self.addEventListener('fetch', event => {
   const url = new URL(request.url);
   if (url.origin !== scope.origin || !url.pathname.startsWith(scope.pathname)) return;
   const relative = url.pathname.slice(scope.pathname.length);
-  if (relative.startsWith(releaseRoute)) event.respondWith(releasedAsset(relative));
+  if (relative.startsWith(releaseRoute)) event.respondWith(releasedAsset(relative, url.search));
   else if (request.mode === 'navigate' && documents.has(relative)) {
     event.respondWith(relative === 'stats.html' ? navigateStats(event, url, relative) : navigate(request, url, relative));
   } else if (publicAssets.has(relative)) {

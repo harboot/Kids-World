@@ -144,20 +144,21 @@ function registryEntry(id, value, tokens) {
   if (value?.length === 2 && value[0] === 'publicArea' && value[1]?.open === '(') {
     const [name, path, loader, ...rest] = split(value[1].items, ',');
     const folder = stringLiteral(path?.[0]);
-    if (name?.length === 1 && path?.length === 1 && folder && /^[\w-]+$/.test(folder) && !rest.length) {
+    if (name?.length && path?.length === 1 && folder && /^[\w-]+$/.test(folder) && !rest.length) {
       return {
-        name: name[0], folder: areaRoot + folder, visibility: publicVisibility(tokens, 'game.js'),
+        name, folder: areaRoot + folder, visibility: publicVisibility(tokens, 'game.js'),
         entryPath: loader && modulePath(loader, id),
       };
     }
   }
   const items = value?.[0]?.items;
-  if (value?.length === 1 && value[0]?.open === '{' && items[0] === '...' && items[2] === ',') {
-    const properties = fields({ open: '{', items: items.slice(3) }, `game.js (${id})`);
+  const comma = items?.indexOf(',');
+  if (value?.length === 1 && value[0]?.open === '{' && items[0] === '...' && comma > 1) {
+    const properties = fields({ open: '{', items: items.slice(comma + 1) }, `game.js (${id})`);
     const visibility = properties.get('show');
     if (visibility?.length === 1 && ['true', 'false'].includes(visibility[0])) {
       return {
-        name: items[1], visibility: visibility[0] === 'true' ? 'Public' : 'Hidden', properties,
+        name: items.slice(1, comma), visibility: visibility[0] === 'true' ? 'Public' : 'Hidden', properties,
         entryPath: properties.has('loadModule') ? modulePath(properties.get('loadModule'), id) : undefined,
       };
     }
@@ -241,7 +242,7 @@ async function fileStats(root, paths) {
   return { ...stats, imageFormats: [...formats].sort() };
 }
 
-export async function generateAreaStats(root) {
+export async function readAreaSources(root) {
   const modules = new Map();
   async function readModule(file) {
     if (!modules.has(file)) {
@@ -258,11 +259,16 @@ export async function generateAreaStats(root) {
   const areas = [];
   for (const id of [...registry.keys()].sort()) {
     const { name, folder, visibility, properties, entryPath } = registryEntry(id, registry.get(id), tokens);
-    const imported = bindings.imports.get(name);
-    const metadataPath = localFile('game.js', imported?.specifier);
+    const imported = bindings.imports.get(name[0]);
+    const catalogKey = name[1]?.open === '[' && name[1].items.length === 1 && stringLiteral(name[1].items[0]);
+    const fromCatalog = imported?.specifier === './area-catalog.js' && imported.name === 'areaMetadata';
+    const metadataPath = fromCatalog && entryPath && name.length === 2 && catalogKey === id
+      ? posix.join(posix.dirname(entryPath), 'metadata.js')
+      : name.length === 1 && localFile('game.js', imported?.specifier);
     if (!metadataPath) throw new Error(`Expected an area import for "${id}" in game.js`);
     const entry = entryPath ?? metadataPath;
-    const metadata = fields(definition((await readModule(metadataPath)).bindings, imported.name, metadataPath), metadataPath);
+    const exportName = fromCatalog ? 'metadata' : imported.name;
+    const metadata = fields(definition((await readModule(metadataPath)).bindings, exportName, metadataPath), metadataPath);
     const [title, rawWidth, rawDepth] = await Promise.all(
       ['title', 'width', 'depth'].map(field => properties?.has(field)
         ? resolveValue(properties.get(field), 'game.js', readModule)
@@ -273,8 +279,16 @@ export async function generateAreaStats(root) {
     const depth = Number.isFinite(rawDepth) && rawDepth > 0 ? rawDepth : null;
     const mapArea = width !== null && depth !== null && Number.isFinite(width * depth) ? width * depth : null;
     const directory = folder ?? (posix.dirname(entry) === 'areas' ? entry.slice(0, -extname(entry).length) : posix.dirname(entry));
+    areas.push({ id, name: title, visibility, width, depth, mapArea, entry, directory, metadataPath });
+  }
+  return areas;
+}
+
+export async function generateAreaStats(root) {
+  const areas = [];
+  for (const { entry, directory, metadataPath, ...area } of await readAreaSources(root)) {
     const paths = new Set([entry, metadataPath, ...await folderFiles(root, directory)]);
-    areas.push({ id, name: title, visibility, width, depth, mapArea, ...await fileStats(root, paths) });
+    areas.push({ ...area, ...await fileStats(root, paths) });
   }
   const summary = {
     totalAreas: areas.length, publicAreas: 0, hiddenAreas: 0, totalFiles: 0,

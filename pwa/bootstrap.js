@@ -106,7 +106,7 @@ async function prepareGame(base, message) {
   game.append(update);
   document.body.append(game);
   const { startGame } = await withTimeout(import(new URL('game.js', base)), 15000, 'Game modules timed out');
-  await withTimeout(startGame(game), 15000, 'Game initialization timed out');
+  await withTimeout(startGame(game), 45000, 'Game initialization timed out');
   if (game.dataset.state !== 'menu') {
     throw new Error(game.querySelector('#menu-message').textContent);
   }
@@ -176,8 +176,10 @@ async function start() {
     await boot();
   } catch (error) {
     console.warn('Kids World could not start.', error);
-    status.textContent = navigator.onLine ? 'Your adventure could not open. Try again!' :
-      'Connect to the internet to download your adventure.';
+    status.textContent = game?.dataset.state === 'error' ? game.querySelector('#menu-message').textContent
+      : navigator.onLine ? 'Your adventure could not open. Try again!' :
+        'Connect to the internet to download your adventure.';
+    retry.textContent = game ? 'Reload game' : 'Try again';
     progressPanel.hidden = true;
     retry.hidden = false;
   } finally {

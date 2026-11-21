@@ -25,6 +25,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: '22'
+      - run: npm ci
       - run: node scripts/generate-area-stats.mjs
       - run: node scripts/generate-pwa-manifest.mjs
       - run: node scripts/generate-pwa-manifest.mjs --check
@@ -43,7 +44,7 @@ jobs:
             exit 0
           fi
 
-          git add -- area-stats.json version.json sw.js
+          git add -- area-catalog.js area-stats.json version.json sw.js
           if ! git diff --cached --quiet; then
             git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
               commit -m 'Update generated area statistics and PWA release'

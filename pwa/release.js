@@ -7,7 +7,7 @@ const snowEntry = './areas/snow-basin/index.js';
 const previousSnowEntry = './areas/snow-basin.js';
 const requiredPaths = [
   './index.html', './style.css', './game.js', './snow.html',
-  './core/game.js', './areas/flower-garden/index.js',
+  './core/game.js',
   './manifest.webmanifest', './assets/icons/icon-192.png', './assets/icons/icon-512.png',
   './pwa/bootstrap.js', './pwa/loading.css', './pwa/release.js', './pwa/cache.js', './pwa/worker.js',
   './vendor/three.module.min.js', './vendor/three.core.min.js', './vendor/three.LICENSE',
@@ -18,34 +18,40 @@ export async function sha256(bytes) {
   return Array.from(new Uint8Array(hash), byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
-export function versionFor(files) {
-  return sha256(new TextEncoder().encode(JSON.stringify(files)));
+export function versionFor(files, onDemandFiles) {
+  const contents = onDemandFiles === undefined ? files : { files, onDemandFiles };
+  return sha256(new TextEncoder().encode(JSON.stringify(contents)));
 }
 
 export async function validateManifest(manifest, { allowPreviousSnowEntry = false } = {}) {
-  if (!manifest || !digest.test(manifest.version) || !Array.isArray(manifest.files)) {
+  if (!manifest || typeof manifest.version !== 'string' || !digest.test(manifest.version) || !Array.isArray(manifest.files) ||
+      (manifest.onDemandFiles !== undefined && !Array.isArray(manifest.onDemandFiles))) {
     throw new Error('Invalid release manifest');
   }
 
-  let previous = '';
-  const paths = new Set();
-  for (const file of manifest.files) {
-    if (!file || typeof file.path !== 'string' || !safePath.test(file.path) ||
-        file.path <= previous || typeof file.revision !== 'string' || !digest.test(file.revision) ||
-        Object.keys(file).length !== 2) {
-      throw new Error('Invalid release file entry');
+  const seen = new Set();
+  for (const files of [manifest.files, manifest.onDemandFiles ?? []]) {
+    let previous = '';
+    for (const file of files) {
+      if (!file || typeof file.path !== 'string' || !safePath.test(file.path) || seen.has(file.path) ||
+          file.path <= previous || typeof file.revision !== 'string' || !digest.test(file.revision) ||
+          Object.keys(file).length !== 2) {
+        throw new Error('Invalid release file entry');
+      }
+      seen.add(file.path);
+      previous = file.path;
     }
-    paths.add(file.path);
-    previous = file.path;
   }
 
-  // Keep releases that predate the Snow Basin move or the dashboard usable offline.
-  const validSnowEntry = paths.has(snowEntry)
-    ? !paths.has(previousSnowEntry)
-    : allowPreviousSnowEntry && paths.has(previousSnowEntry);
+  const paths = new Set(manifest.files.map(file => file.path));
+  // Older complete releases use their original area entry and fingerprint rules.
+  const legacy = manifest.onDemandFiles === undefined;
+  const validLegacyAreas = paths.has('./areas/flower-garden/index.js') &&
+    (paths.has(snowEntry) ? !paths.has(previousSnowEntry) : allowPreviousSnowEntry && paths.has(previousSnowEntry));
   const missingStatsFile = statsPaths.some(path => paths.has(path)) && statsPaths.some(path => !paths.has(path));
-  if (requiredPaths.some(path => !paths.has(path)) || !validSnowEntry || missingStatsFile ||
-      await versionFor(manifest.files) !== manifest.version) {
+  if (requiredPaths.some(path => !paths.has(path)) || missingStatsFile ||
+      (legacy ? !validLegacyAreas : !paths.has('./area-catalog.js') || !statsPaths.every(path => paths.has(path))) ||
+      await versionFor(manifest.files, manifest.onDemandFiles) !== manifest.version) {
     throw new Error('Release manifest is incomplete or its fingerprint does not match');
   }
   return manifest;

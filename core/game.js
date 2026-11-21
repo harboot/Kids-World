@@ -271,7 +271,10 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     } catch (error) {
       if (transition !== request) return;
       console.error(error);
-      const message = `${areas[id].title} could not load.`;
+      const { title, show } = areas[id];
+      const message = show ? `${title} could not load.` : navigator.onLine === false
+        ? `${title} is unavailable offline. Connect to the internet and reload.`
+        : `${title} is unavailable for this release. Reload to check for an update.`;
       if (worlds.active && worlds.active.id !== id) {
         const url = new URL(location.href);
         if (!request.historyMode && resolveArea(url, areas, defaultArea) !== worlds.active.id) {
@@ -280,7 +283,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
         menu(false);
         notice.textContent = `${message} You can keep exploring ${worlds.active.definition.title}.`;
       } else {
-        showError(`${message} Reload the page to try again.`);
+        showError(show ? `${message} Reload the page to try again.` : message);
       }
     } finally {
       if (transition === request) {

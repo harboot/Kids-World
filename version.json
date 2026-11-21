@@ -1,6 +1,10 @@
 {
-  "version": "3eff0f1a1fbdc079491bb94cc5c696ee9733f4fa897e9d37e159e270d4d055c2",
+  "version": "adfbb8d8d7a318d3fa3fb9f4a1236467eee78b1a2152ffb14caba655ae8ac795",
   "files": [
+    {
+      "path": "./area-catalog.js",
+      "revision": "bb98a42bf80a7c4ef0abad2cfedc56f10ff5238e2f868f8d3bcb89fdc9cbc760"
+    },
     {
       "path": "./area-stats.json",
       "revision": "bbc9915cd815b4fc0175ae8c5fadf003ce6adf31dd92f15e50b1d6c515dcfcd1"
@@ -398,62 +402,6 @@
       "revision": "d2b0ebbf3fb1339fadf4bc87ada7b05f5dc70e93a3470c8d8d29e61bc9061264"
     },
     {
-      "path": "./areas/secret-apartment/basement.js",
-      "revision": "342056807268d4fb22b18bb598b604f01b6b575a781da035d8a26f9cfc15b94c"
-    },
-    {
-      "path": "./areas/secret-apartment/car-door.js",
-      "revision": "dfab0982d524e2557169b61f75af22cbdd1e6c13b210a70cdd73d1f0bca336bc"
-    },
-    {
-      "path": "./areas/secret-apartment/cinematic.js",
-      "revision": "fb306ea1e97f3530df61c94da034f23e0241591fde823138b7122a6c991adccb"
-    },
-    {
-      "path": "./areas/secret-apartment/corridor.js",
-      "revision": "13374a63957185e2999363a3cd8c3c30dc1cd3fd29f552ffedb83f72e805bd71"
-    },
-    {
-      "path": "./areas/secret-apartment/elevator.js",
-      "revision": "ead6fadfc668334071f521633e7957aeb47266bb14af37b0307a426ab8242262"
-    },
-    {
-      "path": "./areas/secret-apartment/floor17.js",
-      "revision": "8c8e9da5ff1793272507590760f46f63c81619e4de29c1f24934a116e7e1f170"
-    },
-    {
-      "path": "./areas/secret-apartment/floor8.js",
-      "revision": "f49ac0d0f595ec679d920ffa24db81078f2ff693bb6ffb61e068b03667a8d963"
-    },
-    {
-      "path": "./areas/secret-apartment/geometry.js",
-      "revision": "0578607812d5280966abfee0c09dcd75388bdb6cc5cdcc81f55eaf28c150c260"
-    },
-    {
-      "path": "./areas/secret-apartment/index.js",
-      "revision": "d0f4488059e306f8c8829134e82636cdad585e9a2cca29ee09c88c788b7b5c41"
-    },
-    {
-      "path": "./areas/secret-apartment/metadata.js",
-      "revision": "72357204d573e64980ec00fafdb914318b2dd5a6c7206cf94302e16ec8f78982"
-    },
-    {
-      "path": "./areas/secret-apartment/missions.js",
-      "revision": "ebadac6632ee490831b97cc01a80357247be3bac20d83e08e5979c95b56ae541"
-    },
-    {
-      "path": "./areas/secret-apartment/music.js",
-      "revision": "9c6feaa5768b99c4931a1093e7b011c32f74586207ffd4d1b8cb496f4b421150"
-    },
-    {
-      "path": "./areas/secret-apartment/pool.js",
-      "revision": "04ee18e74453be76539b3aeda6a3e5cf28b368f83ace235f8bbbead1c8319235"
-    },
-    {
-      "path": "./areas/secret-apartment/unit17e.js",
-      "revision": "41c0400c669413d4e52e5eb3c404ae1b7e66d5c262e4a8c2324522a7ce5b1062"
-    },
-    {
       "path": "./areas/snow-basin/activity.js",
       "revision": "24c46f78d2b27e4f5f000898f8ecf702a921b515018371271c6138a163d86703"
     },
@@ -551,7 +499,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "45f51f67dcffdf4a397f39b284012bf6bf070f58d5566cf49b2456428462f50a"
+      "revision": "c52d350bbf3a9f71fd59fac9c7dfd58588b3a9698debf2111cbe8e5b3e822319"
     },
     {
       "path": "./core/geometry.js",
@@ -599,7 +547,7 @@
     },
     {
       "path": "./game.js",
-      "revision": "8bbaf4242c8596706620b33ffc80186c2982d5b597bdd5dd7bbc09b46ca6e360"
+      "revision": "4698848689b41991f5acbccd5d79b94c3702cafee6ed0a0334d89ff60faaa783"
     },
     {
       "path": "./index.html",
@@ -611,11 +559,11 @@
     },
     {
       "path": "./pwa/bootstrap.js",
-      "revision": "e9482a22de3814ee92aca4f2bf3cbeeffdac2ff6dd5bc20e3e96ae66ba5b76e8"
+      "revision": "985057cb95fb6992d03e9ced608775b7c5cc7e395436be31c1e525e309f3df34"
     },
     {
       "path": "./pwa/cache.js",
-      "revision": "c91b4ba708e852e9b748b94b032220fa5ff9c238064368816c832950e44406b9"
+      "revision": "05ac9cb1675121713528994be4cc7b1e2e6c4eb2b457674773994dae57ca3944"
     },
     {
       "path": "./pwa/loading.css",
@@ -623,11 +571,11 @@
     },
     {
       "path": "./pwa/release.js",
-      "revision": "54ba2cd5d93edb5bd8509d8dd4a7bacb6882804cf9972a0d035ca626c204c38d"
+      "revision": "d3f845629e35169c92a90536dbea856d171e2eccb9dd673741070c5d7e7167fd"
     },
     {
       "path": "./pwa/worker.js",
-      "revision": "b04dbd07cf273aa430106ebe3886d7b50569f57350357305f13c904fd9e04beb"
+      "revision": "1399d48705b8fce6217f9cf85a4673de05ab14a87e15abbd6ea92fc096e1b41e"
     },
     {
       "path": "./snow.html",
@@ -652,6 +600,64 @@
     {
       "path": "./vendor/three.module.min.js",
       "revision": "06552c54e4071fbc7305117aafe6765d92c5d2a2a83507d4f05b9bf4f3d4d463"
+    }
+  ],
+  "onDemandFiles": [
+    {
+      "path": "./areas/secret-apartment/basement.js",
+      "revision": "342056807268d4fb22b18bb598b604f01b6b575a781da035d8a26f9cfc15b94c"
+    },
+    {
+      "path": "./areas/secret-apartment/car-door.js",
+      "revision": "dfab0982d524e2557169b61f75af22cbdd1e6c13b210a70cdd73d1f0bca336bc"
+    },
+    {
+      "path": "./areas/secret-apartment/cinematic.js",
+      "revision": "fb306ea1e97f3530df61c94da034f23e0241591fde823138b7122a6c991adccb"
+    },
+    {
+      "path": "./areas/secret-apartment/corridor.js",
+      "revision": "13374a63957185e2999363a3cd8c3c30dc1cd3fd29f552ffedb83f72e805bd71"
+    },
+    {
+      "path": "./areas/secret-apartment/elevator.js",
+      "revision": "ead6fadfc668334071f521633e7957aeb47266bb14af37b0307a426ab8242262"
+    },
+    {
+      "path": "./areas/secret-apartment/floor17.js",
+      "revision": "8c8e9da5ff1793272507590760f46f63c81619e4de29c1f24934a116e7e1f170"
+    },
+    {
+      "path": "./areas/secret-apartment/floor8.js",
+      "revision": "f49ac0d0f595ec679d920ffa24db81078f2ff693bb6ffb61e068b03667a8d963"
+    },
+    {
+      "path": "./areas/secret-apartment/geometry.js",
+      "revision": "0578607812d5280966abfee0c09dcd75388bdb6cc5cdcc81f55eaf28c150c260"
+    },
+    {
+      "path": "./areas/secret-apartment/index.js",
+      "revision": "d0f4488059e306f8c8829134e82636cdad585e9a2cca29ee09c88c788b7b5c41"
+    },
+    {
+      "path": "./areas/secret-apartment/metadata.js",
+      "revision": "72357204d573e64980ec00fafdb914318b2dd5a6c7206cf94302e16ec8f78982"
+    },
+    {
+      "path": "./areas/secret-apartment/missions.js",
+      "revision": "ebadac6632ee490831b97cc01a80357247be3bac20d83e08e5979c95b56ae541"
+    },
+    {
+      "path": "./areas/secret-apartment/music.js",
+      "revision": "9c6feaa5768b99c4931a1093e7b011c32f74586207ffd4d1b8cb496f4b421150"
+    },
+    {
+      "path": "./areas/secret-apartment/pool.js",
+      "revision": "04ee18e74453be76539b3aeda6a3e5cf28b368f83ace235f8bbbead1c8319235"
+    },
+    {
+      "path": "./areas/secret-apartment/unit17e.js",
+      "revision": "41c0400c669413d4e52e5eb3c404ae1b7e66d5c262e4a8c2324522a7ce5b1062"
     }
   ]
 }

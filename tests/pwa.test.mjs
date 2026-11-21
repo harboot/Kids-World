@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { appendFile, cp, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
+import { fileURLToPath } from 'node:url';
 import { createReleaseCache } from '../pwa/cache.js';
 import { assetBase, sha256, validateManifest, versionFor } from '../pwa/release.js';
 
@@ -12,6 +13,7 @@ const scope = new URL('https://example.test/Kids-World/');
 const root = new URL('../', import.meta.url);
 const snowEntry = './areas/snow-basin/index.js';
 const previousSnowEntry = './areas/snow-basin.js';
+const hiddenEntry = './areas/secret-apartment/index.js';
 
 class MemoryStorage {
   caches = new Map();
@@ -31,14 +33,16 @@ class MemoryStorage {
   }
 }
 
-async function fixture(changes = {}, entries = manifest.files) {
+async function fixture(changes = {}, entries = manifest.files, optionalEntries = manifest.onDemandFiles) {
   const payloads = new Map();
-  const files = await Promise.all(entries.map(async ({ path }) => {
+  const hash = async ({ path }) => {
     const body = changes[path] ?? path;
     payloads.set(new URL(path, scope).href, body);
     return { path, revision: await sha256(new TextEncoder().encode(body)) };
-  }));
-  return { manifest: { version: await versionFor(files), files }, payloads };
+  };
+  const files = await Promise.all(entries.map(hash));
+  const onDemandFiles = optionalEntries === null ? undefined : await Promise.all(optionalEntries.map(hash));
+  return { manifest: { version: await versionFor(files, onDemandFiles), files, onDemandFiles }, payloads };
 }
 
 test('checked-in release matches every runtime file and the worker version changes with releases', () => {
@@ -46,18 +50,22 @@ test('checked-in release matches every runtime file and the worker version chang
     cwd: root,
   });
   const paths = manifest.files.map(file => file.path);
-  for (const path of ['./vendor/three.core.min.js', snowEntry, './stats.html', './area-stats.json']) {
+  for (const path of ['./vendor/three.core.min.js', snowEntry, './stats.html', './area-stats.json', './area-catalog.js']) {
     assert.ok(paths.includes(path), path);
   }
   for (const area of ['arendelle-village', 'flower-garden', 'frozen-castle', 'military-base',
-    'princess-gallery', 'secret-apartment', 'snow-basin', 'wooden-house']) {
-    for (const file of ['metadata.js', 'index.js', 'music.js']) {
+    'princess-gallery', 'snow-basin', 'wooden-house']) {
+    for (const file of ['metadata.js', 'index.js', 'music.js', area + '.jpg']) {
       const path = `./areas/${area}/${file}`;
       assert.ok(paths.includes(path), path);
     }
   }
   assert.ok(!paths.includes(previousSnowEntry));
   assert.ok(paths.every(path => !path.startsWith('./tests/')));
+  assert.ok(paths.every(path => !path.startsWith('./areas/secret-apartment/')));
+  for (const file of ['metadata.js', 'index.js', 'music.js']) {
+    assert.ok(manifest.onDemandFiles.some(({ path }) => path === './areas/secret-apartment/' + file));
+  }
 });
 
 test('the game entry and pinned Three.js resolve from local modules', async () => {
@@ -67,33 +75,73 @@ test('the game entry and pinned Three.js resolve from local modules', async () =
   assert.equal(REVISION, '179');
 });
 
-test('new area files invalidate release metadata; colocated development files do not', async t => {
+async function releaseWorkspace(t) {
   const fixtureRoot = await mkdtemp(join(tmpdir(), 'kids-world-release-'));
   t.after(() => rm(fixtureRoot, { recursive: true, force: true }));
-  const files = ['version.json', 'sw.js', 'scripts/generate-pwa-manifest.mjs', ...manifest.files.map(file => file.path)];
-  await Promise.all(files.map(file => cp(new URL(file, root), join(fixtureRoot, file))));
-  const area = join(fixtureRoot, 'areas', 'new-area');
-  await mkdir(join(area, 'tests'), { recursive: true });
-  await writeFile(join(area, 'README.md'), '# Area development notes');
-  await writeFile(join(area, 'tests', 'fixture.json'), '{}');
-  await writeFile(join(area, 'area.test.mjs'), '// Test');
+  const files = ['version.json', 'sw.js', 'package.json', 'scripts',
+    ...[...manifest.files, ...manifest.onDemandFiles].map(file => file.path)];
+  await Promise.all(files.map(file => cp(new URL(file, root), join(fixtureRoot, file), { recursive: true })));
+  await symlink(fileURLToPath(new URL('node_modules', root)), join(fixtureRoot, 'node_modules'), 'junction');
   function generate(...args) {
     return execFileSync(process.execPath, ['scripts/generate-pwa-manifest.mjs', ...args], {
       cwd: fixtureRoot, stdio: 'pipe',
     });
   }
+  return { fixtureRoot, generate };
+}
+
+test('new hidden files change the release identity without altering mandatory files', async t => {
+  const { fixtureRoot, generate } = await releaseWorkspace(t);
+  const area = join(fixtureRoot, 'areas', 'secret-apartment');
+  await mkdir(join(area, 'tests'), { recursive: true });
+  await writeFile(join(area, 'README.md'), '# Area development notes');
+  await writeFile(join(area, 'tests', 'fixture.json'), '{}');
+  await writeFile(join(area, 'area.test.mjs'), '// Test');
   assert.doesNotThrow(() => generate('--check'));
-  await writeFile(join(area, 'index.js'), 'export const area = {};');
+  await writeFile(join(area, 'extra.png'), 'example image bytes');
   assert.throws(() => generate('--check'), /version\.json is out of date/);
   assert.equal(await readFile(join(fixtureRoot, 'version.json'), 'utf8'), await readFile(new URL('version.json', root), 'utf8'));
   generate();
   assert.doesNotThrow(() => generate('--check'));
   const generated = JSON.parse(await readFile(join(fixtureRoot, 'version.json'), 'utf8'));
-  assert.deepEqual(generated.files.filter(file => file.path.includes('/new-area/')).map(file => file.path), [
-    './areas/new-area/index.js',
-  ]);
+  assert.deepEqual(generated.files, manifest.files);
+  assert.ok(generated.onDemandFiles.some(file => file.path === './areas/secret-apartment/extra.png'));
   assert.notEqual(generated.version, manifest.version);
   assert.ok((await readFile(join(fixtureRoot, 'sw.js'), 'utf8')).includes(generated.version));
+});
+
+test('classifies new public areas and verifies transitive module and asset dependencies', async t => {
+  const { fixtureRoot, generate } = await releaseWorkspace(t);
+  const write = (path, contents) => writeFile(join(fixtureRoot, path), contents);
+  const append = (path, contents) => appendFile(join(fixtureRoot, path), contents);
+  const game = await readFile(join(fixtureRoot, 'game.js'), 'utf8');
+  await write('game.js', game.replace('export const areas = {', `export const areas = {
+  'test-yard': publicArea(areaMetadata['test-yard'], 'test-yard', () => import('./areas/test-yard/index.js')),`));
+  await mkdir(join(fixtureRoot, 'areas/test-yard'));
+  const metadata = (await readFile(join(fixtureRoot, 'areas/snow-basin/metadata.js'), 'utf8')).replace("'snow'", "'test-yard'");
+  await write('areas/test-yard/metadata.js', metadata);
+  await write('areas/test-yard/test-yard.jpg', 'example thumbnail bytes');
+  await write('areas/test-yard/index.js', "export { value } from '../secret-apartment/shared.js';");
+  await write('areas/secret-apartment/shared.js', "export { value } from './transitive.js';");
+  await write('areas/secret-apartment/transitive.js', "export const value = new URL('./shared.png', import.meta.url);");
+  await write('areas/secret-apartment/shared.png', 'example image bytes');
+  await append('areas/secret-apartment/index.js', "\nimport './shared.js';\n");
+  generate();
+  assert.doesNotThrow(() => generate('--check'));
+  const result = JSON.parse(await readFile(join(fixtureRoot, 'version.json'), 'utf8'));
+  const required = new Set(result.files.map(file => file.path));
+  const optional = new Set(result.onDemandFiles.map(file => file.path));
+  for (const path of ['./areas/test-yard/index.js', './areas/test-yard/test-yard.jpg', './areas/test-yard/metadata.js',
+    './areas/secret-apartment/shared.js', './areas/secret-apartment/transitive.js', './areas/secret-apartment/shared.png']) {
+    assert.ok(required.has(path), path);
+    assert.ok(!optional.has(path), path);
+  }
+  assert.ok(optional.has(hiddenEntry));
+
+  await append('areas/test-yard/index.js', "\nimport './missing.js';\n");
+  assert.throws(() => generate(), /Missing release dependency areas\/test-yard\/missing\.js/);
+  await write('areas/test-yard/index.js', "const path = './missing.js'; import(path);");
+  assert.throws(() => generate(), /Cannot verify release dependency in areas\/test-yard\/index\.js/);
 });
 
 test('rejects invalid, duplicate, missing and out-of-scope manifest entries', async () => {
@@ -110,12 +158,21 @@ test('rejects invalid, duplicate, missing and out-of-scope manifest entries', as
   }
   const previousFiles = manifest.files.filter(file => !['./stats.html', './area-stats.json'].includes(file.path));
   await validateManifest({ version: await versionFor(previousFiles), files: previousFiles });
+  for (const onDemandFiles of [
+    [manifest.files[0], ...manifest.onDemandFiles],
+    [...manifest.onDemandFiles, manifest.onDemandFiles.at(-1)],
+    [{ ...manifest.onDemandFiles[0], path: './areas/../core/game.js' }],
+  ]) {
+    const version = await versionFor(manifest.files, onDemandFiles);
+    await assert.rejects(validateManifest({ version, files: manifest.files, onDemandFiles }), /Invalid release file entry/);
+  }
+  await assert.rejects(validateManifest({ ...manifest, onDemandFiles: [] }), /fingerprint/);
 });
 
 test('keeps releases with the previous Snow Basin layout available as cached fallbacks', async () => {
   const previousEntries = manifest.files.map(({ path }) => ({ path: path === snowEntry ? previousSnowEntry : path }))
     .sort((a, b) => a.path < b.path ? -1 : Number(a.path > b.path));
-  const previous = await fixture({}, previousEntries);
+  const previous = await fixture({}, previousEntries, null);
   await assert.rejects(validateManifest(previous.manifest), /manifest is incomplete/);
 
   const cache = createReleaseCache({
@@ -207,6 +264,68 @@ test('a stalled download can time out and retry without publishing a partial rel
   assert.equal((await cache.ready())[0].tag, ready.tag);
 });
 
+test('optional files are allowlisted, verified again on reuse, and isolated by release', async () => {
+  const storage = new MemoryStorage();
+  const entry = new URL(hiddenEntry, scope).href;
+  const assetPath = './areas/secret-apartment/poster.png';
+  const entries = [...manifest.onDemandFiles, { path: assetPath }].sort((a, b) => a.path < b.path ? -1 : 1);
+  const original = await fixture({}, manifest.files, entries);
+  let network = original;
+  let unavailable = false;
+  let redirect = false;
+  const requests = [];
+  const cache = createReleaseCache({
+    scope, storage,
+    async fetchAsset(url, options) {
+      requests.push(url);
+      assert.equal(options.redirect, 'error');
+      if (unavailable) throw new TypeError('Offline');
+      const response = new Response(network.payloads.get(url));
+      if (redirect) Object.defineProperty(response, 'redirected', { value: true });
+      return response;
+    },
+  });
+  const progress = [];
+  const installed = await cache.install(original.manifest, null, status => progress.push(status));
+  assert.equal(requests.length, manifest.files.length);
+  assert.ok(requests.every(url => !url.includes('/secret-apartment/')));
+  assert.equal(progress.at(-1).total, manifest.files.length);
+  assert.equal(progress.at(-1).downloaded, manifest.files.length);
+
+  assert.equal((await cache.readAsset(installed.tag, './unlisted.js')).status, 404);
+  assert.equal(requests.length, manifest.files.length);
+  unavailable = true;
+  assert.equal((await cache.readAsset(installed.tag, hiddenEntry)).status, 503);
+  unavailable = false;
+  redirect = true;
+  assert.equal((await cache.readAsset(installed.tag, hiddenEntry)).status, 503);
+  redirect = false;
+
+  requests.length = 0;
+  const results = await Promise.all([cache.readAsset(installed.tag, hiddenEntry), cache.readAsset(installed.tag, hiddenEntry)]);
+  assert.deepEqual(requests, [entry]);
+  for (const { response } of results) assert.equal(await response.text(), hiddenEntry);
+  unavailable = true;
+  assert.equal(await (await cache.readAsset(installed.tag, hiddenEntry)).response.text(), hiddenEntry);
+  assert.deepEqual(requests, [entry]);
+  const asset = await cache.readAsset(installed.tag, assetPath);
+  assert.equal(asset.status, 503, 'only requested files were cached');
+  storage.caches.get(installed.cacheName).set(entry, new Response('tampered cached bytes'));
+  assert.equal((await cache.readAsset(installed.tag, hiddenEntry)).status, 503);
+  assert.equal((await cache.ready())[0].tag, installed.tag);
+
+  unavailable = false;
+  network = await fixture({ [hiddenEntry]: '// Different version' }, manifest.files, entries);
+  assert.equal((await cache.readAsset(installed.tag, hiddenEntry)).status, 409);
+  assert.equal((await cache.ready())[0].tag, installed.tag);
+  const latest = await cache.install(network.manifest, installed, () => {});
+  const matched = await cache.readAsset(latest.tag, hiddenEntry);
+  assert.equal(await matched.response.text(), '// Different version');
+  await cache.prune([installed.tag, latest.tag]);
+  assert.ok(await cache.read(installed.tag, new URL('game.js', scope)));
+  assert.ok(await cache.read(latest.tag, new URL('game.js', scope)));
+});
+
 test('the worker shares a download and serves lazy area modules and versioned statistics offline', async t => {
   const shell = '<script type="module" src="./pwa/bootstrap.js"></script>';
   const stats = '<html data-stats-url="./area-stats.json">';
@@ -271,11 +390,12 @@ test('the worker shares a download and serves lazy area modules and versioned st
   const game = await (await request(gameURL, 'cors')).text();
   const loaders = [...game.matchAll(/import\('([^']+\/index\.js)'\)/g)].map(match => match[1]);
   assert.ok(loaders.includes(snowEntry));
-  assert.ok(loaders.includes('./areas/secret-apartment/index.js'));
+  assert.ok(loaders.includes(hiddenEntry));
   assert.equal(loaders.length, 8);
-  for (const path of loaders) {
+  for (const path of loaders.filter(path => path !== hiddenEntry)) {
     const module = await request(new URL(path, gameURL), 'cors');
     assert.equal(module.status, 200, path);
+    assert.match(module.headers.get('Content-Type'), /javascript/);
     assert.equal(await module.text(), path);
   }
   const firstData = new URL('area-stats.json', assetBase(scope, first.tag));
@@ -284,6 +404,19 @@ test('the worker shares a download and serves lazy area modules and versioned st
   assert.equal(requests.length, release.manifest.files.length + 1);
   assert.equal((await storage.keys()).length, 1);
 
+  const hiddenURL = new URL(hiddenEntry, gameURL);
+  assert.equal((await request(hiddenURL, 'cors')).status, 503);
+  offline = false;
+  const fetched = await request(hiddenURL, 'cors');
+  assert.equal(fetched.status, 200);
+  assert.match(fetched.headers.get('Content-Type'), /javascript/);
+  assert.equal(await fetched.text(), hiddenEntry);
+  assert.equal(requests.at(-1), new URL(hiddenEntry, scope).href);
+  offline = true;
+  const downloaded = requests.length;
+  assert.equal(await (await request(hiddenURL, 'cors')).text(), hiddenEntry);
+  assert.equal((await request(new URL('./unlisted.js', gameURL), 'cors')).status, 404);
+  assert.equal(requests.length, downloaded);
   offline = false;
   release = await fixture({ ...files, './area-stats.json': '{"revision":2}' });
   const newPage = await (await request('stats.html')).text();
