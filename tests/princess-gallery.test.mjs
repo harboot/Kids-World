@@ -69,7 +69,9 @@ test('public gallery opens by normal and drone URLs with no castle progress', t 
     const visit = game.worlds.load(resolveArea(url, areas, 'garden', 'snow'));
     assert.equal(visit.id, ID);
     assertSafeSpawn(hall.spawn, visit, game);
-    assert.deepEqual(visit.area.missionStatus.missions, []);
+    const { missions } = visit.area.missionStatus;
+    assert.deepEqual(missions.map(mission => mission.id), exhibits.map(exhibit => exhibit.id));
+    assert.ok(missions.every(mission => !mission.complete && mission.current === 0 && mission.total === 1));
     assert.match(visit.area.missionStatus.hint, /Visit Rapunzel and jump onto the observation platform/);
     assert.match(visit.area.missionStatus.hint, /Approach Snow White and the seven dwarfs/);
     assert.match(visit.area.missionStatus.hint, /Cinderella’s glass slipper on the ballroom stairs/);
@@ -480,9 +482,15 @@ test('Snow White has eight distinct actors visitors can walk up to, with one sha
     const point = approachActor(entry, area);
     assert.ok(cells.has(Math.round(point.x) + ':' + Math.round(point.z)), 'walk to ' + entry.actor.name);
     assert.ok(!area.obstacles.some(o => overlaps(o, point.x, point.z)), entry.actor.name + ' approach is clear');
+    const insideBubble = approachActor(entry, area, .96);
+    const ground = area.getGroundHeight(insideBubble.x, insideBubble.z);
+    for (const feet of [ground, ground + 1.18]) {
+      assert.equal(walkElevation(area, point, insideBubble.x, insideBubble.z, feet, feet === ground), null,
+        entry.actor.name + ' keeps the player clear while walking or jumping');
+    }
   }
   assert.deepEqual(area.interactions.flatMap(item => item.destination ?? []), [CASTLE]);
-  assert.deepEqual(area.missionStatus.missions, []);
+  assert.ok(area.missionStatus.missions.every(mission => !mission.complete));
   const [x, z] = spaceTransform(snowWhite).toWorld(-1, -7.33);
   assert.equal(walkElevation(area, { x, z }, x, z, area.getGroundHeight(x, z), true), null, 'cottage has collision');
 });
@@ -591,6 +599,26 @@ test('Aurora’s bed and rose are solid with a clear approach from the gallery e
   assert.ok(Math.abs(sleepingHead.y - character.position.y) < .12, 'the body rests level with the mattress');
   assert.ok(head.getObjectByName('Closed eyelids').visible);
   assert.equal(head.getObjectByName('Open eyes').visible, false);
+  const mattress = new THREE.Box3().setFromObject(bed.getObjectByName('Aurora mattress'), true);
+  assert.ok(mattress.max.y > 1.05 && mattress.max.y < 1.20);
+  const leftFoot = character.getObjectByName('Aurora left leg');
+  const rightFoot = character.getObjectByName('Aurora right leg');
+  assert.ok(leftFoot.position.x < 0 && rightFoot.position.x > 0);
+  assert.notEqual(leftFoot.position.z, rightFoot.position.z);
+  for (const foot of [leftFoot, rightFoot]) {
+    const bounds = new THREE.Box3().setFromObject(foot, true);
+    assert.ok(bounds.min.y >= mattress.max.y && bounds.min.y <= mattress.max.y + .03,
+      foot.name + ' rests on the lowered bed');
+  }
+  for (const name of ['Aurora dressing table and mirror', 'Aurora velvet bench', 'Aurora bedside bouquet']) {
+    const furniture = room.getObjectByName(name);
+    assert.ok(furniture.children.some(mesh => mesh.isInstancedMesh), name);
+    const { x, z } = furniture.getWorldPosition(new THREE.Vector3());
+    assert.equal(walkElevation(area, { x, z }, x, z, 0, true), null, name + ' is solid');
+  }
+  const tooClose = toWorld(rx, rz + 1.18);
+  assert.equal(walkElevation(area, { x: approach[0], z: approach[1] }, ...tooClose, 1.19, false), null);
+
 });
 
 test('approaching the rose wakes Aurora smoothly and repeatedly with a stable boundary', t => {
@@ -755,13 +783,25 @@ test('Cinderella stands in view from the entrance and leaves both stair approach
   const nearby = { x, y: EYE_HEIGHT, z };
   assert.equal(walkElevation(area, nearby, feet.x, feet.z, 0, true), null, 'the gown has a solid footprint');
   const pose = head.rotation.toArray();
+  const restYaw = character.rotation.y;
   const slipper = ballroom.getObjectByName('Cinderella glass slipper');
   const slipperRest = slipper.position.y;
   assert.equal(nearestInteraction(area.interactions, nearby), null);
-  worlds.update(2, nearby);
-  assert.deepEqual(head.rotation.toArray(), pose);
+  function follow(dx, dz, elevation = 0) {
+    const [x, z] = toWorld(character.position.x + dx, character.position.z + dz);
+    for (let i = 0; i < 60; i++) worlds.update(1 / 60, { x, y: EYE_HEIGHT + elevation, z });
+  }
+  follow(6.7, 0);
+  assert.ok(Math.abs(character.rotation.y - Math.PI / 2) < .03, 'her whole body turns at a generous distance');
+  follow(-3.1, -3.1);
+  assert.ok(Math.cos(character.rotation.y + Math.PI * .75) > .998, 'her body keeps facing the moving player');
+  follow(0, 6.9, 15.6);
+  assert.ok(Math.cos(character.rotation.y - restYaw) > .998, 'she settles when the player is above the ballroom');
   assert.equal(slipper.position.y, slipperRest);
+  assert.equal(area.missionStatus.missions.find(mission => mission.id === 'cinderella').complete, false);
+  follow(6.7, 0);
   worlds.reset();
+  assert.equal(character.rotation.y, restYaw);
   assert.deepEqual(head.rotation.toArray(), pose);
 
   const gown = character.children.find(child => child.isMesh);
@@ -809,6 +849,9 @@ test('Cinderella’s curved staircase can be walked in both directions and the s
   walkTo(6.72, -2.28);
   assert.ok(player.grounded);
   assert.ok(camera.position.y > EYE_HEIGHT + 1.8);
+  const display = slipper.parent.getWorldPosition(new THREE.Vector3());
+  assert.equal(walkElevation(area, camera.position, display.x, display.z, camera.position.y - EYE_HEIGHT, true), null,
+    'the glass slipper is buffered with room to pass on the stair');
   standStill(45);
   assert.ok(slipper.position.y > rest + .65);
   assert.equal(sparkles.visible, true);
@@ -871,6 +914,84 @@ test('Cinderella’s slipper holds a static sparkle in reduced motion and clears
   assert.equal(sparkles.visible, false);
   visit.area.update(1, near);
   assert.equal(slipper.position.y, rest);
+});
+
+test('the ten gallery missions record one interaction per exhibit and replay after reset', t => {
+  const game = fixture({ reduced: true });
+  const { worlds, progress, notices } = game;
+  t.after(worlds.unload);
+  const { scene, area } = worlds.load(ID);
+  const { missions } = area.missionStatus;
+  const point = (exhibit, x, z, feet = 0) => {
+    const [wx, wz] = spaceTransform(exhibit).toWorld(x, z);
+    return { x: wx, y: EYE_HEIGHT + feet, z: wz };
+  };
+  const completed = () => missions.filter(mission => mission.complete).map(mission => mission.id);
+  const step = (position) => worlds.update(.2, position);
+  const expected = [];
+  const galleryNotice = 'Princess Gallery complete! You explored all ten exhibits.';
+  for (const exhibit of exhibits) {
+    let position;
+    if (exhibit.display) {
+      const display = scene.getObjectByName(exhibit.id + ' exhibit').getObjectByName('Story display');
+      const prop = display.getObjectByName(exhibit.display);
+      const glow = display.getObjectByName('Story display glow');
+      const initialGlow = glow.material.emissiveIntensity;
+      const z = display.position.z;
+      const { x, z: worldZ } = point(exhibit, 0, z);
+      assert.equal(walkElevation(area, { x, z: worldZ }, x, worldZ, 0, true), null, exhibit.id + ' display is solid');
+      const approach = point(exhibit, 0, z + 2.75);
+      const door = point(exhibit, 0, exhibit.bounds.depth / 2 + 1);
+      assertWalkable(area, [door.x, door.z], [approach.x, approach.z], exhibit.id + ' display approach');
+      step({ ...approach, y: EYE_HEIGHT + 15.6 });
+      assert.deepEqual(completed(), expected, 'the overlook does not count');
+      assert.equal(glow.material.emissiveIntensity, initialGlow);
+      position = approach;
+      step(position);
+      assert.ok(prop.position.y > 1 && glow.material.emissiveIntensity > initialGlow);
+      step(door);
+      assert.equal(glow.material.emissiveIntensity, initialGlow);
+    } else {
+      switch (exhibit.id) {
+        case 'rapunzel': {
+          const { x, z, top } = observationPlatform;
+          step(point(exhibit, x, z));
+          assert.deepEqual(completed(), expected, 'standing below the platform does not count');
+          position = point(exhibit, x, z, top);
+          break;
+        }
+        case 'snow-white':
+          position = approachActor(snowActors(scene)[0], area);
+          break;
+        case 'aurora': {
+          const { x, z } = scene.getObjectByName('Enchanted rose').position;
+          position = point(exhibit, x, z + 2.25);
+          break;
+        }
+        case 'cinderella': {
+          const site = scene.getObjectByName('Cinderella slipper display');
+          step(point(exhibit, site.position.x, site.position.z + 1.2));
+          assert.deepEqual(completed(), expected, 'standing below the slipper does not count');
+          position = point(exhibit, site.position.x, site.position.z + 1.2, site.position.y);
+          break;
+        }
+      }
+    }
+    step(position);
+    step(position);
+    expected.push(exhibit.id);
+    assert.deepEqual(completed(), expected);
+    if (expected.length < exhibits.length) assert.equal(progress.has(ID), false);
+  }
+  assert.ok(missions.every(mission => mission.current === mission.total));
+  assert.equal(progress.has(ID), true);
+  assert.equal(progress.has(CASTLE), false, 'gallery completion does not complete the castle');
+  assert.deepEqual(notices.filter(message => message === galleryNotice), [galleryNotice]);
+  worlds.reset();
+  assert.ok(missions.every(mission => !mission.complete && mission.current === 0));
+  assert.equal(progress.has(ID), true, 'reset preserves the saved level record');
+  worlds.load(CASTLE);
+  assert.ok(worlds.load(ID).area.missionStatus.missions.every(mission => !mission.complete));
 });
 
 test('both staircases connect the main level to the glass loop and all ten overlooks', t => {
@@ -1159,7 +1280,7 @@ test('each cart has a vendor and a repeatable first-person tasting at its servic
     worlds.reset();
     assert.equal(model.visible, false);
   }
-  assert.deepEqual(area.missionStatus.missions, []);
+  assert.ok(area.missionStatus.missions.every(mission => !mission.complete));
 });
 
 test('reduced motion holds the drink still and travel clears the snack viewmodel', () => {

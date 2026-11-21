@@ -315,10 +315,10 @@ export function buildGalleryPeople({ THREE, parent, parts, obstacles, vendors })
     const scale = style === 'child' ? .64 : 1;
     const group = addGroup(THREE, visitors, name, x, 0, z, yaw);
     group.scale.setScalar(scale);
-    const bodies = [occupant(obstacles, .33 * scale, 0)];
+    const bodies = [occupant(obstacles, style === 'child' ? .42 : .54, 0)];
     const pose = buildPerson(THREE, group, parts, palette, style, color, skin, hair, satchel);
     const stroller = style === 'parent' ? buildStroller(THREE, group, parts, palette) : null;
-    if (stroller) bodies.push(occupant(obstacles, .65, 1.12));
+    if (stroller) bodies.push(occupant(obstacles, .72, 1.12));
     const guest = { site, group, pose, stroller, bodies, phase: index * 1.17, pace: 0, distance: 0 };
     if (route) routes[route].members.push(guest);
     return guest;

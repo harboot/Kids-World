@@ -203,7 +203,7 @@ function createActor({ THREE, parts, bay, ground, profile, toWorld, obstacles, p
   }
 
   const greeting = profile.motion(.37);
-  addRoundSolid(obstacles, wx, wz, princess ? .47 : .41, y + (princess ? 1.7 : 1.36));
+  addRoundSolid(obstacles, wx, wz, princess ? .88 : .78, y + (princess ? 2.48 : 2.08));
   function reset() {
     blend = time = breathing = 0;
     actor.rotation.z = 0;
@@ -218,12 +218,13 @@ function createActor({ THREE, parts, bay, ground, profile, toWorld, obstacles, p
       const close = (player.x - wx) ** 2 + (player.z - wz) ** 2 <= radius ** 2 &&
         Math.abs(player.y - EYE_HEIGHT - y) <= 1.65;
       const target = Number(close);
-      if (!target && blend === 0) return;
+      if (!close && blend === 0) return false;
       blend = still ? target : THREE.MathUtils.damp(blend, target, 9, dt);
       if (Math.abs(target - blend) < .001) blend = target;
       if (still || !blend) time = 0;
       else if (close) time += dt;
       pose(still ? greeting : profile.motion(time));
+      return close;
     },
   };
 }
@@ -563,7 +564,11 @@ export function buildSnowWhite({ THREE, document, bay, exhibit, parts, obstacles
   return {
     getGroundHeight(x, z) { return ground(...toLocal(x, z)); },
     update(dt, player, _grounded, still) {
-      for (const actor of actors) actor.update(dt, player, still);
+      let greeted = false;
+      for (const actor of actors) {
+        if (actor.update(dt, player, still)) greeted = true;
+      }
+      return greeted;
     },
     reset() {
       for (const actor of actors) actor.reset();

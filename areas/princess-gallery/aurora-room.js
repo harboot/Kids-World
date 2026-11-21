@@ -268,20 +268,23 @@ function buildRoyalBed(THREE, room, parts, exhibit, obstacles, palette, cloth) {
   const bed = addGroup(THREE, room, 'Aurora royal bed', 0, 0, -5.24);
   const frame = new THREE.Group();
   const { toWorld } = spaceTransform(exhibit);
-  const mattressTop = 1.44;
+  const mattressTop = 1.13;
+  const beddingDrop = .31;
   function solid(x, z, width, depth, height) {
     addSolid(obstacles, ...toWorld(x, bed.position.z + z), width, depth, height, exhibit.rotation);
   }
-  part(frame, 'box', plum, 0, .62, 0, 4.82, .61, 5.64);
-  part(frame, 'box', gold, 0, .91, 0, 4.93, .118, 5.76);
-  part(frame, 'box', mauve, 0, .39, 0, 4.86, .14, 5.72);
+  part(frame, 'box', plum, 0, .43, 0, 4.82, .41, 5.64);
+  part(frame, 'box', gold, 0, .91 - beddingDrop, 0, 4.93, .118, 5.76);
+  part(frame, 'box', mauve, 0, .245, 0, 4.86, .121, 5.72);
   const mattress = new THREE.ExtrudeGeometry(new THREE.Shape([
     new THREE.Vector2(-2.16, -2.61), new THREE.Vector2(2.16, -2.61),
     new THREE.Vector2(2.16, 2.61), new THREE.Vector2(-2.16, 2.61),
   ]), { depth: .21, bevelThickness: .14, bevelSize: .14, bevelSegments: 4 });
-  part(frame, mattress, ivory, 0, 1.09, 0, 1, 1, 1).rotation.x = -Math.PI / 2;
+  const cushion = part(bed, mattress, ivory, 0, mattressTop - .35, 0, 1, 1, 1);
+  cushion.name = 'Aurora mattress';
+  cushion.rotation.x = -Math.PI / 2;
 
-  for (const [z, base, height, lining] of [[-2.73, .45, 2.87, velvet], [2.76, .37, 1.00, wine]]) {
+  for (const [z, base, height, lining] of [[-2.73, .28, 3.04, velvet], [2.76, .25, .80, wine]]) {
     part(frame, bedPanel(THREE, 4.70, height, .18), plum, 0, base, z - .145, 1, 1, 1);
     part(frame, bedPanel(THREE, 4.42, height - .125, .071), gold, 0, base + .05, z + .028, 1, 1, 1);
     part(frame, bedPanel(THREE, 4.19, height - .28, .038), lining, 0, base + .12, z + .111, 1, 1, 1);
@@ -353,32 +356,95 @@ function buildRoyalBed(THREE, room, parts, exhibit, obstacles, palette, cloth) {
     }
   }
   for (const [x, y, z, w, h, d, yaw, material] of [
-    [0, 1.446, -1.10, .665, .205, .58, -.10, blush],
-    [-1.36, 1.56, -1.97, .63, .23, .47, -.33, mauve],
-    [1.36, 1.56, -1.97, .63, .23, .47, .33, mauve],
+    [0, 1.446 - beddingDrop, -1.10, .665, .205, .58, -.10, blush],
+    [-1.36, 1.56 - beddingDrop, -1.97, .63, .23, .47, -.33, mauve],
+    [1.36, 1.56 - beddingDrop, -1.97, .63, .23, .47, .33, mauve],
   ]) {
     part(frame, 'sphere', ivory, x, y, z, w + .035, h * .64, d + .031).rotation.y = yaw;
     part(frame, 'sphere', material, x, y + .033, z, w, h, d).rotation.y = yaw;
   }
-  part(frame, 'sphere', blush, 0, 1.43, 1.92, 2.28, .126, .72);
+  part(frame, 'sphere', blush, 0, 1.43 - beddingDrop, 2.20, 2.28, .126, .47);
   for (const side of [-1, 1]) {
-    part(frame, 'sphere', mauve, side * 2.16, 1.23, 1.68, .193, .296, .90);
-    part(frame, 'sphere', wine, side * 2.21, 1.15, 1.81, .159, .173, .66);
+    part(frame, 'sphere', mauve, side * 2.16, 1.23 - beddingDrop, 1.92, .193, .296, .76);
+    part(frame, 'sphere', wine, side * 2.21, 1.15 - beddingDrop, 2.03, .159, .173, .60);
   }
   for (let i = -7; i <= 7; i++) {
     const x = i * .26;
-    const y = 1.43 + .124 * Math.sqrt(1 - (x / 2.28) ** 2 - (.30 / .72) ** 2);
-    part(frame, 'gem', gold, x, y + SURFACE_GAP.detail, 2.22, .059, .022, .114).rotation.y = Math.PI / 4;
+    const y = 1.43 - beddingDrop + .124 * Math.sqrt(1 - (x / 2.28) ** 2 - (.22 / .47) ** 2);
+    part(frame, 'gem', gold, x, y + SURFACE_GAP.detail, 2.42, .059, .022, .114).rotation.y = Math.PI / 4;
   }
   for (const side of [-1, 1]) {
-    beam(frame, gold, [side * 2.43, .68, -2.47], [side * 2.43, .68, 2.49], .061);
+    beam(frame, gold, [side * 2.43, .68 - beddingDrop, -2.47], [side * 2.43, .68 - beddingDrop, 2.49], .061);
     for (let i = -4; i <= 4; i++) {
-      part(frame, 'gem', glow, side * 2.44, .67, i * .53, .046, .105, .121);
+      part(frame, 'gem', glow, side * 2.44, .67 - beddingDrop, i * .53, .046, .105, .121);
     }
   }
-  solid(0, 0, 4.92, 5.78, mattressTop);
+  // Protect the sleeping figure when a player jumps beside the lowered mattress.
+  solid(0, 0, 5.19, 5.85, mattressTop + .38);
   batch(frame, bed);
   return { bed, mattressTop };
+}
+
+function buildBedroomFurniture(THREE, room, parts, exhibit, obstacles, palette) {
+  const { part, beam, batch, matte } = parts;
+  const { gold, ivory, mauve, plum, blush, green, leaf, bloom, wine } = palette;
+  const { toWorld } = spaceTransform(exhibit);
+
+  function furnish(name, x, z, yaw, width, depth, height, decorate) {
+    const furniture = addGroup(THREE, room, name, x, 0, z, yaw);
+    const details = new THREE.Group();
+    decorate(details);
+    batch(details, furniture);
+    addSolid(obstacles, ...toWorld(x, z), width, depth, height, yaw + exhibit.rotation);
+  }
+
+  furnish('Aurora dressing table and mirror', -6.19, -5.68, .47, 2.72, 1.34, 3.36, table => {
+    part(table, 'box', plum, 0, .93, 0, 2.47, .43, 1.09);
+    part(table, 'box', gold, 0, 1.16, 0, 2.63, .14, 1.20);
+    part(table, 'box', ivory, 0, 1.26, 0, 2.55, .11, 1.14);
+    for (const x of [-1.06, 1.06]) {
+      for (const z of [-.40, .40]) part(table, 'drum', plum, x, .44, z, .105, .88, .105);
+      part(table, 'box', mauve, x * .51, .91, .562, .97, .25, .060);
+      part(table, 'gem', gold, x * .51, .91, .611, .079, .070, .049);
+    }
+    part(table, 'sphere', gold, 0, 2.28, -.36, .83, 1.02, .135);
+    part(table, 'sphere', plum, 0, 2.27, -.26, .745, .91, .089);
+    const silver = matte(0x879ac0, { emissive: 0x555f86, emissiveIntensity: .37 });
+    part(table, 'sphere', silver, 0, 2.29, -.192, .681, .83, .076);
+    part(table, 'sphere', ivory, -.23, 2.48, -.124, .078, .42, .010).rotation.z = -.47;
+    part(table, 'gem', gold, 0, 3.32, -.32, .16, .195, .092);
+    for (const [x, scale, material] of [[-.94, .90, blush], [.88, 1, mauve], [1.06, .71, wine]]) {
+      part(table, 'sphere', material, x, 1.32 + .135 * scale, .14, .113 * scale, .14 * scale, .108 * scale);
+      part(table, 'gem', gold, x, 1.32 + .30 * scale, .14, .069, .067, .062);
+    }
+  });
+
+  furnish('Aurora velvet bench', -5.75, -3.87, .47, 1.92, .90, .67, bench => {
+    part(bench, 'box', plum, 0, .46, 0, 1.83, .16, .78);
+    part(bench, 'sphere', mauve, 0, .56, 0, .93, .102, .405);
+    for (const side of [-1, 1]) {
+      for (const z of [-.28, .28]) part(bench, 'drum', gold, side * .75, .21, z, .086, .42, .086);
+      part(bench, 'gem', gold, side * .83, .54, .288, .08, .064, .065);
+    }
+  });
+
+  furnish('Aurora bedside bouquet', 5.20, -7.88, -.25, 1.49, 1.28, 2.29, stand => {
+    part(stand, 'drum', plum, 0, .11, 0, .58, .22, .52);
+    part(stand, 'drum', mauve, 0, .57, 0, .38, .93, .38);
+    part(stand, 'drum', gold, 0, 1.04, 0, .71, .12, .62);
+    part(stand, 'drum', ivory, 0, 1.12, 0, .67, .073, .59);
+    part(stand, 'sphere', plum, 0, 1.36, 0, .29, .22, .28);
+    part(stand, 'drum', gold, 0, 1.55, 0, .17, .11, .17);
+    for (let i = 0; i < 6; i++) {
+      const angle = i * Math.PI * 2 / 6;
+      const x = Math.cos(angle) * .34, z = Math.sin(angle) * .29;
+      const y = 2.02 + .14 * Math.cos(i * 1.9);
+      beam(stand, green, [0, 1.55, 0], [x, y, z], .043);
+      part(stand, 'sphere', leaf, x * .80, y - .19, z * .74, .072, .125, .045).rotation.z = angle - .6;
+      part(stand, 'sphere', wine, x, y, z, .138, .132, .13);
+      part(stand, 'sphere', bloom, x, y + .068, z + .035, .102, .080, .105);
+    }
+  });
 }
 
 export function buildAuroraRoom({ THREE, document, room, parts, exhibit, outline, obstacles, palette }) {
@@ -396,5 +462,6 @@ export function buildAuroraRoom({ THREE, document, room, parts, exhibit, outline
   ceiling.layers.set(PLAYER_ONLY_LAYER);
   buildChandelier(THREE, details, parts, ceilingY, palette);
   batch(details, room);
+  buildBedroomFurniture(THREE, room, parts, exhibit, obstacles, palette);
   return buildRoyalBed(THREE, room, parts, exhibit, obstacles, palette, cloth);
 }

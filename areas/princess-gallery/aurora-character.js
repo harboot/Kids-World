@@ -1,6 +1,45 @@
 import { addGroup } from '../../core/geometry.js';
 import { buildPrincessFace } from './princess-face.js';
 
+function drapedSkirt(THREE) {
+  const profiles = [
+    // Distance along the mattress, width, and height of the cloth above its center.
+    [-.17, .216, .122], [.01, .292, .155], [.26, .423, .169], [.52, .546, .175],
+    [.78, .661, .131], [.97, .702, .090], [1.045, .700, .076], [1.09, .668, .079],
+  ];
+  const radial = 32;
+  const vertices = [], colors = [], indices = [];
+  const deep = new THREE.Color(0xbe3875);
+  const silk = new THREE.Color(0xed8ebb);
+  const hem = new THREE.Color(0xffc8d9);
+  const shade = new THREE.Color();
+  for (const [z, width, height] of profiles) {
+    for (let i = 0; i < radial; i++) {
+      const angle = i * Math.PI * 2 / radial;
+      const up = Math.sin(angle);
+      const pleat = Math.cos(angle * 8 + z * 1.72);
+      const y = -.129 + up * (up > 0 ? height + .023 * pleat : .095);
+      vertices.push(Math.cos(angle) * (width + .033 * pleat * z), y, z + Math.max(0, z) * .022 * pleat);
+      shade.copy(deep).lerp(silk, .24 + .24 * pleat + .25 * Math.max(0, up));
+      if (z >= 1.045) shade.lerp(hem, z > 1.05 ? .77 : .41);
+      colors.push(shade.r, shade.g, shade.b);
+    }
+  }
+  for (let ring = 0; ring < profiles.length - 1; ring++) {
+    for (let i = 0; i < radial; i++) {
+      const a = ring * radial + i;
+      const b = ring * radial + (i + 1) % radial;
+      indices.push(a, b, a + radial, b, b + radial, a + radial);
+    }
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
 // The skirt and hips rest on the mattress while the upper body pivots at the waist.
 export function buildAuroraCharacter(THREE, bed, parts, mattressTop) {
   const { part, beam, batch, matte } = parts;
@@ -18,21 +57,20 @@ export function buildAuroraCharacter(THREE, bed, parts, mattressTop) {
   const skin = matte(0xf4bd9c);
   const pearl = matte(0xfff7ee);
 
-  const skirt = new THREE.Group();
-  part(skirt, 'sphere', dress, 0, -.049, .565, .535, .222, .845);
-  for (let i = -3; i <= 3; i++) {
-    const offset = Math.abs(i);
-    const fold = part(skirt, 'sphere', i % 2 ? silk : dress, i * .134, -.045 - offset * .016,
-      .654 + offset * .029, .15, .195 - offset * .027, .79 - offset * .095);
-    fold.rotation.y = i * .175;
+  part(actor, drapedSkirt(THREE), matte(0xffffff, { vertexColors: true }), 0, 0, 0, 1, 1, 1);
+  for (const side of [-1, 1]) {
+    const label = side < 0 ? 'left' : 'right';
+    const leg = addGroup(THREE, actor, 'Aurora ' + label + ' leg', side * .157, -.153, 1.023 + side * .042);
+    leg.rotation.y = side * .135;
+    part(leg, 'sphere', collar, 0, 0, .071, .077, .075, .19);
+    part(leg, 'sphere', skin, 0, .014, .185, .068, .062, .099);
+    part(leg, 'sphere', rose, 0, -.043, .243, .079, .039, .144);
+    part(leg, 'sphere', dress, 0, -.010, .280, .075, .046, .111);
+    part(leg, 'sphere', dress, 0, -.019, .150, .063, .059, .061);
+    const strap = part(leg, 'sphere', silk, 0, .016, .228, .073, .041, .028);
+    strap.rotation.x = -.21;
+    part(leg, 'gem', gold, 0, .052, .233, .025, .020, .025);
   }
-  part(skirt, 'sphere', rose, 0, -.007, 1.325, .385, .099, .135);
-  part(skirt, 'sphere', collar, 0, -.012, 1.424, .298, .074, .069);
-  for (let i = -2; i <= 2; i++) {
-    part(skirt, 'gem', gold, i * .125, .059 - Math.abs(i) * .008, 1.400 - .021 * i * i,
-      .027, .018, .038);
-  }
-  batch(skirt, actor);
 
   const body = addGroup(THREE, actor, 'Aurora upper body');
   const bodice = new THREE.Group();

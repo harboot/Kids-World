@@ -7,6 +7,7 @@ import { buildExhibitFacade } from './exhibit-facades.js';
 import { GALLERY_DEPTH, GALLERY_WIDTH, exhibitOutline, exhibits, wings } from './exhibits.js';
 import { buildHangingDecor } from './hanging-decor.js';
 import { addGallerySign, addSolid, createParts, spaceTransform } from './parts.js';
+import { buildPreviewDisplay } from './preview-display.js';
 import { buildPromenadeFurniture } from './promenade-furniture.js';
 import { buildPublicSpaces } from './public-spaces.js';
 import { buildScenicBackdrops, buildScenicEdges, canopyMaterial, paintScenicGround } from './scenic-perimeter.js';
@@ -360,19 +361,13 @@ export function buildGallery(THREE, scene, document, obstacles, services) {
         entrance + .69, .24, .16);
       if (enclosed) overhead(part(local, 'box', blush, 0, bounds.height + .06, 0, bounds.width, .12, bounds.depth));
       buildExhibitFacade({ THREE, document, bay, parts, exhibit, outline, thickness, opening, deckBottom, upperLintel });
-    } else if (!build) {
-      // Small accent medallion reserves the scene and leaves the entire floor walkable.
-      const displayZ = -bounds.depth * .24;
-      const podium = addGroup(THREE, local, 'Exhibit reservation', 0, 0, displayZ);
-      part(podium, 'drum', plum, 0, .31, 0, 1.38, .62, 1.38);
-      part(podium, 'drum', gold, 0, .65, 0, 1.30, .10, 1.30);
-      part(podium, 'gem', tint, 0, 1.57, 0, .64, .87, .64).rotation.y = Math.PI / 4;
-      addSolid(obstacles, ...transform.toWorld(0, displayZ), 2.76, 2.76, 2.44, rotation);
     }
 
     batch(local, bay);
-    if (build) exhibitVisits.push(build({ THREE, document, bay, exhibit, parts, obstacles, interiorFace, outline,
-      reducedMotion: services.reducedMotion }));
+    const context = { THREE, document, bay, exhibit, parts, obstacles, interiorFace, outline,
+      reducedMotion: services.reducedMotion };
+    const visit = build ? build(context) : buildPreviewDisplay({ ...context, palette: { gold, ivory, plum } });
+    exhibitVisits.push({ id, ...visit });
   }
   buildScenicEdges({ THREE, parent: shell, parts, obstacles });
   const walkway = buildWalkway({ THREE, document, parent: shell, parts, exhibits, ceiling });

@@ -7,7 +7,10 @@ export function buildCinderellaCharacter(THREE, ballroom, parts, exhibit, obstac
   // The open floor inside the left stair curve keeps the gown visible from the entrance.
   const x = -1.84;
   const z = -1.65;
-  const figure = addGroup(THREE, ballroom, 'Cinderella character', x, 0, z, .27);
+  const restYaw = .27;
+  const restPitch = .055;
+  const restHeadTurn = -.12;
+  const figure = addGroup(THREE, ballroom, 'Cinderella character', x, 0, z, restYaw);
   const details = new THREE.Group();
   const skin = matte(0xf2bf9d);
   const hair = matte(0xc08a36);
@@ -79,7 +82,7 @@ export function buildCinderellaCharacter(THREE, ballroom, parts, exhibit, obstac
   batch(details, figure);
 
   const head = addGroup(THREE, figure, 'Cinderella head', 0, 2.035, .022);
-  head.rotation.set(.055, -.12, -.065);
+  head.rotation.set(restPitch, restHeadTurn, -.065);
   buildPrincessFace(THREE, parts, head, {
     skin, blush: matte(0xe8a18b), brow: matte(0x795231), lip: matte(0xb34e65), iris: matte(0x437fbc), pearl,
   });
@@ -96,5 +99,33 @@ export function buildCinderellaCharacter(THREE, ballroom, parts, exhibit, obstac
   part(coiffure, headband, satin, 0, .056, .047, .308, .355, .29).rotation.x = -.44;
   batch(coiffure, head);
 
-  addRoundSolid(obstacles, ...spaceTransform(exhibit).toWorld(x, z), .73, 1.27);
+  addRoundSolid(obstacles, ...spaceTransform(exhibit).toWorld(x, z), .88, 2.64);
+  const { clamp, damp } = THREE.MathUtils;
+  const attentionRadius = 7.4;
+  const releaseRadius = 8.1;
+  let watching = false;
+
+  return {
+    reset() {
+      watching = false;
+      figure.rotation.y = restYaw;
+      head.rotation.x = restPitch;
+      head.rotation.y = restHeadTurn;
+    },
+    update(dt, playerX, playerZ, eyeY, floorY, still) {
+      const dx = playerX - x;
+      const dz = playerZ - z;
+      const radius = watching ? releaseRadius : attentionRadius;
+      watching = Math.abs(floorY) < 1.38 && dx * dx + dz * dz <= radius * radius;
+      const yaw = watching ? Math.atan2(dx, dz) : restYaw;
+      // Turn the full figure by the shortest arc, including when the player walks behind her.
+      const delta = yaw - figure.rotation.y;
+      const turn = Math.atan2(Math.sin(delta), Math.cos(delta));
+      figure.rotation.y = still || Math.abs(turn) < .001 ? yaw : figure.rotation.y + damp(0, turn, 5.6, dt);
+      const pitch = watching ? clamp(Math.atan2(2.035 - eyeY, Math.hypot(dx, dz)), -.26, .26) : restPitch;
+      const headTurn = watching ? 0 : restHeadTurn;
+      head.rotation.x = still ? pitch : damp(head.rotation.x, pitch, 7, dt);
+      head.rotation.y = still ? headTurn : damp(head.rotation.y, headTurn, 7, dt);
+    },
+  };
 }
