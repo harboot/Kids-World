@@ -22,7 +22,7 @@ async function fixture(t, files) {
 
 test('reads public and hidden definitions, owns only area files, and counts physical bytes and lines', async t => {
   const snow = [
-    "import { DEPTH as SIZE } from './snow-basin/layout.js';",
+    "import { DEPTH as SIZE } from './winter-yard/layout.js';",
     "import '../../irrelevant-runtime.js';",
     "throw new Error('Modules must never run');",
     'const WIDTH = 12.5;',
@@ -41,22 +41,22 @@ test('reads public and hidden definitions, owns only area files, and counts phys
   ].join('\n');
   const directory = await fixture(t, {
     'game.js': [
-      "import { snow as winter } from './areas/snow-basin.js';",
+      "import { snow as winter } from './areas/winter-yard.js';",
       "import { secret } from './areas/secret/index.js';",
       'function publicArea(area, folder) { return { ...area, show: true, thumbnail: folder }; }',
       'export const areas = {',
-      "  snow: publicArea(winter, 'snow-basin'),",
+      "  snow: publicArea(winter, 'winter-yard'),",
       "  'secret-area': { ...secret, show: false },",
       '};',
     ].join('\n'),
-    'areas/snow-basin.js': snow,
-    'areas/snow-basin/layout.js': layout,
-    'areas/snow-basin/empty.mjs': '',
-    'areas/snow-basin/pics/one.JPEG': Buffer.alloc(13),
-    'areas/snow-basin/pics/two.jpg': Buffer.alloc(21),
-    'areas/snow-basin/pics/three.PNG': Buffer.alloc(34),
-    'areas/snow-basin/pics/four.webp': Buffer.alloc(7),
-    'areas/snow-basin/pics/notes.txt': 'area notes',
+    'areas/winter-yard.js': snow,
+    'areas/winter-yard/layout.js': layout,
+    'areas/winter-yard/empty.mjs': '',
+    'areas/winter-yard/pics/one.JPEG': Buffer.alloc(13),
+    'areas/winter-yard/pics/two.jpg': Buffer.alloc(21),
+    'areas/winter-yard/pics/three.PNG': Buffer.alloc(34),
+    'areas/winter-yard/pics/four.webp': Buffer.alloc(7),
+    'areas/winter-yard/pics/notes.txt': 'area notes',
     'areas/secret/index.js': secret,
     'areas/shared/shared.js': 'excluded',
     'areas/unregistered.js': 'excluded',

@@ -1,4 +1,4 @@
-import { addClearanceOutline, clearanceMaterial } from '../../core/interaction-clearance.js';
+import { addClearanceOutline, clearanceMaterial } from './clearance.js';
 import { buildBuildings } from './buildings.js';
 import { decorateVillage } from './decorations.js';
 import { buildFountain } from './fountain.js';
@@ -8,6 +8,7 @@ import { createVillageMissions } from './missions.js';
 import { createScenery } from './scenery.js';
 import { buildTerrain } from './terrain.js';
 import { buildBystanders } from './villager.js';
+import { music } from './music.js';
 
 export const arendelleVillage = {
   id: 'arendelle-village',
@@ -16,7 +17,7 @@ export const arendelleVillage = {
   description: 'Catch fish for the Fish Shop, bring the lost reindeer home, and find three gears to fix the Clock Tower.',
   canvasLabel: '3D medieval harbor village with timber houses, a clock tower, and wooden piers',
   themeColor: '#e9dabf',
-  music: 'garden',
+  music,
   width: 84,
   depth: 72,
   spawn: { x: 0, z: 33.0 },

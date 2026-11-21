@@ -10,6 +10,7 @@ import { addPond, blocksPondTravel, bridgeDeckHeight } from './garden-pond.js';
 import { addRabbits } from './garden-rabbits.js';
 import { addShelter } from './garden-shelters.js';
 import { addHillPath, createTerrain, drawTerrain } from './garden-terrain.js';
+import { music } from './music.js';
 
 function createAnimals(THREE, scene, playerRadius, finishMission) {
   const block = new THREE.BoxGeometry(1, 1, 1);
@@ -198,7 +199,7 @@ export const flowerGarden = {
   loadingMessage: 'Loading the garden…',
   canvasLabel: '3D flower garden',
   themeColor: '#e9eedc',
-  music: 'garden',
+  music,
   width: 45,
   depth: 58,
   spawn: { x: 0, z: 9 },

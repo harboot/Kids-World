@@ -1,4 +1,4 @@
-import { insideClearance } from '../../core/interaction-clearance.js';
+import { insideClearance } from './clearance.js';
 import { SURFACE_GAP } from '../../core/geometry.js';
 
 const gearSites = [

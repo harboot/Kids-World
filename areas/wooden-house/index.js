@@ -1,6 +1,7 @@
 import { addCleaningSparkles, createCleaningMissions } from './cleaning.js';
 import { buildFurniture } from './furniture.js';
 import { buildInterior, createHouseBuilder, HOUSE_DEPTH, HOUSE_WIDTH } from './interior.js';
+import { music } from './music.js';
 
 const ID = 'wooden-house';
 
@@ -10,7 +11,7 @@ export const woodenHouse = {
   description: 'Look toward each mess from nearby to tidy up. You can clean in any order.',
   canvasLabel: '3D wooden house interior',
   themeColor: '#f4e5cf',
-  music: ID,
+  music,
   width: HOUSE_WIDTH,
   depth: HOUSE_DEPTH,
   spawn: { x: 0, z: 3.35 },

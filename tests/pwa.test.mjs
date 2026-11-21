@@ -10,6 +10,8 @@ import { assetBase, sha256, validateManifest, versionFor } from '../pwa/release.
 const manifest = JSON.parse(await readFile(new URL('../version.json', import.meta.url), 'utf8'));
 const scope = new URL('https://example.test/Kids-World/');
 const root = new URL('../', import.meta.url);
+const snowEntry = './areas/snow-basin/index.js';
+const previousSnowEntry = './areas/snow-basin.js';
 
 class MemoryStorage {
   caches = new Map();
@@ -29,9 +31,9 @@ class MemoryStorage {
   }
 }
 
-async function fixture(changes = {}) {
+async function fixture(changes = {}, entries = manifest.files) {
   const payloads = new Map();
-  const files = await Promise.all(manifest.files.map(async ({ path }) => {
+  const files = await Promise.all(entries.map(async ({ path }) => {
     const body = changes[path] ?? path;
     payloads.set(new URL(path, scope).href, body);
     return { path, revision: await sha256(new TextEncoder().encode(body)) };
@@ -43,11 +45,16 @@ test('checked-in release matches every runtime file and the worker version chang
   execFileSync(process.execPath, ['scripts/generate-pwa-manifest.mjs', '--check'], {
     cwd: root,
   });
-  assert.ok(manifest.files.some(file => file.path === './vendor/three.core.min.js'));
-  assert.ok(manifest.files.some(file => file.path === './areas/snow-basin.js'));
-  assert.ok(manifest.files.some(file => file.path === './stats.html'));
-  assert.ok(manifest.files.some(file => file.path === './area-stats.json'));
-  assert.ok(manifest.files.every(file => !file.path.startsWith('./tests/')));
+  const paths = manifest.files.map(file => file.path);
+  for (const path of ['./vendor/three.core.min.js', snowEntry, './stats.html', './area-stats.json']) {
+    assert.ok(paths.includes(path), path);
+  }
+  for (const area of ['arendelle-village', 'flower-garden', 'frozen-castle', 'military-base',
+    'princess-gallery', 'secret-apartment', 'snow-basin', 'wooden-house']) {
+    assert.ok(paths.includes(`./areas/${area}/music.js`), area);
+  }
+  assert.ok(!paths.includes(previousSnowEntry));
+  assert.ok(paths.every(path => !path.startsWith('./tests/')));
 });
 
 test('the game entry and pinned Three.js resolve from local modules', async () => {
@@ -90,7 +97,7 @@ test('rejects invalid, duplicate, missing and out-of-scope manifest entries', as
   await validateManifest(manifest);
   await assert.rejects(validateManifest({ version: '1.0.0', files: [] }));
   for (const files of [
-    manifest.files.filter(file => file.path !== './areas/snow-basin.js'),
+    manifest.files.filter(file => file.path !== snowEntry),
     manifest.files.filter(file => file.path !== './area-stats.json'),
     manifest.files.filter(file => file.path !== './stats.html'),
     [...manifest.files, manifest.files.at(-1)],
@@ -100,6 +107,21 @@ test('rejects invalid, duplicate, missing and out-of-scope manifest entries', as
   }
   const previousFiles = manifest.files.filter(file => !['./stats.html', './area-stats.json'].includes(file.path));
   await validateManifest({ version: await versionFor(previousFiles), files: previousFiles });
+});
+
+test('keeps releases with the previous Snow Basin layout available as cached fallbacks', async () => {
+  const previousEntries = manifest.files.map(({ path }) => ({ path: path === snowEntry ? previousSnowEntry : path }))
+    .sort((a, b) => a.path < b.path ? -1 : Number(a.path > b.path));
+  const previous = await fixture({}, previousEntries);
+  await assert.rejects(validateManifest(previous.manifest), /manifest is incomplete/);
+
+  const cache = createReleaseCache({
+    scope, storage: new MemoryStorage(),
+    async fetchAsset(url) { return new Response(previous.payloads.get(url)); },
+  });
+  const saved = await cache.install(previous.manifest, null, () => {});
+  assert.equal((await cache.ready())[0].tag, saved.tag);
+  assert.equal(await (await cache.read(saved.tag, new URL(previousSnowEntry, scope))).text(), previousSnowEntry);
 });
 
 test('stages a verified release, reports only stored files, and reuses matching revisions', async () => {

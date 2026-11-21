@@ -1,9 +1,9 @@
 {
-  "version": "7e27d1a9cc186a667493cd5bff2a33283a590a2ffa1a5a4e544f583af7ca405e",
+  "version": "13e8b4f33ddb7695c8c420ea428ea989800410b07b285157e5321ef8ccd5cbde",
   "files": [
     {
       "path": "./area-stats.json",
-      "revision": "b3db8555cac1a4781056a62e82dc00d6ecef05cdb000420d6ed41b7966cd4623"
+      "revision": "8e8dcd7a97c01f257ddcbef780aff392ebe00cfbdc53ae32282664abf8db6ae9"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -11,11 +11,15 @@
     },
     {
       "path": "./areas/arendelle-village/buildings.js",
-      "revision": "10498a03f33f26416b9daabb18910bab3a466380b8933306a0281f35070b791f"
+      "revision": "bda9c030d021b8350c8b2cee44cb3025ffaec7f3a4d7c27567a38ecd9f999882"
+    },
+    {
+      "path": "./areas/arendelle-village/clearance.js",
+      "revision": "9e16be8396da19d72e9dc612764e6556e80bfb420729f8983374bbaa2989618b"
     },
     {
       "path": "./areas/arendelle-village/clock-mission.js",
-      "revision": "cca9c651662ae0d790ac38015c062e41f15bdd4dc26c98f9a533b9b107004ce7"
+      "revision": "d165de03b255e123f83c7281fa6ea147e3a8604c02afca7c4cce73e8a79020ff"
     },
     {
       "path": "./areas/arendelle-village/decorations.js",
@@ -35,7 +39,7 @@
     },
     {
       "path": "./areas/arendelle-village/index.js",
-      "revision": "d0d01a812d52a9ebd4cddd2cdb349807e17e00c4b7b0ca98d33c7d7fb937e5d1"
+      "revision": "39498ca0a7801bb91a604000fe400f407a7d1af87104c5767bf96ebf40482333"
     },
     {
       "path": "./areas/arendelle-village/interactions.js",
@@ -44,6 +48,10 @@
     {
       "path": "./areas/arendelle-village/missions.js",
       "revision": "bcd4c9ac31043b079105b28c9b6ab682ccdce053326ce00ff5a3d842675d193b"
+    },
+    {
+      "path": "./areas/arendelle-village/music.js",
+      "revision": "423d7027f2edd0f0e9deddbdee12c7656eda651819f71d8d7ec2b3998df86488"
     },
     {
       "path": "./areas/arendelle-village/reindeer.js",
@@ -55,7 +63,7 @@
     },
     {
       "path": "./areas/arendelle-village/terraces.js",
-      "revision": "0037740d06467fe1207e4702a5d29cf8007b7b0564a59396c407b57321c90389"
+      "revision": "b402f68063dd9c504d208d2429881ca22274b63c9438b5c26eec7ff7c73f9cac"
     },
     {
       "path": "./areas/arendelle-village/terrain.js",
@@ -111,7 +119,11 @@
     },
     {
       "path": "./areas/flower-garden/index.js",
-      "revision": "8b1e449237d36436df728c8d790a1a69184a3899a4cd62ad5b738f03f7d73175"
+      "revision": "98b1943adb5f2db47c7d4393b172bf2970e8d02699a27ca72640ffbf869a5fc6"
+    },
+    {
+      "path": "./areas/flower-garden/music.js",
+      "revision": "9f863d3ee2e901e813c81ab3cf7a295ef8541f1b86aa69a3c79328a54ca369d8"
     },
     {
       "path": "./areas/frozen-castle/activities.js",
@@ -127,7 +139,11 @@
     },
     {
       "path": "./areas/frozen-castle/index.js",
-      "revision": "a8cbe7e2f16152f923b440dcbe79b62690cf5736e1d2350354fd34a5b590b438"
+      "revision": "d9ed885e03385f29af0d78404e0b5fd9f4e89a4a03b417c9fcb86b9a0235d072"
+    },
+    {
+      "path": "./areas/frozen-castle/music.js",
+      "revision": "fba26596b593195c595e30783a28e435b024ce81e8c0da07051884941bf9778c"
     },
     {
       "path": "./areas/frozen-castle/palace.js",
@@ -163,7 +179,7 @@
     },
     {
       "path": "./areas/military-base/index.js",
-      "revision": "9f3b8a7c821d02cd84d16a378a792f80ced37e2f5e58a13f8f4a240c917ed6b5"
+      "revision": "d0ea824eedc936ee81867a60e6771094b46a473c5fbec6db73b4d41d625ca701"
     },
     {
       "path": "./areas/military-base/layout.js",
@@ -180,6 +196,10 @@
     {
       "path": "./areas/military-base/missions.js",
       "revision": "8afc268b4d9ab8393dd4e765cf6decc6eed0ddd2acf46ad4cbdc5b56746980e1"
+    },
+    {
+      "path": "./areas/military-base/music.js",
+      "revision": "bd693a58043af02e4b29c55637d57b7c07b7a011818a9d54c86321b7b98d794b"
     },
     {
       "path": "./areas/military-base/perimeter.js",
@@ -291,7 +311,11 @@
     },
     {
       "path": "./areas/princess-gallery/index.js",
-      "revision": "9506a74d1892d0364bfccd63c0e1512aa90915713faa9a49d765f85aa31b402a"
+      "revision": "497cf9efc8eb64796269f682781ac3c2eccc1b3845ec112534630489642592db"
+    },
+    {
+      "path": "./areas/princess-gallery/music.js",
+      "revision": "cf6f65b8a388419124b474aa6139c820a8dbfac91df5eec932eb3e3ab08276d7"
     },
     {
       "path": "./areas/princess-gallery/parts.js",
@@ -387,11 +411,15 @@
     },
     {
       "path": "./areas/secret-apartment/index.js",
-      "revision": "766078407ff5d46a0aca5b3cc1d00dbf4e740606cbb7a7a45efad22091c274a3"
+      "revision": "946a7bab73e47c4eb21540bda076a02159647a5c9c6aa63e8cf104fc787180bd"
     },
     {
       "path": "./areas/secret-apartment/missions.js",
       "revision": "ebadac6632ee490831b97cc01a80357247be3bac20d83e08e5979c95b56ae541"
+    },
+    {
+      "path": "./areas/secret-apartment/music.js",
+      "revision": "9c6feaa5768b99c4931a1093e7b011c32f74586207ffd4d1b8cb496f4b421150"
     },
     {
       "path": "./areas/secret-apartment/pool.js",
@@ -402,12 +430,16 @@
       "revision": "41c0400c669413d4e52e5eb3c404ae1b7e66d5c262e4a8c2324522a7ce5b1062"
     },
     {
-      "path": "./areas/snow-basin.js",
-      "revision": "a8f8a12a6d74720c78f826875da9c9658d324109c25868bbb52993f662e96107"
-    },
-    {
       "path": "./areas/snow-basin/activity.js",
       "revision": "24c46f78d2b27e4f5f000898f8ecf702a921b515018371271c6138a163d86703"
+    },
+    {
+      "path": "./areas/snow-basin/index.js",
+      "revision": "884ad0143318dc8ae6629cfc1fd14604d143fb94035a515ab1e6b42709ae8ea0"
+    },
+    {
+      "path": "./areas/snow-basin/music.js",
+      "revision": "67cd67ae1031011e32a9cefeeb8e455fec4ba796b0f4851eec497e04511ba8ae"
     },
     {
       "path": "./areas/snow-basin/props.js",
@@ -423,7 +455,11 @@
     },
     {
       "path": "./areas/wooden-house/cleaning.js",
-      "revision": "fa76bb01af18febd4eb99e89943aac82285dcb0b67992f08a81cbd5646e0a74a"
+      "revision": "57ed66caf59286bdbb7e36e2565dd1cadcdbcab98b1768006c0253d551e295aa"
+    },
+    {
+      "path": "./areas/wooden-house/clearance.js",
+      "revision": "9e16be8396da19d72e9dc612764e6556e80bfb420729f8983374bbaa2989618b"
     },
     {
       "path": "./areas/wooden-house/furniture.js",
@@ -431,11 +467,15 @@
     },
     {
       "path": "./areas/wooden-house/index.js",
-      "revision": "087566b9ba8df5d80dacfeea48dadff840fbfed4336605453c7a100209f3c10c"
+      "revision": "e6612aa2361555b8accf3b79c6157a83732c9cd6ec7b927c617561420bc413ac"
     },
     {
       "path": "./areas/wooden-house/interior.js",
       "revision": "feb60ef4544b656f1ffa1a5b36f40880e7d5fd96c19869350c16a1187befd127"
+    },
+    {
+      "path": "./areas/wooden-house/music.js",
+      "revision": "f118be360793955f0a319d7e273607b5f3ecac7853d6a0df8e683547fef19d6c"
     },
     {
       "path": "./areas/wooden-house/wooden-house.jpg",
@@ -459,7 +499,7 @@
     },
     {
       "path": "./core/audio.js",
-      "revision": "0902e77feb10f54d176fd34b927af82c41f9d3a679d8664bcc33ba6f58322673"
+      "revision": "9558728a9b6c0288b5040076dd38463706ef5135167c9eed0d13b5b2c829be3a"
     },
     {
       "path": "./core/controls.js",
@@ -479,7 +519,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "3489b8dc5e67ea907e0c5299e8653f8b76677abf0f7eae494ddede0b2b303b8b"
+      "revision": "2381e780251d174f6e2173de1919f38ecf33043257cbaeae88347e13048c312a"
     },
     {
       "path": "./core/geometry.js",
@@ -488,10 +528,6 @@
     {
       "path": "./core/hud.js",
       "revision": "5b65fdd1baa1230c2a8a33d0b246564f7decaea286cd1f8e1853db37fc0e8fac"
-    },
-    {
-      "path": "./core/interaction-clearance.js",
-      "revision": "da985894f3d230bb90e2606d36542e61dcfd56888c3e8ae9b5a2a39939cd0c80"
     },
     {
       "path": "./core/interactions.js",
@@ -531,7 +567,7 @@
     },
     {
       "path": "./game.js",
-      "revision": "ab2166c38c89023109f43bc9b8a3a60a968b0d24eaf65b65a9f1d9f36470f1cd"
+      "revision": "169a76704c4fc7ebbc3542ed89e02744b0c362e2a26d81952b947121544ee46e"
     },
     {
       "path": "./index.html",
@@ -547,7 +583,7 @@
     },
     {
       "path": "./pwa/cache.js",
-      "revision": "802e811c898c61f83258a30f5fc5f6930036d113425a197473bad004253f526c"
+      "revision": "c91b4ba708e852e9b748b94b032220fa5ff9c238064368816c832950e44406b9"
     },
     {
       "path": "./pwa/loading.css",
@@ -555,7 +591,7 @@
     },
     {
       "path": "./pwa/release.js",
-      "revision": "b4ae61b5252e8eac9a980014d52d9ad97c3aa2d1038e83c332664062de5b1271"
+      "revision": "54ba2cd5d93edb5bd8509d8dd4a7bacb6882804cf9972a0d035ca626c204c38d"
     },
     {
       "path": "./pwa/worker.js",

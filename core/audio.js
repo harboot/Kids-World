@@ -1,46 +1,8 @@
-// Original melodies. Notes use MIDI pitch numbers and offsets measured in beats.
-const garden = {
-  beat: 0.47,
-  bars: [
-    { chord: [55, 59, 62], melody: [[0, 67], [0.75, 71], [1.5, 74], [2.5, 71], [3.25, 69]] },
-    { chord: [48, 55, 60], melody: [[0, 67], [0.75, 64], [1.5, 67], [2.25, 72], [3.25, 71]] },
-    { chord: [52, 55, 59], melody: [[0, 71], [0.75, 67], [1.5, 64], [2.5, 67], [3.25, 69]] },
-    { chord: [50, 57, 62], melody: [[0, 66], [0.75, 69], [1.5, 74], [2.5, 69], [3.25, 66]] },
-  ],
-};
-
-const snow = {
-  beat: 0.66,
-  bars: [
-    { chord: [50, 57, 65], melody: [[0.5, 81], [2, 77], [3, 76]] },
-    { chord: [46, 53, 62], melody: [[0, 74], [1.75, 77], [2.75, 81]] },
-    { chord: [53, 60, 69], melody: [[0.5, 84], [2, 81], [3, 79]] },
-    { chord: [48, 55, 64], melody: [[0, 76], [1.5, 79], [2.75, 74]] },
-  ],
-};
-
-const woodenHouse = {
-  beat: 0.57,
-  bars: [
-    { chord: [45, 52, 57, 61], melody: [[0.5, 69], [1.75, 73], [2.75, 76]] },
-    { chord: [42, 49, 57, 61], melody: [[0, 78], [1.5, 76], [2.75, 73]] },
-    { chord: [38, 45, 54, 57], melody: [[0.5, 74], [1.5, 69], [2.5, 66]] },
-    { chord: [40, 47, 56, 59], melody: [[0, 68], [1.75, 71], [2.75, 64]] },
-  ],
-};
-
-const frozenCastle = {
-  beat: 0.73,
-  bars: [
-    { chord: [47, 54, 58, 61], melody: [[0.25, 78], [1.4, 85], [2.65, 82]] },
-    { chord: [44, 51, 59, 66], melody: [[0.5, 80], [2, 83], [2.8, 90]] },
-    { chord: [42, 49, 58, 63], melody: [[0.2, 87], [1.75, 82], [2.72, 85]] },
-    { chord: [49, 56, 61, 68], melody: [[0.65, 80], [1.8, 76], [2.7, 78]] },
-  ],
-};
-
 const muteKey = 'kids-world-muted';
 const minVolume = 0.0001;
+const masterVolume = 0.64;
+const musicVolume = 0.55;
+const sampleRate = 24000;
 const frequency = pitch => 440 * 2 ** ((pitch - 69) / 12);
 
 function tone(context, destination, at, pitch, { endPitch = pitch, duration, level, attack = 0.012, wave = 'sine' }) {
@@ -59,58 +21,39 @@ function tone(context, destination, at, pitch, { endPitch = pitch, duration, lev
   oscillator.stop(at + duration);
 }
 
-const scores = { garden, snow, 'wooden-house': woodenHouse, 'frozen-castle': frozenCastle };
 const jumpCue = [[60, { endPitch: 77, duration: 0.17, level: 0.22, wave: 'triangle' }]];
 const interactCue = [
   [53, { endPitch: 46, duration: 0.065, level: 0.24, attack: 0.004, wave: 'triangle' }],
   [79, { duration: 0.135, level: 0.15 }, 0.035],
 ];
 
-function renderLoop(OfflineContext, area) {
-  const { beat, bars } = scores[area];
-  const sampleRate = 24000;
-  const context = new OfflineContext(1, Math.round(4 * beat * bars.length * sampleRate), sampleRate);
+function renderLoop(OfflineContext, { beat, beatsPerBar = 4, bars, accompaniment = [], melody = [], rhythm = [] }) {
+  const barDuration = beatsPerBar * beat;
+  const context = new OfflineContext(1, Math.round(barDuration * bars.length * sampleRate), sampleRate);
   const output = context.destination;
-  bars.forEach(({ chord, melody }, bar) => {
-    const start = bar * 4 * beat;
-    if (area === 'snow' || area === 'frozen-castle') {
-      const castle = area === 'frozen-castle';
-      chord.forEach((pitch, i) => {
-        tone(context, output, start + i * 0.055, pitch, { duration: 3.8 * beat, attack: 0.28, level: castle ? 0.046 : 0.055 });
-      });
-      melody.forEach(([offset, pitch]) => {
-        const at = start + offset * beat;
-        tone(context, output, at, pitch, { duration: (castle ? 1.12 : 0.82) * beat, level: castle ? 0.12 : 0.15 });
-        tone(context, output, at + 0.12, pitch + 12, { duration: 0.57 * beat, level: castle ? 0.035 : 0.025 });
-      });
-    } else if (area === 'wooden-house') {
-      chord.forEach((pitch, i) => {
-        tone(context, output, start + i * 0.34 * beat, pitch, {
-          duration: 2.8 * beat, attack: 0.04, level: i === 0 ? 0.13 : 0.065, wave: i === 0 ? 'sine' : 'triangle',
-        });
-      });
-      melody.forEach(([offset, pitch]) => {
-        tone(context, output, start + offset * beat, pitch, { duration: 0.98 * beat, attack: 0.025, level: 0.13 });
-      });
-    } else {
-      tone(context, output, start, chord[0], { duration: 0.74 * beat, level: 0.15, wave: 'triangle' });
-      tone(context, output, start + 2 * beat, chord[0] - 12, { duration: 0.83 * beat, level: 0.13, wave: 'triangle' });
-      chord.slice(1).forEach((pitch, i) => {
-        tone(context, output, start + (1.25 + i * 1.65) * beat, pitch, { duration: 0.68 * beat, level: 0.085 });
-      });
-      melody.forEach(([offset, pitch]) => {
-        const at = start + offset * beat;
-        tone(context, output, at, pitch, { duration: 0.67 * beat, level: 0.125, wave: 'triangle' });
-        tone(context, output, at, pitch + 12, { duration: 0.24 * beat, level: 0.045 });
-      });
+  bars.forEach((bar, index) => {
+    const start = index * barDuration;
+    function play(offset, pitch, part) {
+      const at = start + (offset + (part.offset ?? 0)) * beat + (part.delay ?? 0);
+      tone(context, output, at, pitch + (part.transpose ?? 0), { ...part, duration: part.duration * beat });
+    }
+
+    for (const part of accompaniment) {
+      part.voices.forEach((voice, index) => play(index * (part.spread ?? 0), bar.chord[voice], part));
+    }
+    for (const [offset, pitch] of bar.melody ?? []) {
+      for (const part of melody) play(offset, pitch, part);
+    }
+    for (const part of rhythm) {
+      for (const [offset, pitch] of part.notes) play(offset, pitch, part);
     }
   });
   return context.startRendering();
 }
 
 export function createAudio(button) {
-  const AudioContext = window.AudioContext || window.webkitAudioContext;
-  const OfflineContext = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  const AudioContext = globalThis.AudioContext || globalThis.webkitAudioContext;
+  const OfflineContext = globalThis.OfflineAudioContext || globalThis.webkitOfflineAudioContext;
   let muted = false;
   try {
     muted = localStorage.getItem(muteKey) === '1';
@@ -120,10 +63,11 @@ export function createAudio(button) {
 
   let context;
   let master;
-  const buffers = new Map();
-  let area;
+  const buffers = new WeakMap();
+  let score;
   let track;
   let playing = false;
+  let rendering = false;
 
   function syncButton() {
     button.setAttribute('aria-pressed', String(muted));
@@ -132,53 +76,88 @@ export function createAudio(button) {
 
   function unlock() {
     if (!AudioContext || muted) return;
+    let opening;
     try {
       if (!context) {
-        context = new AudioContext();
-        master = context.createGain();
-        master.gain.value = 0.64;
-        master.connect(context.destination);
+        opening = new AudioContext();
+        const gain = opening.createGain();
+        gain.gain.value = masterVolume;
+        gain.connect(opening.destination);
+        opening.addEventListener('statechange', syncMusic);
+        context = opening;
+        master = gain;
       }
-      if (context.state !== 'running') context.resume().catch(() => {});
+      if (context.state === 'running') syncMusic();
+      else context.resume().then(syncMusic, () => {});
     } catch {
+      if (!context) opening?.close?.().catch(() => {});
       button.hidden = true;
     }
   }
 
   function stopMusic() {
-    if (!track) return;
+    if (!track || track.stopping) return;
+    // Hold the slot through the fade so a replacement starts after this track ends.
+    track.stopping = true;
     const now = context.currentTime;
-    track.gain.gain.setTargetAtTime(minVolume, now, 0.01);
-    track.source.stop(now + 0.06);
-    track = null;
+    if (context.state === 'running') {
+      track.gain.gain.setTargetAtTime(minVolume, now, 0.01);
+      track.source.stop(now + 0.06);
+    } else {
+      track.source.stop(now);
+    }
+  }
+
+  function startMusic(buffer) {
+    const gain = context.createGain();
+    const source = context.createBufferSource();
+    gain.gain.value = musicVolume;
+    source.buffer = buffer;
+    source.loop = true;
+    source.connect(gain).connect(master);
+    source.onended = () => {
+      source.disconnect();
+      gain.disconnect();
+      track = null;
+      syncMusic();
+    };
+    source.start();
+    track = { source, gain, stopping: false };
+  }
+
+  function canPlayMusic() {
+    return playing && !muted && score && context?.state === 'running';
   }
 
   function syncMusic() {
-    if (!playing || muted || !context || !master || !OfflineContext || !Object.hasOwn(scores, area)) {
+    if (!playing || muted || !score) {
       stopMusic();
       return;
     }
-    if (track) return;
+    if (!canPlayMusic() || !OfflineContext || track) return;
 
-    const requestedArea = area;
-    if (!buffers.has(requestedArea)) {
-      buffers.set(requestedArea, Promise.resolve().then(() => renderLoop(OfflineContext, requestedArea)).catch(() => null));
+    const buffer = buffers.get(score);
+    if (buffer) {
+      startMusic(buffer);
+      return;
     }
-    buffers.get(requestedArea).then(audioBuffer => {
-      if (!audioBuffer || !playing || muted || track || area !== requestedArea) return;
-      const gain = context.createGain();
-      const source = context.createBufferSource();
-      gain.gain.value = 0.55;
-      source.buffer = audioBuffer;
-      source.loop = true;
-      source.connect(gain).connect(master);
-      source.onended = () => {
-        source.disconnect();
-        gain.disconnect();
-      };
-      track = { source, gain };
-      source.start();
-    });
+    if (rendering) return;
+
+    // Defer node setup and render one loop at a time when switching areas.
+    const requested = score;
+    rendering = true;
+    setTimeout(async () => {
+      try {
+        if (canPlayMusic() && score === requested) {
+          buffers.set(requested, await renderLoop(OfflineContext, requested));
+        }
+      } catch {
+        // Background music is optional when offline audio rendering fails.
+      } finally {
+        rendering = false;
+        if (score !== requested || buffers.has(requested)) syncMusic();
+      }
+    }, 0);
   }
 
   function setPlaying(active) {
@@ -186,10 +165,10 @@ export function createAudio(button) {
     syncMusic();
   }
 
-  function setArea(next) {
-    if (area === next) return;
+  function setScore(next) {
+    if (score === next) return;
     stopMusic();
-    area = next;
+    score = next;
     syncMusic();
   }
 
@@ -215,11 +194,11 @@ export function createAudio(button) {
         // Keep the in-memory preference for this page.
       }
       syncButton();
+      if (master) master.gain.setTargetAtTime(muted ? minVolume : masterVolume, context.currentTime, 0.01);
       unlock();
-      if (master) master.gain.setTargetAtTime(muted ? minVolume : 0.64, context.currentTime, 0.01);
       syncMusic();
     });
   }
 
-  return { unlock, setArea, setPlaying, effect, playCue };
+  return { unlock, setScore, setPlaying, effect, playCue };
 }

@@ -10,6 +10,7 @@ import { createScenery } from './scenery.js';
 import { buildSoldiers } from './soldiers.js';
 import { buildTerrain } from './terrain.js';
 import { buildVehicles } from './vehicles.js';
+import { music } from './music.js';
 
 export const militaryBase = {
   title: 'Military Base',
@@ -17,6 +18,7 @@ export const militaryBase = {
   description: 'Complete five missions at a snowy mountain base and take a helicopter sightseeing tour.',
   canvasLabel: '3D military base with an open gate, headquarters, tank yard, and helipad',
   themeColor: '#dae6ef',
+  music,
   width: WIDTH,
   depth: DEPTH,
   spawn: SPAWN,

@@ -1,6 +1,6 @@
 import { arendelleVillage } from './areas/arendelle-village/index.js';
 import { flowerGarden } from './areas/flower-garden/index.js';
-import { snowBasin } from './areas/snow-basin.js';
+import { snowBasin } from './areas/snow-basin/index.js';
 import { woodenHouse } from './areas/wooden-house/index.js';
 import { frozenCastle } from './areas/frozen-castle/index.js';
 import { princessGallery } from './areas/princess-gallery/index.js';

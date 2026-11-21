@@ -232,7 +232,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     try {
       const { definition } = worlds.load(id);
       prepareVisit();
-      audio.setArea(definition.music);
+      audio.setScore(definition.music);
       view.sceneChanged();
       showArea(id);
       if (historyMode) history[historyMode](null, '', areaURL(new URL(location.href), id));
