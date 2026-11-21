@@ -77,31 +77,31 @@ test('raycasting returns exact world hits and skips hidden groups, effects and v
   for (const resource of [geometry, material, transparent, hiddenMaterial]) resource.dispose();
 });
 
-test('the picker returns elevated terrain, bridges, stairs and the lookout in real areas', t => {
+test('the picker returns elevated terrain, bridges, stairs and the lookout in real areas', async t => {
   const worlds = createWorldManager(THREE, {
     areas, camera: new THREE.PerspectiveCamera(), playerRadius: 0.34,
     services: { reducedMotion: () => true },
   });
   t.after(worlds.unload);
   const drone = createDroneCamera(THREE);
-  function open(id) {
-    const { definition, area, scene, viewmodel } = worlds.load(id);
+  async function open(id) {
+    const { definition, area, scene, viewmodel } = await worlds.load(id);
     drone.focus(definition, area.droneView, 1);
     return pickerAtWorldPosition(drone, scene, viewmodel);
   }
-  const garden = open('garden');
+  const garden = await open('garden');
   near(garden(HILL.x, HILL.z).y, worlds.active.area.getGroundHeight(HILL.x, HILL.z));
   assert.ok(garden(HILL.x, HILL.z).y > 2);
   near(garden(BRIDGE.x, POND.z).y, BRIDGE.peak, 0.1);
-  assert.ok(open('snow')(0, 0));
-  const castle = open('frozen-castle');
+  assert.ok((await open('snow'))(0, 0));
+  const castle = await open('frozen-castle');
   const stairs = worlds.active.area.interactions.find(item => item.label === 'Build ice staircase');
   for (let i = 0; i < 3; i++) stairs.act();
   const stair = stairPoint(0.55);
   near(castle(stair.x, stair.z).y, stair.y, 0.2);
-  assert.ok(open('arendelle-village')(2.8, -9.15).y > 10);
-  near(open('wooden-house')(0, 1.2).y, 0);
-  const apartment = open('secret-apartment');
+  assert.ok((await open('arendelle-village'))(2.8, -9.15).y > 10);
+  near((await open('wooden-house'))(0, 1.2).y, 0);
+  const apartment = await open('secret-apartment');
   near(apartment(-88, 5).y, -0.016);
   drone.focus(areas['secret-apartment'], undefined, 1);
   assert.equal(apartment(0, 8), null, 'inactive zones remain excluded even if the camera can see their coordinates');

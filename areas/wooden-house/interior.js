@@ -1,8 +1,8 @@
 import { addGroup, addMesh, rectangleBounds } from '../../core/geometry.js';
 import { PLAYER_ONLY_LAYER } from '../../core/render-layers.js';
+import { metadata } from './metadata.js';
 
-export const HOUSE_WIDTH = 12.8;
-export const HOUSE_DEPTH = 10.8;
+const { width: HOUSE_WIDTH, depth: HOUSE_DEPTH } = metadata;
 const HEIGHT = 3.8;
 const HALF_WIDTH = HOUSE_WIDTH / 2;
 const HALF_DEPTH = HOUSE_DEPTH / 2;

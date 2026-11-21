@@ -87,7 +87,7 @@ const tidy = {
   toys: model => model.toys.every(toy => !toy.visible) && model.lid.rotation.x === 0,
 };
 
-test('the house opens by URL and the Garden cabin keeps its porch activities', t => {
+test('the house opens by URL and the Garden cabin keeps its porch activities', async t => {
   const direct = new URL('https://example.test/Kids-World/index.html?area=wooden-house');
   assert.equal(resolveArea(direct, areas, 'garden', 'snow'), house);
   assert.equal(resolveArea(new URL('./', direct), areas, 'garden', house), house);
@@ -96,7 +96,7 @@ test('the house opens by URL and the Garden cabin keeps its porch activities', t
   const { worlds, camera, completions } = fixture();
   t.after(worlds.unload);
   const player = createPlayer(THREE, camera);
-  const { area: garden, scene } = worlds.load('garden');
+  const { area: garden, scene } = await worlds.load('garden');
   assert.ok(scene.getObjectByName('Cabin flower window'));
   garden.interactions.find(item => item.label === 'Pick up basket' && item.active).act();
   for (const label of ['Sit on bench', 'Place basket']) {
@@ -104,16 +104,16 @@ test('the house opens by URL and the Garden cabin keeps its porch activities', t
     const position = { x: item.x, y: 2.7, z: item.z + 0.54 };
     assert.equal(nearestInteraction(garden.interactions, position), item);
   }
-  const { area, definition } = worlds.load(resolveArea(direct, areas, 'garden'));
+  const { area, definition } = await worlds.load(resolveArea(direct, areas, 'garden'));
   player.reset(definition.spawn, area);
   assert.deepEqual(camera.position.toArray(), [definition.spawn.x, 1.68, definition.spawn.z]);
   assert.deepEqual(area.missionStatus.missions, missionProgress());
   assert.deepEqual(completions, []);
 });
 
-test('the open layout connects the spawn to every interaction and blocks walls and major furniture', () => {
+test('the open layout connects the spawn to every interaction and blocks walls and major furniture', async () => {
   const { worlds } = fixture();
-  const { area, definition } = worlds.load(house);
+  const { area, definition } = await worlds.load(house);
   const open = (x, z) => walkElevation(area, { x, z }, x, z, 0, true) === 0;
   for (const [x, z] of [[-4.55, -3.45], [2.2, -4.62], [-2.07, 1.65], [-5.86, 1.49], [6.3, 0], [0, -5.29]]) {
     assert.equal(open(x, z), false);
@@ -140,9 +140,9 @@ test('the open layout connects the spawn to every interaction and blocks walls a
   worlds.unload();
 });
 
-test('each mission makes its actual furniture tidy exactly once and only after the animation', () => {
+test('each mission makes its actual furniture tidy exactly once and only after the animation', async () => {
   const { worlds, completions, cues } = fixture();
-  const { area, scene } = worlds.load(house);
+  const { area, scene } = await worlds.load(house);
   const tasks = missions(area);
   const model = models(scene);
   assert.deepEqual(Object.fromEntries(Object.values(tasks).map(task => [task.id, task.label])), labels);
@@ -177,9 +177,9 @@ test('each mission makes its actual furniture tidy exactly once and only after t
   worlds.unload();
 });
 
-test('every mission works from different positions outside its clearance while facing the object', () => {
+test('every mission works from different positions outside its clearance while facing the object', async () => {
   const { worlds, camera } = fixture();
-  const { area, scene } = worlds.load(house);
+  const { area, scene } = await worlds.load(house);
   const tasks = missions(area);
   const button = Object.assign(new EventTarget(), { style: { setProperty() {} } });
   const prompts = createInteractions(THREE, {
@@ -239,13 +239,13 @@ test('every mission works from different positions outside its clearance while f
   worlds.unload();
 });
 
-test('all five tasks can finish in different orders, record once per visit and remain replayable', () => {
+test('all five tasks can finish in different orders, record once per visit and remain replayable', async () => {
   const { worlds, getStorage, writes, completions, progress, cues, notifications } = fixture(['garden@2', 'snow']);
   for (const order of [
     ['toys', 'painting', 'tv', 'bed', 'dishes'],
     ['dishes', 'bed', 'toys', 'tv', 'painting'],
   ]) {
-    const { area, scene } = worlds.active ?? worlds.load(house);
+    const { area, scene } = worlds.active ?? await worlds.load(house);
     const tasks = missions(area);
     const model = models(scene);
     assert.deepEqual(area.missionStatus.missions, missionProgress());
@@ -276,16 +276,16 @@ test('all five tasks can finish in different orders, record once per visit and r
   assert.deepEqual(notifications, Array(2).fill('Great job! The house is sparkling clean!'));
   assert.equal(writes.length, 1);
   assert.equal(cues.length, 12);
-  worlds.load('garden');
-  const revisit = worlds.load(house);
+  await worlds.load('garden');
+  const revisit = await worlds.load(house);
   assert.deepEqual(revisit.area.missionStatus.missions, missionProgress());
   assert.ok(Object.values(missions(revisit.area)).every(task => task.active));
   worlds.unload();
 });
 
-test('unload cancels running missions and releases their resources', () => {
+test('unload cancels running missions and releases their resources', async () => {
   const { worlds, completions, cues } = fixture();
-  const first = worlds.load(house);
+  const first = await worlds.load(house);
   const model = models(first.scene);
   const tasks = missions(first.area);
   let disposed = false;
@@ -301,7 +301,7 @@ test('unload cancels running missions and releases their resources', () => {
   assert.deepEqual(first.area.missionStatus.missions, missionProgress());
   tasks.dishes.act();
   tasks.tv.act();
-  worlds.load('garden');
+  await worlds.load('garden');
   assert.ok(first.lifetime.signal.aborted);
   assert.equal(first.scene.children.length, 0);
   assert.ok(disposed);
@@ -311,15 +311,15 @@ test('unload cancels running missions and releases their resources', () => {
   first.area.update(2);
   assert.equal(cues.length, 4);
   assert.deepEqual(completions, []);
-  const next = worlds.load(house);
+  const next = await worlds.load(house);
   assert.deepEqual(next.area.missionStatus.missions, missionProgress());
   worlds.unload();
 });
 
-test('reduced motion keeps the TV still and applies tidy poses without animated effects', () => {
+test('reduced motion keeps the TV still and applies tidy poses without animated effects', async () => {
   const { worlds, reduceMotion, completions } = fixture();
   reduceMotion();
-  const { area, scene } = worlds.load(house);
+  const { area, scene } = await worlds.load(house);
   const model = models(scene);
   const cloud = model.program.children[3];
   const cloudPosition = cloud.position.clone();

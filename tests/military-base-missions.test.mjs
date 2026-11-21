@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import * as THREE from '../vendor/three.module.min.js';
-import { militaryBase } from '../areas/military-base/index.js';
+import { areas } from '../game.js';
 import { cruiseAltitude, flightDurations, sampleCircuit } from '../areas/military-base/helicopter-flight.js';
 import { passengerEye } from '../areas/military-base/helicopter.js';
 import { headquarters, helipad, motorPool, repairTank } from '../areas/military-base/layout.js';
@@ -13,20 +13,20 @@ import { createWorldManager } from '../core/world-manager.js';
 
 const flightTime = Object.values(flightDurations).reduce((sum, time) => sum + time, 0);
 
-function missionFixture(t, { reducedMotion = () => false } = {}) {
+async function missionFixture(t, { reducedMotion = () => false } = {}) {
   const camera = new THREE.PerspectiveCamera(62, 16 / 9, .07, 115);
   const notices = [];
   const cues = [];
   const completions = [];
   const worlds = createWorldManager(THREE, {
-    areas: { 'military-base': militaryBase },
+    areas,
     camera,
     services: {
       notify: message => notices.push(message), playCue: cue => cues.push(cue), reducedMotion,
       completeLevel: id => completions.push(id), isLevelComplete: id => completions.includes(id),
     },
   });
-  const visit = worlds.load('military-base');
+  const visit = await worlds.load('military-base');
   t.after(worlds.unload);
   const { area, scene } = visit;
   const player = createPlayer(THREE, camera);
@@ -53,8 +53,8 @@ function missionFixture(t, { reducedMotion = () => false } = {}) {
   return { area, scene, worlds, visit, camera, player, node, find, board, row, beginFlight, advance, notices, cues, completions };
 }
 
-test('security panels activate once, signal green and cue the associated guards', t => {
-  const { area, find, row, node, advance } = missionFixture(t);
+test('security panels activate once, signal green and cue the associated guards', async t => {
+  const { area, find, row, node, advance } = await missionFixture(t);
   const panels = find('Activate Security');
   assert.equal(panels.length, 3);
   assert.equal(panels[2].reachable({ y: EYE_HEIGHT }), false);
@@ -76,8 +76,8 @@ test('security panels activate once, signal green and cue the associated guards'
   assert.ok(panels.every(item => item.active));
 });
 
-test('tank parts are unique, installation drives once and the tank yields to a player in its lane', t => {
-  const { area, find, row, node, advance, notices, worlds, camera } = missionFixture(t);
+test('tank parts are unique, installation drives once and the tank yields to a player in its lane', async t => {
+  const { area, find, row, node, advance, notices, worlds, camera } = await missionFixture(t);
   const pickups = find('Pick Up Component');
   const [install] = find('Install Component');
   const tank = node('Tank 04 under repair');
@@ -124,8 +124,8 @@ test('tank parts are unique, installation drives once and the tank yields to a p
   assert.ok(pickups.every(item => item.active));
 });
 
-test('supply delivery carries one crate at a time and alignment only spins the main radar after all three heads turn', t => {
-  const { area, find, row, node, advance, cues } = missionFixture(t);
+test('supply delivery carries one crate at a time and alignment only spins the main radar after all three heads turn', async t => {
+  const { area, find, row, node, advance, cues } = await missionFixture(t);
   const source = find('Pick Up Supplies');
   const [drop] = find('Deliver Supplies');
   source[0].act();
@@ -170,8 +170,8 @@ test('supply delivery carries one crate at a time and alignment only spins the m
   assert.ok(source.every(item => item.active));
 });
 
-test('the circuit is clockwise on the actual Drone View projection and keeps the facilities on its right', t => {
-  const { visit, scene } = missionFixture(t);
+test('the circuit is clockwise on the actual Drone View projection and keeps the facilities on its right', async t => {
+  const { visit, scene } = await missionFixture(t);
   const { camera, focus } = createDroneCamera(THREE);
   focus(visit.definition, visit.area.droneView, 16 / 9);
   scene.updateMatrixWorld(true);
@@ -203,8 +203,8 @@ test('the circuit is clockwise on the actual Drone View projection and keeps the
   }
 });
 
-test('flight locks the player, keeps the camera on the right seat, lands before credit, and supports replay and reset', t => {
-  const { area, camera, player, visit, node, board, row, beginFlight, advance, notices } = missionFixture(t);
+test('flight locks the player, keeps the camera on the right seat, lands before credit, and supports replay and reset', async t => {
+  const { area, camera, player, visit, node, board, row, beginFlight, advance, notices } = await missionFixture(t);
   const aircraft = node('Utility helicopter');
   const motion = new THREE.Vector2(0, -1);
   const start = node('Helicopter parking position').position.clone();
@@ -253,8 +253,8 @@ test('flight locks the player, keeps the camera on the right seat, lands before 
   assert.equal(player.guided, false);
 });
 
-test('every mission prompt can be reached from a clear standing position', t => {
-  const { area, find } = missionFixture(t);
+test('every mission prompt can be reached from a clear standing position', async t => {
+  const { area, find } = await missionFixture(t);
   const point = label => find(label)[0];
   point('Inspect Radar Console').act();
   point('Pick Up Component').act();
@@ -276,8 +276,8 @@ test('every mission prompt can be reached from a clear standing position', t => 
   area.interactions.forEach(verify);
 });
 
-test('the last independent mission records area completion once across repeat visits', t => {
-  const { area, find, beginFlight, advance, completions } = missionFixture(t, { reducedMotion: () => true });
+test('the last independent mission records area completion once across repeat visits', async t => {
+  const { area, find, beginFlight, advance, completions } = await missionFixture(t, { reducedMotion: () => true });
   for (let visit = 0; visit < 2; visit++) {
     find('Inspect Radar Console')[0].act();
     find('Align Antenna').forEach(item => item.act());

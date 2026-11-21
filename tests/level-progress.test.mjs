@@ -1,18 +1,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import * as THREE from '../vendor/three.module.min.js';
-import { flowerGarden } from '../areas/flower-garden/index.js';
+import { areas } from '../game.js';
 import { fishPose } from '../areas/flower-garden/garden-pond.js';
 import { createTerrain, POND, pondDistance } from '../areas/flower-garden/garden-terrain.js';
 import { nearestInteraction } from '../core/interactions.js';
 import { createLevelProgress } from '../core/level-progress.js';
 import { createWorldManager } from '../core/world-manager.js';
 import { walkElevation } from '../core/movement.js';
-
-const areas = {
-  garden: { ...flowerGarden, show: true },
-  snow: { show: true, load: () => ({ obstacles: [] }) },
-};
 
 function storageFixture() {
   const entries = new Map();
@@ -55,7 +50,7 @@ test('the five-mission Garden needs a new completion while other saved badges re
   assert.equal(open().has('snow'), true);
 });
 
-function gardenFixture() {
+async function gardenFixture() {
   const storage = storageFixture();
   const progress = createLevelProgress(areas, () => storage);
   const camera = new THREE.PerspectiveCamera();
@@ -74,7 +69,7 @@ function gardenFixture() {
       notify: message => notifications.push(message),
     },
   });
-  const { area, scene } = worlds.load('garden');
+  const { area, scene } = await worlds.load('garden');
   const find = label => area.interactions.find(item => item.label === label);
   const basket = find('Pick up basket');
   const shake = find('Shake tree');
@@ -108,8 +103,8 @@ function assertProgress(area, { apples = 0, fish = 0, cow = 0, rabbits = 0, chic
   ]);
 }
 
-test('only placing a basket with at least three apples completes delivery', () => {
-  const game = gardenFixture();
+test('only placing a basket with at least three apples completes delivery', async () => {
+  const game = await gardenFixture();
   const { worlds, area, basket, find, collect, visibleApples, progress, completions } = game;
   for (const apples of [0, 1, 2, 3, 4, 5]) {
     worlds.reset();
@@ -148,8 +143,8 @@ test('only placing a basket with at least three apples completes delivery', () =
   worlds.unload();
 });
 
-test('the dry shore feeding spot animates pellets, ripples and fish and stays reusable', () => {
-  const { worlds, area, scene, camera, feed, cues } = gardenFixture();
+test('the dry shore feeding spot animates pellets, ripples and fish and stays reusable', async () => {
+  const { worlds, area, scene, camera, feed, cues } = await gardenFixture();
   const approach = { x: feed.x + 0.75, z: feed.z, y: 1.68 };
   assert.equal(nearestInteraction(area.interactions, approach), feed);
   assert.notEqual(walkElevation(area, approach, approach.x - 0.2, approach.z, 0, true), null);
@@ -169,7 +164,7 @@ test('the dry shore feeding spot animates pellets, ripples and fish and stays re
   assert.ok(pellets.some(node => node.visible));
   let sawRipples = false;
   const pose = {};
-  const { getTerrainHeight } = createTerrain(flowerGarden.width, flowerGarden.depth);
+  const { getTerrainHeight } = createTerrain(areas.garden.width, areas.garden.depth);
   for (let step = 1; step <= 40; step++) {
     worlds.update(0.1, camera.position);
     sawRipples ||= ripples.some(node => node.visible);
@@ -200,8 +195,8 @@ test('the dry shore feeding spot animates pellets, ripples and fish and stays re
   worlds.unload();
 });
 
-test('a chicken jump and either cow greeting each count once', () => {
-  const { worlds, area, scene, camera, cows, find } = gardenFixture();
+test('a chicken jump and either cow greeting each count once', async () => {
+  const { worlds, area, scene, camera, cows, find } = await gardenFixture();
   assert.equal(cows.length, 2);
   for (const [i, cow] of cows.entries()) {
     worlds.reset();
@@ -228,8 +223,8 @@ test('a chicken jump and either cow greeting each count once', () => {
   worlds.unload();
 });
 
-test('all five missions record Garden completion in different orders and preserve it through replay', () => {
-  const { worlds, area, camera, completions, progress, storage, find, basket, collect, cows, feed, notifications } = gardenFixture();
+test('all five missions record Garden completion in different orders and preserve it through replay', async () => {
+  const { worlds, area, camera, completions, progress, storage, find, basket, collect, cows, feed, notifications } = await gardenFixture();
   const tasks = {
     apples() {
       basket.act();
@@ -265,8 +260,8 @@ test('all five missions record Garden completion in different orders and preserv
     worlds.reset();
   }
   assert.equal(progress.has('snow'), false);
-  worlds.load('snow');
-  const replay = worlds.load('garden');
+  await worlds.load('snow');
+  const replay = await worlds.load('garden');
   assertProgress(replay.area);
   assert.equal(createLevelProgress(areas, () => storage).has('garden'), true);
   worlds.unload();

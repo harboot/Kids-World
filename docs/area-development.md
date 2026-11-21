@@ -2,11 +2,12 @@
 
 ## Create and test an area
 
-1. Add an area folder under `areas/` and export its definition from `index.js`, as in `areas/snow-basin/index.js`. Build the terrain, objects, collisions, interactions, and mission rules inside its synchronous `load(context)` function.
-2. Return the loaded area's obstacles and structured `missionStatus`, plus the interactions and lifecycle hooks the area uses. Implement `reset()` for any state that changes during a visit.
-3. Import the definition in `game.js` and register it under a stable ID. Use `publicArea(definition, folder)` for a public area or set `show: false` for a link-only area. The registry key is the area ID used by the picker, direct links, and completion records.
-4. Open `?area=<id>` locally to play the area. Add `&view=drone` to inspect surfaces and copy world coordinates. Test reset, the area picker or direct entry, and each mission's completion conditions.
-5. Add regression tests and update the offline release.
+1. Create an area folder under `areas/`. Export a static `metadata` object from `metadata.js` with the stable area ID and the fields below. Keep this module free of scene, mission, and audio imports.
+2. Default-export a definition from `index.js` that spreads `metadata` and supplies `load(context)`. The engine imports the module asynchronously, then calls `load` synchronously to build the scene and return the visit.
+3. Import the metadata in `game.js`. Use the metadata ID as the registry key and declare `loadModule: () => import('./areas/<folder>/index.js')` with a literal path. Use `publicArea(metadata, folder, loadModule)` to register a public area and its thumbnail.
+4. For a public area, add a 16:9 JPEG named after the folder, such as `areas/princess-gallery/princess-gallery.jpg`.
+5. Open `?area=<id>` locally and add `&view=drone` to inspect surfaces. Add regression tests for routing, reset, and mission completion.
+6. Regenerate the area statistics and PWA manifest, then validate the release.
 
 ```sh
 node scripts/generate-area-stats.mjs
@@ -15,20 +16,19 @@ node scripts/generate-pwa-manifest.mjs --check
 node --test
 ```
 
-The picker lists all public areas from the start and marks areas whose missions are complete. Save a public area’s 16:9 JPEG in its own folder with the folder name, such as `areas/princess-gallery/princess-gallery.jpg`. The `publicArea` helper resolves the image relative to the registry module, and the release manifest includes it for offline play. Link-only areas open from explicit links such as `?area=secret-apartment` and stay out of the picker and public progress.
+`show: true` makes an area visible in the picker and eligible for public completion badges. `show: false` makes it link-only, such as `?area=secret-apartment`. Both use the same lazy loader and remain in the PWA precache until Phase 2, so every area can still open offline from a complete release.
 
-## Area definition
+## Area metadata
 
 | Required field | What it supplies |
 | --- | --- |
+| `id` | Stable ID matching the registry key used for routing and completion records |
 | `title`, `description`, `canvasLabel`, `themeColor` | Nonempty strings for the wordmark, menu, accessible canvas name, and browser theme color |
 | `heading` | Two strings for the menu heading and its accent, with visible text in at least one |
 | `width`, `depth` | Positive finite dimensions of the area in world units |
 | `spawn` | Finite `x` and `z` coordinates, with optional finite `yaw` in radians and `elevation` for selecting an elevated surface |
-| `load(context)` | Constructs the visit and returns its runtime interface |
-| `show` | Explicit boolean set on the entry in `game.js` |
 
-`loadingMessage` can override the default loading text. Set or increment `completionRevision` when a changed mission list requires a new completion badge.
+`loadingMessage` can override the default loading text. Set or increment the positive integer `completionRevision` when a changed mission list requires a new completion badge.
 
 ### Background music
 
@@ -51,12 +51,11 @@ Export the area's original score as `music` from its own `music.js` and pass tha
 
 ## Minimal example
 
-Save this module as `areas/example-yard/index.js`. Import `exampleYard` in `game.js`, then add `'example-yard': { ...exampleYard, show: false }` to the registry to try it through `?area=example-yard`.
+Save the metadata as `areas/example-yard/metadata.js`.
 
 ```js
-import { addMesh, rectangleBounds } from '../../core/geometry.js';
-
-export const exampleYard = {
+export const metadata = {
+  id: 'example-yard',
   title: 'Bell Yard',
   heading: ['Bell', 'Yard'],
   description: 'Walk up to the bell and ring it.',
@@ -65,6 +64,17 @@ export const exampleYard = {
   width: 12,
   depth: 12,
   spawn: { x: 0, z: 3 },
+};
+```
+
+Save the implementation as `areas/example-yard/index.js`.
+
+```js
+import { addMesh, rectangleBounds } from '../../core/geometry.js';
+import { metadata } from './metadata.js';
+
+export default {
+  ...metadata,
   load({ THREE, scene, notify }) {
     scene.background = new THREE.Color(0xd9edf0);
     scene.add(new THREE.HemisphereLight(0xfff8e6, 0x647d54, 2));
@@ -96,6 +106,16 @@ export const exampleYard = {
     };
   },
 };
+```
+
+Import `{ metadata as exampleYard }` from `./areas/example-yard/metadata.js` in `game.js`. Add this registry entry and open `?area=example-yard`.
+
+```js
+'example-yard': {
+  ...exampleYard,
+  show: false,
+  loadModule: () => import('./areas/example-yard/index.js'),
+},
 ```
 
 ## Shared tools and ownership

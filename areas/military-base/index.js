@@ -3,25 +3,18 @@ import { buildDecorations } from './decorations.js';
 import { buildHelicopter } from './helicopter.js';
 import { buildMissionProps } from './mission-props.js';
 import { createMissions } from './missions.js';
-import { DEPTH, SPAWN, WIDTH } from './layout.js';
 import { buildPerimeter } from './perimeter.js';
 import { buildRoads } from './roads.js';
 import { createScenery } from './scenery.js';
 import { buildSoldiers } from './soldiers.js';
 import { buildTerrain } from './terrain.js';
 import { buildVehicles } from './vehicles.js';
+import { metadata } from './metadata.js';
 import { music } from './music.js';
 
 export const militaryBase = {
-  title: 'Military Base',
-  heading: ['Military', 'Base'],
-  description: 'Complete five missions at a snowy mountain base and take a helicopter sightseeing tour.',
-  canvasLabel: '3D military base with an open gate, headquarters, tank yard, and helipad',
-  themeColor: '#dae6ef',
+  ...metadata,
   music,
-  width: WIDTH,
-  depth: DEPTH,
-  spawn: SPAWN,
   load({ THREE, scene, camera, hud, playerRadius, touch, reducedMotion = () => false,
     playCue = () => {}, notify = () => {}, completeLevel = () => {}, isLevelComplete = () => false }) {
     scene.background = new THREE.Color(0xd4e2ee);
@@ -84,3 +77,5 @@ export const militaryBase = {
     };
   },
 };
+
+export default militaryBase;

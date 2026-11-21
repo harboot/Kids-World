@@ -4,9 +4,10 @@ import { buildBelle } from './belle.js';
 import { buildCinderella } from './cinderella.js';
 import { buildRapunzel } from './rapunzel.js';
 import { buildSnowWhite } from './snow-white.js';
+import { metadata } from './metadata.js';
 
-export const GALLERY_WIDTH = 140;
-export const GALLERY_DEPTH = 120;
+export const GALLERY_WIDTH = metadata.width;
+export const GALLERY_DEPTH = metadata.depth;
 
 // Unit outlines, clockwise when viewed from above. The first edge always faces the visitor.
 const outlines = {

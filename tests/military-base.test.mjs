@@ -1,20 +1,21 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import * as THREE from '../vendor/three.module.min.js';
+import { areas } from '../game.js';
 import { militaryBase } from '../areas/military-base/index.js';
 import { antennas, checkpoints, fence, headquarters, helipad, hospital, lookout, motorPool, repairTank, supplyDepot } from '../areas/military-base/layout.js';
 import { walkElevation } from '../core/movement.js';
 import { createPlayer, EYE_HEIGHT } from '../core/player.js';
 import { createWorldManager } from '../core/world-manager.js';
 
-function fixture(reducedMotion) {
+async function fixture(reducedMotion) {
   const camera = new THREE.PerspectiveCamera();
   const worlds = createWorldManager(THREE, {
-    areas: { 'military-base': militaryBase },
+    areas,
     camera,
     services: { reducedMotion },
   });
-  const visit = worlds.load('military-base');
+  const visit = await worlds.load('military-base');
   const player = createPlayer(THREE, camera);
   const step = new THREE.Vector2();
   function spawn(x, z) { player.reset({ x, z }, worlds.active.area); }
@@ -33,8 +34,8 @@ function fixture(reducedMotion) {
   return { worlds, visit, camera, spawn, walk };
 }
 
-test('the South Gate leads to a walkable HQ lobby and the physical stairs work in both directions', t => {
-  const { worlds, camera, walk } = fixture();
+test('the South Gate leads to a walkable HQ lobby and the physical stairs work in both directions', async t => {
+  const { worlds, camera, walk } = await fixture();
   t.after(worlds.unload);
   assert.equal(camera.position.y, EYE_HEIGHT);
   const { x, z, yaw } = headquarters;
@@ -47,8 +48,8 @@ test('the South Gate leads to a walkable HQ lobby and the physical stairs work i
   assert.equal(camera.position.y, EYE_HEIGHT);
 });
 
-test('the motor pool service bay, logistics dock, and flight apron are walkable', t => {
-  const { worlds, camera, spawn, walk } = fixture();
+test('the motor pool service bay, logistics dock, and flight apron are walkable', async t => {
+  const { worlds, camera, spawn, walk } = await fixture();
   t.after(worlds.unload);
   spawn(0, 49.9);
   walk(motorPool.x + 9, 49.9);
@@ -68,8 +69,8 @@ test('the motor pool service bay, logistics dock, and flight apron are walkable'
   assert.ok(Math.hypot(camera.position.x - helipad.x, camera.position.z - helipad.z) < helipad.radius);
 });
 
-test('the open service sheds are accessible and the roadway wraps around the HQ apron', t => {
-  const { worlds, visit, camera, spawn, walk } = fixture();
+test('the open service sheds are accessible and the roadway wraps around the HQ apron', async t => {
+  const { worlds, visit, camera, spawn, walk } = await fixture();
   t.after(worlds.unload);
   visit.scene.updateMatrixWorld(true);
   const shed = visit.scene.getObjectByName('Service Shed 01');
@@ -92,8 +93,8 @@ test('the open service sheds are accessible and the roadway wraps around the HQ 
   assert.equal(hitsRoad(headquarters.x, headquarters.z), false);
 });
 
-test('the South Lookout ramp and deck support normal player movement with guardrails', t => {
-  const { worlds, visit, camera, spawn, walk } = fixture();
+test('the South Lookout ramp and deck support normal player movement with guardrails', async t => {
+  const { worlds, visit, camera, spawn, walk } = await fixture();
   t.after(worlds.unload);
   const { area } = visit;
   const { x, z, height } = lookout;
@@ -119,8 +120,8 @@ test('the South Lookout ramp and deck support normal player movement with guardr
   }
 });
 
-test('fences, closed buildings and parked vehicles use Core collision', t => {
-  const { worlds, visit, camera, spawn } = fixture();
+test('fences, closed buildings and parked vehicles use Core collision', async t => {
+  const { worlds, visit, camera, spawn } = await fixture();
   t.after(worlds.unload);
   const { area } = visit;
   const blocked = (x, z) => walkElevation(area, camera.position, x, z, 0, true) === null;
@@ -133,9 +134,9 @@ test('fences, closed buildings and parked vehicles use Core collision', t => {
   assert.equal(walkElevation(area, camera.position, 0, fence.south, 0, true), 0);
 });
 
-test('mission sites are in the environment and animated scenery resets with the visit', t => {
+test('mission sites are in the environment and animated scenery resets with the visit', async t => {
   let reduced = false;
-  const { worlds, visit } = fixture(() => reduced);
+  const { worlds, visit } = await fixture(() => reduced);
   t.after(worlds.unload);
   const { area, scene } = visit;
   assert.deepEqual(area.missionStatus.missions.map(({ current, total }) => [current, total]),
@@ -164,7 +165,7 @@ test('mission sites are in the environment and animated scenery resets with the 
   assert.deepEqual(snapshot(), initial);
   let disposed = false;
   flagGeometry.addEventListener('dispose', () => { disposed = true; });
-  const reentered = worlds.load('military-base');
+  const reentered = await worlds.load('military-base');
   assert.ok(disposed);
   assert.equal(scene.children.length, 0);
   assert.equal(reentered.scene.getObjectByName('Rotating radar antenna').rotation.y, initial[0]);

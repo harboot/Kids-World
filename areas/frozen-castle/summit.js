@@ -1,7 +1,7 @@
 import { SURFACE_GAP } from '../../core/geometry.js';
 import { PALACE_WIDTH, PALACE_DEPTH } from './palace.js';
+import { SUMMIT_SIZE } from './metadata.js';
 
-export const SUMMIT_SIZE = 40;
 const edge = SUMMIT_SIZE / 2;
 const railLine = edge - 0.4;
 const railWidth = 0.32;

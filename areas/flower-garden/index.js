@@ -10,6 +10,7 @@ import { addPond, blocksPondTravel, bridgeDeckHeight } from './garden-pond.js';
 import { addRabbits } from './garden-rabbits.js';
 import { addShelter } from './garden-shelters.js';
 import { addHillPath, createTerrain, drawTerrain } from './garden-terrain.js';
+import { metadata } from './metadata.js';
 import { music } from './music.js';
 
 function createAnimals(THREE, scene, playerRadius, finishMission) {
@@ -192,19 +193,12 @@ function createAnimals(THREE, scene, playerRadius, finishMission) {
 
 
 export const flowerGarden = {
-  title: 'Flower Garden',
-  heading: ['Flower', 'Garden'],
-  description: 'Help the garden animals, deliver apples, and explore by balloon or through the mountain cave.',
-  completionRevision: 2,
-  loadingMessage: 'Loading the garden…',
-  canvasLabel: '3D flower garden',
-  themeColor: '#e9eedc',
+  ...metadata,
   music,
-  width: 45,
-  depth: 58,
-  spawn: { x: 0, z: 9 },
   load: loadGarden,
 };
+
+export default flowerGarden;
 
 function loadGarden({ THREE, scene, viewmodel, touch, playerRadius = .34, completeLevel, playCue, notify,
   carryPlayer, reducedMotion, signal }) {

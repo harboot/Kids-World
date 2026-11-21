@@ -1,7 +1,7 @@
 import { SURFACE_GAP } from '../../core/geometry.js';
 import { addPalaceSign } from './palace.js';
 import { buildStaircase, stairSite } from './staircase.js';
-import { SUMMIT_SIZE } from './summit.js';
+import { SUMMIT_SIZE } from './metadata.js';
 
 const corner = SUMMIT_SIZE / 2 - 2.35;
 const activationSites = [

@@ -1,7 +1,3 @@
-export const WIDTH = 154;
-export const DEPTH = 150;
-export const SPAWN = { x: 0, z: 70.1 };
-
 export const fence = { west: -70, east: 70, north: -63, south: 61, gate: 7.5, approach: 72 };
 export const headquarters = { x: -14, z: -4, width: 20, depth: 19, yaw: .13 };
 export const helipad = { x: 21, z: -35, radius: 9.45 };

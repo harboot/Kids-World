@@ -238,7 +238,7 @@ button:focus-visible { outline: 3px solid #377b65; outline-offset: 3px; }
            calc(21px + env(safe-area-inset-bottom)) calc(clamp(18px, 6.3vw, 102px) + env(safe-area-inset-left));
   background: linear-gradient(90deg, #f1f0db57, #f1f0db00 68%);
 }
-[data-state="playing"] .menu, [data-state="traveling"] .menu, [data-state="error"] .guide { display: none; }
+[data-state="playing"] .menu, [data-state="traveling"] .guide, [data-state="error"] .guide { display: none; }
 .menu-content {
   width: min(430px, 100%);
   padding: clamp(18px, 3.7vw, 42px);

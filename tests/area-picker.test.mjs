@@ -67,7 +67,7 @@ test('the picker lists all public areas with thumbnails, regardless of missions 
   assert.equal(JSON.parse(saved).includes('princess-gallery'), true);
 });
 
-test('each public world loads with no completion record and has only local interactions', t => {
+test('each public world loads with no completion record and has only local interactions', async t => {
   const worlds = createWorldManager(THREE, {
     areas, camera: new THREE.PerspectiveCamera(), touch: true, playerRadius: 0.34,
     services: { isLevelComplete: () => false },
@@ -75,8 +75,8 @@ test('each public world loads with no completion record and has only local inter
   t.after(worlds.unload);
   const destinations = Object.values(areas).map(area => area.title);
   for (const id of Object.keys(publicFolders)) {
-    const { area, definition } = worlds.load(id);
-    assert.equal(definition, areas[id]);
+    const { area, definition } = await worlds.load(id);
+    assert.equal(definition, (await areas[id].loadModule()).default);
     assert.equal(area.arrivals, undefined, id);
     assert.ok(area.interactions.every(item => item.destination === undefined), id);
     for (const { label } of area.interactions) {
