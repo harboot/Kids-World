@@ -1,12 +1,11 @@
-import { addIceDoor } from './shared/ice-door.js';
 import { CHOPS, CHOP_COOLDOWN, FALL_DURATION, SNOWMAN_COUNT, createSnowActivity, snowMissionsComplete } from './snow-basin/activity.js';
-import { addAxe, addCastleDoor, addChopTree, addFrozenKey, addSnowPlay, showSnowmen } from './snow-basin/props.js';
+import { addAxe, addIceSculpture, addChopTree, addFrozenKey, addSnowPlay, showSnowmen } from './snow-basin/props.js';
 import { addWinterScenery } from './snow-basin/scenery.js';
 
 const axeSite = { x: 0.9, z: 5.9 };
 const treeSite = { x: 7.5, z: -1.85 };
 const keySite = { x: 6.32, z: 0.43 };
-const castleSite = { x: -2.3, z: 13.92 };
+const sculptureSite = { x: -2.3, z: 13.92 };
 const treeClearance = 2.72;
 const landingBounds = { left: treeSite.x + 2.09, right: treeSite.x + 8.12, front: treeSite.z - 1.93, back: treeSite.z + 1.93 };
 const piles = [
@@ -43,7 +42,7 @@ export const snowBasin = {
 };
 
 function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlaying, playCue, playerRadius = 0.34,
-  isLevelComplete, completeLevel, reducedMotion, notify }) {
+  completeLevel, reducedMotion, notify }) {
   const { width, depth, spawn } = snowBasin;
   const kit = addWinterScenery({ THREE, scene, touch, width, depth });
   const { obstacles } = kit;
@@ -56,22 +55,14 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
   scene.add(treeBoundary);
   const play = addSnowPlay(THREE, scene, viewmodel, kit, piles);
   const key = addFrozenKey(THREE, scene, kit, keySite);
-  const returnDoor = addIceDoor(THREE, scene, obstacles, {
-    x: 0, z: -14.36, destination: 'garden', label: 'Return to Flower Garden',
-  });
-  let activity;
-  const castle = addCastleDoor(THREE, scene, kit, {
-    ...castleSite,
-    reducedMotion,
-    available: () => Boolean(isLevelComplete?.('snow') || (activity && snowMissionsComplete(activity.missions))),
-  });
+  addIceSculpture(THREE, scene, kit, sculptureSite);
 
   const direction = new THREE.Vector3();
   const origin = new THREE.Vector3();
   let impactTime = Infinity;
   let keyTime = 0;
   let panel;
-  activity = createSnowActivity({
+  const activity = createSnowActivity({
     width, depth, spawn, obstacles,
     clearSpot(x, z) {
       if (Math.abs(x) > width / 2 - 1.4 || Math.abs(z) > depth / 2 - 1.4) return false;
@@ -87,10 +78,9 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
       if (name === 'key') key.model.visible = false;
       playCue?.(cues[name]);
       if ((name === 'hit' || name === 'key') && snowMissionsComplete(missions)) {
-        castle.refresh();
         completeLevel?.('snow');
         playCue?.(cues.success);
-        notify?.(name === 'key' ? 'Frozen Key collected! Frozen Castle unlocked!' : 'Frozen Castle unlocked!');
+        notify?.(name === 'key' ? 'Frozen Key collected! Snow Basin complete!' : 'Snow Basin complete!');
       } else if (name === 'key') notify?.('Frozen Key collected!');
       updateThrowControls();
     },
@@ -193,8 +183,6 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
     }
     impactTime = Infinity;
     keyTime = 0;
-    castle.refresh();
-    castle.resetHighlight();
     updateThrowControls();
     updateModels();
   }
@@ -229,10 +217,8 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
   };
   return {
     obstacles,
-    arrivals: { 'frozen-castle': { x: castleSite.x, z: castleSite.z - 2.6, yaw: Math.PI } },
     get missionStatus() { return missionStatus; },
     interactions: [
-      returnDoor, castle,
       {
         ...axeSite, anchorY: 0.46, radius: 1.85, label: 'Pick up axe', silent: true,
         get active() { return !state.axe; },
@@ -262,7 +248,6 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, hud, isPlayi
     ],
     update(dt) {
       activity.update(dt);
-      castle.refresh(dt);
       if (impactTime < 0.56) impactTime += dt;
       updateModels(dt);
     },

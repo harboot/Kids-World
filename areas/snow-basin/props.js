@@ -1,6 +1,5 @@
 import { SURFACE_GAP } from '../../core/geometry.js';
 import { BALL_RADIUS, BREAK_DURATION, CHOPS, SNOWMAN_COUNT, SNOWMAN_SPHERES } from './activity.js';
-import { registerDoor } from '../shared/ice-door.js';
 
 export function addAxe(THREE, scene, viewmodel, kit, site) {
   const { box, mesh, material } = kit;
@@ -221,38 +220,27 @@ export function addFrozenKey(THREE, scene, kit, site) {
   };
 }
 
-export function addCastleDoor(THREE, scene, kit, { x, z, available, reducedMotion }) {
-  const { box, mesh, material, obstacles } = kit;
-  const facade = new THREE.Group();
-  facade.position.set(x, 0, z);
-  facade.rotation.y = Math.PI;
+export function addIceSculpture(THREE, scene, kit, { x, z }) {
+  const { mesh, material, obstacles } = kit;
+  const sculpture = new THREE.Group();
+  sculpture.name = 'Glacial crystal sculpture';
+  sculpture.position.set(x, 0, z);
+  scene.add(sculpture);
 
-  const blue = material(0x528cad);
-  const pale = material(0xbaddec);
-  const door = new THREE.MeshLambertMaterial({ color: 0x367a9f, emissive: 0x173649 });
-  const crystal = new THREE.MeshLambertMaterial({ color: 0xa9e6f9, emissive: 0x2a5264 });
+  const base = new THREE.CylinderGeometry(1, 1.08, 1, 10);
   const shard = new THREE.OctahedronGeometry(1);
-  const part = (shape, color, px, y, pz, sx, sy, sz) =>
-    mesh(shape, color, px, y, pz, sx, sy, sz, true, facade);
-
-  part(box, blue, 0, 1.92, -0.06, 3.57, 3.84, 0.57);
-  part(box, door, 0, 1.68, 0.26, 2.23, 3.23, 0.16);
-  part(box, pale, 0, 0.10, 0.40, 3.64, 0.20, 0.61);
-  part(box, pale, 0, 3.52, 0.31, 3.65, 0.30, 0.48);
-  part(box, blue, 0, 3.89, 0.05, 3.81, 0.33, 0.59);
-  part(shard, crystal, 0, 3.98, 0.41, 0.47, 0.63, 0.23);
-  part(box, pale, 0, 1.68, 0.36, 0.065, 3.14, 0.045);
-  for (const side of [-1, 1]) {
-    part(box, pale, side * 1.39, 1.78, 0.36, 0.43, 3.57, 0.43);
-    part(box, blue, side * 1.41, 4.13, 0.05, 0.77, 0.86, 0.73);
-    part(box, pale, side * 1.41, 4.56, 0.05, 0.83, 0.21, 0.79);
-    part(shard, crystal, side * 1.42, 4.83, 0.11, 0.26, 0.44, 0.20);
-    part(shard, crystal, side * 0.25, 1.62, 0.46, 0.109, 0.139, 0.085);
+  const ice = material(0x679fbd);
+  const frost = material(0xc7ebf4);
+  const pale = new THREE.MeshLambertMaterial({ color: 0xa4dbf0, emissive: 0x285064, emissiveIntensity: .33 });
+  mesh(base, ice, 0, .22, 0, 1.34, .44, .94, true, sculpture);
+  mesh(base, frost, 0, .49, 0, 1.17, .15, .81, true, sculpture);
+  for (const [px, py, pz, width, height, lean] of [
+    [0, 1.67, 0, .48, 1.20, .10], [-.64, 1.17, -.14, .29, .67, -.32],
+    [.61, 1.25, -.19, .31, .74, .30], [.35, .87, -.53, .20, .43, .46],
+  ]) {
+    const crystal = mesh(shard, pale, px, py, pz, width, height, width * .85, true, sculpture);
+    crystal.rotation.z = lean;
+    crystal.rotation.y = px * 1.3;
   }
-
-  return registerDoor(THREE, scene, obstacles, facade, {
-    x, z, anchorY: 2.28, radius: 2.65, label: 'Enter Frozen Castle', available, reducedMotion,
-    act({ travel, heardCue }) { travel('frozen-castle', heardCue); },
-    bounds: { left: x - 1.92, right: x + 1.92, front: z - 0.505, back: z + 0.505, height: 4.67 },
-  });
+  obstacles.push({ left: x - 1.40, right: x + 1.40, front: z - .97, back: z + .97, height: 2.83 });
 }

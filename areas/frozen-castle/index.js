@@ -1,18 +1,10 @@
 import { createCastleActivities } from './activities.js';
-import { buildDecorations, gatewaySite, returnSite } from './decorations.js';
+import { buildDecorations } from './decorations.js';
 import { buildPalace, createPalaceBuilder } from './palace.js';
-import { BALCONY_HEIGHT } from './staircase.js';
 import { blocksSummitEdge, buildSummit, SUMMIT_SIZE } from './summit.js';
-import { buildRoyalGateway } from '../shared/royal-gateway.js';
 
 const ID = 'frozen-castle';
-const villageName = 'Arendelle Village';
-const VILLAGE_ID = 'arendelle-village';
-const GALLERY_ID = 'princess-gallery';
-const gallerySite = { x: 8.8, z: 12.91 };
-const galleryRequirements = 'Complete all three Frozen Castle missions to open Princess Gallery.';
-
-const unlockCue = [
+const completionCue = [
   [66, { duration: 0.34, level: 0.13 }, 1.1],
   [73, { duration: 0.33, level: 0.14 }, 1.25],
   [78, { duration: 0.52, level: 0.15 }, 1.42],
@@ -39,10 +31,7 @@ function loadCastle({ THREE, scene, hud, signal, playCue = () => {}, reducedMoti
   const builder = createPalaceBuilder(THREE, scene, obstacles);
   buildPalace(THREE, scene, builder, hud?.ownerDocument);
   buildSummit(THREE, scene, builder);
-  const { throneInteraction, droplets, chandelierGlow, aurora, gatewayGlow } = buildDecorations(THREE, builder, hud?.ownerDocument, villageName, BALCONY_HEIGHT);
-  const setGalleryGlow = buildRoyalGateway(THREE, scene, hud?.ownerDocument, obstacles, {
-    ...gallerySite, yaw: Math.PI, title: 'Princess Gallery',
-  });
+  const { throneInteraction, droplets, chandelierGlow, aurora } = buildDecorations(THREE, builder);
 
   let released = false;
   let recorded = isLevelComplete(ID);
@@ -58,43 +47,15 @@ function loadCastle({ THREE, scene, hud, signal, playCue = () => {}, reducedMoti
       if (!recorded && !isLevelComplete(ID)) completeLevel(ID);
       recorded = true;
       celebration = 2.4;
-      playCue(unlockCue);
+      playCue(completionCue);
       pose(0);
-      notify?.(`Castle Magic Restored! ${villageName} and Princess Gallery unlocked!`);
+      notify?.('Castle Magic Restored! Frozen Castle complete!');
     },
   });
   builder.batchArchitecture();
 
   const { missions } = activity;
   const isComplete = () => missions.crystals && missions.stairs && missions.melody;
-  const gatewaysUnlocked = () => isComplete() || recorded || isLevelComplete(ID);
-  const gateway = {
-    ...gatewaySite, radius: 2.5, anchorY: BALCONY_HEIGHT + 1.8, label: 'Enter ' + villageName,
-    destination: VILLAGE_ID,
-    reachable: player => player.y >= BALCONY_HEIGHT + 1.2,
-    get active() { return isActive() && gatewaysUnlocked(); },
-    act(context) {
-      if (this.active) context.travel(VILLAGE_ID, context.heardCue);
-    },
-  };
-  const galleryGateway = {
-    ...gallerySite, radius: 2.65, anchorY: 1.85, destination: GALLERY_ID,
-    reachable: player => player.y < 3.5 && player.z < gallerySite.z,
-    get active() { return isActive(); },
-    get unlocked() { return isActive() && gatewaysUnlocked(); },
-    get label() { return this.unlocked ? 'Enter Princess Gallery' : 'Princess Gallery · Locked'; },
-    get silent() { return !this.unlocked; },
-    act({ travel, heardCue }) {
-      if (!isActive()) return;
-      if (this.unlocked) travel(GALLERY_ID, heardCue, ID);
-      else notify?.(galleryRequirements);
-    },
-  };
-  const exit = {
-    ...returnSite, radius: 2.05, anchorY: 2.18, label: 'Return to Snow Basin',
-    reachable: player => player.y < 3.5 && player.z < returnSite.z,
-    act({ travel, heardCue }) { if (isActive()) travel('snow', heardCue, ID); },
-  };
   const throne = {
     ...throneInteraction,
     get active() { return isActive(); },
@@ -112,9 +73,6 @@ function loadCastle({ THREE, scene, hud, signal, playCue = () => {}, reducedMoti
     aurora.visible = missions.melody;
     aurora.position.y = 7.8 + (still ? 0 : Math.sin(elapsed * 0.68) * 0.23);
     aurora.children[0].material.opacity = 0.32 + shimmer * 0.5 + (still ? 0 : Math.sin(elapsed * 1.4) * 0.075);
-    gatewayGlow.color.setHex(gateway.active ? 0xffbf81 : 0x8b666e);
-    gatewayGlow.emissiveIntensity = gateway.active ? 1.35 + shimmer * 2.85 : 0.45;
-    setGalleryGlow(galleryGateway.unlocked);
     droplets.children.forEach((droplet, i) => {
       droplet.position.y = 1.12 + (still ? 0 : Math.sin(elapsed * 1.8 + i * 0.68) * 0.18);
     });
@@ -130,11 +88,7 @@ function loadCastle({ THREE, scene, hud, signal, playCue = () => {}, reducedMoti
 
   return {
     obstacles,
-    arrivals: {
-      [VILLAGE_ID]: { x: 0, z: 9.5 },
-      [GALLERY_ID]: { x: gallerySite.x, z: 9.45, yaw: Math.PI },
-    },
-    interactions: [...activity.interactions, throne, gateway, galleryGateway, exit],
+    interactions: [...activity.interactions, throne],
     blocksGround(x, z, radius, feet, from) {
       return blocksSummitEdge(x, z, radius) || activity.staircase.blocksGround(x, z, radius, feet, from);
     },

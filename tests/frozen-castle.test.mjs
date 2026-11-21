@@ -8,7 +8,7 @@ import { nearestInteraction } from '../core/interactions.js';
 import { createLevelProgress } from '../core/level-progress.js';
 import { PLAYER_RADIUS, walkElevation } from '../core/movement.js';
 import { createPlayer } from '../core/player.js';
-import { areaURL, createWorldManager, historyArrival, resolveArea } from '../core/world-manager.js';
+import { areaURL, createWorldManager, resolveArea } from '../core/world-manager.js';
 
 const ID = 'frozen-castle';
 const storageKey = 'kids-world-completed-levels';
@@ -44,12 +44,10 @@ function fixture({ saved = [], still = false } = {}) {
     crystals: withLabel('Activate crystal'),
     music: withLabel('Play crystal'),
     stairs: withLabel('Build ice staircase')[0],
-    gateway: withLabel('Enter Arendelle Village')[0],
-    exit: withLabel('Return to Snow Basin')[0],
   };
 }
 
-const completionNotice = 'Castle Magic Restored! Arendelle Village and Princess Gallery unlocked!';
+const completionNotice = 'Castle Magic Restored! Frozen Castle complete!';
 
 function assertProgress(area, { crystals = 0, stairs = 0, melody = 0, stairsFinished = stairs === 3 } = {}) {
   assert.deepEqual(area.missionStatus.missions, [
@@ -85,13 +83,12 @@ function finishMission(game, mission) {
   }
 }
 
-test('the castle route, safe entrance spawn and named Snow Basin arrival use the registered areas', () => {
-  const { worlds, area, camera, exit, gateway } = fixture({ saved: ['snow'] });
+test('the castle route uses the safe hall spawn before Snow Basin missions are complete', t => {
+  const { worlds, area, camera, progress } = fixture();
+  t.after(worlds.unload);
   const castle = areas[ID];
   assert.equal(castle.id, ID);
   assert.equal(castle.title, 'Frozen Castle');
-  assert.equal(gateway.destination, 'arendelle-village');
-  assert.equal(areas[gateway.destination].title, 'Arendelle Village');
   const url = areaURL(new URL('https://example.test/Kids-World/index.html?area=snow#explore'), ID);
   assert.equal(url.href, 'https://example.test/Kids-World/index.html?area=frozen-castle#explore');
   assert.equal(resolveArea(url, areas, 'garden', 'snow'), ID);
@@ -99,29 +96,15 @@ test('the castle route, safe entrance spawn and named Snow Basin arrival use the
   const player = createPlayer(THREE, camera);
   player.reset(castle.spawn, area);
   assert.equal(walkElevation(area, castle.spawn, castle.spawn.x, castle.spawn.z, 0, true), 0);
-  assert.equal(nearestInteraction(area.interactions, { x: castle.spawn.x, y: camera.position.y, z: castle.spawn.z + 0.4 }), exit);
   assert.ok(camera.getWorldDirection(new THREE.Vector3()).z < 0, 'player faces the hall');
-
-  exit.act({ heardCue: true, travel(destination, heardCue, arrival) {
-    assert.equal(destination, 'snow');
-    assert.equal(heardCue, true);
-    assert.equal(historyArrival(destination, { area: destination, arrival }), ID);
-    const { area: snow } = worlds.load(destination);
-    const spawn = snow.arrivals[arrival];
-    player.reset(spawn, snow);
-    assert.equal(walkElevation(snow, spawn, spawn.x, spawn.z, 0, true), 0);
-    assert.equal(nearestInteraction(snow.interactions, camera.position).label, 'Enter Frozen Castle');
-    assert.ok(camera.getWorldDirection(new THREE.Vector3()).z > 0, 'player faces the Snow Basin doorway');
-    assert.deepEqual(snow.missionStatus.missions.map(({ id, current, total, complete }) => [id, current, total, complete]), [
-      ['snowmen', 0, 3, false], ['pine', 0, 5, false], ['key', 0, 1, false],
-    ]);
-  } });
-  assert.equal(worlds.active.id, 'snow');
-  worlds.unload();
+  const formerExit = { x: 0, y: camera.position.y, z: castle.spawn.z + 0.4 };
+  assert.equal(nearestInteraction(area.interactions, formerExit), null);
+  assert.equal(progress.has('snow'), false);
+  assertProgress(area);
 });
 
-test('all missions, the throne, mountain lookout and ground-floor exit are reachable before building', () => {
-  const { worlds, area, visit, crystals, stairs, music, exit } = fixture();
+test('all missions, the throne and mountain lookout are reachable before building', () => {
+  const { worlds, area, visit, crystals, stairs, music } = fixture();
   const start = { ...visit.definition.spawn, feet: 0 };
   const { width, depth } = visit.definition;
   const queue = [start];
@@ -139,7 +122,7 @@ test('all missions, the throne, mountain lookout and ground-floor exit are reach
     }
   }
   const throne = area.interactions.find(item => item.label === 'Sit on Ice Throne');
-  for (const item of [...crystals, stairs, ...music, throne, exit]) {
+  for (const item of [...crystals, stairs, ...music, throne]) {
     assert.ok(queue.some(cell => nearestInteraction(area.interactions, { ...cell, y: cell.feet + 1.68 }) === item),
       `standing approach for ${item.label} at ${item.x},${item.z}`);
   }
@@ -151,7 +134,7 @@ test('all missions, the throne, mountain lookout and ground-floor exit are reach
 });
 
 test('the expanded summit terrace loops around all four walls and connects through three arches', () => {
-  const { worlds, area, visit, camera, exit } = fixture();
+  const { worlds, area, visit, camera } = fixture();
   assert.equal(visit.definition.width, 40);
   assert.equal(visit.definition.depth, 40);
   assertProgress(area);
@@ -164,7 +147,6 @@ test('the expanded summit terrace loops around all four walls and connects throu
   followPath(player, camera, visit, circuit.map(([x, z]) => ({ x, z })));
   assert.equal(camera.position.y, 1.68);
   assertProgress(area);
-  assert.equal(nearestInteraction([exit], { x: 0, y: 1.68, z: 14.8 }), null, 'the return door is inside the castle');
   worlds.unload();
 });
 
@@ -186,14 +168,13 @@ test('the outdoor railings contain walking and jumping on every side of the summ
 
 test('each terrace corner has a giant solid crystal and all four activate the chandelier', () => {
   const game = fixture();
-  const { worlds, area, scene, crystals, music, stairs, gateway, cues } = game;
+  const { worlds, area, scene, crystals, music, stairs, cues } = game;
   const chandelier = scene.getObjectByName('Crystal chandelier').children[1].material;
   const dim = chandelier.emissiveIntensity;
   assertProgress(area);
   assert.equal(crystals.length, 4);
   assert.equal(music.length, 3);
   assert.ok(stairs.active);
-  assert.equal(gateway.active, false);
 
   const corners = new Set();
   for (const [i, crystal] of crystals.entries()) {
@@ -227,20 +208,18 @@ test('each terrace corner has a giant solid crystal and all four activate the ch
   finishMission(game, 'melody');
   assertProgress(area, { crystals: 3, stairs: 3, melody: 3 });
   assert.equal(chandelier.emissiveIntensity, dim);
-  assert.equal(gateway.active, false);
   crystals[3].act();
   worlds.update(0.7);
   assertProgress(area, { crystals: 4, stairs: 3, melody: 3 });
   assert.deepEqual(game.notifications, [completionNotice]);
   assert.ok(chandelier.emissiveIntensity > dim);
   assert.ok(crystals.every(item => !item.active));
-  assert.equal(gateway.active, true);
   worlds.unload();
 });
 
 test('the curved staircase forms exactly three sections and safely connects the upper balcony', () => {
   const game = fixture();
-  const { worlds, area, scene, stairs, exit, gateway } = game;
+  const { worlds, area, scene, stairs } = game;
   const models = stairsModels(scene);
   const barriers = scene.children.filter(node => node.name === 'Unfinished staircase barrier');
   const feetAt = (point, feet) => area.getGroundHeight(point.x, point.z, feet);
@@ -251,9 +230,6 @@ test('the curved staircase forms exactly three sections and safely connects the 
   assert.equal(feetAt(stairPoint(0.25), 0), 0);
   assert.equal(feetAt(bottomDoor, 0), 0);
   assert.equal(feetAt(upperDoor, BALCONY_HEIGHT), BALCONY_HEIGHT);
-  assert.equal(nearestInteraction([exit], bottomDoor), exit);
-  assert.equal(nearestInteraction([exit], upperDoor), null);
-  assert.equal(gateway.active, false);
 
   const position = { ...stairPoint(-0.035), feet: 0 };
   function walkToward(target) {
@@ -288,7 +264,6 @@ test('the curved staircase forms exactly three sections and safely connects the 
   assert.equal(stairs.active, false);
   assert.ok(barriers.every(model => !model.visible));
   assertProgress(area, { stairs: 3 });
-  assert.equal(gateway.active, false);
 
   for (; progress <= 1; progress += 0.005) walkToward(stairPoint(progress));
   for (let x = -4.45; x <= 0; x += 0.08) walkToward({ x, z: 11.72 });
@@ -297,27 +272,21 @@ test('the curved staircase forms exactly three sections and safely connects the 
   assert.equal(walkElevation(area, position, 0, 10.3, position.feet, true), null, 'balcony railing contains the player');
   assert.equal(walkElevation(area, bottomDoor, 0, 10.3, 0, true), 0, 'the route under the balcony stays open');
 
-  finishMission(game, 'crystals');
-  finishMission(game, 'melody');
-  assert.equal(nearestInteraction([gateway], bottomDoor), null, 'the gateway is upstairs');
-  assert.equal(nearestInteraction([gateway], upperDoor), gateway);
   worlds.unload();
 });
 
 test('the player can ascend and descend the whole curved staircase with normal movement', () => {
   const game = fixture({ saved: ['frozen-castle'], still: true });
-  const { area, camera, gateway, visit, worlds } = game;
+  const { area, camera, visit, worlds } = game;
   const player = createPlayer(THREE, camera);
   const waypoints = Array.from({ length: 28 }, (_, i) => stairPoint(-0.053 + i * 0.039));
   waypoints.push({ x: -2, z: 11.72 }, { x: 0, z: 11.72 });
   assertProgress(area);
-  assert.ok(gateway.active, 'saved completion keeps the upper gateway unlocked');
   finishMission(game, 'stairs');
   player.reset(waypoints[0], area);
 
   followPath(player, camera, visit, waypoints.slice(1));
   assert.ok(Math.abs(camera.position.y - (BALCONY_HEIGHT + 1.68)) < 1e-5);
-  assert.equal(nearestInteraction(area.interactions, camera.position), gateway);
   followPath(player, camera, visit, waypoints.slice(0, -1).reverse());
   assert.ok(Math.abs(camera.position.y - 1.68) < 1e-5);
   worlds.unload();
@@ -345,28 +314,25 @@ test('the blue, pink and purple tuning crystals play distinct notes and can be r
   worlds.unload();
 });
 
-test('all mission orders unlock travel to the village and completion is saved only once', () => {
+test('all mission orders record completion only once', () => {
   for (const order of [
     ['crystals', 'stairs', 'melody'], ['crystals', 'melody', 'stairs'],
     ['stairs', 'crystals', 'melody'], ['stairs', 'melody', 'crystals'],
     ['melody', 'crystals', 'stairs'], ['melody', 'stairs', 'crystals'],
   ]) {
     const game = fixture({ saved: ['snow'] });
-    const { worlds, area, gateway, recorded, writes, getStorage, notifications } = game;
-    const trips = [];
-    const travel = (...trip) => trips.push(trip);
+    const { worlds, area, recorded, writes, getStorage, notifications } = game;
     const totals = { crystals: 4, stairs: 3, melody: 3 };
     const completed = {};
-    saveCheck(false);
+    assert.equal(game.progress.has(ID), false);
     order.forEach((mission, index) => {
       finishMission(game, mission);
       completed[mission] = totals[mission];
       assertProgress(area, completed);
       assert.deepEqual(notifications, index === 2 ? [completionNotice] : []);
-      saveCheck(index === 2);
+      assert.equal(game.progress.has(ID), index === 2);
+      assert.deepEqual(recorded, index === 2 ? [ID] : []);
     });
-    gateway.act({ travel, heardCue: true });
-    assert.deepEqual(trips, [['arendelle-village', true]]);
     for (const item of [...game.crystals, game.stairs, ...game.music]) item.act();
     assertProgress(area, totals);
     assert.deepEqual(notifications, [completionNotice]);
@@ -375,21 +341,12 @@ test('all mission orders unlock travel to the village and completion is saved on
     const reopened = createLevelProgress(areas, getStorage);
     assert.ok(reopened.has(ID) && reopened.has('snow'));
     worlds.unload();
-
-    function saveCheck(open) {
-      assert.equal(gateway.active, open);
-      if (!open) {
-        gateway.act({ travel });
-        assert.deepEqual(trips, []);
-        assert.deepEqual(recorded, []);
-      }
-    }
   }
 });
 
-test('restart and replay restore temporary states, keep access, and release scene resources on unload', () => {
+test('restart and replay restore temporary states, retain completion, and release scene resources on unload', () => {
   const game = fixture({ still: true });
-  const { worlds, visit, scene, area, gateway, crystals, progress, writes, recorded, cues } = game;
+  const { worlds, visit, scene, area, crystals, progress, writes, recorded, cues } = game;
   const aurora = scene.getObjectByName('Ceiling aurora');
   const chandelier = scene.getObjectByName('Crystal chandelier').children[1].material;
   const originalGlow = chandelier.emissiveIntensity;
@@ -398,7 +355,7 @@ test('restart and replay restore temporary states, keep access, and release scen
   const sparkles = scene.getObjectByName('Crystal sparkles');
   const models = stairsModels(scene);
   for (const mission of ['melody', 'stairs', 'crystals']) finishMission(game, mission);
-  assert.ok(aurora.visible && gateway.active && progress.has(ID));
+  assert.ok(aurora.visible && progress.has(ID));
   assert.ok(chandelier.emissiveIntensity > originalGlow);
   assert.ok(fountain.position.equals(originalPosition));
   assert.equal(sparkles.visible, false);
@@ -409,7 +366,7 @@ test('restart and replay restore temporary states, keep access, and release scen
   assert.equal(aurora.visible, false);
   assert.ok(models.every(model => !model.visible));
   assert.ok(scene.getObjectByName('Musical crystal 1').children[1].visible === false);
-  assert.ok(crystals.every(item => item.active) && gateway.active);
+  assert.ok(crystals.every(item => item.active));
   assert.equal(writes.length, 1);
   for (const mission of ['crystals', 'melody', 'stairs']) finishMission(game, mission);
   assert.deepEqual(recorded, [ID]);
@@ -422,12 +379,12 @@ test('restart and replay restore temporary states, keep access, and release scen
   assert.equal(visit.scene.children.length, 0);
   assert.ok(disposed);
   assert.equal(aurora.visible, false);
-  for (const item of [...crystals, game.stairs, ...game.music, gateway]) item.act();
+  for (const item of [...crystals, game.stairs, ...game.music]) item.act();
   area.update(3);
   assert.equal(cues.length, previousCues);
   const next = worlds.load(ID);
   assertProgress(next.area);
-  assert.ok(next.area.interactions.find(item => item.label === 'Enter Arendelle Village').active);
+  assert.ok(progress.has(ID));
   worlds.unload();
 });
 

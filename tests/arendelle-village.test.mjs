@@ -6,8 +6,8 @@ import { areas } from '../game.js';
 import { nearestInteraction } from '../core/interactions.js';
 import { createLevelProgress } from '../core/level-progress.js';
 import { PLAYER_RADIUS, walkElevation } from '../core/movement.js';
-import { createPlayer } from '../core/player.js';
-import { areaURL, createWorldManager, historyArrival, resolveArea } from '../core/world-manager.js';
+import { createPlayer, EYE_HEIGHT } from '../core/player.js';
+import { areaURL, createWorldManager, resolveArea } from '../core/world-manager.js';
 import { missionHudFixture } from './helpers/mission-hud.mjs';
 
 const ID = 'arendelle-village';
@@ -62,57 +62,21 @@ function followPath(player, camera, visit, points, onStep = () => {}) {
   }
 }
 
-test('the unlocked Castle gateway opens the village and the return gateway arrives safely in the Castle hall', t => {
-  const { visit, worlds, camera, progress, writes } = fixture(CASTLE);
+test('a direct visit opens the village at the avenue before Castle missions are complete', t => {
+  const { worlds, camera, progress, writes } = fixture(CASTLE);
   t.after(worlds.unload);
   const player = createPlayer(THREE, camera);
   const route = areaURL(new URL('https://example.test/Kids-World/'), ID);
-  assert.equal(areas[ID].id, ID);
-  assert.equal(resolveArea(route, areas, 'garden'), ID);
-
-  const gateway = visit.area.interactions.find(item => item.destination === ID);
-  const trips = [];
-  function travel(id, heardCue, arrival) {
-    trips.push({ id, heardCue, arrival });
-    const { area, definition } = worlds.load(id);
-    player.reset(area.arrivals?.[arrival] ?? definition.spawn, area);
-  }
-  assert.equal(gateway.active, false);
-  gateway.act({ travel });
-  assert.deepEqual(trips, []);
-  for (const interaction of visit.area.interactions) {
-    if (interaction.label === 'Activate crystal' || interaction.label === 'Play crystal') interaction.act();
-  }
-  const stairs = visit.area.interactions.find(item => item.label === 'Build ice staircase');
-  stairs.act();
-  stairs.act();
-  assert.equal(gateway.active, false);
-  stairs.act();
-  worlds.update(0.6);
-  assert.equal(gateway.active, true);
-  assert.equal(progress.has(CASTLE), true);
-
-  gateway.act({ travel, heardCue: true });
-  assert.deepEqual(trips, [{ id: ID, heardCue: true, arrival: undefined }]);
-  assert.equal(worlds.active.id, ID);
-  const village = worlds.active;
-  const { spawn } = village.definition;
-  assert.deepEqual([camera.position.x, camera.position.z], [spawn.x, spawn.z]);
+  const visit = worlds.load(resolveArea(route, areas, 'garden'));
+  assert.equal(visit.id, ID);
+  const { spawn } = visit.definition;
+  player.reset(spawn, visit.area);
+  assert.deepEqual(camera.position.toArray(), [spawn.x, EYE_HEIGHT + visit.area.getGroundHeight(spawn.x, spawn.z), spawn.z]);
   assert.ok(camera.getWorldDirection(new THREE.Vector3()).z < 0, 'faces the village avenue');
-  assert.equal(nearestInteraction(village.area.interactions, camera.position), null);
-  followPath(player, camera, village, [[0, 27.55]]);
-  const returnGate = nearestInteraction(village.area.interactions, camera.position);
-  assert.equal(returnGate.label, 'Return to Frozen Castle');
-  returnGate.act({ travel, heardCue: false });
-  assert.deepEqual(trips[1], { id: CASTLE, heardCue: false, arrival: ID });
-  assert.equal(historyArrival(CASTLE, { area: CASTLE, arrival: trips[1].arrival }), ID);
-  const castle = worlds.active;
-  const arrival = castle.area.arrivals[ID];
-  assert.deepEqual([camera.position.x, camera.position.y, camera.position.z], [arrival.x, 1.68, arrival.z]);
-  assert.equal(walkElevation(castle.area, arrival, arrival.x, arrival.z, 0, true), 0);
-  assert.equal(nearestInteraction(castle.area.interactions, camera.position), null);
-  assert.equal(castle.area.interactions.find(item => item.destination === ID).active, true);
-  assert.deepEqual(writes, [['garden', 'wooden-house', 'snow', CASTLE]]);
+  assert.equal(nearestInteraction(visit.area.interactions, camera.position), null);
+  assert.deepEqual(visit.area.missionStatus.missions, initialProgress);
+  assert.equal(progress.has(CASTLE), false);
+  assert.deepEqual(writes, []);
 });
 
 test('the village roads connect the entrance, plaza, west lanes, bridge, stable, market and both piers', t => {
@@ -120,7 +84,7 @@ test('the village roads connect the entrance, plaza, west lanes, bridge, stable,
   t.after(worlds.unload);
   const { area, definition, scene } = visit;
   assert.ok(definition.width * definition.depth > areas.snow.width * areas.snow.depth * 3);
-  for (const name of ['Village gateway', 'Village Square', 'Clock tower', 'Village fountain', 'Village house 1',
+  for (const name of ['Village trail lantern', 'Village Square', 'Clock tower', 'Village fountain', 'Village house 1',
     'Stone bridge', 'Village stables', 'Stable enclosure', 'Bakery', 'Fruit Shop', 'Fish Shop',
     'Harbor seawall', 'Fishing pier', 'City boat pier', 'City passenger boat', 'Fjord mountains']) {
     assert.ok(scene.getObjectByName(name), name);
@@ -168,20 +132,19 @@ test('buildings, quay, bridge walls, water edges and the world boundary block mo
   block([-36.57, 3.7], [-36.79, 3.7], true);
 });
 
-test('shop and dock interactions show temporary messages without travel or completion', t => {
+test('shop interactions show temporary messages without completing village missions', t => {
   const { visit, worlds, progress, writes, missionHud } = fixture();
   t.after(worlds.unload);
   const { area } = visit;
   const prompts = [
     ['Visit Bakery', 'Bakery — Coming Soon', { x: 7.4, z: 8.5 }],
     ['Visit Fruit Shop', 'Fruit Shop — Coming Soon', { x: 14.2, z: 8.6 }],
-    ['To The City', 'City Adventure — Coming Soon', { x: 30.1, z: 17.25 }],
   ];
   assert.deepEqual(area.missionStatus.missions, initialProgress);
   for (const [label, message, site] of prompts) {
     const item = nearestInteraction(area.interactions, { ...site, y: 1.68 });
     assert.equal(item.label, label);
-    item.act({ travel() { assert.fail('Coming Soon should stay in the current area'); } });
+    item.act();
     assert.equal(missionHud.toast.textContent, message);
     assert.deepEqual(area.missionStatus.missions, initialProgress);
     worlds.update(1.6);
@@ -222,8 +185,8 @@ test('Restart restores motion, and travel disposes the first visit before recrea
     resource.addEventListener('dispose', () => disposed.set(resource, (disposed.get(resource) ?? 0) + 1));
   }
 
-  const cityPrompt = visit.area.interactions.find(item => item.label === 'To The City');
-  cityPrompt.act();
+  const bakery = visit.area.interactions.find(item => item.label === 'Visit Bakery');
+  bakery.act();
   worlds.update(1);
   assert.ok(!boat.position.equals(stillBoat) && boat.rotation.z !== 0 && !waves.position.equals(stillWaves));
   const children = visit.scene.children.length;
@@ -247,7 +210,7 @@ test('Restart restores motion, and travel disposes the first visit before recrea
   assert.ok([...disposed.values()].every(count => count === 1));
   assert.ok(visit.area.interactions.every(item => item.active === false));
   const notices = missionHud.notifications.length;
-  cityPrompt.act();
+  bakery.act();
   assert.equal(missionHud.notifications.length, notices);
   assert.deepEqual(visit.area.missionStatus.missions, initialProgress);
 
@@ -472,7 +435,7 @@ test('any order completes the village only after all three missions and replay p
         order.forEach((mission, i) => {
           play[mission]();
           assert.equal(visit.area.missionStatus.missions.filter(mission => mission.complete).length, i + 1);
-          assert.equal(missionHud.toast.textContent.includes('Arendelle Village Complete!'), i === 2);
+          assert.equal(missionHud.toast.textContent.includes('Arendelle Village complete!'), i === 2);
           assert.equal(progress.has(ID), replay || i === 2);
         });
       }
@@ -641,60 +604,4 @@ test('the larger fountain animates its droplets, toggles from its valve, and res
   worlds.unload();
   fountain.act();
   assert.equal(fountain.active, false);
-});
-
-test('the Flower Garden and village gates share the saved village unlock and travel both ways', t => {
-  const { worlds, camera, progress } = fixture('garden');
-  t.after(worlds.unload);
-  const player = createPlayer(THREE, camera);
-  const trips = [];
-  function travel(id, heardCue, arrival) {
-    trips.push({ id, heardCue, arrival });
-    const visit = worlds.load(id);
-    const spawn = visit.area.arrivals[arrival];
-    assert.ok(spawn, 'each gate has a named arrival in the other area');
-    player.reset(spawn, visit.area);
-    const feet = visit.area.getGroundHeight(spawn.x, spawn.z);
-    assert.equal(walkElevation(visit.area, spawn, spawn.x, spawn.z, feet, true), feet);
-    assert.equal(nearestInteraction(visit.area.interactions, camera.position), null, 'the arrival leaves room by the gate');
-  }
-
-  const gardenGate = find(worlds.active, 'Enter Arendelle Village');
-  assert.ok(progress.has('garden'));
-  assert.equal(gardenGate.active, false);
-  assert.equal(worlds.active.scene.getObjectByName('Locked gate bar').visible, true);
-  gardenGate.act({ travel });
-  const village = worlds.load(ID);
-  const villageGate = find(village, 'Enter Flower Garden');
-  assert.equal(villageGate.active, false);
-  deliverFish(village, worlds);
-  repairClock(village);
-  villageGate.act({ travel });
-  assert.equal(villageGate.active, false);
-  assert.deepEqual(trips, []);
-
-  escort(village, worlds, camera);
-  assert.ok(progress.has(ID) && villageGate.active);
-  assert.equal(village.scene.getObjectByName('Locked gate bar').visible, false);
-  assert.equal(gardenGate.active, false, 'an unloaded visit stays inactive even after unlocking');
-
-  worlds.reset();
-  assert.equal(villageGate.active, true, 'restart preserves the shared unlock');
-  player.reset(village.definition.spawn, village.area);
-  followPath(player, camera, village, [[0, 12], [3.43, 7], [3.43, -23.5], [4, -26.4]]);
-  assert.equal(nearestInteraction(village.area.interactions, camera.position), villageGate);
-  villageGate.act({ travel, heardCue: true });
-
-  const garden = worlds.active;
-  const returnGate = find(garden, 'Enter Arendelle Village');
-  assert.equal(returnGate.active, true);
-  assert.equal(garden.scene.getObjectByName('Locked gate bar').visible, false);
-  followPath(player, camera, garden, [[0, 20.9]]);
-  assert.equal(nearestInteraction(garden.area.interactions, camera.position), returnGate);
-  returnGate.act({ travel, heardCue: false });
-  assert.equal(worlds.active.id, ID);
-  assert.deepEqual(trips, [
-    { id: 'garden', heardCue: true, arrival: ID },
-    { id: ID, heardCue: false, arrival: 'garden' },
-  ]);
 });

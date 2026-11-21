@@ -1,28 +1,17 @@
-import { SURFACE_GAP } from '../../core/geometry.js';
-import { addPalaceSign, arch, snowflake } from './palace.js';
+import { snowflake } from './palace.js';
 
-export const returnSite = { x: 0, z: 13.29 };
-export const gatewaySite = { x: 0, z: 13.25 };
-
-export function buildDecorations(THREE, builder, document, villageName, gatewayHeight) {
+export function buildDecorations(THREE, builder) {
   const { architecture, group, part, beam, solid, ice, materials } = builder;
   const { frost, pearl, blue, deep, glass, lilac, silver, light } = materials;
 
-  const entry = group('Grand crystal entrance', returnSite.x, 0, returnSite.z, architecture);
-  entry.rotation.y = Math.PI;
-  entry.scale.y = 0.93;
-  arch(builder, entry, deep, 5.75, 4.57, 1.45, 0.52, 0.68);
-  arch(builder, entry, frost, 5.64, 4.63, 1.33, 0.28, 0.83);
-  arch(builder, entry, glass, 3.7, 3.66, 1.15, 0.25, 0.44);
-  part(entry, 'box', deep, 0, 1.88, -0.19, 3.67, 3.76, 0.42);
-  part(entry, 'gem', glass, 0, 2.61, 0.075, 1.57, 1.39, 0.13);
-  snowflake(builder, entry, light, 0, 2.61, 0.22, 0.82);
+  const crest = group('Winter crest relief', 0, 3.42, 13.62, architecture);
+  crest.rotation.y = Math.PI;
+  part(crest, 'drum', deep, 0, 0, 0, 1.80, .18, 1.80).rotation.x = Math.PI / 2;
+  part(crest, 'drum', glass, 0, 0, .125, 1.59, .13, 1.59).rotation.x = Math.PI / 2;
+  snowflake(builder, crest, light, 0, 0, .222, 1.16);
   for (const side of [-1, 1]) {
-    part(entry, 'box', pearl, side * 1.02, 1.78, 0.05, 0.1, 3.54, 0.12);
-    part(entry, 'gem', silver, side * 2.33, 3.51, 0.16, 0.5, 1.15, 0.37);
-    part(entry, 'gem', lilac, side * 3.03, 1.04, 0.25, 0.38, 1.08, 0.34);
+    part(crest, 'gem', lilac, side * 1.95, 0, .082, .23, .38, .13);
   }
-  solid(returnSite.x, returnSite.z, 6.72, 0.8, 6);
 
   const throne = group('Ice Throne', 0, 1.6, -11.36, architecture);
   part(throne, 'drum', deep, 0, 0.14, 0, 2.37, 0.28, 1.45);
@@ -88,44 +77,7 @@ export function buildDecorations(THREE, builder, document, villageName, gatewayH
     part(chandelier, 'gem', frost, x * 0.75, -0.73, z * 0.75, 0.1, 0.48, 0.1);
   }
   const aurora = buildAurora(THREE, group);
-  const gatewayGlow = buildGateway(THREE, builder, document, villageName, gatewayHeight);
-  return { throneInteraction, droplets, chandelierGlow, aurora, gatewayGlow };
-}
-
-function buildGateway(THREE, builder, document, villageName, gatewayHeight) {
-  const { architecture, group, part, ice, materials: { pearl, frost, deep, lilac } } = builder;
-  const gate = group(villageName + ' gateway', gatewaySite.x, gatewayHeight, gatewaySite.z, architecture);
-  gate.rotation.y = Math.PI;
-  gate.scale.y = 0.87;
-  const bronze = ice(0x76506c);
-  const gold = ice(0xffd499, 0x744425);
-  arch(builder, gate, pearl, 4.14, 3.58, 1.24, 0.47, 0.68);
-  arch(builder, gate, frost, 4.16, 3.6, 1.24, 0.22, 0.78);
-  arch(builder, gate, gold, 3.55, 3.34, 0.96, 0.09, 0.62);
-  part(gate, 'box', bronze, 0, 1.65, -0.22, 3.56, 3.33, 0.24);
-  part(gate, 'gem', lilac, 0, 4.77, 0.23, 0.44, 0.67, 0.27);
-  const boardZ = 0.35;
-  const boardDepth = 0.21;
-  part(gate, 'box', deep, 0, 3.63, boardZ, 3.05, 0.55, boardDepth);
-  addPalaceSign(THREE, document, gate, villageName, 0, 3.63, boardZ + boardDepth / 2 + SURFACE_GAP.detail, 2.86, 0.42);
-
-  for (const side of [-1, 1]) {
-    part(gate, 'box', gold, side * 2.56, 0.98, 0.12, 0.15, 1.96, 0.18);
-    part(gate, 'box', bronze, side * 2.56, 0.11, 0.12, 0.53, 0.22, 0.53);
-    part(gate, 'box', bronze, side * 2.56, 2.26, 0.12, 0.5, 0.12, 0.45);
-    part(gate, 'gem', gold, side * 2.56, 2.02, 0.12, 0.27, 0.31, 0.27);
-    snowflake(builder, gate, frost, side * 1.05, 2.65, 0.17, 0.31);
-  }
-  const panels = group(villageName + ' gateway glow', gatewaySite.x, gatewayHeight, gatewaySite.z);
-  panels.rotation.y = gate.rotation.y;
-  panels.scale.y = gate.scale.y;
-  const glow = ice(0x8b666e, 0x3d252b);
-  for (const side of [-1, 1]) {
-    part(panels, 'box', glow, side * 0.78, 1.7, 0.018, 1.5, 3.15, 0.10);
-    part(panels, 'gem', gold, side * 0.21, 1.58, 0.105, 0.1, 0.17, 0.09);
-  }
-  part(panels, 'gem', glow, 0, 3.54, -0.07, 1.72, 0.62, 0.09);
-  return glow;
+  return { throneInteraction, droplets, chandelierGlow, aurora };
 }
 
 function buildAurora(THREE, group) {

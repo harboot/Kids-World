@@ -312,23 +312,14 @@ test('the pine can be chopped from several positions with a clear view and a pro
   worlds.unload();
 });
 
-test('doors, reset and unload keep HUD, held objects and snow controls scoped to a visit', () => {
+test('reset and unload keep HUD, held objects and snow controls scoped to a visit', () => {
   const { worlds, camera, target, hud, visit, missionHud } = buildWorld();
   const { area, scene, viewmodel } = visit;
   const panel = hud.children[0];
   const throwButton = panel.children.find(child => child.className === 'snow-throw');
   assert.deepEqual(panel.children.map(child => child.className), ['snow-throw-key', 'snow-throw']);
-  const door = area.interactions.find(item => item.label === 'Enter Frozen Castle');
-  const exit = area.interactions.find(item => item.label === 'Return to Flower Garden');
   const pickup = area.interactions.find(item => item.label === 'Pick up axe');
-  let destination;
-  door.act({ travel: id => { destination = id; } });
-  assert.equal(destination, undefined);
-  assert.equal(missionHud.toast.textContent, '');
-  assert.equal(door.active, false);
-  assert.equal(scene.getObjectByName('Enter Frozen Castle').visible, false);
-  exit.act({ travel: id => { destination = id; } });
-  assert.equal(destination, 'garden');
+  assert.ok(scene.getObjectByName('Glacial crystal sculpture'));
   assert.equal(nearestInteraction(area.interactions, { x: 0.9, y: 1.68, z: 6.5 }), pickup);
   assertProgress(area);
   assert.equal(area.missionStatus.hint, 'Make a snowball');
@@ -430,14 +421,11 @@ function assertProgress(area, { snowmen = 0, chops = 0, key = 0, pineFallen = ch
   ]);
 }
 
-test('tree and key can come first and the gate waits for the last snowman', () => {
+test('tree and key can come first and completion waits for the last snowman', () => {
   const game = buildWorld();
   const { worlds, visit, completed, completions, missionHud, cues } = game;
   const { area, scene } = visit;
-  const castle = scene.getObjectByName('Enter Frozen Castle');
-  const sparkles = castle.getObjectByName('Door unlock sparkles');
   const key = scene.getObjectByName('Frozen Key');
-  const door = area.interactions.find(item => item.label === 'Enter Frozen Castle');
   const pickup = area.interactions.find(item => item.label === 'Pick up Frozen Key');
   const { toast, advance } = missionHud;
   assert.equal(key.visible, false);
@@ -446,7 +434,6 @@ test('tree and key can come first and the gate waits for the last snowman', () =
   assertProgress(area);
   fallInWorld(worlds);
   assertProgress(area, { chops: 5 });
-  assert.equal(castle.visible, false);
   assert.ok(key.visible && pickup.active);
   assert.equal(area.missionStatus.hint, 'Find the key near the fallen pine');
   assert.ok(reachableCells(area).some(pos => nearestInteraction([pickup], pos) === pickup));
@@ -455,47 +442,34 @@ test('tree and key can come first and the gate waits for the last snowman', () =
   assertProgress(area, { chops: 5, key: 1 });
   assert.equal(toast.textContent, 'Frozen Key collected!');
   assert.equal(key.visible, false);
-  assert.equal(door.active, false);
-  assert.equal(castle.visible, false);
-  assert.equal(sparkles.visible, false);
   assert.equal(completed.has('snow'), false);
   assert.deepEqual(completions, []);
-  door.act({ travel: () => assert.fail('an incomplete visit cannot travel') });
   shootSnowmen(game, (hits) => {
     assertProgress(area, { snowmen: hits, chops: 5, key: 1 });
     assert.equal(completed.has('snow'), hits === SNOWMAN_COUNT);
   });
   assert.equal(area.missionStatus.hint, '');
-  assert.equal(toast.textContent, 'Frozen Castle unlocked!');
-  assert.ok(door.active && castle.visible && sparkles.visible);
-  const travelCalls = [];
-  door.act({ heardCue: true, travel: (...args) => travelCalls.push(args) });
-  assert.deepEqual(travelCalls, [['frozen-castle', true]]);
+  assert.equal(toast.textContent, 'Snow Basin complete!');
   worlds.update(3.1, player);
   advance(3100);
   assert.equal(toast.textContent, '');
-  assert.equal(sparkles.visible, false);
   assert.equal(cues.at(-1).length, 4, 'the full completion plays its own cue');
   assert.deepEqual(completions, ['snow']);
   worlds.reset();
   assertProgress(area);
-  assert.ok(door.active && castle.visible);
-  assert.equal(sparkles.visible, false);
   assert.equal(key.visible, false);
   assert.equal(pickup.active, false);
   assert.equal(toast.textContent, '');
   worlds.unload();
 });
 
-test('snowmen can be cleared first and never unlock the castle or complete the level alone', () => {
+test('snowmen can be cleared first and never complete the level alone', () => {
   const game = buildWorld();
   const { worlds, visit, completions, missionHud } = game;
   const { area, scene } = visit;
-  const door = area.interactions.find(item => item.label === 'Enter Frozen Castle');
   const pickup = area.interactions.find(item => item.label === 'Pick up Frozen Key');
   shootSnowmen(game, hits => {
     assertProgress(area, { snowmen: hits });
-    assert.equal(door.active, false);
     assert.equal(Math.abs(scene.getObjectByName('Marked pine').rotation.z), 0);
     assert.equal(completions.length, 0);
   });
@@ -503,23 +477,20 @@ test('snowmen can be cleared first and never unlock the castle or complete the l
   fallInWorld(worlds);
   assertProgress(area, { snowmen: 3, chops: 5 });
   assert.equal(area.missionStatus.hint, 'Find the key near the fallen pine');
-  assert.equal(door.active, false);
   assert.deepEqual(completions, []);
   assert.ok(pickup.act());
   assert.equal(pickup.act(), false);
   assertProgress(area, { snowmen: 3, chops: 5, key: 1 });
-  assert.ok(door.active);
-  assert.equal(missionHud.toast.textContent, 'Frozen Key collected! Frozen Castle unlocked!');
+  assert.equal(missionHud.toast.textContent, 'Frozen Key collected! Snow Basin complete!');
   assert.deepEqual(completions, ['snow']);
   worlds.unload();
 });
 
-test('a legacy Snow Basin completion keeps Frozen Castle available on replay', () => {
+test('a saved Snow Basin completion coexists with fresh missions on replay', () => {
   const { worlds, visit, completed, completions } = buildWorld(true);
   function checkVisit(areaVisit) {
     assertProgress(areaVisit.area);
-    assert.ok(areaVisit.scene.getObjectByName('Enter Frozen Castle').visible);
-    assert.equal(areaVisit.scene.getObjectByName('Door unlock sparkles').visible, false);
+    assert.ok(areaVisit.scene.getObjectByName('Glacial crystal sculpture'));
     assert.ok(areaVisit.scene.getObjectByName('Snow Basin axe').visible);
     assert.equal(areaVisit.scene.getObjectByName('Frozen Key').visible, false);
     assert.equal(areaVisit.scene.children.filter(node => /^Snowman \d/.test(node.name) && node.visible).length, SNOWMAN_COUNT);
@@ -532,7 +503,7 @@ test('a legacy Snow Basin completion keeps Frozen Castle available on replay', (
   worlds.unload();
 });
 
-test('the Snow Basin gate requires every mission flag, including combinations unreachable during normal play', () => {
+test('Snow Basin completion requires every mission flag, including combinations unreachable during normal play', () => {
   for (const snowmen of [false, true]) {
     for (const tree of [false, true]) {
       for (const key of [false, true]) {

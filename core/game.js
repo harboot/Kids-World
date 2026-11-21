@@ -1,3 +1,4 @@
+import { renderAreaList } from './area-picker.js';
 import { isPublicArea, validateAreaRegistry } from './area-registry.js';
 import { createAudio } from './audio.js';
 import { createControls } from './controls.js';
@@ -9,7 +10,7 @@ import { createLevelProgress } from './level-progress.js';
 import { PLAYER_RADIUS } from './movement.js';
 import { createPlayer } from './player.js';
 import { createView } from './renderer.js';
-import { areaURL, createWorldManager, historyArrival, resolveArea } from './world-manager.js';
+import { areaURL, createWorldManager, resolveArea } from './world-manager.js';
 
 const areaKey = 'kids-world-last-area';
 
@@ -39,7 +40,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   const droneEntry = game.querySelector('#open-drone');
   const chooseLevel = game.querySelector('#choose-level');
   const levelPicker = game.querySelector('#level-picker');
-  const levelList = game.querySelector('#completed-levels');
+  const areaList = game.querySelector('#area-list');
   const restart = game.querySelector('#restart');
   const menuMessage = game.querySelector('#menu-message');
   const notice = game.querySelector('#notice');
@@ -135,7 +136,8 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     label: game.querySelector('#interaction-label'),
     camera, playing: playerInput, touchMode,
     runAction(item) {
-      item.act({ heardCue: !item.silent && audio.effect('interact'), sit, travel, relocate });
+      if (!item.silent) audio.effect('interact');
+      item.act({ sit, relocate });
     },
   });
   const controls = createControls(THREE, {
@@ -145,7 +147,6 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     jump() { if (player.jump()) audio.effect('jump'); },
     pause() { menu(true); },
   });
-  let travelTimer;
   let previousFrame = null;
 
   function syncFrameMeter() {
@@ -154,7 +155,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
 
   function syncView(url = new URL(location.href)) {
     const visit = worlds.active;
-    route = { drone: isDroneView(url), fps: isFpsView(url), arrival: historyArrival(visit.id, history.state) };
+    route = { drone: isDroneView(url), fps: isFpsView(url) };
     if (route.drone) {
       drone ??= createDroneView(THREE, {
         game, canvas, aspect: () => camera.aspect, enabled: playing, invalidate: view.invalidate,
@@ -175,7 +176,6 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   }
 
   function stopPlaying() {
-    window.clearTimeout(travelTimer);
     frameMeter.setActive(false);
     audio.setPlaying(false);
     controls.clear();
@@ -204,10 +204,9 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     player.reset(spawn, worlds.active.area);
   }
 
-  function prepareVisit(arrival) {
+  function prepareVisit() {
     const { definition, area } = worlds.active;
-    const spawn = arrival && Object.hasOwn(area.arrivals ?? {}, arrival) ? area.arrivals[arrival] : definition.spawn;
-    player.reset(spawn, area);
+    player.reset(definition.spawn, area);
     delete game.dataset.seated;
     interactions.setItems(area.interactions ?? []);
     missionHud.update(area.missionStatus);
@@ -226,20 +225,17 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     menu(false);
   }
 
-  function enterArea(id, historyMode, arrival) {
+  function enterArea(id, historyMode) {
     game.dataset.state = 'traveling';
     stopPlaying();
     clearVisitPresentation();
     try {
       const { definition } = worlds.load(id);
-      prepareVisit(arrival);
+      prepareVisit();
       audio.setArea(definition.music);
       view.sceneChanged();
       showArea(id);
-      if (historyMode) {
-        const state = arrival ? { area: id, arrival } : null;
-        history[historyMode](state, '', areaURL(new URL(location.href), id));
-      }
+      if (historyMode) history[historyMode](null, '', areaURL(new URL(location.href), id));
       rememberArea(areas, id);
       menu(false);
     } catch (error) {
@@ -248,31 +244,17 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     }
   }
 
-  function travel(id, heardCue, arrival) {
-    if (!playerInput() || id === worlds.active.id || !isPublicArea(areas, id)) return;
-    game.dataset.state = 'traveling';
-    stopPlaying();
-    if (heardCue) travelTimer = window.setTimeout(() => enterArea(id, 'pushState', arrival), 180);
-    else enterArea(id, 'pushState', arrival);
-  }
-
   chooseLevel.addEventListener('click', () => {
     if (levelPicker.open || !worlds.active || game.dataset.state === 'traveling') return;
     if (playing()) menu(true);
     progress.refresh();
-    levelList.replaceChildren();
-    for (const [id, area] of Object.entries(areas)) {
-      if (!progress.canSelect(id)) continue;
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.textContent = area.title;
-      button.addEventListener('click', () => {
-        if (id === worlds.active.id) resetArea();
+    renderAreaList(areaList, {
+      areas, progress, current: worlds.active.id,
+      select(id) {
+        if (id === worlds.active.id) levelPicker.close();
         else enterArea(id, 'pushState');
-      });
-      levelList.append(button);
-    }
-    if (!levelList.childElementCount) levelList.textContent = 'Complete a level to replay it here.';
+      },
+    });
     levelPicker.showModal();
   });
 
@@ -315,14 +297,13 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   function restoreArea() {
     const url = new URL(location.href);
     const id = resolveArea(url, areas, defaultArea);
-    const arrival = historyArrival(id, history.state);
-    if (worlds.active?.id === id && route && route.arrival === arrival &&
+    if (worlds.active?.id === id && route &&
       (route.drone !== isDroneView(url) || route.fps !== isFpsView(url))) {
       syncView(url);
       return;
     }
-    if (worlds.active?.id !== id || arrival) {
-      enterArea(id, null, arrival);
+    if (worlds.active?.id !== id) {
+      enterArea(id);
       return;
     }
     rememberArea(areas, id);
@@ -358,6 +339,6 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     requestAnimationFrame(frame);
   }
 
-  enterArea(initialArea, 'replaceState', restoringHistory ? historyArrival(initialArea, history.state) : undefined);
+  enterArea(initialArea, 'replaceState');
   requestAnimationFrame(frame);
 }

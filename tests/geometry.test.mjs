@@ -4,7 +4,6 @@ import * as THREE from '../vendor/three.module.min.js';
 import { addGroup, addMesh, paintCanvasTexture, rectangleBounds } from '../core/geometry.js';
 import { seededRandom } from '../core/random.js';
 import { createScenery } from '../areas/arendelle-village/scenery.js';
-import { addIceDoor } from '../areas/shared/ice-door.js';
 
 test('centered bounds use the original axis edges and retain village quarter-turn footprints', () => {
   assert.deepEqual(rectangleBounds(-2, 4, 6, 3), { left: -5, right: 1, front: 2.5, back: 5.5 });
@@ -58,38 +57,4 @@ test('seeded scenery sequences retain the garden and village values and independ
   assert.equal(village(), 1664733498 / 4294967296);
   assert.equal(garden(), 1335339466 / 4294967296);
   assert.equal(village(), 3194335057 / 4294967296);
-});
-
-test('the shared ice door retains collision, unlock feedback and destination routing', () => {
-  const scene = new THREE.Scene();
-  const obstacles = [];
-  let unlocked = false;
-  const door = addIceDoor(THREE, scene, obstacles, {
-    x: 2, z: -4, label: 'Enter Snow Basin', destination: 'snow',
-    available: () => unlocked, reducedMotion: () => true,
-  });
-  const model = scene.children[0];
-  const sparkles = model.getObjectByName('Door unlock sparkles');
-  const travel = [];
-  const context = { heardCue: true, travel: (...args) => travel.push(args) };
-  assert.deepEqual(obstacles[0], { left: 0.81, right: 3.19, front: -4.16, back: -3.76, height: 0 });
-  door.act(context);
-  assert.equal(door.active, false);
-  assert.deepEqual(travel, []);
-  assert.equal(model.visible, false);
-  unlocked = true;
-  door.refresh();
-  assert.equal(obstacles[0].height, 3.06);
-  assert.equal(model.visible, true);
-  assert.equal(sparkles.visible, true);
-  assert.deepEqual(sparkles.scale.toArray(), [1, 1, 1]);
-  door.act(context);
-  assert.deepEqual(travel, [['snow', true]]);
-  door.refresh(2.4);
-  assert.equal(sparkles.visible, false);
-  unlocked = false;
-  door.refresh();
-  door.resetHighlight();
-  assert.equal(model.visible, false);
-  assert.equal(obstacles[0].height, 0);
 });

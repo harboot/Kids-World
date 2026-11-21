@@ -3,7 +3,7 @@ import { CITY_PIER, FISHING_PIER, QUAY, shorelineX } from './terrain.js';
 import { seededRandom } from '../../core/random.js';
 
 export const SEA_LEVEL = -0.48;
-export const CITY_SIGN = { x: 30.7, z: 17.25 };
+const CITY_SIGN = { x: 30.7, z: 17.25 };
 const timber = 0x866045;
 const oak = 0x604333;
 const rope = 0xc1a179;
@@ -46,10 +46,10 @@ export function buildHarbor(THREE, scene, kit) {
   fishingNet(kit, fishing, 29.6, -5.65);
   fishingNet(kit, fishing, 27.4, -0.31);
 
-  const citySign = group('City pier boarding sign', CITY_SIGN.x + 0.84, 0, CITY_SIGN.z - 1.5);
+  const citySign = group('Harbor pier sign', CITY_SIGN.x + 0.84, 0, CITY_SIGN.z - 1.5);
   const postHeight = 1.31;
   box(citySign, oak, 0, postHeight / 2, 0, 0.17, postHeight, 0.17);
-  sign(citySign, 'To The City', -0.12, 1.54, 0, 1.8, 0.42,
+  sign(citySign, 'Harbor Pier', -0.12, 1.54, 0, 1.8, 0.42,
     { background: '#35545b', yaw: -Math.PI / 2, bothSides: true });
   solid(citySign, 0.23, 0.23, 1.6);
   box(city, timber, 28.6, 0.46, 19, 1.66, 0.15, 0.57);

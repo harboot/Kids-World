@@ -1,5 +1,4 @@
 import { addClearanceOutline, clearanceMaterial } from '../../core/interaction-clearance.js';
-import { addGardenVillageGate } from '../shared/garden-village-gate.js';
 import { buildBuildings } from './buildings.js';
 import { decorateVillage } from './decorations.js';
 import { buildFountain } from './fountain.js';
@@ -46,10 +45,6 @@ function loadVillage({ THREE, scene, viewmodel, hud, signal, touch, reducedMotio
   const { clock, lookout, balcony } = buildBuildings(kit, terrain.getGroundHeight);
   decorateVillage(kit, terrain.getGroundHeight);
   const poseHarbor = buildHarbor(THREE, scene, kit);
-  const gardenGate = addGardenVillageGate(THREE, scene, obstacles, {
-    area: arendelleVillage.id, ground: terrain.getGroundHeight, document: hud?.ownerDocument, signal, isLevelComplete,
-  });
-
   let elapsed = 0;
   const isActive = () => !signal?.aborted;
   const outlineMaterial = clearanceMaterial(THREE);
@@ -63,7 +58,7 @@ function loadVillage({ THREE, scene, viewmodel, hud, signal, touch, reducedMotio
   }, { id: arendelleVillage.id, isLevelComplete, completeLevel });
   const interactions = [
     ...villageInteractions(isActive, notify), ...clockDoors(clock, lookout, isActive, mark),
-    fountain.interaction, gardenGate.interaction, ...missions.interactions,
+    fountain.interaction, ...missions.interactions,
   ];
   kit.finish();
 
@@ -76,7 +71,6 @@ function loadVillage({ THREE, scene, viewmodel, hud, signal, touch, reducedMotio
       return Boolean(from && (lookout.blocks(x, z, radius, feet, from) || balcony.blocks(x, z, radius, feet, from)));
     },
     obstacles,
-    arrivals: { garden: gardenGate.arrival },
     interactions,
     get missionStatus() { return missions.missionStatus; },
     reset() {
@@ -85,7 +79,6 @@ function loadVillage({ THREE, scene, viewmodel, hud, signal, touch, reducedMotio
       poseBystanders(0, true);
       fountain.reset();
       missions.reset();
-      gardenGate.refresh();
     },
     update(dt, player) {
       if (!isActive()) return;
@@ -95,7 +88,6 @@ function loadVillage({ THREE, scene, viewmodel, hud, signal, touch, reducedMotio
       poseBystanders(elapsed, still);
       fountain.update(elapsed, still);
       missions.update(dt, player, elapsed, still);
-      gardenGate.refresh();
     },
   };
 }

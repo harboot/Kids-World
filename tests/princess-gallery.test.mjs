@@ -16,7 +16,7 @@ import { createLevelProgress } from '../core/level-progress.js';
 import { floorHeight, overlaps, PLAYER_RADIUS, walkElevation } from '../core/movement.js';
 import { createPlayer, EYE_HEIGHT } from '../core/player.js';
 import { PLAYER_ONLY_LAYER } from '../core/render-layers.js';
-import { areaURL, createWorldManager, historyArrival, resolveArea } from '../core/world-manager.js';
+import { areaURL, createWorldManager, resolveArea } from '../core/world-manager.js';
 
 const ID = 'princess-gallery';
 const CASTLE = 'frozen-castle';
@@ -84,84 +84,21 @@ test('public gallery opens by normal and drone URLs with no castle progress', t 
     assert.match(visit.area.missionStatus.hint, /Approach Belle’s enchanted tea table/);
     assert.equal(game.progress.has(CASTLE), false);
     assert.equal(game.progress.has(ID), false);
-    assert.equal(game.progress.canSelect(ID), false);
   }
   assert.equal(resolveArea(new URL('https://example.test/?area=secret-apartment'), areas, 'garden'), 'secret-apartment');
 });
 
-test('the castle gate explains its lock and unlocks only when all three missions complete', t => {
-  const game = fixture();
+test('reopening the gallery uses the lobby spawn and retains its saved completion', t => {
+  const game = fixture({ saved: [ID] });
   t.after(game.worlds.unload);
-  const visit = game.worlds.load(CASTLE);
-  const { area, scene } = visit;
-  const gate = area.interactions.find(item => item.destination === ID);
-  const seal = scene.getObjectByName('Magic seal');
-  const sparks = scene.getObjectByName('Gateway crystals');
-  const reach = { x: gate.x, z: gate.z - 1.8, y: EYE_HEIGHT };
-  const travels = [];
-  const travel = (...destination) => travels.push(destination);
-  assert.equal(nearestInteraction(area.interactions, reach), gate);
-  assert.match(gate.label, /Locked/);
-  assert.equal(gate.unlocked, false);
-  assert.equal(game.progress.canSelect(ID), false);
-  assert.ok(seal.visible && !sparks.visible);
-  gate.act({ travel, heardCue: true });
-  assert.deepEqual(travels, []);
-  assert.match(game.notices.at(-1), /all three Frozen Castle missions/);
-  assert.ok(area.missionStatus.missions.every(mission => !mission.complete));
-
-  for (const item of area.interactions.filter(item => item.label === 'Activate crystal')) item.act();
-  for (const item of area.interactions.filter(item => item.label === 'Play crystal').reverse()) item.act();
-  assert.equal(gate.unlocked, false);
-  const stairs = area.interactions.find(item => item.label === 'Build ice staircase');
-  for (let i = 0; i < 3; i++) stairs.act();
-  assert.equal(gate.unlocked, false);
-  game.worlds.update(0.6, game.camera.position);
-  assert.ok(area.missionStatus.missions.every(mission => mission.complete));
-  assert.equal(game.progress.has(CASTLE), true);
-  assert.equal(game.progress.canSelect(CASTLE), true);
-  assert.equal(game.progress.canSelect(ID), true);
-  assert.equal(game.progress.has(ID), false);
-  assert.equal(gate.unlocked, true);
-  assert.equal(gate.label, 'Enter Princess Gallery');
-  assert.ok(!seal.visible && sparks.visible);
-  gate.act({ travel, heardCue: true });
-  assert.deepEqual(travels, [[ID, true, CASTLE]]);
-  assert.deepEqual(JSON.parse(game.storage.getItem(storageKey)), [CASTLE]);
-});
-
-test('saved completion, existing castle gates and named arrivals survive reset and visits', t => {
-  const game = fixture({ saved: [CASTLE] });
-  t.after(game.worlds.unload);
-  assert.equal(game.progress.canSelect(ID), true);
-  assert.equal(game.progress.canSelect('secret-apartment'), false);
-  assert.equal(game.progress.canSelect('arendelle-village'), false);
-  assert.equal(game.progress.has(ID), false);
-  const castle = game.worlds.load(CASTLE);
-  const gate = castle.area.interactions.find(item => item.destination === ID);
-  const village = castle.area.interactions.find(item => item.destination === 'arendelle-village');
-  const snow = castle.area.interactions.find(item => item.label === 'Return to Snow Basin');
-  const calls = [];
-  const travel = (...args) => calls.push(args);
-  game.worlds.reset();
-  assert.equal(gate.unlocked, true);
-  assert.equal(village.active, true);
-  assert.ok(castle.area.missionStatus.missions.every(mission => !mission.complete));
-  assertSafeSpawn(castle.area.arrivals[ID], castle, game);
-  gate.act({ travel, heardCue: true });
-  village.act({ travel, heardCue: true });
-  snow.act({ travel, heardCue: true });
-  assert.deepEqual(calls, [[ID, true, CASTLE], ['arendelle-village', true], ['snow', true, CASTLE]]);
-  const gallery = game.worlds.load(ID);
-  assertSafeSpawn(gallery.area.arrivals[CASTLE], gallery, game);
-  const [exit] = gallery.area.interactions;
-  assert.equal(exit.label, 'Return to Frozen Castle');
-  exit.act({ travel, heardCue: false });
-  assert.deepEqual(calls.at(-1), [CASTLE, false, ID]);
-  const target = areaURL(new URL('https://example.test/?area=princess-gallery'), CASTLE);
-  assert.equal(resolveArea(target, areas, 'garden'), CASTLE);
-  assert.equal(historyArrival(CASTLE, { area: CASTLE, arrival: ID }), ID);
-  assert.equal(game.worlds.load(CASTLE).area.interactions.find(item => item.destination === ID).unlocked, true);
+  game.worlds.load(CASTLE);
+  const target = areaURL(new URL('https://example.test/?area=frozen-castle'), ID);
+  const gallery = game.worlds.load(resolveArea(target, areas, 'garden'));
+  assertSafeSpawn(hall.spawn, gallery, game);
+  assert.ok(gallery.area.missionStatus.missions.every(mission => !mission.complete));
+  assert.ok(game.progress.has(ID));
+  assert.equal(game.progress.has(CASTLE), false);
+  assert.deepEqual(JSON.parse(game.storage.getItem(storageKey)), [ID]);
 });
 
 function containsPoint(polygon, [x, z]) {
@@ -500,7 +437,7 @@ test('Snow White has eight distinct actors visitors can walk up to, with one sha
         entry.actor.name + ' keeps the player clear while walking or jumping');
     }
   }
-  assert.deepEqual(area.interactions.flatMap(item => item.destination ?? []), [CASTLE]);
+  assert.deepEqual(area.interactions.flatMap(item => item.destination ?? []), []);
   assert.ok(area.missionStatus.missions.every(mission => !mission.complete));
   const [x, z] = spaceTransform(snowWhite).toWorld(-1, -7.33);
   assert.equal(walkElevation(area, { x, z }, x, z, area.getGroundHeight(x, z), true), null, 'cottage has collision');
@@ -1603,7 +1540,7 @@ test('gallery guests include guards, a child with their parents, and a parent wi
   assert.ok(baby.children.some(mesh => mesh.isMesh));
   const { x, z } = stroller.getWorldPosition(new THREE.Vector3());
   assert.equal(walkElevation(area, { x, z }, x, z, 0, true), null);
-  assert.deepEqual(area.interactions.flatMap(item => item.destination ?? []), [CASTLE]);
+  assert.deepEqual(area.interactions.flatMap(item => item.destination ?? []), []);
 
   const head = child.getObjectByName('Woodland family child head');
   const rest = head.rotation.toArray();

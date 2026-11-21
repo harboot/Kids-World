@@ -1,6 +1,10 @@
 {
-  "version": "bf84a90228343801b358e44067c6b4097c4a76f4a4ff7943a6d07a48fafadecc",
+  "version": "5b6a062b2ffadf286800c3d87809a6dbccbd4ff071c8adcb3a48f8f49a8c6343",
   "files": [
+    {
+      "path": "./areas/arendelle-village/arendelle-village.jpg",
+      "revision": "9b9436863a1c143e66c9db97a917300ee6dc1c7bb647ba0e8c4853eeb2b231c0"
+    },
     {
       "path": "./areas/arendelle-village/buildings.js",
       "revision": "10498a03f33f26416b9daabb18910bab3a466380b8933306a0281f35070b791f"
@@ -11,7 +15,7 @@
     },
     {
       "path": "./areas/arendelle-village/decorations.js",
-      "revision": "e5163914ff191f03cc1cb2af5de431efecd05f60ce1aa967b3bc1da4069dd63c"
+      "revision": "c8d0bded6b0f6b6d4e75e046f951a14015bba008041ba02ccb4266523939be49"
     },
     {
       "path": "./areas/arendelle-village/fishing.js",
@@ -23,19 +27,19 @@
     },
     {
       "path": "./areas/arendelle-village/harbor.js",
-      "revision": "bac42d795c4f68a95460df9fad9af1fd6617665ee8fc9dea517423aecb03ba33"
+      "revision": "d344ade7bcf1a8cda7fb0eb5b998d58d23f0cbbccfdc661c1bf553c36919d16b"
     },
     {
       "path": "./areas/arendelle-village/index.js",
-      "revision": "be3997d88ef7fd8b49d79944f7f935e80cd7111d469c612b7aa7795663b82a26"
+      "revision": "d0d01a812d52a9ebd4cddd2cdb349807e17e00c4b7b0ca98d33c7d7fb937e5d1"
     },
     {
       "path": "./areas/arendelle-village/interactions.js",
-      "revision": "84494b672cf4acdddc345bb3e3713931f474334dcd7d50605a673bb0bde7649e"
+      "revision": "04091bcb67b4f20e494c4e72209699523d850264afea74f0290bb42e99fb2b59"
     },
     {
       "path": "./areas/arendelle-village/missions.js",
-      "revision": "2c5e794043b705fa18bca6e03c8c5749c8ec9f3d01b2b19386a02dc376187334"
+      "revision": "bcd4c9ac31043b079105b28c9b6ab682ccdce053326ce00ff5a3d842675d193b"
     },
     {
       "path": "./areas/arendelle-village/reindeer.js",
@@ -58,8 +62,12 @@
       "revision": "e654f1fc32121bd0efaf0c9ff24121097ced5a59063790465276984fc8945f29"
     },
     {
+      "path": "./areas/flower-garden/flower-garden.jpg",
+      "revision": "2dcfd24d934ac7cc5211b0e9ca74307080810ea019ab0edc6c752e76b039e0ae"
+    },
+    {
       "path": "./areas/flower-garden/garden-cabin.js",
-      "revision": "8dbe6a9007159690b1320f669bd62f6ffbe30a2202094f0b3add134b32d91661"
+      "revision": "5a932061e40f7168376b79ff6737f42a64b9b35ce8bbc9682bad35229b4adc11"
     },
     {
       "path": "./areas/flower-garden/garden-orchard.js",
@@ -75,7 +83,7 @@
     },
     {
       "path": "./areas/flower-garden/index.js",
-      "revision": "9865eadc2d5825207378ed024b60420fbaac77707c629befb91edd15bc7f5abd"
+      "revision": "008f6d1c8d8e6d55511585723b34346e323d19f6497298e64aa87a9ba8ebbcb8"
     },
     {
       "path": "./areas/frozen-castle/activities.js",
@@ -83,11 +91,15 @@
     },
     {
       "path": "./areas/frozen-castle/decorations.js",
-      "revision": "718c8cacbe08461d738f67a7db313671d4971c7ef2cc679f3e9efb64e2a4699c"
+      "revision": "ddb0d824f4dfd8be4e727abd4cfd443d6011f1ba1fa65c0195e4abd811ee21fa"
+    },
+    {
+      "path": "./areas/frozen-castle/frozen-castle.jpg",
+      "revision": "dc940a7f2b14dc669cad21420d95e024b80243448fdcde5a591021c59d67014c"
     },
     {
       "path": "./areas/frozen-castle/index.js",
-      "revision": "9c5483a7a3bbb0b3a6d2bae4db15cfacb31ae1b957dc0654e11f9e74996d1c5f"
+      "revision": "a8cbe7e2f16152f923b440dcbe79b62690cf5736e1d2350354fd34a5b590b438"
     },
     {
       "path": "./areas/frozen-castle/palace.js",
@@ -187,7 +199,7 @@
     },
     {
       "path": "./areas/princess-gallery/index.js",
-      "revision": "6db5d54166e9b2ea6ab792e16c818194e50bcb04dccb50a6e83538b71341d250"
+      "revision": "9506a74d1892d0364bfccd63c0e1512aa90915713faa9a49d765f85aa31b402a"
     },
     {
       "path": "./areas/princess-gallery/parts.js",
@@ -200,6 +212,10 @@
     {
       "path": "./areas/princess-gallery/princess-face.js",
       "revision": "c7bc8c008717699fe252d838f22e395441a765a7501ac08038ac22d04eb5e9ed"
+    },
+    {
+      "path": "./areas/princess-gallery/princess-gallery.jpg",
+      "revision": "a0ab0a1ae072ff5edacbd22929b1a38368fd7d2de0e5510126bbcff5773d18c1"
     },
     {
       "path": "./areas/princess-gallery/promenade-furniture.js",
@@ -294,20 +310,8 @@
       "revision": "41c0400c669413d4e52e5eb3c404ae1b7e66d5c262e4a8c2324522a7ce5b1062"
     },
     {
-      "path": "./areas/shared/garden-village-gate.js",
-      "revision": "44734aa37d4bf345b2185d7f343c5fff9df259cad7e70e34f44c8c7400a2b862"
-    },
-    {
-      "path": "./areas/shared/ice-door.js",
-      "revision": "046a5eb469413eb7554b2225aa31dfbb90204c84e3a0da55b7ad43fae8adb68e"
-    },
-    {
-      "path": "./areas/shared/royal-gateway.js",
-      "revision": "2e4bd3ff74647a909d0a228ffb6372ceb358f701772a30347af16bd4cb66eb78"
-    },
-    {
       "path": "./areas/snow-basin.js",
-      "revision": "2977d481d47f65b93c6abc398f602c548fd6926286a50672bd5be9a839f73002"
+      "revision": "a8f8a12a6d74720c78f826875da9c9658d324109c25868bbb52993f662e96107"
     },
     {
       "path": "./areas/snow-basin/activity.js",
@@ -315,11 +319,15 @@
     },
     {
       "path": "./areas/snow-basin/props.js",
-      "revision": "d091a664020d616540c9ecb21e376ef1190b83d00059aa86e418428fab8f31d1"
+      "revision": "0f45098dc373a14cfa512010107b4d7dfa2eb3cc0d6aad0d52a956f0daff6c74"
     },
     {
       "path": "./areas/snow-basin/scenery.js",
       "revision": "a850ac9fc61e492c53e8ab6629e65ef30c907ededa7a8366e8f26c87797cb28a"
+    },
+    {
+      "path": "./areas/snow-basin/snow-basin.jpg",
+      "revision": "07248eacd6c18ab91de9bad4b801906514cd2dfc93115cbac8d0c3fd8902f034"
     },
     {
       "path": "./areas/wooden-house/cleaning.js",
@@ -331,11 +339,15 @@
     },
     {
       "path": "./areas/wooden-house/index.js",
-      "revision": "06c53b5b4709d2b3ee8b26028ca4c6ce80ada03876440a44fc90e32ba14abcf9"
+      "revision": "087566b9ba8df5d80dacfeea48dadff840fbfed4336605453c7a100209f3c10c"
     },
     {
       "path": "./areas/wooden-house/interior.js",
-      "revision": "0818102ed4099e20360786728ac4df0c833b8e8cf3f930ed81ac8d83205c9c57"
+      "revision": "feb60ef4544b656f1ffa1a5b36f40880e7d5fd96c19869350c16a1187befd127"
+    },
+    {
+      "path": "./areas/wooden-house/wooden-house.jpg",
+      "revision": "74dfe81e79e97108ba144827e2c11b6cc690c21e4b9c1044f72e7180dada5bb5"
     },
     {
       "path": "./assets/icons/icon-192.png",
@@ -344,6 +356,10 @@
     {
       "path": "./assets/icons/icon-512.png",
       "revision": "b27df2db398c99e96cdd44cb6e307c720bda68b5d734da43d0dc53507440f0d7"
+    },
+    {
+      "path": "./core/area-picker.js",
+      "revision": "64e44d11a6656db59ea5f50e36bc02c888ae33b63b77564ad3444f60ef5f6ea7"
     },
     {
       "path": "./core/area-registry.js",
@@ -371,7 +387,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "6f197a45e34fb59f604bfbca6e13d726aa625807e8f619e999e52e8299538b74"
+      "revision": "0a5bb74d594c06b3053ffce9637e09bdf87657b4b881868df960517c5d7f35a2"
     },
     {
       "path": "./core/geometry.js",
@@ -391,7 +407,7 @@
     },
     {
       "path": "./core/level-progress.js",
-      "revision": "9a82dd63e197f6f5af45ffd462fe829e94a3739349b4747feed3e5323fa0a879"
+      "revision": "63f09d20a6565cfb95cdc70f431dbcaf2392036e0b957bcdaf05324cf8079511"
     },
     {
       "path": "./core/missions.js",
@@ -419,15 +435,15 @@
     },
     {
       "path": "./core/world-manager.js",
-      "revision": "cdf86d0abf3cff90d2bd833e7164dcb5aea14952e8f064cf96d10f4c0ba21b51"
+      "revision": "d40d58c9c949fcbc971844fa6fcbe06006a28732e766df4e5f18b35b8c5acc22"
     },
     {
       "path": "./game.js",
-      "revision": "7afd3468a67103005623e1382ce0ca0ce33c50d7734cba2af77092e4b82f7882"
+      "revision": "e4267f243c902dfec593ed81d38d70c26f9e06788f1bf7724fcb3ced017be6be"
     },
     {
       "path": "./index.html",
-      "revision": "8e8ba5d889385279f002ff09045898bd9207fb29c2de36afea3e490d3b4d4f38"
+      "revision": "2eaed0ec1ec4b36865bc776b4c119fb95325f80a2de221d945961b0af143c868"
     },
     {
       "path": "./manifest.webmanifest",
@@ -459,7 +475,7 @@
     },
     {
       "path": "./style.css",
-      "revision": "4b2639d76d6c0e23f054b78a164fbd9365eceb8b765d7f87ff0c5a1bdc184798"
+      "revision": "4662ff6b12f46b8bbe72f3928343d22915c6f4a1ae6afee1e03fbefd66ad5279"
     },
     {
       "path": "./vendor/three.LICENSE",

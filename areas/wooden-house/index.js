@@ -20,7 +20,7 @@ export const woodenHouse = {
 function loadHouse({ THREE, scene, signal, playCue = () => {}, reducedMotion = () => false, completeLevel, notify }) {
   const obstacles = [];
   const builder = createHouseBuilder(THREE, scene, obstacles);
-  const exit = buildInterior(THREE, scene, builder);
+  buildInterior(THREE, scene, builder);
   const models = buildFurniture(THREE, scene, builder);
   builder.batchArchitecture();
   const sparkles = addCleaningSparkles(THREE, scene);
@@ -36,7 +36,7 @@ function loadHouse({ THREE, scene, signal, playCue = () => {}, reducedMotion = (
   return {
     obstacles,
     blocksGround: cleaning.blocksGround,
-    interactions: [...cleaning.interactions, exit],
+    interactions: cleaning.interactions,
     get missionStatus() { return cleaning.missionStatus; },
     reset() {
       cleaning.reset();

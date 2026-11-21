@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { nearestInteraction } from '../core/interactions.js';
-import { areaURL, createWorldManager, historyArrival, resolveArea } from '../core/world-manager.js';
+import { areaURL, createWorldManager, resolveArea } from '../core/world-manager.js';
 
 class Node {
   children = [];
@@ -173,18 +173,13 @@ test('area routes honor explicit and legacy links, with a saved area as a fallba
   assert.equal(resolveArea(route, areas, 'garden'), 'snow');
 });
 
-test('history routes keep their area, named arrival, query parameters and hash', () => {
+test('history URLs keep the area, other query parameters and hash', () => {
   const areas = { garden: { show: true }, snow: { show: true } };
   const initial = new URL('https://example.test/Kids-World/?arrive=garden&source=test&tag=a&tag=b#scene');
   const garden = areaURL(initial, 'garden');
   const snow = areaURL(garden, 'snow');
-  const arrivalState = { area: 'garden', arrival: 'cabin' };
-  for (const [url, state, id, arrival] of [
-    [garden, arrivalState, 'garden', 'cabin'],
-    [snow, null, 'snow', undefined],
-  ]) {
+  for (const [url, id] of [[garden, 'garden'], [snow, 'snow']]) {
     assert.equal(resolveArea(url, areas, 'garden', 'snow'), id);
-    assert.equal(historyArrival(id, state), arrival);
     assert.equal(url.searchParams.get('source'), 'test');
     assert.deepEqual(url.searchParams.getAll('tag'), ['a', 'b']);
     assert.equal(url.searchParams.has('arrive'), false);
@@ -192,6 +187,4 @@ test('history routes keep their area, named arrival, query parameters and hash',
     assert.equal(url.pathname, '/Kids-World/index.html');
     assert.equal(areaURL(url, id).href, url.href);
   }
-  assert.equal(historyArrival('snow', arrivalState), undefined);
-  assert.equal(historyArrival('garden', { area: 'garden', arrival: 1 }), undefined);
 });
