@@ -91,9 +91,10 @@ test('emits the same JSON bytes each time and rejects stale data in check mode',
   const script = 'scripts/generate-area-stats.mjs';
   const directory = await fixture(t, {
     [script]: await readFile(new URL(script, root)),
-    'game.js': "import { example } from './areas/example.js';\n" +
-      'export const areas = { example: { ...example, show: false } };\n',
-    'areas/example.js': 'export const example = { title: "Example", width: 9, depth: 3 };\n',
+    'game.js': "import { metadata } from './areas/example/metadata.js';\n" +
+      "export const areas = { example: { ...metadata, show: false, loadModule: () => import('./areas/example/index.js') } };\n",
+    'areas/example/metadata.js': 'export const metadata = { title: "Example", width: 9, depth: 3 };\n',
+    'areas/example/index.js': 'throw new Error("Area implementations must not run");\n',
     'area-stats.json': '{}\n',
   });
   function generate(...args) {
@@ -103,6 +104,7 @@ test('emits the same JSON bytes each time and rejects stale data in check mode',
   generate();
   const first = await readFile(join(directory, 'area-stats.json'), 'utf8');
   assert.equal(JSON.parse(first).areas[0].mapArea, 27);
+  assert.equal(JSON.parse(first).areas[0].totalFiles, 2);
   generate();
   assert.equal(await readFile(join(directory, 'area-stats.json'), 'utf8'), first);
   assert.doesNotThrow(() => generate('--check'));

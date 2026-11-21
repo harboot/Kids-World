@@ -13,7 +13,7 @@ import { areaURL, createWorldManager, resolveArea } from '../core/world-manager.
 const ID = 'frozen-castle';
 const storageKey = 'kids-world-completed-levels';
 
-function fixture({ saved = [], still = false } = {}) {
+async function fixture({ saved = [], still = false } = {}) {
   let stored = JSON.stringify(saved);
   const writes = [];
   const storage = {
@@ -36,7 +36,7 @@ function fixture({ saved = [], still = false } = {}) {
       notify(message) { notifications.push(message); },
     },
   });
-  const visit = worlds.load(ID);
+  const visit = await worlds.load(ID);
   const { area, scene } = visit;
   const withLabel = label => area.interactions.filter(item => item.label === label);
   return {
@@ -83,8 +83,8 @@ function finishMission(game, mission) {
   }
 }
 
-test('the castle route uses the safe hall spawn before Snow Basin missions are complete', t => {
-  const { worlds, area, camera, progress } = fixture();
+test('the castle route uses the safe hall spawn before Snow Basin missions are complete', async t => {
+  const { worlds, area, camera, progress } = await fixture();
   t.after(worlds.unload);
   const castle = areas[ID];
   assert.equal(castle.id, ID);
@@ -103,8 +103,8 @@ test('the castle route uses the safe hall spawn before Snow Basin missions are c
   assertProgress(area);
 });
 
-test('all missions, the throne and mountain lookout are reachable before building', () => {
-  const { worlds, area, visit, crystals, stairs, music } = fixture();
+test('all missions, the throne and mountain lookout are reachable before building', async () => {
+  const { worlds, area, visit, crystals, stairs, music } = await fixture();
   const start = { ...visit.definition.spawn, feet: 0 };
   const { width, depth } = visit.definition;
   const queue = [start];
@@ -133,8 +133,8 @@ test('all missions, the throne and mountain lookout are reachable before buildin
   worlds.unload();
 });
 
-test('the expanded summit terrace loops around all four walls and connects through three arches', () => {
-  const { worlds, area, visit, camera } = fixture();
+test('the expanded summit terrace loops around all four walls and connects through three arches', async () => {
+  const { worlds, area, visit, camera } = await fixture();
   assert.equal(visit.definition.width, 40);
   assert.equal(visit.definition.depth, 40);
   assertProgress(area);
@@ -150,8 +150,8 @@ test('the expanded summit terrace loops around all four walls and connects throu
   worlds.unload();
 });
 
-test('the outdoor railings contain walking and jumping on every side of the summit', () => {
-  const { worlds, area, scene } = fixture();
+test('the outdoor railings contain walking and jumping on every side of the summit', async () => {
+  const { worlds, area, scene } = await fixture();
   for (const [x, z] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
     const from = { x: x * 18.85, z: z * 18.85 };
     assert.equal(walkElevation(area, from, x * 19.03, z * 19.03, 0, true), 0);
@@ -166,8 +166,8 @@ test('the outdoor railings contain walking and jumping on every side of the summ
   worlds.unload();
 });
 
-test('each terrace corner has a giant solid crystal and all four activate the chandelier', () => {
-  const game = fixture();
+test('each terrace corner has a giant solid crystal and all four activate the chandelier', async () => {
+  const game = await fixture();
   const { worlds, area, scene, crystals, music, stairs, cues } = game;
   const chandelier = scene.getObjectByName('Crystal chandelier').children[1].material;
   const dim = chandelier.emissiveIntensity;
@@ -217,8 +217,8 @@ test('each terrace corner has a giant solid crystal and all four activate the ch
   worlds.unload();
 });
 
-test('the curved staircase forms exactly three sections and safely connects the upper balcony', () => {
-  const game = fixture();
+test('the curved staircase forms exactly three sections and safely connects the upper balcony', async () => {
+  const game = await fixture();
   const { worlds, area, scene, stairs } = game;
   const models = stairsModels(scene);
   const barriers = scene.children.filter(node => node.name === 'Unfinished staircase barrier');
@@ -275,8 +275,8 @@ test('the curved staircase forms exactly three sections and safely connects the 
   worlds.unload();
 });
 
-test('the player can ascend and descend the whole curved staircase with normal movement', () => {
-  const game = fixture({ saved: ['frozen-castle'], still: true });
+test('the player can ascend and descend the whole curved staircase with normal movement', async () => {
+  const game = await fixture({ saved: ['frozen-castle'], still: true });
   const { area, camera, visit, worlds } = game;
   const player = createPlayer(THREE, camera);
   const waypoints = Array.from({ length: 28 }, (_, i) => stairPoint(-0.053 + i * 0.039));
@@ -292,8 +292,8 @@ test('the player can ascend and descend the whole curved staircase with normal m
   worlds.unload();
 });
 
-test('the blue, pink and purple tuning crystals play distinct notes and can be replayed', () => {
-  const { worlds, area, scene, music, cues } = fixture();
+test('the blue, pink and purple tuning crystals play distinct notes and can be replayed', async () => {
+  const { worlds, area, scene, music, cues } = await fixture();
   const aurora = scene.getObjectByName('Ceiling aurora');
   assert.equal(aurora.visible, false);
   for (const index of [1, 1, 2, 0]) {
@@ -314,13 +314,13 @@ test('the blue, pink and purple tuning crystals play distinct notes and can be r
   worlds.unload();
 });
 
-test('all mission orders record completion only once', () => {
+test('all mission orders record completion only once', async () => {
   for (const order of [
     ['crystals', 'stairs', 'melody'], ['crystals', 'melody', 'stairs'],
     ['stairs', 'crystals', 'melody'], ['stairs', 'melody', 'crystals'],
     ['melody', 'crystals', 'stairs'], ['melody', 'stairs', 'crystals'],
   ]) {
-    const game = fixture({ saved: ['snow'] });
+    const game = await fixture({ saved: ['snow'] });
     const { worlds, area, recorded, writes, getStorage, notifications } = game;
     const totals = { crystals: 4, stairs: 3, melody: 3 };
     const completed = {};
@@ -344,8 +344,8 @@ test('all mission orders record completion only once', () => {
   }
 });
 
-test('restart and replay restore temporary states, retain completion, and release scene resources on unload', () => {
-  const game = fixture({ still: true });
+test('restart and replay restore temporary states, retain completion, and release scene resources on unload', async () => {
+  const game = await fixture({ still: true });
   const { worlds, visit, scene, area, crystals, progress, writes, recorded, cues } = game;
   const aurora = scene.getObjectByName('Ceiling aurora');
   const chandelier = scene.getObjectByName('Crystal chandelier').children[1].material;
@@ -374,7 +374,7 @@ test('restart and replay restore temporary states, retain completion, and releas
   let disposed = false;
   aurora.children[0].geometry.addEventListener('dispose', () => { disposed = true; });
   const previousCues = cues.length;
-  worlds.load('snow');
+  await worlds.load('snow');
   assert.ok(visit.lifetime.signal.aborted);
   assert.equal(visit.scene.children.length, 0);
   assert.ok(disposed);
@@ -382,7 +382,7 @@ test('restart and replay restore temporary states, retain completion, and releas
   for (const item of [...crystals, game.stairs, ...game.music]) item.act();
   area.update(3);
   assert.equal(cues.length, previousCues);
-  const next = worlds.load(ID);
+  const next = await worlds.load(ID);
   assertProgress(next.area);
   assert.ok(progress.has(ID));
   worlds.unload();

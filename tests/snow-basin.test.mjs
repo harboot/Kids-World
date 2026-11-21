@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import * as THREE from '../vendor/three.module.min.js';
+import { areas } from '../game.js';
 import { snowBasin } from '../areas/snow-basin/index.js';
 import { CHOP_COOLDOWN, CHOPS, FALL_DURATION, SNOWMAN_COUNT, sweepSphere, createSnowActivity, snowMissionsComplete } from '../areas/snow-basin/activity.js';
 import { nearestInteraction } from '../core/interactions.js';
@@ -161,7 +162,7 @@ class Element extends EventTarget {
   setAttribute() {}
 }
 
-function buildWorld(saved = false) {
+async function buildWorld(saved = false) {
   const camera = new THREE.PerspectiveCamera();
   const target = new EventTarget();
   const completed = new Set(saved ? ['snow'] : []);
@@ -171,7 +172,10 @@ function buildWorld(saved = false) {
   const hud = new Element();
   hud.ownerDocument = { createElement: () => new Element(), defaultView: target };
   const worlds = createWorldManager(THREE, {
-    areas: { snow: snowBasin, garden: { load: () => ({ obstacles: [] }) } },
+    areas: { snow: areas.snow, garden: {
+      ...areas.garden,
+      async loadModule() { return { default: { ...areas.garden, load: () => ({ obstacles: [] }) } }; },
+    } },
     camera, touch: true, playerRadius: 0.34,
     services: {
       hud, isPlaying: () => true, isLevelComplete: id => completed.has(id),
@@ -180,7 +184,7 @@ function buildWorld(saved = false) {
       notify: missionHud.notify,
     },
   });
-  const visit = worlds.load('snow');
+  const visit = await worlds.load('snow');
   return { worlds, camera, target, hud, visit, completed, completions, cues, missionHud };
 }
 
@@ -214,8 +218,8 @@ function reachableCells(area) {
   return queue;
 }
 
-test('every reset populates three reachable targets that stay put through the pine fall', () => {
-  const { worlds, visit } = buildWorld();
+test('every reset populates three reachable targets that stay put through the pine fall', async () => {
+  const { worlds, visit } = await buildWorld();
   const { scene, area } = visit;
   const tree = scene.getObjectByName('Marked pine');
   const chop = area.interactions.find(item => item.label === 'Chop tree');
@@ -253,8 +257,8 @@ test('every reset populates three reachable targets that stay put through the pi
   worlds.unload();
 });
 
-test('the pine can be chopped from several positions with a clear view and a protected landing', () => {
-  const { worlds, visit, camera } = buildWorld();
+test('the pine can be chopped from several positions with a clear view and a protected landing', async () => {
+  const { worlds, visit, camera } = await buildWorld();
   const { scene, area } = visit;
   const tree = scene.getObjectByName('Marked pine');
   assert.equal(scene.getObjectByName('Chop tree viewing zone'), undefined);
@@ -312,8 +316,8 @@ test('the pine can be chopped from several positions with a clear view and a pro
   worlds.unload();
 });
 
-test('reset and unload keep HUD, held objects and snow controls scoped to a visit', () => {
-  const { worlds, camera, target, hud, visit, missionHud } = buildWorld();
+test('reset and unload keep HUD, held objects and snow controls scoped to a visit', async () => {
+  const { worlds, camera, target, hud, visit, missionHud } = await buildWorld();
   const { area, scene, viewmodel } = visit;
   const panel = hud.children[0];
   const throwButton = panel.children.find(child => child.className === 'snow-throw');
@@ -350,20 +354,20 @@ test('reset and unload keep HUD, held objects and snow controls scoped to a visi
   pile.act();
   const press = () => Object.assign(new Event('keydown', { cancelable: true }), { code: 'KeyF', repeat: false });
   assert.equal(target.dispatchEvent(press()), false);
-  worlds.load('garden');
+  await worlds.load('garden');
   assert.equal(hud.children.length, 0);
   assert.equal(visit.lifetime.signal.aborted, true);
   assert.equal(target.dispatchEvent(press()), true);
   assert.equal(scene.children.length, 0);
-  const again = worlds.load('snow');
+  const again = await worlds.load('snow');
   assert.ok(again.area.interactions.find(item => item.label === 'Pick up axe').active);
   assert.equal(again.scene.children.filter(node => /^Snowman \d/.test(node.name) && node.visible).length, SNOWMAN_COUNT);
   assert.equal(hud.children.length, 1);
   worlds.unload();
 });
 
-test('each chop deepens the same trunk mesh and restart restores the starter notch', () => {
-  const { worlds, visit } = buildWorld();
+test('each chop deepens the same trunk mesh and restart restores the starter notch', async () => {
+  const { worlds, visit } = await buildWorld();
   const tree = visit.scene.getObjectByName('Marked pine');
   const positions = tree.getObjectByName('Marked trunk').geometry.getAttribute('position');
   const trees = tree.children.length;
@@ -421,8 +425,8 @@ function assertProgress(area, { snowmen = 0, chops = 0, key = 0, pineFallen = ch
   ]);
 }
 
-test('tree and key can come first and completion waits for the last snowman', () => {
-  const game = buildWorld();
+test('tree and key can come first and completion waits for the last snowman', async () => {
+  const game = await buildWorld();
   const { worlds, visit, completed, completions, missionHud, cues } = game;
   const { area, scene } = visit;
   const key = scene.getObjectByName('Frozen Key');
@@ -463,8 +467,8 @@ test('tree and key can come first and completion waits for the last snowman', ()
   worlds.unload();
 });
 
-test('snowmen can be cleared first and never complete the level alone', () => {
-  const game = buildWorld();
+test('snowmen can be cleared first and never complete the level alone', async () => {
+  const game = await buildWorld();
   const { worlds, visit, completions, missionHud } = game;
   const { area, scene } = visit;
   const pickup = area.interactions.find(item => item.label === 'Pick up Frozen Key');
@@ -486,8 +490,8 @@ test('snowmen can be cleared first and never complete the level alone', () => {
   worlds.unload();
 });
 
-test('a saved Snow Basin completion coexists with fresh missions on replay', () => {
-  const { worlds, visit, completed, completions } = buildWorld(true);
+test('a saved Snow Basin completion coexists with fresh missions on replay', async () => {
+  const { worlds, visit, completed, completions } = await buildWorld(true);
   function checkVisit(areaVisit) {
     assertProgress(areaVisit.area);
     assert.ok(areaVisit.scene.getObjectByName('Glacial crystal sculpture'));
@@ -497,8 +501,8 @@ test('a saved Snow Basin completion coexists with fresh missions on replay', () 
     assert.ok(completed.has('snow'));
   }
   checkVisit(visit);
-  worlds.load('garden');
-  checkVisit(worlds.load('snow'));
+  await worlds.load('garden');
+  checkVisit(await worlds.load('snow'));
   assert.deepEqual(completions, []);
   worlds.unload();
 });

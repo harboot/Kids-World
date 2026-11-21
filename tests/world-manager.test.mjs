@@ -31,6 +31,14 @@ class Node {
 
 const THREE = { Scene: Node, Group: Node };
 
+function registered(id, area) {
+  const metadata = {
+    id, title: id, heading: [id, ''], description: id, themeColor: '#000', canvasLabel: id,
+    width: 10, depth: 10, spawn: { x: 0, z: 0 },
+  };
+  return { ...metadata, show: true, loadModule: async () => ({ default: { ...metadata, ...area } }) };
+}
+
 function areaFixture(name, events) {
   const disposed = [];
   const target = new EventTarget();
@@ -82,14 +90,16 @@ function areaFixture(name, events) {
   };
 }
 
-test('area travel unloads the old world and attaches only the new world and viewmodel', () => {
+test('area travel unloads the old world and attaches only the new world and viewmodel', async () => {
   const events = [];
   const garden = areaFixture('garden', events);
   const snow = areaFixture('snow', events);
   const camera = new Node();
-  const worlds = createWorldManager(THREE, { areas: { garden, snow }, camera });
+  const worlds = createWorldManager(THREE, {
+    areas: { garden: registered('garden', garden), snow: registered('snow', snow) }, camera,
+  });
 
-  const firstVisit = worlds.load('garden');
+  const firstVisit = await worlds.load('garden');
   worlds.update(1);
   assert.equal(firstVisit.area.state, 1);
   worlds.reset();
@@ -98,7 +108,7 @@ test('area travel unloads the old world and attaches only the new world and view
   assert.equal(garden.disposed.length, 0);
   worlds.update(2);
 
-  const second = worlds.load('snow');
+  const second = await worlds.load('snow');
   assert.deepEqual(events, ['garden load', 'garden reset', 'garden reset', 'snow load', 'snow reset', 'garden unload']);
   assert.deepEqual(garden.disposed.sort(), ['geometry', 'instance', 'material', 'shadow', 'texture']);
   assert.equal(firstVisit.scene.children.length, 0);
@@ -115,7 +125,7 @@ test('area travel unloads the old world and attaches only the new world and view
   assert.equal(firstVisit.area.state, 2);
   assert.equal(second.area.state, 1);
 
-  const returnVisit = worlds.load('garden');
+  const returnVisit = await worlds.load('garden');
   assert.equal(returnVisit.area.state, 0);
   assert.notEqual(returnVisit.area.interactions, firstVisit.area.interactions);
   assert.deepEqual(snow.disposed.sort(), ['geometry', 'instance', 'material', 'shadow', 'texture']);
@@ -130,32 +140,68 @@ test('area travel unloads the old world and attaches only the new world and view
   assert.equal(events.filter(event => event === 'garden unload').length, 2);
 });
 
-test('a failed load cleans up its resources and leaves the current world available', () => {
+test('a failed load cleans up its resources and leaves the current world available', async () => {
   let aborted = false;
   let disposed = false;
   const camera = new Node();
   const worlds = createWorldManager(THREE, {
     camera,
     areas: {
-      garden: areaFixture('garden', []),
-      broken: {
-        show: true,
+      garden: registered('garden', areaFixture('garden', [])),
+      broken: registered('broken', {
         load({ viewmodel, signal }) {
           signal.addEventListener('abort', () => { aborted = true; });
           viewmodel.add(Object.assign(new Node(), { geometry: { dispose() { disposed = true; } } }));
           throw new Error('broken');
         },
-      },
+      }),
     },
   });
 
-  const garden = worlds.load('garden');
-  assert.throws(() => worlds.load('broken'), /broken/);
+  const garden = await worlds.load('garden');
+  await assert.rejects(worlds.load('broken'), /broken/);
   assert.equal(worlds.active, garden);
   assert.equal(camera.parent, garden.scene);
   assert.deepEqual(camera.children, [garden.viewmodel]);
   assert.ok(aborted);
   assert.ok(disposed);
+});
+
+test('coalesces duplicate imports and activates only the newest request', async () => {
+  const firstImport = Promise.withResolvers();
+  const events = [];
+  const garden = registered('garden', areaFixture('garden', events));
+  const snow = registered('snow', areaFixture('snow', events));
+  let imports = 0;
+  const areas = { garden: { ...garden, loadModule() { imports++; return firstImport.promise; } }, snow };
+  const worlds = createWorldManager(THREE, { areas, camera: new Node() });
+  const first = worlds.load('garden');
+  assert.equal(worlds.load('garden'), first);
+  assert.equal(imports, 1);
+  assert.equal(worlds.active, null);
+  const newest = await worlds.load('snow');
+  firstImport.resolve(await garden.loadModule());
+  assert.equal(await first, null);
+  assert.equal(worlds.active, newest);
+  assert.deepEqual(events, ['snow load', 'snow reset']);
+});
+
+test('a rejected import preserves the active world and stale failures are ignored', async () => {
+  const failure = Promise.withResolvers();
+  const areas = {
+    garden: registered('garden', areaFixture('garden', [])),
+    snow: { loadModule: () => failure.promise },
+  };
+  const worlds = createWorldManager(THREE, { areas, camera: new Node() });
+  const current = await worlds.load('garden');
+  const canceled = worlds.load('snow');
+  worlds.cancelLoad();
+  failure.reject(new Error('module unavailable'));
+  assert.equal(await canceled, null);
+  await assert.rejects(worlds.load('snow'), /module unavailable/);
+  await assert.rejects(worlds.load('constructor'), /Unknown area/);
+  assert.equal(worlds.active, current);
+  assert.equal(current.lifetime.signal.aborted, false);
 });
 
 test('area routes honor explicit and legacy links, with a saved area as a fallback', () => {

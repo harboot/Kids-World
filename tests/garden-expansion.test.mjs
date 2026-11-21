@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import * as THREE from '../vendor/three.module.min.js';
+import { areas } from '../game.js';
 import { BALLOON } from '../areas/flower-garden/garden-balloon.js';
 import { caveCenterline, CAVE_MOUTHS } from '../areas/flower-garden/garden-cave.js';
 import { flowerGarden } from '../areas/flower-garden/index.js';
@@ -9,14 +10,14 @@ import { PLAYER_RADIUS, walkElevation } from '../core/movement.js';
 import { createPlayer, EYE_HEIGHT } from '../core/player.js';
 import { createWorldManager } from '../core/world-manager.js';
 
-function fixture(t, reduced = false) {
+async function fixture(t, reduced = false) {
   const camera = new THREE.PerspectiveCamera();
   const player = createPlayer(THREE, camera);
   const worlds = createWorldManager(THREE, {
-    areas: { garden: flowerGarden }, camera, playerRadius: PLAYER_RADIUS,
+    areas, camera, playerRadius: PLAYER_RADIUS,
     services: { carryPlayer: player.carryVertically, reducedMotion: () => reduced },
   });
-  const visit = worlds.load('garden');
+  const visit = await worlds.load('garden');
   const relocate = spawn => player.reset(spawn, visit.area);
   relocate(flowerGarden.spawn);
   t.after(worlds.unload);
@@ -41,8 +42,8 @@ function fixture(t, reduced = false) {
   return { ...visit, worlds, camera, player, relocate, advance, follow };
 }
 
-test('a picked bunch attracts every hill rabbit and feeding can repeat', t => {
-  const { area, scene, camera, relocate, follow, advance, worlds } = fixture(t);
+test('a picked bunch attracts every hill rabbit and feeding can repeat', async t => {
+  const { area, scene, camera, relocate, follow, advance, worlds } = await fixture(t);
   const rabbits = scene.children.filter(object => /^Hill rabbit \d$/.test(object.name));
   assert.equal(rabbits.length, 5);
   const homes = rabbits.map(rabbit => rabbit.position.clone());
@@ -84,8 +85,8 @@ test('a picked bunch attracts every hill rabbit and feeding can repeat', t => {
   assert.ok(rabbits.every((rabbit, i) => rabbit.position.equals(homes[i])));
 });
 
-test('both pen gates swing out and the shelters contain feed and rows of eggs', t => {
-  const { area, scene, relocate, advance, follow, worlds } = fixture(t);
+test('both pen gates swing out and the shelters contain feed and rows of eggs', async t => {
+  const { area, scene, relocate, advance, follow, worlds } = await fixture(t);
   const trough = scene.getObjectByName('Cow feeding shelter').getObjectByName('Grass-filled feeding trough');
   const nests = scene.getObjectByName('Chicken nesting shelter').getObjectByName('Two rows of chicken nests');
   assert.ok(trough.children.some(batch => batch.count === 22), 'tufts of grass');
@@ -114,8 +115,8 @@ test('both pen gates swing out and the shelters contain feed and rows of eggs', 
   assert.ok(gates.every(gate => gate.label === 'Open'));
 });
 
-test('both cave mouths connect along the walkable corridor and release bats on approach', t => {
-  const { area, scene, camera, relocate, follow, advance, worlds } = fixture(t);
+test('both cave mouths connect along the walkable corridor and release bats on approach', async t => {
+  const { area, scene, camera, relocate, follow, advance, worlds } = await fixture(t);
   const [west, east] = CAVE_MOUTHS;
   const bats = scene.children.filter(object => /^Cave bat \d$/.test(object.name));
   assert.equal(bats.length, 6);
@@ -149,8 +150,8 @@ test('both cave mouths connect along the walkable corridor and release bats on a
   assert.ok(bats.every(bat => !bat.visible));
 });
 
-test('the balloon boards, carries, contains and returns the real player', t => {
-  const { area, scene, camera, relocate, advance, player, worlds } = fixture(t);
+test('the balloon boards, carries, contains and returns the real player', async t => {
+  const { area, scene, camera, relocate, advance, player, worlds } = await fixture(t);
   const craft = scene.getObjectByName('Flower Garden hot air balloon');
   const ride = area.interactions.find(item => item.label === 'Ride the hot air balloon');
   assert.deepEqual([craft.position.x, craft.position.z], [BALLOON.x, BALLOON.z]);
@@ -182,8 +183,8 @@ test('the balloon boards, carries, contains and returns the real player', t => {
   assert.equal(craft.position.y, 0);
 });
 
-test('reduced motion settles the balloon and rabbits without flight or hopping animation', t => {
-  const { area, scene, relocate, advance, worlds } = fixture(t, true);
+test('reduced motion settles the balloon and rabbits without flight or hopping animation', async t => {
+  const { area, scene, relocate, advance, worlds } = await fixture(t, true);
   const ride = area.interactions.find(item => item.label === 'Ride the hot air balloon');
   const craft = scene.getObjectByName('Flower Garden hot air balloon');
   relocate({ x: ride.x, z: ride.z });

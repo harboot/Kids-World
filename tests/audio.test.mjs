@@ -3,6 +3,8 @@ import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import { createAudio } from '../core/audio.js';
 import { areas } from '../game.js';
+import { music as gardenMusic } from '../areas/flower-garden/music.js';
+import { music as snowMusic } from '../areas/snow-basin/music.js';
 
 class SoundButton extends EventTarget {
   hidden = true;
@@ -140,7 +142,7 @@ test('all eight areas export distinct local compositions compatible with the gen
   audio.setPlaying(true);
   for (const [id, area] of Object.entries(areas)) {
     const { music } = await import(`../areas/${folders[id] ?? id}/music.js`);
-    assert.equal(area.music, music, id);
+    assert.equal((await area.loadModule()).default.music, music, id);
     assert.ok(music.beat > 0 && music.bars.length > 0);
     compositions.add(JSON.stringify(music.bars));
 
@@ -179,8 +181,8 @@ test('all eight areas export distinct local compositions compatible with the gen
 test('switches, pauses, and restarts with a single loop, and never plays an obsolete render', async t => {
   const { contexts, renders, started, tick } = setup(t);
   const audio = createAudio(new SoundButton());
-  const original = areas.garden.music;
-  const destination = areas.snow.music;
+  const original = gardenMusic;
+  const destination = snowMusic;
 
   audio.setScore(original);
   audio.setPlaying(true);
@@ -236,7 +238,7 @@ test('mute survives audio instances and preserves generic and area cues when sou
   const audio = createAudio(button);
   const cue = [[54, { duration: 0.2, level: 0.15, endPitch: 59, wave: 'triangle' }, 0.03]];
   assert.equal(button.attributes.get('aria-pressed'), 'true');
-  audio.setScore(areas.garden.music);
+  audio.setScore(gardenMusic);
   audio.unlock();
   audio.setPlaying(true);
   assert.equal(contexts.length, 0);
@@ -267,7 +269,7 @@ test('mute survives audio instances and preserves generic and area cues when sou
 
 test('unavailable Web Audio APIs and a rejected audio unlock leave playback controls safe', async t => {
   const { contexts, renders, AudioContext, tick } = setup(t, { failResume: true });
-  const score = areas.snow.music;
+  const score = snowMusic;
   globalThis.AudioContext = undefined;
   const hiddenButton = new SoundButton();
   const silent = createAudio(hiddenButton);

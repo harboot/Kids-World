@@ -142,10 +142,13 @@ function publicVisibility(tokens, file) {
 
 function registryEntry(id, value, tokens) {
   if (value?.length === 2 && value[0] === 'publicArea' && value[1]?.open === '(') {
-    const [name, comma, path, ...rest] = value[1].items;
-    const folder = stringLiteral(path);
-    if (comma === ',' && folder && /^[\w-]+$/.test(folder) && !rest.length) {
-      return { name, folder: areaRoot + folder, visibility: publicVisibility(tokens, 'game.js') };
+    const [name, path, loader, ...rest] = split(value[1].items, ',');
+    const folder = stringLiteral(path?.[0]);
+    if (name?.length === 1 && path?.length === 1 && folder && /^[\w-]+$/.test(folder) && !rest.length) {
+      return {
+        name: name[0], folder: areaRoot + folder, visibility: publicVisibility(tokens, 'game.js'),
+        entryPath: loader && modulePath(loader, id),
+      };
     }
   }
   const items = value?.[0]?.items;
@@ -153,10 +156,23 @@ function registryEntry(id, value, tokens) {
     const properties = fields({ open: '{', items: items.slice(3) }, `game.js (${id})`);
     const visibility = properties.get('show');
     if (visibility?.length === 1 && ['true', 'false'].includes(visibility[0])) {
-      return { name: items[1], visibility: visibility[0] === 'true' ? 'Public' : 'Hidden', properties };
+      return {
+        name: items[1], visibility: visibility[0] === 'true' ? 'Public' : 'Hidden', properties,
+        entryPath: properties.has('loadModule') ? modulePath(properties.get('loadModule'), id) : undefined,
+      };
     }
   }
   throw new Error(`Unsupported area registration for "${id}" in game.js`);
+}
+
+function modulePath(loader, id) {
+  const [parameters, arrow, keyword, args, ...rest] = loader;
+  if (parameters?.open === '(' && parameters.items.length === 0 && arrow === '=>' &&
+      keyword === 'import' && args?.open === '(' && args.items.length === 1 && !rest.length) {
+    const path = localFile('game.js', stringLiteral(args.items[0]));
+    if (path) return path;
+  }
+  throw new Error(`Expected a literal area module loader for "${id}" in game.js`);
 }
 
 function localFile(from, specifier) {
@@ -241,22 +257,23 @@ export async function generateAreaStats(root) {
   const registry = fields(definition(bindings, 'areas', 'game.js'), 'game.js');
   const areas = [];
   for (const id of [...registry.keys()].sort()) {
-    const { name, folder, visibility, properties } = registryEntry(id, registry.get(id), tokens);
+    const { name, folder, visibility, properties, entryPath } = registryEntry(id, registry.get(id), tokens);
     const imported = bindings.imports.get(name);
-    const entry = localFile('game.js', imported?.specifier);
-    if (!entry) throw new Error(`Expected an area import for "${id}" in game.js`);
-    const metadata = fields(definition((await readModule(entry)).bindings, imported.name, entry), entry);
+    const metadataPath = localFile('game.js', imported?.specifier);
+    if (!metadataPath) throw new Error(`Expected an area import for "${id}" in game.js`);
+    const entry = entryPath ?? metadataPath;
+    const metadata = fields(definition((await readModule(metadataPath)).bindings, imported.name, metadataPath), metadataPath);
     const [title, rawWidth, rawDepth] = await Promise.all(
       ['title', 'width', 'depth'].map(field => properties?.has(field)
         ? resolveValue(properties.get(field), 'game.js', readModule)
-        : resolveValue(metadata.get(field), entry, readModule)),
+        : resolveValue(metadata.get(field), metadataPath, readModule)),
     );
-    if (typeof title !== 'string' || !title.trim()) throw new Error(`Could not read the area title in ${entry}`);
+    if (typeof title !== 'string' || !title.trim()) throw new Error(`Could not read the area title in ${metadataPath}`);
     const width = Number.isFinite(rawWidth) && rawWidth > 0 ? rawWidth : null;
     const depth = Number.isFinite(rawDepth) && rawDepth > 0 ? rawDepth : null;
     const mapArea = width !== null && depth !== null && Number.isFinite(width * depth) ? width * depth : null;
     const directory = folder ?? (posix.dirname(entry) === 'areas' ? entry.slice(0, -extname(entry).length) : posix.dirname(entry));
-    const paths = new Set([entry, ...await folderFiles(root, directory)]);
+    const paths = new Set([entry, metadataPath, ...await folderFiles(root, directory)]);
     areas.push({ id, name: title, visibility, width, depth, mapArea, ...await fileStats(root, paths) });
   }
   const summary = {

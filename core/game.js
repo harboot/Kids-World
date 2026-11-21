@@ -56,6 +56,9 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
 
   let drone;
   let route;
+  let transition;
+  let finishStartup;
+  const ready = new Promise(resolve => { finishStartup = resolve; });
   const playing = () => game.dataset.state === 'playing';
   const playerInput = () => playing() && !drone?.camera;
   const touchMode = () => game.dataset.input === 'touch';
@@ -85,7 +88,8 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   }
 
   const restoringHistory = performance.getEntriesByType('navigation')[0]?.type === 'back_forward';
-  const initialArea = resolveArea(new URL(location.href), areas, defaultArea, restoringHistory ? null : savedArea());
+  const initialURL = new URL(location.href);
+  const initialArea = resolveArea(initialURL, areas, defaultArea, restoringHistory ? null : savedArea());
   showArea(initialArea);
   notice.textContent = areas[initialArea].loadingMessage ?? `Loading ${areas[initialArea].title}…`;
 
@@ -103,8 +107,10 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     view = createView(THREE, {
       game, canvas, fullscreen: game.querySelector('#fullscreen'), touchDevice,
       contextLost() {
+        cancelTransition();
         stopPlaying();
         showError('The WebGL context was lost. Reload the page to continue exploring.');
+        finishStartup();
       },
     });
   } catch {
@@ -219,33 +225,73 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   }
 
   function resetArea() {
+    if (transition || !worlds.active) return;
     clearVisitPresentation();
     worlds.reset();
     prepareVisit();
     menu(false);
   }
 
-  function enterArea(id, historyMode) {
+  function cancelTransition() {
+    transition = undefined;
+    worlds.cancelLoad();
+  }
+
+  async function enterArea(id, historyMode) {
+    if (transition?.id === id) {
+      // A history navigation to the same pending area already chose its URL.
+      transition.historyMode = historyMode;
+      return;
+    }
+    const request = { id, historyMode };
+    transition = request;
     game.dataset.state = 'traveling';
     stopPlaying();
-    clearVisitPresentation();
+    if (levelPicker.open) levelPicker.close();
+    drone?.stop();
+    droneEntry.hidden = true;
+    start.hidden = true;
+    start.disabled = true;
+    restart.disabled = true;
+    chooseLevel.disabled = true;
+    notice.textContent = areas[id].loadingMessage ?? `Loading ${areas[id].title}…`;
+    view.invalidate();
+
     try {
-      const { definition } = worlds.load(id);
+      const visit = await worlds.load(id);
+      if (transition !== request || !visit) return;
+      clearVisitPresentation();
       prepareVisit();
-      audio.setScore(definition.music);
+      audio.setScore(visit.definition.music);
       view.sceneChanged();
       showArea(id);
-      if (historyMode) history[historyMode](null, '', areaURL(new URL(location.href), id));
+      if (request.historyMode) history[request.historyMode](null, '', areaURL(new URL(location.href), id));
       rememberArea(areas, id);
       menu(false);
     } catch (error) {
+      if (transition !== request) return;
       console.error(error);
-      showError('This area failed to load. Reload the page to try again.');
+      const message = `${areas[id].title} could not load.`;
+      if (worlds.active && worlds.active.id !== id) {
+        const url = new URL(location.href);
+        if (!request.historyMode && resolveArea(url, areas, defaultArea) !== worlds.active.id) {
+          history.replaceState(null, '', areaURL(url, worlds.active.id));
+        }
+        menu(false);
+        notice.textContent = `${message} You can keep exploring ${worlds.active.definition.title}.`;
+      } else {
+        showError(`${message} Reload the page to try again.`);
+      }
+    } finally {
+      if (transition === request) {
+        transition = undefined;
+        finishStartup();
+      }
     }
   }
 
   chooseLevel.addEventListener('click', () => {
-    if (levelPicker.open || !worlds.active || game.dataset.state === 'traveling') return;
+    if (levelPicker.open || !worlds.active || transition || game.dataset.state === 'error') return;
     if (playing()) menu(true);
     progress.refresh();
     renderAreaList(areaList, {
@@ -287,6 +333,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   }
 
   function startPlaying(pointerType) {
+    if (!worlds.active || !['menu', 'paused'].includes(game.dataset.state)) return;
     audio.unlock();
     if (game.dataset.state === 'menu' && pointerType) {
       game.dataset.input = pointerType === 'mouse' ? 'mouse' : 'touch';
@@ -303,6 +350,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
 
   start.addEventListener('click', event => startPlaying(event.pointerType));
   droneEntry.addEventListener('click', () => {
+    if (droneEntry.hidden || transition) return;
     changeDroneView(true);
     startPlaying();
   });
@@ -310,13 +358,15 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   function restoreArea() {
     const url = new URL(location.href);
     const id = resolveArea(url, areas, defaultArea);
-    if (worlds.active?.id === id && route &&
-      (route.drone !== isDroneView(url) || route.fps !== isFpsView(url))) {
-      syncView(url);
-      return;
-    }
     if (worlds.active?.id !== id) {
       enterArea(id);
+      return;
+    }
+    const wasTraveling = Boolean(transition);
+    cancelTransition();
+    if (route && (route.drone !== isDroneView(url) || route.fps !== isFpsView(url))) {
+      if (wasTraveling) menu(false);
+      else syncView(url);
       return;
     }
     rememberArea(areas, id);
@@ -352,6 +402,8 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     requestAnimationFrame(frame);
   }
 
-  enterArea(initialArea, 'replaceState');
+  const url = new URL(location.href);
+  enterArea(url.href === initialURL.href ? initialArea : resolveArea(url, areas, defaultArea), 'replaceState');
+  await ready;
   requestAnimationFrame(frame);
 }

@@ -23,7 +23,7 @@ function assertMission(area, id, current, complete) {
   assert.deepEqual(area.missionStatus.missions.find(mission => mission.id === id), { ...initial, current, complete });
 }
 
-function fixture(initial = ID) {
+async function fixture(initial = ID) {
   let stored = JSON.stringify(['garden@2', 'wooden-house', 'snow']);
   const writes = [];
   const completions = [];
@@ -44,7 +44,7 @@ function fixture(initial = ID) {
       notify: missionHud.notify,
     },
   });
-  const visit = worlds.load(initial);
+  const visit = await worlds.load(initial);
   return { visit, worlds, camera, progress, writes, completions, cues, missionHud, reduceMotion() { still = true; } };
 }
 
@@ -62,12 +62,12 @@ function followPath(player, camera, visit, points, onStep = () => {}) {
   }
 }
 
-test('a direct visit opens the village at the avenue before Castle missions are complete', t => {
-  const { worlds, camera, progress, writes } = fixture(CASTLE);
+test('a direct visit opens the village at the avenue before Castle missions are complete', async t => {
+  const { worlds, camera, progress, writes } = await fixture(CASTLE);
   t.after(worlds.unload);
   const player = createPlayer(THREE, camera);
   const route = areaURL(new URL('https://example.test/Kids-World/'), ID);
-  const visit = worlds.load(resolveArea(route, areas, 'garden'));
+  const visit = await worlds.load(resolveArea(route, areas, 'garden'));
   assert.equal(visit.id, ID);
   const { spawn } = visit.definition;
   player.reset(spawn, visit.area);
@@ -79,8 +79,8 @@ test('a direct visit opens the village at the avenue before Castle missions are 
   assert.deepEqual(writes, []);
 });
 
-test('the village roads connect the entrance, plaza, west lanes, bridge, stable, market and both piers', t => {
-  const { visit, worlds, camera } = fixture();
+test('the village roads connect the entrance, plaza, west lanes, bridge, stable, market and both piers', async t => {
+  const { visit, worlds, camera } = await fixture();
   t.after(worlds.unload);
   const { area, definition, scene } = visit;
   assert.ok(definition.width * definition.depth > areas.snow.width * areas.snow.depth * 3);
@@ -104,8 +104,8 @@ test('the village roads connect the entrance, plaza, west lanes, bridge, stable,
   assert.equal(camera.position.y, 1.68, 'walks to the end of the city pier');
 });
 
-test('buildings, quay, bridge walls, water edges and the world boundary block movement', t => {
-  const { visit, worlds } = fixture();
+test('buildings, quay, bridge walls, water edges and the world boundary block movement', async t => {
+  const { visit, worlds } = await fixture();
   t.after(worlds.unload);
   const { area } = visit;
   function block(safe, blocked, jump = false) {
@@ -132,8 +132,8 @@ test('buildings, quay, bridge walls, water edges and the world boundary block mo
   block([-36.57, 3.7], [-36.79, 3.7], true);
 });
 
-test('shop interactions show temporary messages without completing village missions', t => {
-  const { visit, worlds, progress, writes, missionHud } = fixture();
+test('shop interactions show temporary messages without completing village missions', async t => {
+  const { visit, worlds, progress, writes, missionHud } = await fixture();
   t.after(worlds.unload);
   const { area } = visit;
   const prompts = [
@@ -162,8 +162,8 @@ test('shop interactions show temporary messages without completing village missi
   assert.deepEqual(writes, []);
 });
 
-test('Restart restores motion, and travel disposes the first visit before recreating it', t => {
-  const { visit, worlds, camera, progress, reduceMotion, missionHud } = fixture();
+test('Restart restores motion, and travel disposes the first visit before recreating it', async t => {
+  const { visit, worlds, camera, progress, reduceMotion, missionHud } = await fixture();
   t.after(worlds.unload);
   const boat = visit.scene.getObjectByName('City passenger boat');
   const waves = visit.scene.getObjectByName('Water ripples');
@@ -202,7 +202,7 @@ test('Restart restores motion, and travel disposes the first visit before recrea
   assert.ok(boat.position.equals(stillBoat) && waves.position.equals(stillWaves));
   assert.equal(boat.rotation.z, 0);
 
-  worlds.load(CASTLE);
+  await worlds.load(CASTLE);
   assert.ok(visit.lifetime.signal.aborted);
   assert.equal(visit.scene.children.length, 0);
   assert.equal(disposed.size, gameResources.size);
@@ -214,7 +214,7 @@ test('Restart restores motion, and travel disposes the first visit before recrea
   assert.equal(missionHud.notifications.length, notices);
   assert.deepEqual(visit.area.missionStatus.missions, initialProgress);
 
-  const repeat = worlds.load(ID);
+  const repeat = await worlds.load(ID);
   assert.equal(camera.parent, repeat.scene);
   assert.equal(repeat.scene.children.length, children);
   assert.notEqual(repeat.area.interactions, visit.area.interactions);
@@ -278,8 +278,8 @@ function escort(visit, worlds, camera, checkStep = () => {}) {
   for (let i = 0; i < 90; i++) update(0.04);
 }
 
-test('fishing supports pickup, bite timing, misses, walking away, and a single sale of three fish', t => {
-  const { visit, worlds, progress, cues, missionHud } = fixture();
+test('fishing supports pickup, bite timing, misses, walking away, and a single sale of three fish', async t => {
+  const { visit, worlds, progress, cues, missionHud } = await fixture();
   t.after(worlds.unload);
   const { area, scene } = visit;
   const rod = scene.getObjectByName('Fishing rod');
@@ -340,8 +340,8 @@ test('fishing supports pickup, bite timing, misses, walking away, and a single s
   assert.equal(seller.label, 'Talk to Fish Seller');
 });
 
-test('the reindeer crosses the bridge and reaches the trough after the stable keeper accepts it', t => {
-  const { visit, worlds, camera, completions, missionHud } = fixture();
+test('the reindeer crosses the bridge and reaches the trough after the stable keeper accepts it', async t => {
+  const { visit, worlds, camera, completions, missionHud } = await fixture();
   t.after(worlds.unload);
   const { area, scene } = visit;
   const deer = scene.getObjectByName('Lost reindeer');
@@ -374,14 +374,14 @@ test('the reindeer crosses the bridge and reaches the trough after the stable ke
   assert.ok(deer.position.equals(original));
   assert.equal(find(visit, 'Follow Me').active, true);
   const recruit = find(visit, 'Follow Me');
-  worlds.load(CASTLE);
+  await worlds.load(CASTLE);
   recruit.act();
   assert.equal(recruit.active, false);
   assert.ok(deer.position.equals(original));
 });
 
-test('gears are unique reachable pickups and the repair starts all four clock faces', t => {
-  const { visit, worlds, cues, reduceMotion } = fixture();
+test('gears are unique reachable pickups and the repair starts all four clock faces', async t => {
+  const { visit, worlds, cues, reduceMotion } = await fixture();
   t.after(worlds.unload);
   const { area, scene } = visit;
   const gears = area.interactions.filter(item => item.label === 'Collect Clock Gear');
@@ -424,10 +424,10 @@ test('gears are unique reachable pickups and the repair starts all four clock fa
   assert.ok(gears.every(gear => gear.active) && !repair.active);
 });
 
-test('any order completes the village only after all three missions and replay preserves the record', () => {
+test('any order completes the village only after all three missions and replay preserves the record', async () => {
   const orders = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
   for (const order of orders) {
-    const { worlds, camera, progress, writes, completions, missionHud } = fixture();
+    const { worlds, camera, progress, writes, completions, missionHud } = await fixture();
     try {
       function playVisit(visit, replay = false) {
         const play = [() => deliverFish(visit, worlds), () => escort(visit, worlds, camera), () => repairClock(visit)];
@@ -440,7 +440,7 @@ test('any order completes the village only after all three missions and replay p
         });
       }
       playVisit(worlds.active);
-      const repeat = worlds.load(ID);
+      const repeat = await worlds.load(ID);
       playVisit(repeat, true);
       worlds.reset();
       assert.deepEqual(repeat.area.missionStatus.missions, initialProgress);
@@ -452,8 +452,8 @@ test('any order completes the village only after all three missions and replay p
   }
 });
 
-test('the reindeer detours around a bench the player jumps over', t => {
-  const { visit, worlds, camera } = fixture();
+test('the reindeer detours around a bench the player jumps over', async t => {
+  const { visit, worlds, camera } = await fixture();
   t.after(worlds.unload);
   const { area, scene } = visit;
   const player = createPlayer(THREE, camera);
@@ -479,8 +479,8 @@ test('the reindeer detours around a bench the player jumps over', t => {
   assert.equal(find(visit, 'Follow Me').active, false, 'keeps following after the detour');
 });
 
-test('the reindeer keeps a wider following gap and steps back when approached', t => {
-  const { visit, worlds, camera } = fixture();
+test('the reindeer keeps a wider following gap and steps back when approached', async t => {
+  const { visit, worlds, camera } = await fixture();
   t.after(worlds.unload);
   const { area, scene } = visit;
   const player = createPlayer(THREE, camera);
@@ -498,8 +498,8 @@ test('the reindeer keeps a wider following gap and steps back when approached', 
   assert.ok(distance() > 2.05 && deer.position.distanceTo(before) > 1.2, 'the deer backs away from a close player');
 });
 
-test('the Clock Tower doors relocate the player between levels and the lookout rail stops walkers and jumps', t => {
-  const { visit, worlds, camera } = fixture();
+test('the Clock Tower doors relocate the player between levels and the lookout rail stops walkers and jumps', async t => {
+  const { visit, worlds, camera } = await fixture();
   t.after(worlds.unload);
   const { area, scene } = visit;
   const player = createPlayer(THREE, camera);
@@ -529,8 +529,8 @@ test('the Clock Tower doors relocate the player between levels and the lookout r
   assert.equal(worlds.active, visit);
 });
 
-test('the repair button uses a thin clearance marker and unlocks its approach only after repair', t => {
-  const { visit, worlds } = fixture();
+test('the repair button uses a thin clearance marker and unlocks its approach only after repair', async t => {
+  const { visit, worlds } = await fixture();
   t.after(worlds.unload);
   const { area, scene } = visit;
   const repair = find(visit, 'Repair Clock Tower');
@@ -553,8 +553,8 @@ test('the repair button uses a thin clearance marker and unlocks its approach on
   assert.equal(walkElevation(area, approach, blocked.x, blocked.z, 0, true), null);
 });
 
-test('the two house plots share one building with walkable stairs and a railed balcony', t => {
-  const { visit, worlds, camera } = fixture();
+test('the two house plots share one building with walkable stairs and a railed balcony', async t => {
+  const { visit, worlds, camera } = await fixture();
   t.after(worlds.unload);
   const { area, scene } = visit;
   const player = createPlayer(THREE, camera);
@@ -570,8 +570,8 @@ test('the two house plots share one building with walkable stairs and a railed b
   assert.equal(camera.position.y, 1.68, 'walks back down to the street');
 });
 
-test('the larger fountain animates its droplets, toggles from its valve, and resets with idle bystanders', t => {
-  const { visit, worlds, reduceMotion } = fixture();
+test('the larger fountain animates its droplets, toggles from its valve, and resets with idle bystanders', async t => {
+  const { visit, worlds, reduceMotion } = await fixture();
   t.after(worlds.unload);
   const { area, scene } = visit;
   const droplets = scene.getObjectByName('Fountain droplets');

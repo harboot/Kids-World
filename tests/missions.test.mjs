@@ -44,7 +44,7 @@ test('normalization rejects invalid mission fields and duplicate IDs', () => {
   }
 });
 
-test('every registered area provides a fresh mission status and releases its visit on travel', t => {
+test('every registered area provides a fresh mission status and releases its visit on travel', async t => {
   const camera = new THREE.PerspectiveCamera();
   const worlds = createWorldManager(THREE, { areas, camera, playerRadius: PLAYER_RADIUS });
   t.after(worlds.unload);
@@ -57,7 +57,7 @@ test('every registered area provides a fresh mission status and releases its vis
     ['secret-apartment', [2, 2, 5]],
   ]) {
     const previous = worlds.active;
-    const { area, scene } = worlds.load(id);
+    const { area, scene } = await worlds.load(id);
     assert.ok(Array.isArray(area.obstacles), id);
     assert.equal(typeof area.reset, 'function', id);
     assert.ok(Array.isArray(area.interactions) && area.interactions.every(item => typeof item.act === 'function'), id);

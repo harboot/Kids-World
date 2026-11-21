@@ -61,7 +61,7 @@ function assertSafeSpawn(spawn, visit, game) {
   assert.equal(nearestInteraction(area.interactions, game.camera.position), null);
 }
 
-test('public gallery opens by normal and drone URLs with no castle progress', t => {
+test('public gallery opens by normal and drone URLs with no castle progress', async t => {
   const game = fixture();
   t.after(game.worlds.unload);
   assert.equal(hall.show, true);
@@ -70,7 +70,7 @@ test('public gallery opens by normal and drone URLs with no castle progress', t 
   for (const flight of [false, true]) {
     const url = new URL('https://example.test/?area=princess-gallery' + (flight ? '&view=drone' : ''));
     assert.equal(isDroneView(url), flight);
-    const visit = game.worlds.load(resolveArea(url, areas, 'garden', 'snow'));
+    const visit = await game.worlds.load(resolveArea(url, areas, 'garden', 'snow'));
     assert.equal(visit.id, ID);
     assertSafeSpawn(hall.spawn, visit, game);
     const { missions } = visit.area.missionStatus;
@@ -88,12 +88,12 @@ test('public gallery opens by normal and drone URLs with no castle progress', t 
   assert.equal(resolveArea(new URL('https://example.test/?area=secret-apartment'), areas, 'garden'), 'secret-apartment');
 });
 
-test('reopening the gallery uses the lobby spawn and retains its saved completion', t => {
+test('reopening the gallery uses the lobby spawn and retains its saved completion', async t => {
   const game = fixture({ saved: [ID] });
   t.after(game.worlds.unload);
-  game.worlds.load(CASTLE);
+  await game.worlds.load(CASTLE);
   const target = areaURL(new URL('https://example.test/?area=frozen-castle'), ID);
-  const gallery = game.worlds.load(resolveArea(target, areas, 'garden'));
+  const gallery = await game.worlds.load(resolveArea(target, areas, 'garden'));
   assertSafeSpawn(hall.spawn, gallery, game);
   assert.ok(gallery.area.missionStatus.missions.every(mission => !mission.complete));
   assert.ok(game.progress.has(ID));
@@ -146,10 +146,10 @@ function walkableCells(area, start) {
   return visited;
 }
 
-test('ten distinct and nonoverlapping footprints surround the Central Atrium', t => {
+test('ten distinct and nonoverlapping footprints surround the Central Atrium', async t => {
   const { worlds } = fixture();
   t.after(worlds.unload);
-  const { scene } = worlds.load(ID);
+  const { scene } = await worlds.load(ID);
   assert.deepEqual([hall.width, hall.depth], [140, 120]);
   assert.ok(scene.getObjectByName('Central Atrium'));
   assert.ok(scene.getObjectByName('Marble promenade, wing paths and atrium inlay'));
@@ -185,10 +185,10 @@ test('ten distinct and nonoverlapping footprints surround the Central Atrium', t
   }
 });
 
-test('visitors can walk from the lobby through the atrium and into all ten entrances', t => {
+test('visitors can walk from the lobby through the atrium and into all ten entrances', async t => {
   const { worlds } = fixture();
   t.after(worlds.unload);
-  const { area } = worlds.load(ID);
+  const { area } = await worlds.load(ID);
   const cells = walkableCells(area, hall.spawn);
   assert.ok(cells.has('0:12') && cells.has('0:-12'), 'both sides of the fountain are reachable');
   for (const exhibit of exhibits) {
@@ -214,10 +214,10 @@ test('visitors can walk from the lobby through the atrium and into all ten entra
   assert.equal(walkElevation(area, flank, flank.x, flank.z, flankHeight, true), flankHeight);
 });
 
-test('landscape barriers close the rear gaps behind the exhibits', t => {
+test('landscape barriers close the rear gaps behind the exhibits', async t => {
   const { worlds } = fixture();
   t.after(worlds.unload);
-  const { area, scene } = worlds.load(ID);
+  const { area, scene } = await worlds.load(ID);
   const cells = walkableCells(area, hall.spawn);
   for (const behind of ['-62:41', '-67:19', '-62:-46', '-43:-53', '24:-57', '55:-50', '66:-32', '66:28', '56:55', '33:54']) {
     assert.equal(cells.has(behind), false, behind + ' is behind the landscape');
@@ -236,10 +236,10 @@ test('landscape barriers close the rear gaps behind the exhibits', t => {
   assert.ok(scene.getObjectByName('Royal palace facade'));
 });
 
-test('the atrium ice mountain covers the roof opening and tapers down over the fountain', t => {
+test('the atrium ice mountain covers the roof opening and tapers down over the fountain', async t => {
   const { worlds } = fixture();
   t.after(worlds.unload);
-  const { scene } = worlds.load(ID);
+  const { scene } = await worlds.load(ID);
   const ice = scene.getObjectByName('Inverted ice mountain');
   assert.ok(ice.layers.isEnabled(PLAYER_ONLY_LAYER));
   const roofY = scene.getObjectByName('Twilight canopy').position.y;
@@ -258,10 +258,10 @@ test('the atrium ice mountain covers the roof opening and tapers down over the f
   }
 });
 
-test('the drone camera sees the gallery floor and picks surfaces below the ceiling', t => {
+test('the drone camera sees the gallery floor and picks surfaces below the ceiling', async t => {
   const { worlds } = fixture();
   t.after(worlds.unload);
-  const { scene, definition, viewmodel } = worlds.load(ID);
+  const { scene, definition, viewmodel } = await worlds.load(ID);
   const drone = createDroneCamera(THREE);
   drone.focus(definition, undefined, 1.7);
   let roof = 0;
@@ -293,11 +293,11 @@ test('the drone camera sees the gallery floor and picks surfaces below the ceili
   }
 });
 
-test('a normal jump lands on the observation platform and waving stops and repeats with real movement', t => {
+test('a normal jump lands on the observation platform and waving stops and repeats with real movement', async t => {
   const game = fixture();
   t.after(game.worlds.unload);
   const { worlds, camera, player } = game;
-  const visit = worlds.load(ID);
+  const visit = await worlds.load(ID);
   const pad = observationPlatform;
   const center = worldPoint(pad.x, pad.z);
   const approach = worldPoint(pad.x, pad.z + pad.depth / 2 + 0.65);
@@ -344,9 +344,9 @@ test('a normal jump lands on the observation platform and waving stops and repea
   assert.equal(game.progress.has(ID), false);
 });
 
-test('reduced motion, airborne exclusion, reset and unload clean up the greeting and resources', () => {
+test('reduced motion, airborne exclusion, reset and unload clean up the greeting and resources', async () => {
   const { worlds, camera, player } = fixture({ reduced: true });
-  const visit = worlds.load(ID);
+  const visit = await worlds.load(ID);
   const shoulder = visit.scene.getObjectByName('Rapunzel waving shoulder');
   const elbow = visit.scene.getObjectByName('Rapunzel waving elbow');
   const rest = shoulder.rotation.z;
@@ -408,10 +408,10 @@ function approachActor(entry, area, distance = 1.82) {
   return point;
 }
 
-test('Snow White has eight distinct actors visitors can walk up to, with one shared type of reaction', t => {
+test('Snow White has eight distinct actors visitors can walk up to, with one shared type of reaction', async t => {
   const { worlds } = fixture();
   t.after(worlds.unload);
-  const { scene, area } = worlds.load(ID);
+  const { scene, area } = await worlds.load(ID);
   const actors = snowActors(scene);
   const cells = walkableCells(area, hall.spawn);
   const appearances = actors.map(({ actor }) => {
@@ -443,10 +443,10 @@ test('Snow White has eight distinct actors visitors can walk up to, with one sha
   assert.equal(walkElevation(area, { x, z }, x, z, area.getGroundHeight(x, z), true), null, 'cottage has collision');
 });
 
-test('each actor animates independently, settles to idle on departure and responds again', t => {
+test('each actor animates independently, settles to idle on departure and responds again', async t => {
   const { worlds } = fixture();
   t.after(worlds.unload);
-  const { scene, area } = worlds.load(ID);
+  const { scene, area } = await worlds.load(ID);
   const actors = snowActors(scene);
   const idle = actors.map(entry => entry.pose());
   const far = { x: hall.spawn.x, y: EYE_HEIGHT, z: hall.spawn.z };
@@ -487,9 +487,9 @@ test('each actor animates independently, settles to idle on departure and respon
   assert.deepEqual(actors.map(entry => entry.pose()), idle);
 });
 
-test('Snow White supports static greetings and resets all actors on unload', () => {
+test('Snow White supports static greetings and resets all actors on unload', async () => {
   const { worlds } = fixture({ reduced: true });
-  const visit = worlds.load(ID);
+  const visit = await worlds.load(ID);
   const actors = snowActors(visit.scene);
   const idle = actors.map(entry => entry.pose());
   const near = approachActor(actors[0], visit.area);
@@ -513,10 +513,10 @@ test('Snow White supports static greetings and resets all actors on unload', () 
   assert.deepEqual(actors.map(entry => entry.pose()), idle);
 });
 
-test('Aurora’s bed and rose are solid with a clear approach from the gallery entrance', t => {
+test('Aurora’s bed and rose are solid with a clear approach from the gallery entrance', async t => {
   const { worlds } = fixture();
   t.after(worlds.unload);
-  const { area, scene } = worlds.load(ID);
+  const { area, scene } = await worlds.load(ID);
   const exhibit = exhibits.find(entry => entry.id === 'aurora');
   const { toWorld } = spaceTransform(exhibit);
   const room = scene.getObjectByName('Aurora royal sleeping chamber');
@@ -571,10 +571,10 @@ test('Aurora’s bed and rose are solid with a clear approach from the gallery e
 
 });
 
-test('approaching the rose wakes Aurora smoothly and repeatedly with a stable boundary', t => {
+test('approaching the rose wakes Aurora smoothly and repeatedly with a stable boundary', async t => {
   const { worlds } = fixture();
   t.after(worlds.unload);
-  const { scene } = worlds.load(ID);
+  const { scene } = await worlds.load(ID);
   const { toWorld } = spaceTransform(exhibits.find(entry => entry.id === 'aurora'));
   const { x: rx, z: rz } = scene.getObjectByName('Enchanted rose').position;
   const body = scene.getObjectByName('Aurora upper body');
@@ -636,10 +636,10 @@ test('approaching the rose wakes Aurora smoothly and repeatedly with a stable bo
   assert.equal(light.intensity, awakeLight);
 });
 
-test('Aurora resets her pose and effects and releases scene resources on travel', t => {
+test('Aurora resets her pose and effects and releases scene resources on travel', async t => {
   const { worlds } = fixture();
   t.after(worlds.unload);
-  const visit = worlds.load(ID);
+  const visit = await worlds.load(ID);
   const { scene } = visit;
   const body = scene.getObjectByName('Aurora upper body');
   const head = scene.getObjectByName('Aurora head');
@@ -663,21 +663,21 @@ test('Aurora resets her pose and effects and releases scene resources on travel'
   const disposed = new Set();
   for (const resource of resources) resource.addEventListener('dispose', () => disposed.add(resource));
   worlds.update(2.2, near);
-  worlds.load(CASTLE);
+  await worlds.load(CASTLE);
   assert.deepEqual(disposed, new Set(resources));
   assert.equal(scene.children.length, 0);
   assert.deepEqual(state(), rest);
   visit.area.update(3, near);
   assert.deepEqual(state(), rest);
-  const fresh = worlds.load(ID).scene.getObjectByName('Aurora upper body');
+  const fresh = (await worlds.load(ID)).scene.getObjectByName('Aurora upper body');
   assert.equal(fresh.rotation.x, rest[0]);
   assert.equal(fresh.getObjectByName('Open eyes').visible, false);
 });
 
-test('reduced motion keeps Aurora still and wakes or settles her immediately', t => {
+test('reduced motion keeps Aurora still and wakes or settles her immediately', async t => {
   const { worlds } = fixture({ reduced: true });
   t.after(worlds.unload);
-  const { scene } = worlds.load(ID);
+  const { scene } = await worlds.load(ID);
   const body = scene.getObjectByName('Aurora upper body');
   const head = scene.getObjectByName('Aurora head');
   const eyes = head.getObjectByName('Open eyes');
@@ -702,10 +702,10 @@ test('reduced motion keeps Aurora still and wakes or settles her immediately', t
   assert.equal(dust.visible, false);
 });
 
-test('Cinderella stands in view from the entrance and leaves both stair approaches clear', t => {
+test('Cinderella stands in view from the entrance and leaves both stair approaches clear', async t => {
   const { worlds } = fixture();
   t.after(worlds.unload);
-  const { area, scene } = worlds.load(ID);
+  const { area, scene } = await worlds.load(ID);
   const ballroom = scene.getObjectByName('Cinderella palace ballroom');
   const character = ballroom.getObjectByName('Cinderella character');
   const head = character.getObjectByName('Cinderella head');
@@ -765,10 +765,10 @@ test('Cinderella stands in view from the entrance and leaves both stair approach
   assert.deepEqual(head.rotation.toArray(), pose);
 });
 
-test('Cinderella’s curved staircase can be walked in both directions and the slipper responds on approach', t => {
+test('Cinderella’s curved staircase can be walked in both directions and the slipper responds on approach', async t => {
   const { worlds, player, camera } = fixture();
   t.after(worlds.unload);
-  const visit = worlds.load(ID);
+  const visit = await worlds.load(ID);
   const { area, scene } = visit;
   const exhibit = exhibits.find(entry => entry.id === 'cinderella');
   const { toWorld } = spaceTransform(exhibit);
@@ -843,9 +843,9 @@ test('Cinderella’s curved staircase can be walked in both directions and the s
   assert.equal(sparkles.visible, false);
 });
 
-test('Cinderella’s slipper holds a static sparkle in reduced motion and clears on unload', () => {
+test('Cinderella’s slipper holds a static sparkle in reduced motion and clears on unload', async () => {
   const { worlds } = fixture({ reduced: true });
-  const visit = worlds.load(ID);
+  const visit = await worlds.load(ID);
   const slipper = visit.scene.getObjectByName('Cinderella glass slipper');
   const sparkles = visit.scene.getObjectByName('Cinderella slipper sparkles');
   const rest = slipper.position.y;
@@ -872,10 +872,10 @@ test('Cinderella’s slipper holds a static sparkle in reduced motion and clears
   assert.equal(slipper.position.y, rest);
 });
 
-test('the shipwreck’s deck and gangplank have one visible surface at the walking height', t => {
+test('the shipwreck’s deck and gangplank have one visible surface at the walking height', async t => {
   const { worlds } = fixture();
   t.after(worlds.unload);
-  const { area, scene } = worlds.load(ID);
+  const { area, scene } = await worlds.load(ID);
   scene.updateMatrixWorld(true);
   const ship = scene.getObjectByName('Ariel shipwreck');
   const deck = ship.getObjectByName('Shipwreck deck boards');
@@ -896,10 +896,10 @@ test('the shipwreck’s deck and gangplank have one visible surface at the walki
   assert.equal(new THREE.Raycaster(eye, inside).intersectObject(hull, false).length, 2);
 });
 
-test('Ariel slowly circles the shipwreck only while the deck is occupied', t => {
+test('Ariel slowly circles the shipwreck only while the deck is occupied', async t => {
   const { worlds, player, camera } = fixture();
   t.after(worlds.unload);
-  const visit = worlds.load(ID);
+  const visit = await worlds.load(ID);
   const { area, scene } = visit;
   const exhibit = exhibits.find(entry => entry.id === 'ariel');
   const toHullWorld = (x, z) => spaceTransform(exhibit).toWorld(...spaceTransform(wreckDeck).toWorld(x, z));
@@ -983,10 +983,10 @@ test('Ariel slowly circles the shipwreck only while the deck is occupied', t => 
   assert.equal(area.missionStatus.missions.find(mission => mission.id === 'ariel').complete, false);
 });
 
-test('Ariel holds a steady greeting in reduced motion and unload releases the exhibit', t => {
+test('Ariel holds a steady greeting in reduced motion and unload releases the exhibit', async t => {
   const { worlds, player, camera } = fixture({ reduced: true });
   t.after(worlds.unload);
-  const visit = worlds.load(ID);
+  const visit = await worlds.load(ID);
   const deck = visit.scene.getObjectByName('Shipwreck deck').getWorldPosition(new THREE.Vector3());
   const ariel = visit.scene.getObjectByName('Ariel character');
   const tail = ariel.getObjectByName('Ariel articulated tail tip');
@@ -1005,17 +1005,17 @@ test('Ariel holds a steady greeting in reduced motion and unload releases the ex
   assert.deepEqual(school.instanceMatrix.array, fishMatrix);
   let disposed = 0;
   school.geometry.addEventListener('dispose', () => disposed++);
-  worlds.load(CASTLE);
+  await worlds.load(CASTLE);
   assert.equal(disposed, 1);
   assert.equal(ariel.visible, false);
   visit.area.update(.2, camera.position);
   assert.equal(ariel.visible, false);
 });
 
-test('Ariel’s treasure chest opens and closes with a repeatable interaction and no extra mission', t => {
+test('Ariel’s treasure chest opens and closes with a repeatable interaction and no extra mission', async t => {
   const { worlds, camera } = fixture();
   t.after(worlds.unload);
-  const { scene, area } = worlds.load(ID);
+  const { scene, area } = await worlds.load(ID);
   const chest = scene.getObjectByName('Ariel treasure chest');
   const lid = chest.getObjectByName('Ariel treasure chest lid');
   const treasure = chest.getObjectByName('Ariel chest treasure');
@@ -1058,10 +1058,10 @@ test('Ariel’s treasure chest opens and closes with a repeatable interaction an
   assert.equal(Math.abs(lid.rotation.x), 0);
 });
 
-test('Belle’s library has a walkable staircase, solid furniture, and both characters', t => {
+test('Belle’s library has a walkable staircase, solid furniture, and both characters', async t => {
   const { worlds, player, camera } = fixture();
   t.after(worlds.unload);
-  const visit = worlds.load(ID);
+  const visit = await worlds.load(ID);
   const { area, scene } = visit;
   const exhibit = exhibits.find(entry => entry.id === 'belle');
   const { toWorld } = spaceTransform(exhibit);
@@ -1104,10 +1104,10 @@ test('Belle’s library has a walkable staircase, solid furniture, and both char
   assert.ok(player.grounded && Math.abs(camera.position.y - EYE_HEIGHT) < 1e-6);
 });
 
-test('Belle’s teapot and cups dance on approach, settle on departure, and reset on unload', t => {
+test('Belle’s teapot and cups dance on approach, settle on departure, and reset on unload', async t => {
   const { worlds } = fixture();
   t.after(worlds.unload);
-  const visit = worlds.load(ID);
+  const visit = await worlds.load(ID);
   const { area, scene } = visit;
   const table = scene.getObjectByName('Belle enchanted tea table');
   const pot = table.getObjectByName('Belle dancing teapot');
@@ -1147,10 +1147,10 @@ test('Belle’s teapot and cups dance on approach, settle on departure, and rese
   assert.deepEqual(pose(), rest);
 });
 
-test('Belle’s table presents a steady greeting in reduced motion', t => {
+test('Belle’s table presents a steady greeting in reduced motion', async t => {
   const { worlds } = fixture({ reduced: true });
   t.after(worlds.unload);
-  const { area, scene } = worlds.load(ID);
+  const { area, scene } = await worlds.load(ID);
   const table = scene.getObjectByName('Belle enchanted tea table');
   const pot = table.getObjectByName('Belle dancing teapot');
   const near = table.localToWorld(new THREE.Vector3(0, EYE_HEIGHT, 2.0));
@@ -1165,11 +1165,11 @@ test('Belle’s table presents a steady greeting in reduced motion', t => {
   assert.equal(pot.position.y, rest);
 });
 
-test('the ten gallery missions record one interaction per exhibit and replay after reset', t => {
+test('the ten gallery missions record one interaction per exhibit and replay after reset', async t => {
   const game = fixture({ reduced: true });
   const { worlds, progress, notices } = game;
   t.after(worlds.unload);
-  const { scene, area } = worlds.load(ID);
+  const { scene, area } = await worlds.load(ID);
   const { missions } = area.missionStatus;
   const point = (exhibit, x, z, feet = 0) => {
     const [wx, wz] = spaceTransform(exhibit).toWorld(x, z);
@@ -1251,14 +1251,14 @@ test('the ten gallery missions record one interaction per exhibit and replay aft
   worlds.reset();
   assert.ok(missions.every(mission => !mission.complete && mission.current === 0));
   assert.equal(progress.has(ID), true, 'reset preserves the saved level record');
-  worlds.load(CASTLE);
-  assert.ok(worlds.load(ID).area.missionStatus.missions.every(mission => !mission.complete));
+  await worlds.load(CASTLE);
+  assert.ok((await worlds.load(ID)).area.missionStatus.missions.every(mission => !mission.complete));
 });
 
-test('the Glass Walkway lift can be called from either landing and carries the player both ways', t => {
+test('the Glass Walkway lift can be called from either landing and carries the player both ways', async t => {
   const { worlds, player, camera } = fixture();
   t.after(worlds.unload);
-  const visit = worlds.load(ID);
+  const visit = await worlds.load(ID);
   const { scene, area } = visit;
   const cabin = scene.getObjectByName('Glass lift cabin');
   const groundDoor = scene.getObjectByName('Lift ground station').getObjectByName('Landing door');
@@ -1362,10 +1362,10 @@ test('the Glass Walkway lift can be called from either landing and carries the p
   assert.equal(upperDoor.visible, true);
 });
 
-test('the lift uses a short trip in reduced motion and clears its controls on unload', t => {
+test('the lift uses a short trip in reduced motion and clears its controls on unload', async t => {
   const { worlds, player, camera } = fixture({ reduced: true });
   t.after(worlds.unload);
-  const { scene, area } = worlds.load(ID);
+  const { scene, area } = await worlds.load(ID);
   const { x, z } = walkwayLiftSite;
   player.reset({ x, z }, area);
   const ride = nearestInteraction(area.interactions, camera.position);
@@ -1381,10 +1381,10 @@ test('the lift uses a short trip in reduced motion and clears its controls on un
   assert.equal(ride.active, false);
 });
 
-test('both staircases connect the main level to the glass loop and all ten overlooks', t => {
+test('both staircases connect the main level to the glass loop and all ten overlooks', async t => {
   const { worlds, player, camera } = fixture();
   t.after(worlds.unload);
-  const visit = worlds.load(ID);
+  const visit = await worlds.load(ID);
   const { area, scene } = visit;
   const walkway = scene.getObjectByName('Princess Gallery Glass Walkway');
   const floor = walkway.getObjectByName('Suspended glass bridge floor');
@@ -1465,10 +1465,10 @@ test('both staircases connect the main level to the glass loop and all ten overl
   assert.ok(Math.abs(camera.position.y - EYE_HEIGHT) < 1e-6, 'return to the main floor');
 });
 
-test('the overhead lookout into Cinderella can still be inspected by the drone at floor level', t => {
+test('the overhead lookout into Cinderella can still be inspected by the drone at floor level', async t => {
   const { worlds } = fixture();
   t.after(worlds.unload);
-  const { area, scene, definition, viewmodel } = worlds.load(ID);
+  const { area, scene, definition, viewmodel } = await worlds.load(ID);
   const [x, z] = spaceTransform(exhibits.find(entry => entry.id === 'cinderella')).toWorld(0, 9.6);
   assert.ok(area.getGroundHeight(x, z, 15.6) > 15);
   const drone = createDroneCamera(THREE);
@@ -1480,10 +1480,10 @@ test('the overhead lookout into Cinderella can still be inspected by the drone a
   assert.ok(selected && Math.abs(selected.y) < .04);
 });
 
-test('the three wings have their own public landmarks with room to walk around them', t => {
+test('the three wings have their own public landmarks with room to walk around them', async t => {
   const { worlds } = fixture();
   t.after(worlds.unload);
-  const { area, scene } = worlds.load(ID);
+  const { area, scene } = await worlds.load(ID);
   const publicSpaces = scene.getObjectByName('Gallery public spaces');
   assert.ok(publicSpaces);
   for (const [name, count] of [
@@ -1504,10 +1504,10 @@ test('the three wings have their own public landmarks with room to walk around t
   assertWalkable(area, [x - 1.6, z], [x + 1.6, z], 'compass mosaic');
 });
 
-test('the Woodland bench at the second flower garden faces the path with a walking gap behind it', t => {
+test('the Woodland bench at the second flower garden faces the path with a walking gap behind it', async t => {
   const { worlds } = fixture();
   t.after(worlds.unload);
-  const { area, scene } = worlds.load(ID);
+  const { area, scene } = await worlds.load(ID);
   const landmarks = scene.getObjectByName('Gallery public spaces');
   const flowerGarden = landmarks.getObjectByName('Woodland flower garden 2');
   const bench = landmarks.children.find(child => child.name === 'Woodland bench' && child.position.x > -20);
@@ -1518,10 +1518,10 @@ test('the Woodland bench at the second flower garden faces the path with a walki
   assertWalkable(area, [x - 1.05, z - 1.65], [x - 1.05, z + 1.65], 'gap between the planter and bench');
 });
 
-test('gallery guests include guards, a child with their parents, and a parent with an occupied stroller', t => {
+test('gallery guests include guards, a child with their parents, and a parent with an occupied stroller', async t => {
   const { worlds, camera } = fixture();
   t.after(worlds.unload);
-  const { area, scene } = worlds.load(ID);
+  const { area, scene } = await worlds.load(ID);
   const guests = scene.getObjectByName('Gallery visitors and guards');
   assert.ok(guests);
   for (const name of ['Lobby guard', 'Royal Wing guard', 'Royal Wing visitor with satchel']) {
@@ -1550,20 +1550,20 @@ test('gallery guests include guards, a child with their parents, and a parent wi
   assert.deepEqual(head.rotation.toArray(), rest);
 });
 
-test('reduced motion keeps gallery visitors in a steady pose', t => {
+test('reduced motion keeps gallery visitors in a steady pose', async t => {
   const { worlds, camera } = fixture({ reduced: true });
   t.after(worlds.unload);
-  const { scene } = worlds.load(ID);
+  const { scene } = await worlds.load(ID);
   const arm = scene.getObjectByName('Woodland family child right arm');
   const rest = arm.rotation.toArray();
   worlds.update(1, camera.position);
   assert.deepEqual(arm.rotation.toArray(), rest);
 });
 
-test('four snack carts have walkable service approaches in separate parts of the gallery', t => {
+test('four snack carts have walkable service approaches in separate parts of the gallery', async t => {
   const { worlds } = fixture();
   t.after(worlds.unload);
-  const { area, scene } = worlds.load(ID);
+  const { area, scene } = await worlds.load(ID);
   const collection = scene.getObjectByName('Princess Gallery snack carts');
   assert.deepEqual(new Set(collection.children.map(cart => cart.name)),
     new Set(['Popcorn cart', 'Cotton Candy cart', 'Hot Dogs cart', 'Cold Drinks cart']));
@@ -1577,10 +1577,10 @@ test('four snack carts have walkable service approaches in separate parts of the
   }
 });
 
-test('benches, bins, lamps and balloon bouquets are reachable along the promenade', t => {
+test('benches, bins, lamps and balloon bouquets are reachable along the promenade', async t => {
   const { worlds } = fixture();
   t.after(worlds.unload);
-  const { area, scene } = worlds.load(ID);
+  const { area, scene } = await worlds.load(ID);
   const furniture = scene.getObjectByName('Promenade furniture');
   const stations = furniture.children.filter(child => child.name.endsWith('rest stop'));
   const bouquets = furniture.children.filter(child => child.name.startsWith('Balloon bouquet'));
@@ -1605,10 +1605,10 @@ test('benches, bins, lamps and balloon bouquets are reachable along the promenad
   }
 });
 
-test('the hanging decorations stay above the public floor and clear Drone View', t => {
+test('the hanging decorations stay above the public floor and clear Drone View', async t => {
   const { worlds } = fixture();
   t.after(worlds.unload);
-  const { scene, definition } = worlds.load(ID);
+  const { scene, definition } = await worlds.load(ID);
   const hanging = scene.getObjectByName('Princess Gallery hanging decorations');
   assert.deepEqual(new Set(hanging.children.map(piece => piece.name)), new Set([
     'Grand hanging crane', 'Adventure hanging bird', 'Woodland hanging cloud', 'Adventure hanging cloud',
@@ -1641,10 +1641,10 @@ function snackApproach(scene, name, depth) {
   return { x: px, y: EYE_HEIGHT, z: pz };
 }
 
-test('each cart has a vendor and a repeatable first-person tasting at its service side', t => {
+test('each cart has a vendor and a repeatable first-person tasting at its service side', async t => {
   const { worlds, camera } = fixture();
   t.after(worlds.unload);
-  const { scene, area, viewmodel } = worlds.load(ID);
+  const { scene, area, viewmodel } = await worlds.load(ID);
   const models = viewmodel.getObjectByName('Gallery snack tasting').children;
   const actions = tastings.map(([, label]) => area.interactions.find(item => item.label === label));
   assert.equal(models.length, 4);
@@ -1686,9 +1686,9 @@ test('each cart has a vendor and a repeatable first-person tasting at its servic
   assert.ok(area.missionStatus.missions.every(mission => !mission.complete));
 });
 
-test('reduced motion holds the drink still and travel clears the snack viewmodel', () => {
+test('reduced motion holds the drink still and travel clears the snack viewmodel', async () => {
   const { worlds, camera } = fixture({ reduced: true });
-  const visit = worlds.load(ID);
+  const visit = await worlds.load(ID);
   const drink = visit.area.interactions.find(item => item.label === 'Sip a cold drink');
   const front = snackApproach(visit.scene, 'Cold Drinks', 2.1);
   camera.position.set(front.x, front.y, front.z);
@@ -1699,7 +1699,7 @@ test('reduced motion holds the drink still and travel clears the snack viewmodel
   worlds.update(.85, camera.position);
   assert.ok(model.visible);
   assert.deepEqual(held.position.toArray(), originalPose);
-  worlds.load(CASTLE);
+  await worlds.load(CASTLE);
   assert.equal(model.visible, false);
   assert.equal(visit.viewmodel.children.length, 0);
   assert.equal(drink.active, false);
@@ -1707,10 +1707,10 @@ test('reduced motion holds the drink still and travel clears the snack viewmodel
   assert.equal(model.visible, false);
 });
 
-test('visitors, guards and stroller stroll while vendors and exhibit actors move at their posts', t => {
+test('visitors, guards and stroller stroll while vendors and exhibit actors move at their posts', async t => {
   const { worlds } = fixture();
   t.after(worlds.unload);
-  const { scene, area } = worlds.load(ID);
+  const { scene, area } = await worlds.load(ID);
   const crowd = scene.getObjectByName('Gallery visitors and guards').children;
   const guests = crowd.filter(actor => !actor.name.endsWith(' vendor'));
   const start = guests.map(actor => actor.position.clone());

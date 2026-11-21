@@ -12,7 +12,7 @@ import { missionHudFixture } from './helpers/mission-hud.mjs';
 
 const ID = 'secret-apartment';
 
-test('the link-only area opens by explicit URL and never enters public progress', () => {
+test('the link-only area opens by explicit URL and never enters public progress', async () => {
   const root = new URL('https://example.test/Kids-World/');
   assert.equal(isPublicArea(areas, ID), false);
   assert.equal(resolveArea(root, areas, 'garden', ID), 'garden');
@@ -21,7 +21,7 @@ test('the link-only area opens by explicit URL and never enters public progress'
   const explicit = resolveArea(new URL('?area=secret-apartment&arrive=snow', root), areas, 'garden', 'snow');
   assert.equal(explicit, ID);
   const worlds = createWorldManager(THREE, { areas, camera: new THREE.PerspectiveCamera(), services: {} });
-  assert.equal(worlds.load(explicit).definition.title, 'Secret Apartment — 17E');
+  assert.equal((await worlds.load(explicit)).definition.title, 'Secret Apartment — 17E');
   worlds.unload();
   assert.equal(resolveArea(areaURL(root, ID), areas, 'garden'), ID);
   assert.equal(resolveArea(new URL('?area=snow', root), areas, 'garden', ID), 'snow');
@@ -39,7 +39,7 @@ test('the link-only area opens by explicit URL and never enters public progress'
   assert.equal(progress.has('garden'), true);
 });
 
-function fixture(reducedMotion = false) {
+async function fixture(reducedMotion = false) {
   const camera = new THREE.PerspectiveCamera();
   const player = createPlayer(THREE, camera);
   const cues = [];
@@ -60,7 +60,7 @@ function fixture(reducedMotion = false) {
     areas, camera,
     services: { reducedMotion: () => reducedMotion, playCue: cue => cues.push(cue), hud, notify: missionHud.notify },
   });
-  const { area, scene, definition, lifetime } = worlds.load(ID);
+  const { area, scene, definition, lifetime } = await worlds.load(ID);
   const { position } = camera;
   const arrivals = [];
   const action = {
@@ -243,8 +243,8 @@ test('mission state enforces order and emits one countdown and one ending', () =
   assert.deepEqual(notifications, ['Access card acquired', 'Lighter acquired', 'Secret Apartment — Mission Complete']);
 });
 
-test('the elevator calls without a card, rejects locked floors, and seals during allowed travel', () => {
-  const game = fixture();
+test('the elevator calls without a card, rejects locked floors, and seals during allowed travel', async () => {
+  const game = await fixture();
   const { area, scene, position, player, arrivals, move, act, update, worlds, action, cues, missionHud } = game;
   const first = scene.getObjectByName('basement');
   const panel = first.getObjectByName('Sliding elevator door');
@@ -317,8 +317,8 @@ test('the elevator calls without a card, rejects locked floors, and seals during
   worlds.unload();
 });
 
-test('only the illuminated car offers a safe one-way door and a single access card', () => {
-  const { area, scene, move, act, update, worlds, find, prompt, cues, approachCar, missionHud } = fixture();
+test('only the illuminated car offers a safe one-way door and a single access card', async () => {
+  const { area, scene, move, act, update, worlds, find, prompt, cues, approachCar, missionHud } = await fixture();
   const car = scene.getObjectByName('Sedan with illuminated cabin');
   const door = car.getObjectByName('Driver door');
   const card = car.getObjectByName('Access card');
@@ -360,8 +360,8 @@ test('only the illuminated car offers a safe one-way door and a single access ca
   worlds.unload();
 });
 
-test('the gazebo and kitchen routes remain walkable and the ending is confined to Unit 17E', () => {
-  const game = fixture();
+test('the gazebo and kitchen routes remain walkable and the ending is confined to Unit 17E', async () => {
+  const game = await fixture();
   const { area, scene, position, move, act, update, worlds, find, cues, hud, action, missionHud } = game;
   const unit = scene.getObjectByName('Unit 17E interior');
   const material = unit.getObjectByName('White marble television feature wall').material;
@@ -451,8 +451,8 @@ test('the gazebo and kitchen routes remain walkable and the ending is confined t
   assert.equal(game.elements.has(hud.overlay), false);
 });
 
-test('restart cancels transit and countdown and restores both items, doors and access rules', () => {
-  const game = fixture(true);
+test('restart cancels transit and countdown and restores both items, doors and access rules', async () => {
+  const game = await fixture(true);
   const { area, scene, definition, player, position, worlds, lifetime, arrivals, move, act, update, hud, cues, missionHud } = game;
   game.takeCard();
   game.enterElevator();
@@ -498,8 +498,8 @@ test('restart cancels transit and countdown and restores both items, doors and a
   assert.equal(scene.children.length, 0);
 });
 
-test('reduced motion retains countdown and damage at a low frame rate with no flash or smoke', () => {
-  const { area, act, update, scene, hud, worlds, position, kitchen } = fixture(true);
+test('reduced motion retains countdown and damage at a low frame rate with no flash or smoke', async () => {
+  const { area, act, update, scene, hud, worlds, position, kitchen } = await fixture(true);
   kitchen();
   assert.equal(scene.getObjectByName('Main swimming pool').material.uniforms.time.value, 0);
   act('Activate Prop Control');

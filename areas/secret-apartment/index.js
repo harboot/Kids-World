@@ -8,26 +8,22 @@ import { buildFloor17 } from './floor17.js';
 import { createArchitecture } from './geometry.js';
 import { createApartmentMission, travelCue } from './missions.js';
 import { TERRACE } from './pool.js';
+import { BASEMENT_X, metadata } from './metadata.js';
 import { music } from './music.js';
 
 const PLACEMENT = {
-  basement: { x: -88, doorZ: -9.75 },
+  basement: { x: BASEMENT_X, doorZ: -9.75 },
   floor8: { x: 0, doorZ: -10.65 },
   floor17: { x: 88, doorZ: -10.65 },
 };
 
 export const secretApartment = {
-  title: 'Secret Apartment — 17E',
-  heading: ['Secret Apartment', '17E'],
-  description: 'Explore the underground parking, the pool terrace on Floor 8, and Unit 17E.',
-  canvasLabel: '3D apartment building with underground parking, pool terrace and Unit 17E',
-  themeColor: '#e5dac6',
+  ...metadata,
   music,
-  width: 220,
-  depth: 84,
-  spawn: { x: PLACEMENT.basement.x + 0.24, z: 9.5, yaw: -0.12 },
   load: loadApartment,
 };
+
+export default secretApartment;
 
 function inZone(id, x, z, doorZ) {
   if (id === 'basement') return Math.abs(x) <= 16 && z >= -13.5 && z <= 13;

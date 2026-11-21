@@ -1,9 +1,9 @@
 {
-  "version": "13e8b4f33ddb7695c8c420ea428ea989800410b07b285157e5321ef8ccd5cbde",
+  "version": "3eff0f1a1fbdc079491bb94cc5c696ee9733f4fa897e9d37e159e270d4d055c2",
   "files": [
     {
       "path": "./area-stats.json",
-      "revision": "8e8dcd7a97c01f257ddcbef780aff392ebe00cfbdc53ae32282664abf8db6ae9"
+      "revision": "bbc9915cd815b4fc0175ae8c5fadf003ce6adf31dd92f15e50b1d6c515dcfcd1"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -39,11 +39,15 @@
     },
     {
       "path": "./areas/arendelle-village/index.js",
-      "revision": "39498ca0a7801bb91a604000fe400f407a7d1af87104c5767bf96ebf40482333"
+      "revision": "1cebbb2c062a97964b5d86712107fd3796d9a07f30311d5dc4c912bec9f6218c"
     },
     {
       "path": "./areas/arendelle-village/interactions.js",
       "revision": "04091bcb67b4f20e494c4e72209699523d850264afea74f0290bb42e99fb2b59"
+    },
+    {
+      "path": "./areas/arendelle-village/metadata.js",
+      "revision": "0aec907dcd63aea5fc3f6852894294e8597ebd201c03c22f336d63a5bc6373ee"
     },
     {
       "path": "./areas/arendelle-village/missions.js",
@@ -119,7 +123,11 @@
     },
     {
       "path": "./areas/flower-garden/index.js",
-      "revision": "98b1943adb5f2db47c7d4393b172bf2970e8d02699a27ca72640ffbf869a5fc6"
+      "revision": "5ccafadd4dca18a07f3e328ae3469160ff265efb8c9a04e92c366338bde0ef6e"
+    },
+    {
+      "path": "./areas/flower-garden/metadata.js",
+      "revision": "2856fabeaed0ce8dc6982fd52f1ba32fca8abc41aed18b4c0a7ef429bd235d4a"
     },
     {
       "path": "./areas/flower-garden/music.js",
@@ -127,7 +135,7 @@
     },
     {
       "path": "./areas/frozen-castle/activities.js",
-      "revision": "d2e58b42c91b1b1a6d734641c1698699841ace993fb54ac90cbc63f2e0130108"
+      "revision": "d1852704c7dbc294e155069ed81efd05a3a52e0cf5b7a605cf8cfc7715c95f39"
     },
     {
       "path": "./areas/frozen-castle/decorations.js",
@@ -139,7 +147,11 @@
     },
     {
       "path": "./areas/frozen-castle/index.js",
-      "revision": "d9ed885e03385f29af0d78404e0b5fd9f4e89a4a03b417c9fcb86b9a0235d072"
+      "revision": "9d0ce7299472659eb6464e5a8d7043305c5d50742a15f8d0d984fc3ecfa90dc9"
+    },
+    {
+      "path": "./areas/frozen-castle/metadata.js",
+      "revision": "edbc245c318208a677a1e14666c06a16801a68bc15455dfb70efeb4a32a37aa0"
     },
     {
       "path": "./areas/frozen-castle/music.js",
@@ -155,7 +167,7 @@
     },
     {
       "path": "./areas/frozen-castle/summit.js",
-      "revision": "cf5cc7ccd4a26a36f73206e00e35a954f484352bdf2c1999a1c85e09bbcc6529"
+      "revision": "982db5375250440292f9140a0a4f454b1d967eca825952d90107b2ab486b242f"
     },
     {
       "path": "./areas/military-base/buildings.js",
@@ -179,11 +191,15 @@
     },
     {
       "path": "./areas/military-base/index.js",
-      "revision": "d0ea824eedc936ee81867a60e6771094b46a473c5fbec6db73b4d41d625ca701"
+      "revision": "7b9f2b1dda02030f84cfb8b2db280bd6dd706521e584455d884471680abb15e1"
     },
     {
       "path": "./areas/military-base/layout.js",
-      "revision": "91068cb002d20aec9e60001ff49595f10dccc29b05291c6d02febd2555819ad1"
+      "revision": "649e23042aa137dc9a929ae558979697dfd3b5ba8b8bd8448f8174dc4a562d25"
+    },
+    {
+      "path": "./areas/military-base/metadata.js",
+      "revision": "daba3272f22ee8509d94daa72cceb614d18e0b8eba2b076314abfaf18be6ac89"
     },
     {
       "path": "./areas/military-base/military-base.jpg",
@@ -295,7 +311,7 @@
     },
     {
       "path": "./areas/princess-gallery/exhibits.js",
-      "revision": "ee5630fe38e650c4ee8cdef70df51042465d291b58e7a065654b38e03c6c3e75"
+      "revision": "52392e76930bb76200a6c2aa9c4f02d95256b1ffa082b67de6c1cce9e962880c"
     },
     {
       "path": "./areas/princess-gallery/gallery.js",
@@ -311,7 +327,11 @@
     },
     {
       "path": "./areas/princess-gallery/index.js",
-      "revision": "497cf9efc8eb64796269f682781ac3c2eccc1b3845ec112534630489642592db"
+      "revision": "2ea231bf17cd791175a4fbea64afc936c8c48f4afff9d0d16ffa3ed1bfd51c1e"
+    },
+    {
+      "path": "./areas/princess-gallery/metadata.js",
+      "revision": "0bec0f502984d75983b4551cc69046673df86d0161ccc8d05aca9aa7bb091eaf"
     },
     {
       "path": "./areas/princess-gallery/music.js",
@@ -411,7 +431,11 @@
     },
     {
       "path": "./areas/secret-apartment/index.js",
-      "revision": "946a7bab73e47c4eb21540bda076a02159647a5c9c6aa63e8cf104fc787180bd"
+      "revision": "d0f4488059e306f8c8829134e82636cdad585e9a2cca29ee09c88c788b7b5c41"
+    },
+    {
+      "path": "./areas/secret-apartment/metadata.js",
+      "revision": "72357204d573e64980ec00fafdb914318b2dd5a6c7206cf94302e16ec8f78982"
     },
     {
       "path": "./areas/secret-apartment/missions.js",
@@ -435,7 +459,11 @@
     },
     {
       "path": "./areas/snow-basin/index.js",
-      "revision": "884ad0143318dc8ae6629cfc1fd14604d143fb94035a515ab1e6b42709ae8ea0"
+      "revision": "47a4ba6a7b9e056ae2f68bab128f4dd623084c83914129692018040d70a3ede9"
+    },
+    {
+      "path": "./areas/snow-basin/metadata.js",
+      "revision": "6648f741801fd8f5a2feb3e91df2da4a22c18dfeb7084d69ebde8b555ae9f919"
     },
     {
       "path": "./areas/snow-basin/music.js",
@@ -467,11 +495,15 @@
     },
     {
       "path": "./areas/wooden-house/index.js",
-      "revision": "e6612aa2361555b8accf3b79c6157a83732c9cd6ec7b927c617561420bc413ac"
+      "revision": "15e3946bb49af2c197ab5c6671f5ac264fc1f82675f9061c6b84bf3f64ee906e"
     },
     {
       "path": "./areas/wooden-house/interior.js",
-      "revision": "feb60ef4544b656f1ffa1a5b36f40880e7d5fd96c19869350c16a1187befd127"
+      "revision": "798ebacd2f1be37ccd80c808efde891cfb95f861dfe94db8c6c5c91cb6ab7762"
+    },
+    {
+      "path": "./areas/wooden-house/metadata.js",
+      "revision": "84ee7360a6d3afa6bb649d541f9ed91b3096f9e670b6473b9ceed6883fa4c076"
     },
     {
       "path": "./areas/wooden-house/music.js",
@@ -495,7 +527,7 @@
     },
     {
       "path": "./core/area-registry.js",
-      "revision": "44e5f22757cac36a22342f22a91ded3a9976c04048a86a24e9e523bc3a90feb0"
+      "revision": "cf47fa344260bdcc94639ec2b5301463e582144cac6c5f491c3134dcebc13087"
     },
     {
       "path": "./core/audio.js",
@@ -519,7 +551,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "2381e780251d174f6e2173de1919f38ecf33043257cbaeae88347e13048c312a"
+      "revision": "45f51f67dcffdf4a397f39b284012bf6bf070f58d5566cf49b2456428462f50a"
     },
     {
       "path": "./core/geometry.js",
@@ -563,11 +595,11 @@
     },
     {
       "path": "./core/world-manager.js",
-      "revision": "d40d58c9c949fcbc971844fa6fcbe06006a28732e766df4e5f18b35b8c5acc22"
+      "revision": "0283c2d132a2925247e20e60936ac0c0d5ac7c4caa5f4d4daf450e033e8e186d"
     },
     {
       "path": "./game.js",
-      "revision": "169a76704c4fc7ebbc3542ed89e02744b0c362e2a26d81952b947121544ee46e"
+      "revision": "8bbaf4242c8596706620b33ffc80186c2982d5b597bdd5dd7bbc09b46ca6e360"
     },
     {
       "path": "./index.html",
@@ -607,7 +639,7 @@
     },
     {
       "path": "./style.css",
-      "revision": "4662ff6b12f46b8bbe72f3928343d22915c6f4a1ae6afee1e03fbefd66ad5279"
+      "revision": "9f8060e285e59a805b31ffb982f2e4aef71ae8dd439f8d6ccd52b962f8fadf4c"
     },
     {
       "path": "./vendor/three.LICENSE",

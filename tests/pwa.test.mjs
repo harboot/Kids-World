@@ -51,7 +51,10 @@ test('checked-in release matches every runtime file and the worker version chang
   }
   for (const area of ['arendelle-village', 'flower-garden', 'frozen-castle', 'military-base',
     'princess-gallery', 'secret-apartment', 'snow-basin', 'wooden-house']) {
-    assert.ok(paths.includes(`./areas/${area}/music.js`), area);
+    for (const file of ['metadata.js', 'index.js', 'music.js']) {
+      const path = `./areas/${area}/${file}`;
+      assert.ok(paths.includes(path), path);
+    }
   }
   assert.ok(!paths.includes(previousSnowEntry));
   assert.ok(paths.every(path => !path.startsWith('./tests/')));
@@ -204,10 +207,12 @@ test('a stalled download can time out and retry without publishing a partial rel
   assert.equal((await cache.ready())[0].tag, ready.tag);
 });
 
-test('the worker shares a concurrent download and serves the game and versioned statistics offline', async t => {
+test('the worker shares a download and serves lazy area modules and versioned statistics offline', async t => {
   const shell = '<script type="module" src="./pwa/bootstrap.js"></script>';
   const stats = '<html data-stats-url="./area-stats.json">';
-  let release = await fixture({ './index.html': shell, './stats.html': stats, './area-stats.json': '{"revision":1}' });
+  const source = await readFile(new URL('game.js', root), 'utf8');
+  const files = { './index.html': shell, './stats.html': stats, './game.js': source };
+  let release = await fixture({ ...files, './area-stats.json': '{"revision":1}' });
   const storage = new MemoryStorage();
   const events = new Map();
   const client = { id: 'test-client', url: scope.href };
@@ -262,6 +267,17 @@ test('the worker shares a concurrent download and serves the game and versioned 
   const response = await request('index.html?area=snow');
   assert.equal(response.status, 200);
   assert.ok((await response.text()).includes(assetBase(scope, first.tag).pathname + 'pwa/bootstrap.js'));
+  const gameURL = new URL('game.js', assetBase(scope, first.tag));
+  const game = await (await request(gameURL, 'cors')).text();
+  const loaders = [...game.matchAll(/import\('([^']+\/index\.js)'\)/g)].map(match => match[1]);
+  assert.ok(loaders.includes(snowEntry));
+  assert.ok(loaders.includes('./areas/secret-apartment/index.js'));
+  assert.equal(loaders.length, 8);
+  for (const path of loaders) {
+    const module = await request(new URL(path, gameURL), 'cors');
+    assert.equal(module.status, 200, path);
+    assert.equal(await module.text(), path);
+  }
   const firstData = new URL('area-stats.json', assetBase(scope, first.tag));
   assert.equal(await (await request('stats.html')).text(), `<html data-stats-url="${firstData.pathname}">`);
   assert.deepEqual(await (await request(firstData, 'cors')).json(), { revision: 1 });
@@ -269,7 +285,7 @@ test('the worker shares a concurrent download and serves the game and versioned 
   assert.equal((await storage.keys()).length, 1);
 
   offline = false;
-  release = await fixture({ './index.html': shell, './stats.html': stats, './area-stats.json': '{"revision":2}' });
+  release = await fixture({ ...files, './area-stats.json': '{"revision":2}' });
   const newPage = await (await request('stats.html')).text();
   const newData = newPage.match(/data-stats-url="([^"]+)"/)[1];
   assert.notEqual(newData, firstData.pathname);

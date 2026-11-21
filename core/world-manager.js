@@ -1,4 +1,4 @@
-import { hasArea, isPublicArea } from './area-registry.js';
+import { hasArea, isPublicArea, loadAreaDefinition } from './area-registry.js';
 
 export { isPublicArea } from './area-registry.js';
 
@@ -23,6 +23,7 @@ export function areaURL(url, id) {
 
 export function createWorldManager(THREE, { areas, camera, touch, playerRadius, services }) {
   let active = null;
+  let pending = null;
 
   function release({ area, scene, viewmodel, lifetime }) {
     lifetime.abort();
@@ -35,16 +36,14 @@ export function createWorldManager(THREE, { areas, camera, touch, playerRadius, 
     }
   }
 
-  function unload() {
+  function unloadActive() {
     if (!active) return;
     const previous = active;
     active = null;
     release(previous);
   }
 
-  function load(id) {
-    if (!hasArea(areas, id)) throw new Error(`Unknown area: ${id}`);
-    const definition = areas[id];
+  function activate(id, definition) {
     const scene = new THREE.Scene();
     const viewmodel = new THREE.Group();
     const lifetime = new AbortController();
@@ -54,7 +53,7 @@ export function createWorldManager(THREE, { areas, camera, touch, playerRadius, 
       // Keep the current visit available if building or resetting the next scene fails.
       next.area = definition.load({ ...services, THREE, scene, camera, viewmodel, touch, playerRadius, signal: lifetime.signal });
       next.area.reset?.();
-      unload();
+      unloadActive();
     } catch (error) {
       release(next);
       throw error;
@@ -66,10 +65,33 @@ export function createWorldManager(THREE, { areas, camera, touch, playerRadius, 
     return active;
   }
 
+  function load(id) {
+    if (!hasArea(areas, id)) return Promise.reject(new Error(`Unknown area: ${id}`));
+    if (pending?.id === id) return pending.promise;
+
+    const request = { id };
+    pending = request;
+    // Imports can finish after another navigation has superseded them.
+    request.promise = loadAreaDefinition(id, areas[id]).then(
+      definition => pending === request ? activate(id, definition) : null,
+      error => {
+        if (pending === request) throw error;
+        return null;
+      },
+    ).finally(() => {
+      if (pending === request) pending = null;
+    });
+    return request.promise;
+  }
+
   return {
     get active() { return active; },
     load,
-    unload,
+    cancelLoad() { pending = null; },
+    unload() {
+      pending = null;
+      unloadActive();
+    },
     update(dt, position, elapsed = dt) { active?.area.update?.(dt, position, elapsed); },
     reset() { active?.area.reset?.(); },
   };
