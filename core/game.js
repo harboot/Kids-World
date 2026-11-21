@@ -134,10 +134,10 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     button: game.querySelector('#interaction'),
     glyph: game.querySelector('#interaction-glyph'),
     label: game.querySelector('#interaction-label'),
-    camera, playing: playerInput, touchMode,
+    camera, playing: () => playerInput() && !player.guided, touchMode,
     runAction(item) {
       if (!item.silent) audio.effect('interact');
-      item.act({ sit, relocate });
+      item.act({ sit, guideCamera, relocate });
     },
   });
   const controls = createControls(THREE, {
@@ -257,6 +257,19 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     });
     levelPicker.showModal();
   });
+
+  function guideCamera(look) {
+    const visit = worlds.active;
+    const stop = player.guide(look);
+    game.dataset.seated = 'true';
+    controls.clear();
+    interactions.hide();
+    return spawn => {
+      if (!stop()) return;
+      delete game.dataset.seated;
+      if (worlds.active === visit) relocate(spawn);
+    };
+  }
 
   function sit(pose, standLabel) {
     player.sit(pose);

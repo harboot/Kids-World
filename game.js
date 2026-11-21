@@ -4,6 +4,7 @@ import { snowBasin } from './areas/snow-basin.js';
 import { woodenHouse } from './areas/wooden-house/index.js';
 import { frozenCastle } from './areas/frozen-castle/index.js';
 import { princessGallery } from './areas/princess-gallery/index.js';
+import { militaryBase } from './areas/military-base/index.js';
 import { secretApartment } from './areas/secret-apartment/index.js';
 import { createGame } from './core/game.js';
 
@@ -18,6 +19,7 @@ export const areas = {
   'frozen-castle': publicArea(frozenCastle, 'frozen-castle'),
   'arendelle-village': publicArea(arendelleVillage, 'arendelle-village'),
   'princess-gallery': publicArea(princessGallery, 'princess-gallery'),
+  'military-base': publicArea(militaryBase, 'military-base'),
   'secret-apartment': { ...secretApartment, show: false },
 };
 

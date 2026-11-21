@@ -14,6 +14,7 @@ const publicFolders = {
   'frozen-castle': 'frozen-castle',
   'arendelle-village': 'arendelle-village',
   'princess-gallery': 'princess-gallery',
+  'military-base': 'military-base',
 };
 
 class Element extends EventTarget {

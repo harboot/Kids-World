@@ -1,5 +1,5 @@
 {
-  "version": "cefac6a25e45c42b54c4ad737193512ce6bc9eef90ada78753c5e225dcda288b",
+  "version": "1768a6382f4fd2c4fc503104c8b4cd405eb594bddd46d5096cbe3b8617e9614e",
   "files": [
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -136,6 +136,70 @@
     {
       "path": "./areas/frozen-castle/summit.js",
       "revision": "cf5cc7ccd4a26a36f73206e00e35a954f484352bdf2c1999a1c85e09bbcc6529"
+    },
+    {
+      "path": "./areas/military-base/buildings.js",
+      "revision": "65ed13ae2dde21f08a48ebf7c1dee1c152e55c8e46308e74931d1b940393dccc"
+    },
+    {
+      "path": "./areas/military-base/decorations.js",
+      "revision": "8de3c8a2dfcda7ff3a8ae53db940f05bb616364f39e9bb3462b6f9dd832f751b"
+    },
+    {
+      "path": "./areas/military-base/helicopter-cabin.js",
+      "revision": "af91616f61897be06584e18fef75b1e01df6be0c81c5f188b7f37706d1543d8b"
+    },
+    {
+      "path": "./areas/military-base/helicopter-flight.js",
+      "revision": "7633e7a9141668884d746c0187e48fd104d77bad5304ad280d1ecde5cb012da0"
+    },
+    {
+      "path": "./areas/military-base/helicopter.js",
+      "revision": "78bc3910316bc5937785033b12390527327c4dc026fcffa7e128f783b2d82ef6"
+    },
+    {
+      "path": "./areas/military-base/index.js",
+      "revision": "9f3b8a7c821d02cd84d16a378a792f80ced37e2f5e58a13f8f4a240c917ed6b5"
+    },
+    {
+      "path": "./areas/military-base/layout.js",
+      "revision": "91068cb002d20aec9e60001ff49595f10dccc29b05291c6d02febd2555819ad1"
+    },
+    {
+      "path": "./areas/military-base/military-base.jpg",
+      "revision": "457ff0fc34e6f37d6bd659b1d22bb29ad03c2c9f564ec73baa635c8e77f57bdd"
+    },
+    {
+      "path": "./areas/military-base/mission-props.js",
+      "revision": "e617154c29fa0ba0aaf5faa106e1e0ba4881122e59e8de4c81d468544a3a70fb"
+    },
+    {
+      "path": "./areas/military-base/missions.js",
+      "revision": "8afc268b4d9ab8393dd4e765cf6decc6eed0ddd2acf46ad4cbdc5b56746980e1"
+    },
+    {
+      "path": "./areas/military-base/perimeter.js",
+      "revision": "87d76f4eaef4bb04d1f6f8eba4665052b1152fefe1b04a77cc87e133866875d9"
+    },
+    {
+      "path": "./areas/military-base/roads.js",
+      "revision": "942c7234f39e878fc853c9c5554acf51ba9f799f06372fa6659c349e7062d871"
+    },
+    {
+      "path": "./areas/military-base/scenery.js",
+      "revision": "d80e9229d9b3f0dceaee0159b8a7837ed0951a8b2a61157abdfa0228de873f66"
+    },
+    {
+      "path": "./areas/military-base/soldiers.js",
+      "revision": "c95e95a81c2cac86c554819bcf33449efcfcdd2bacec19c59a18b047e0c7f12b"
+    },
+    {
+      "path": "./areas/military-base/terrain.js",
+      "revision": "74da9c8aafa9e22405e95c470ef061d1131242be2bfb45f5a5c4e2b8dbe4b72c"
+    },
+    {
+      "path": "./areas/military-base/vehicles.js",
+      "revision": "69f0094bda5495d211e846f9619d817eb3d5249fe077eb3b3b8dbc4f582f9bea"
     },
     {
       "path": "./areas/princess-gallery/ariel-character.js",
@@ -411,7 +475,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "0a5bb74d594c06b3053ffce9637e09bdf87657b4b881868df960517c5d7f35a2"
+      "revision": "3489b8dc5e67ea907e0c5299e8653f8b76677abf0f7eae494ddede0b2b303b8b"
     },
     {
       "path": "./core/geometry.js",
@@ -419,7 +483,7 @@
     },
     {
       "path": "./core/hud.js",
-      "revision": "46225a8a28e0b3e6cba8c237b37833d72fbbe33d0ed0861c09bb402be5d789b0"
+      "revision": "5b65fdd1baa1230c2a8a33d0b246564f7decaea286cd1f8e1853db37fc0e8fac"
     },
     {
       "path": "./core/interaction-clearance.js",
@@ -443,7 +507,7 @@
     },
     {
       "path": "./core/player.js",
-      "revision": "81f80f39de72342fbde183252104229802e7dede294cd0e0d8d4b32dfd413b5b"
+      "revision": "f872e950e2bdcf22800e5e8dc34652ddaec1726313672f273cfd127f543bafc7"
     },
     {
       "path": "./core/random.js",
@@ -463,7 +527,7 @@
     },
     {
       "path": "./game.js",
-      "revision": "e4267f243c902dfec593ed81d38d70c26f9e06788f1bf7724fcb3ced017be6be"
+      "revision": "ab2166c38c89023109f43bc9b8a3a60a968b0d24eaf65b65a9f1d9f36470f1cd"
     },
     {
       "path": "./index.html",

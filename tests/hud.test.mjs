@@ -41,8 +41,11 @@ test('the HUD updates counters, hints and inventory in place with either spoiler
   details.open = false;
   hud.update({ missions: [] });
   assert.equal(details.open, false);
+  assert.equal(details.hidden, true);
   assert.deepEqual(list.children, []);
   assert.equal(elements['mission-summary'].textContent, '0/0');
+  hud.update(status);
+  assert.equal(details.hidden, false);
 });
 
 test('toasts expire, replace previous feedback and clear on restart or travel', () => {

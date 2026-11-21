@@ -53,6 +53,14 @@ Ride the hot air balloon for a view of the lakes and forests, or walk through th
 - Belle — Visit Belle and the Beast in the castle library and approach the tea table to see the teapot and cups dance.
 - Approach the story displays for Jasmine, Mulan, Moana, and Tiana to complete the other four missions while their full exhibits are in development.
 
+### Military Base — 5 Missions
+
+- Security Patrol — Activate the panels at South Gate, Motor Pool, and South Lookout.
+- Repair the Tank — Collect and install three components, then stand clear while the tank parks.
+- Supply Delivery — Carry three crates from the Supply Depot to the Field Hospital, one at a time.
+- Radar Activation — Inspect the radar console and align the dish, rotating array, and west relay.
+- Helicopter Patrol — Board at the right passenger door for an automatic clockwise sightseeing flight. You can look around during the ride and board again after landing.
+
 ## Built for Expansion
 
 Kids World is designed around a reusable game engine and independent world modules.

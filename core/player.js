@@ -11,6 +11,7 @@ export function createPlayer(THREE, camera) {
   const speed = new THREE.Vector2();
   const falling = { feet: 0, speed: 0, grounded: true };
   let seated = null;
+  let guidedView = null;
   let yaw = 0;
   let pitch = 0;
   let elevation = 0;
@@ -24,6 +25,7 @@ export function createPlayer(THREE, camera) {
 
   function reset(spawn, world) {
     seated = null;
+    guidedView = null;
     yaw = spawn.yaw ?? 0;
     pitch = 0;
     elevation = world.getGroundHeight?.(spawn.x, spawn.z, spawn.elevation) ?? 0;
@@ -53,21 +55,37 @@ export function createPlayer(THREE, camera) {
     updateCamera();
   }
 
+  function guide(look) {
+    const view = { look };
+    guidedView = view;
+    speed.set(0, 0);
+    verticalSpeed = 0;
+    return () => {
+      if (guidedView !== view) return false;
+      guidedView = null;
+      return true;
+    };
+  }
+
   function carryVertically(distance) {
-    if (seated) return;
+    if (seated || guidedView) return;
     elevation += distance;
     camera.position.y = elevation + EYE_HEIGHT;
     camera.updateMatrixWorld();
   }
 
   function jump() {
-    if (seated || !grounded) return false;
+    if (seated || guidedView || !grounded) return false;
     verticalSpeed = JUMP_SPEED;
     grounded = false;
     return true;
   }
 
   function look(dx, dy) {
+    if (guidedView) {
+      guidedView.look?.(dx, dy);
+      return;
+    }
     yaw -= dx;
     pitch = clamp(pitch - dy, -1.43, 1.43);
     updateCamera();
@@ -82,7 +100,7 @@ export function createPlayer(THREE, camera) {
   }
 
   function move(dt, movement, { area, definition }) {
-    if (seated) return;
+    if (seated || guidedView) return;
     const cos = Math.cos(yaw);
     const sin = Math.sin(yaw);
     const xMotion = cos * movement.x + sin * movement.y;
@@ -113,9 +131,10 @@ export function createPlayer(THREE, camera) {
   }
 
   return {
-    get seated() { return seated !== null; },
-    get grounded() { return grounded && !seated; },
-    reset, sit, stand, jump, look, move, carryVertically,
+    get seated() { return Boolean(seated || guidedView); },
+    get guided() { return guidedView !== null; },
+    get grounded() { return grounded && !seated && !guidedView; },
+    reset, sit, stand, guide, jump, look, move, carryVertically,
     stop() { speed.set(0, 0); },
   };
 }
