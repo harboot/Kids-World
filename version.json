@@ -1,5 +1,5 @@
 {
-  "version": "ca9494b6c64579eb8338a00bcf5dd6a04aa0ebb14c18b927204e124d277d596a",
+  "version": "1768a6382f4fd2c4fc503104c8b4cd405eb594bddd46d5096cbe3b8617e9614e",
   "files": [
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -146,16 +146,20 @@
       "revision": "8de3c8a2dfcda7ff3a8ae53db940f05bb616364f39e9bb3462b6f9dd832f751b"
     },
     {
+      "path": "./areas/military-base/helicopter-cabin.js",
+      "revision": "af91616f61897be06584e18fef75b1e01df6be0c81c5f188b7f37706d1543d8b"
+    },
+    {
       "path": "./areas/military-base/helicopter-flight.js",
       "revision": "7633e7a9141668884d746c0187e48fd104d77bad5304ad280d1ecde5cb012da0"
     },
     {
       "path": "./areas/military-base/helicopter.js",
-      "revision": "c80a862a2e9833da5603d78d8271dc61e3192b855b384d2049a09b8639750acc"
+      "revision": "78bc3910316bc5937785033b12390527327c4dc026fcffa7e128f783b2d82ef6"
     },
     {
       "path": "./areas/military-base/index.js",
-      "revision": "c2ec8aac5763c4f7cd6781b83d1d5e20b96be03c8e9e6b49c3b45202853ccf4d"
+      "revision": "9f3b8a7c821d02cd84d16a378a792f80ced37e2f5e58a13f8f4a240c917ed6b5"
     },
     {
       "path": "./areas/military-base/layout.js",

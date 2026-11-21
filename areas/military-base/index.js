@@ -43,7 +43,7 @@ export const militaryBase = {
     buildBuildings(kit);
     const traversal = buildPerimeter(kit);
     const tank = buildVehicles(kit, moving);
-    const helicopter = buildHelicopter(kit, moving);
+    const helicopter = buildHelicopter(kit, moving, document);
     const { radarHeads, poseFlag } = buildDecorations(kit, moving, document);
     const soldiers = buildSoldiers(kit, moving);
     const props = buildMissionProps(kit, moving);
