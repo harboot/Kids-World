@@ -12,10 +12,14 @@ Players explore worlds, interact with objects, and complete simple missions. Ope
 
 ## Worlds & Missions
 
-### Flower Garden — 3 Missions
+### Flower Garden — 5 Missions
 - Deliver a basket containing at least 3 apples.
 - Feed the fish in the pond.
-- Greet a cow.
+- Greet a cow in its pen.
+- Pick carrots at the foot of the hill and put them in the tray to feed all five rabbits.
+- Open the chicken pen and make a chicken jump.
+
+Ride the hot air balloon for a view of the lakes and forests, or walk through the mountain cave and watch for bats at either entrance.
 
 ### Wooden House — 5 Missions
 - Make the bed.

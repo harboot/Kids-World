@@ -41,6 +41,20 @@ test('completion is independent of the last area and survives reopening', () => 
   assert.equal(initial.has('snow'), true);
 });
 
+test('the five-mission Garden needs a new completion while other saved badges remain', () => {
+  const storage = storageFixture();
+  const key = 'kids-world-completed-levels';
+  storage.setItem(key, JSON.stringify(['garden', 'snow']));
+  const open = () => createLevelProgress(areas, () => storage);
+  const progress = open();
+  assert.equal(progress.has('garden'), false);
+  assert.equal(progress.has('snow'), true);
+  progress.complete('garden');
+  assert.deepEqual(JSON.parse(storage.getItem(key)), ['snow', 'garden@2']);
+  assert.equal(open().has('garden'), true);
+  assert.equal(open().has('snow'), true);
+});
+
 function gardenFixture() {
   const storage = storageFixture();
   const progress = createLevelProgress(areas, () => storage);
@@ -84,11 +98,13 @@ function gardenFixture() {
   };
 }
 
-function assertProgress(area, { apples = 0, fish = 0, cow = 0, delivered = false } = {}) {
+function assertProgress(area, { apples = 0, fish = 0, cow = 0, rabbits = 0, chicken = 0, delivered = false } = {}) {
   assert.deepEqual(area.missionStatus.missions, [
     { id: 'apples', title: 'Collect and deliver apples', current: apples, total: 3, complete: delivered },
     { id: 'fish', title: 'Feed the pond fish', current: fish, total: 1, complete: fish === 1 },
     { id: 'cow', title: 'Greet a cow', current: cow, total: 1, complete: cow === 1 },
+    { id: 'rabbits', title: 'Feed the rabbits', current: rabbits, total: 1, complete: rabbits === 1 },
+    { id: 'chicken', title: 'Make a chicken jump', current: chicken, total: 1, complete: chicken === 1 },
   ]);
 }
 
@@ -184,7 +200,7 @@ test('the dry shore feeding spot animates pellets, ripples and fish and stays re
   worlds.unload();
 });
 
-test('either cow can complete the greeting, while chickens and repeated greetings add no progress', () => {
+test('a chicken jump and either cow greeting each count once', () => {
   const { worlds, area, scene, camera, cows, find } = gardenFixture();
   assert.equal(cows.length, 2);
   for (const [i, cow] of cows.entries()) {
@@ -195,25 +211,25 @@ test('either cow can complete the greeting, while chickens and repeated greeting
     chicken.act();
     worlds.update(0.25, camera.position);
     assert.ok(!chicken.active);
-    assertProgress(area);
+    assertProgress(area, { chicken: 1 });
     cow.act();
-    assertProgress(area, { cow: 1 });
+    assertProgress(area, { cow: 1, chicken: 1 });
     worlds.update(0.25, camera.position);
     assert.notEqual(model.getObjectByName('Cow head').rotation.x, 0);
     assert.ok(!cow.active);
     cow.act();
     cows[1 - i].act();
-    assertProgress(area, { cow: 1 });
+    assertProgress(area, { cow: 1, chicken: 1 });
     worlds.update(2, camera.position);
     assert.ok(cow.active);
     cow.act();
-    assertProgress(area, { cow: 1 });
+    assertProgress(area, { cow: 1, chicken: 1 });
   }
   worlds.unload();
 });
 
-test('all three missions record Garden completion in different orders and preserve it through replay', () => {
-  const { worlds, area, completions, progress, storage, find, basket, collect, cows, feed, notifications } = gardenFixture();
+test('all five missions record Garden completion in different orders and preserve it through replay', () => {
+  const { worlds, area, camera, completions, progress, storage, find, basket, collect, cows, feed, notifications } = gardenFixture();
   const tasks = {
     apples() {
       basket.act();
@@ -222,15 +238,26 @@ test('all three missions record Garden completion in different orders and preser
     },
     fish: feed.act,
     cow() { cows[0].act(); },
+    rabbits() {
+      find('Pick carrots').act();
+      find('Feed the rabbits').act();
+      for (let step = 0; step < 65; step++) worlds.update(.05, camera.position);
+    },
+    chicken() { find('Make chicken jump').act(); },
   };
-  for (const [visit, order] of [['fish', 'cow', 'apples'], ['cow', 'apples', 'fish'], ['apples', 'fish', 'cow']].entries()) {
+  const orders = [
+    ['fish', 'cow', 'apples', 'chicken', 'rabbits'],
+    ['rabbits', 'chicken', 'cow', 'apples', 'fish'],
+    ['apples', 'rabbits', 'fish', 'cow', 'chicken'],
+  ];
+  for (const [visit, order] of orders.entries()) {
     assertProgress(area);
     const counts = {};
     for (const [index, id] of order.entries()) {
       tasks[id]();
       counts[id] = id === 'apples' ? 3 : 1;
       assertProgress(area, { ...counts, delivered: counts.apples === 3 });
-      assert.equal(progress.has('garden'), visit > 0 || index === 2);
+      assert.equal(progress.has('garden'), visit > 0 || index === order.length - 1);
     }
     assert.equal(notifications.length, visit + 1);
     assert.equal(notifications.at(-1), 'Flower Garden complete!');

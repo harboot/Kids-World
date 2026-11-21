@@ -27,7 +27,7 @@ The picker lists all public areas from the start and marks areas whose missions 
 | `load(context)` | Constructs the visit and returns its runtime interface |
 | `show` | Explicit boolean set on the entry in `game.js` |
 
-`music` can name an existing track, such as `'garden'`. `loadingMessage` can override the default loading text.
+`music` can name an existing track, such as `'garden'`. `loadingMessage` can override the default loading text. Set or increment `completionRevision` when a changed mission list requires a new completion badge.
 
 ### Loaded visit
 
