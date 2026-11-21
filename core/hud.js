@@ -41,6 +41,7 @@ export function createMissionHud(game, timers = globalThis) {
       });
       list.replaceChildren(...rows.map(({ row }) => row));
     }
+    details.hidden = next.missions.length === 0 && !next.hint && next.inventory.length === 0;
     setText(summary, `${next.completed}/${next.missions.length}`);
     next.missions.forEach((mission, index) => {
       const { row, title, count } = rows[index];
