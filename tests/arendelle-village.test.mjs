@@ -24,7 +24,7 @@ function assertMission(area, id, current, complete) {
 }
 
 function fixture(initial = ID) {
-  let stored = JSON.stringify(['garden', 'wooden-house', 'snow']);
+  let stored = JSON.stringify(['garden@2', 'wooden-house', 'snow']);
   const writes = [];
   const completions = [];
   const cues = [];
@@ -445,7 +445,7 @@ test('any order completes the village only after all three missions and replay p
       worlds.reset();
       assert.deepEqual(repeat.area.missionStatus.missions, initialProgress);
       assert.deepEqual(completions, [ID]);
-      assert.deepEqual(writes, [['garden', 'wooden-house', 'snow', ID]]);
+      assert.deepEqual(writes, [['garden@2', 'wooden-house', 'snow', ID]]);
     } finally {
       worlds.unload();
     }

@@ -1,5 +1,5 @@
 {
-  "version": "5b6a062b2ffadf286800c3d87809a6dbccbd4ff071c8adcb3a48f8f49a8c6343",
+  "version": "cefac6a25e45c42b54c4ad737193512ce6bc9eef90ada78753c5e225dcda288b",
   "files": [
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -63,19 +63,43 @@
     },
     {
       "path": "./areas/flower-garden/flower-garden.jpg",
-      "revision": "2dcfd24d934ac7cc5211b0e9ca74307080810ea019ab0edc6c752e76b039e0ae"
+      "revision": "8be857c4c5e3f7e38fd57df3a8532b25d3831a353e90b9d433bf5cbbb0bbd748"
+    },
+    {
+      "path": "./areas/flower-garden/garden-balloon.js",
+      "revision": "d9d20c31a3fef0ce479c22b1c35e07b916e6246b549213a1dc5fce7fa41745c6"
+    },
+    {
+      "path": "./areas/flower-garden/garden-batches.js",
+      "revision": "03e58b6eddb778c157164bcc5979d3d17b0b734de0390df0207c9c0fb9164375"
     },
     {
       "path": "./areas/flower-garden/garden-cabin.js",
       "revision": "5a932061e40f7168376b79ff6737f42a64b9b35ce8bbc9682bad35229b4adc11"
     },
     {
+      "path": "./areas/flower-garden/garden-cave.js",
+      "revision": "b906b2978bc225cabb2c32d0592687670b1c364007f32bed193e1f23cbc0234a"
+    },
+    {
       "path": "./areas/flower-garden/garden-orchard.js",
       "revision": "3b84ba4e8143d9d8d8efe7f84d112243a928821e0fb455c1b6c92de18ec87710"
     },
     {
+      "path": "./areas/flower-garden/garden-panorama.js",
+      "revision": "2e5c3be08f346fc73a89b85a0358809d987446b4efc87c4cc3a8baa2d05d9bbf"
+    },
+    {
       "path": "./areas/flower-garden/garden-pond.js",
       "revision": "2559bb9c63f71f6d26d69264b816a5a825e864de363191b0d853396c171525a3"
+    },
+    {
+      "path": "./areas/flower-garden/garden-rabbits.js",
+      "revision": "0501f8606fab31065c5e7f0ab600a0260d771aad007a89c4a7104f7ec1373ae3"
+    },
+    {
+      "path": "./areas/flower-garden/garden-shelters.js",
+      "revision": "3c349b49cea41bb3f44907d0963190e9bf322dc03a83d312e8db3e89531cb541"
     },
     {
       "path": "./areas/flower-garden/garden-terrain.js",
@@ -83,7 +107,7 @@
     },
     {
       "path": "./areas/flower-garden/index.js",
-      "revision": "008f6d1c8d8e6d55511585723b34346e323d19f6497298e64aa87a9ba8ebbcb8"
+      "revision": "8b1e449237d36436df728c8d790a1a69184a3899a4cd62ad5b738f03f7d73175"
     },
     {
       "path": "./areas/frozen-castle/activities.js",
@@ -407,7 +431,7 @@
     },
     {
       "path": "./core/level-progress.js",
-      "revision": "63f09d20a6565cfb95cdc70f431dbcaf2392036e0b957bcdaf05324cf8079511"
+      "revision": "838a779e32f6dea01ad1361ec94f5ac5cd607926aeba22dfa6375395f53a67d4"
     },
     {
       "path": "./core/missions.js",

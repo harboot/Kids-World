@@ -26,16 +26,16 @@ test('the link-only area opens by explicit URL and never enters public progress'
   assert.equal(resolveArea(areaURL(root, ID), areas, 'garden'), ID);
   assert.equal(resolveArea(new URL('?area=snow', root), areas, 'garden', ID), 'snow');
 
-  let saved = JSON.stringify([ID, 'garden']);
+  let saved = JSON.stringify([ID, 'garden@2']);
   const progress = createLevelProgress(areas, () => ({
     getItem: () => saved,
     setItem(key, value) { saved = value; },
   }));
   progress.complete(ID);
   assert.equal(progress.has(ID), false);
-  assert.deepEqual(JSON.parse(saved), [ID, 'garden']);
+  assert.deepEqual(JSON.parse(saved), [ID, 'garden@2']);
   progress.complete('snow');
-  assert.deepEqual(JSON.parse(saved), ['garden', 'snow']);
+  assert.deepEqual(JSON.parse(saved), ['garden@2', 'snow']);
   assert.equal(progress.has('garden'), true);
 });
 
