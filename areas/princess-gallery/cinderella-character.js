@@ -2,7 +2,7 @@ import { addGroup } from '../../core/geometry.js';
 import { addRoundSolid, spaceTransform } from './parts.js';
 import { buildPrincessFace } from './princess-face.js';
 
-export function buildCinderellaCharacter(THREE, ballroom, parts, exhibit, obstacles) {
+export function buildCinderellaCharacter(THREE, ballroom, parts, exhibit, obstacles, landingHeight) {
   const { part, matte, batch } = parts;
   // The open floor inside the left stair curve keeps the gown visible from the entrance.
   const x = -1.84;
@@ -101,8 +101,9 @@ export function buildCinderellaCharacter(THREE, ballroom, parts, exhibit, obstac
 
   addRoundSolid(obstacles, ...spaceTransform(exhibit).toWorld(x, z), .88, 2.64);
   const { clamp, damp } = THREE.MathUtils;
-  const attentionRadius = 7.4;
-  const releaseRadius = 8.1;
+  const attentionRadius = 14.1;
+  const releaseRadius = 14.8;
+  const { width, depth } = exhibit.bounds;
   let watching = false;
 
   return {
@@ -116,13 +117,15 @@ export function buildCinderellaCharacter(THREE, ballroom, parts, exhibit, obstac
       const dx = playerX - x;
       const dz = playerZ - z;
       const radius = watching ? releaseRadius : attentionRadius;
-      watching = Math.abs(floorY) < 1.38 && dx * dx + dz * dz <= radius * radius;
+      const inBallroom = Math.abs(playerX) <= width / 2 - .26 && Math.abs(playerZ) < depth / 2;
+      const distance = Math.hypot(dx, dz);
+      watching = inBallroom && floorY >= -.2 && floorY < landingHeight + 1.45 && distance <= radius;
       const yaw = watching ? Math.atan2(dx, dz) : restYaw;
       // Turn the full figure by the shortest arc, including when the player walks behind her.
       const delta = yaw - figure.rotation.y;
       const turn = Math.atan2(Math.sin(delta), Math.cos(delta));
       figure.rotation.y = still || Math.abs(turn) < .001 ? yaw : figure.rotation.y + damp(0, turn, 5.6, dt);
-      const pitch = watching ? clamp(Math.atan2(2.035 - eyeY, Math.hypot(dx, dz)), -.26, .26) : restPitch;
+      const pitch = watching ? clamp(Math.atan2(head.position.y - eyeY, distance), -.79, .31) : restPitch;
       const headTurn = watching ? 0 : restHeadTurn;
       head.rotation.x = still ? pitch : damp(head.rotation.x, pitch, 7, dt);
       head.rotation.y = still ? headTurn : damp(head.rotation.y, headTurn, 7, dt);

@@ -7,6 +7,8 @@ import { ATRIUM_RADII } from '../areas/princess-gallery/atrium.js';
 import { exhibits, exhibitOutline } from '../areas/princess-gallery/exhibits.js';
 import { spaceTransform } from '../areas/princess-gallery/parts.js';
 import { observationPlatform } from '../areas/princess-gallery/rapunzel.js';
+import { WALKWAY_HEIGHT } from '../areas/princess-gallery/walkway.js';
+import { walkwayLiftSite } from '../areas/princess-gallery/walkway-lift.js';
 import { createCoordinatePicker } from '../core/coordinate-picker.js';
 import { createDroneCamera, isDroneView } from '../core/drone-view.js';
 import { nearestInteraction } from '../core/interactions.js';
@@ -40,6 +42,7 @@ function fixture({ saved = [], reduced = false } = {}) {
     services: {
       reducedMotion: () => reduced,
       isPlayerGrounded: () => player.grounded,
+      carryPlayer: player.carryVertically,
       notify: message => notices.push(message),
       isLevelComplete: progress.has,
       completeLevel: progress.complete,
@@ -804,6 +807,9 @@ test('Cinderella stands in view from the entrance and leaves both stair approach
   assert.ok(Math.abs(character.rotation.y - Math.PI / 2) < .03, 'her whole body turns at a generous distance');
   follow(-3.1, -3.1);
   assert.ok(Math.cos(character.rotation.y + Math.PI * .75) > .998, 'her body keeps facing the moving player');
+  follow(11.89, -6.31, 4.32);
+  assert.ok(Math.cos(character.rotation.y - Math.atan2(11.89, -6.31)) > .998, 'she tracks the far staircase landing');
+  assert.ok(head.rotation.x < -.24, 'her head tilts up to meet the player’s eyes on the stairs');
   follow(0, 6.9, 15.6);
   assert.ok(Math.cos(character.rotation.y - restYaw) > .998, 'she settles when the player is above the ballroom');
   assert.equal(slipper.position.y, slipperRest);
@@ -870,6 +876,9 @@ test('Cinderella’s curved staircase can be walked in both directions and the s
 
   walkTo(9.01, -4.64);
   walkTo(10.05, -7.96);
+  standStill(30);
+  const head = scene.getObjectByName('Cinderella head');
+  assert.ok(head.getWorldDirection(new THREE.Vector3()).y > .24, 'she looks up as the player climbs the stairs');
   walkTo(0, -8.36);
   assert.ok(Math.abs(camera.position.y - EYE_HEIGHT - 4.32) < 1e-6);
   assert.ok(player.grounded);
@@ -925,7 +934,7 @@ test('Cinderella’s slipper holds a static sparkle in reduced motion and clears
   assert.equal(slipper.position.y, rest);
 });
 
-test('Ariel appears from the shipwreck and swims around the player only while the deck is occupied', t => {
+test('Ariel slowly circles the shipwreck only while the deck is occupied', t => {
   const { worlds, player, camera } = fixture();
   t.after(worlds.unload);
   const visit = worlds.load(ID);
@@ -965,10 +974,11 @@ test('Ariel appears from the shipwreck and swims around the player only while th
   function wait(frames) {
     for (let i = 0; i < frames; i++) worlds.update(1 / 60, camera.position);
   }
-  function offsetFromPlayer() {
-    const position = character.getWorldPosition(new THREE.Vector3()).sub(camera.position);
-    assert.ok(Math.hypot(position.x, position.z) > 3.15 && Math.hypot(position.x, position.z) < 3.8);
-    return position;
+  function shipPhase() {
+    const { x, z } = character.position;
+    const phase = Math.atan2((z + .70) / 5.33, x / 4.55);
+    assert.ok(Math.abs((x / 4.55) ** 2 + ((z + .70) / 5.33) ** 2 - 1) < 1e-7);
+    return phase;
   }
 
   const middle = deck.getWorldPosition(new THREE.Vector3());
@@ -986,15 +996,20 @@ test('Ariel appears from the shipwreck and swims around the player only while th
   assert.ok(player.grounded);
   assert.ok(Math.abs(camera.position.y - EYE_HEIGHT - wreckDeck.height) < 1e-6);
   assert.ok(character.visible);
-  const start = offsetFromPlayer();
+  const start = shipPhase();
+  const before = character.position.clone();
+  const [otherX, otherZ] = toHullWorld(-.66, -.51);
+  player.reset({ x: otherX, z: otherZ }, area);
+  worlds.update(0, camera.position);
+  assert.ok(character.position.equals(before), 'the route is anchored to the ship as the player changes position');
   const initialBend = tail.rotation.x;
   wait(120);
-  assert.ok(offsetFromPlayer().distanceTo(start) > 3.0);
+  const arc = shipPhase() - start;
+  assert.ok(arc > .65 && arc < .85, 'Ariel makes one lap in about 17 seconds');
   assert.notEqual(tail.rotation.x, initialBend);
   assert.equal(area.missionStatus.missions.find(mission => mission.id === 'ariel').complete, true);
   assert.equal(nearestInteraction(area.interactions, camera.position), null);
-  walkTo(-.66, -.51);
-  offsetFromPlayer();
+  walkTo(0, .57);
   walkTo(0, wreckDeck.rampEnd + .60);
   wait(60);
   assert.equal(character.visible, false);
@@ -1033,6 +1048,52 @@ test('Ariel holds a steady greeting in reduced motion and unload releases the ex
   assert.equal(ariel.visible, false);
   visit.area.update(.2, camera.position);
   assert.equal(ariel.visible, false);
+});
+
+test('Ariel’s treasure chest opens and closes with a repeatable interaction and no extra mission', t => {
+  const { worlds, camera } = fixture();
+  t.after(worlds.unload);
+  const { scene, area } = worlds.load(ID);
+  const chest = scene.getObjectByName('Ariel treasure chest');
+  const lid = chest.getObjectByName('Ariel treasure chest lid');
+  const treasure = chest.getObjectByName('Ariel chest treasure');
+  const action = area.interactions.find(item => item.label === 'Open treasure chest');
+  function stand(z, y = EYE_HEIGHT) {
+    camera.position.copy(chest.localToWorld(new THREE.Vector3(0, y, z)));
+  }
+
+  assert.equal(treasure.visible, false);
+  assert.equal(Math.abs(lid.rotation.x), 0);
+  stand(-1.9);
+  assert.equal(nearestInteraction(area.interactions, camera.position), null);
+  action.act();
+  assert.equal(action.label, 'Open treasure chest');
+  stand(1.9, EYE_HEIGHT + WALKWAY_HEIGHT);
+  assert.equal(nearestInteraction(area.interactions, camera.position), null);
+  stand(1.9);
+  assert.equal(nearestInteraction(area.interactions, camera.position, () => false), null);
+  assert.equal(nearestInteraction(area.interactions, camera.position, () => true), action);
+  action.act();
+  assert.equal(action.label, 'Close treasure chest');
+  worlds.update(.13, camera.position);
+  assert.ok(lid.rotation.x < 0 && lid.rotation.x > -1.2);
+  worlds.update(.5, camera.position);
+  assert.ok(lid.rotation.x < -1.2 && treasure.visible);
+  action.act();
+  worlds.update(.6, camera.position);
+  assert.equal(Math.abs(lid.rotation.x), 0);
+  assert.equal(treasure.visible, false);
+  assert.equal(action.label, 'Open treasure chest');
+  assert.ok(area.missionStatus.missions.every(mission => !mission.complete));
+
+  action.act();
+  worlds.update(.6, camera.position);
+  worlds.reset();
+  assert.equal(treasure.visible, false);
+  worlds.unload();
+  action.act();
+  assert.equal(action.active, false);
+  assert.equal(Math.abs(lid.rotation.x), 0);
 });
 
 test('the ten gallery missions record one interaction per exhibit and replay after reset', t => {
@@ -1118,6 +1179,132 @@ test('the ten gallery missions record one interaction per exhibit and replay aft
   assert.equal(progress.has(ID), true, 'reset preserves the saved level record');
   worlds.load(CASTLE);
   assert.ok(worlds.load(ID).area.missionStatus.missions.every(mission => !mission.complete));
+});
+
+test('the Glass Walkway lift can be called from either landing and carries the player both ways', t => {
+  const { worlds, player, camera } = fixture();
+  t.after(worlds.unload);
+  const visit = worlds.load(ID);
+  const { scene, area } = visit;
+  const cabin = scene.getObjectByName('Glass lift cabin');
+  const groundDoor = scene.getObjectByName('Lift ground station').getObjectByName('Landing door');
+  const upperDoor = scene.getObjectByName('Lift walkway station').getObjectByName('Landing door');
+  const { x, z, halfDepth, entry } = walkwayLiftSite;
+  const front = x + halfDepth;
+  const landingX = front + 1.04;
+  const callGround = area.interactions.find(item => item.label === 'Call lift to ground floor');
+  const callUpper = area.interactions.find(item => item.label === 'Call lift to Glass Walkway');
+  const ride = area.interactions.find(item => item.label === 'Ride lift to Glass Walkway');
+  const direction = new THREE.Vector2();
+
+  function frame() {
+    player.move(1 / 60, direction, visit);
+    worlds.update(1 / 60, camera.position);
+  }
+  function wait(frames) {
+    direction.set(0, 0);
+    player.stop();
+    for (let i = 0; i < frames; i++) frame();
+  }
+  function walkTo(tx, tz) {
+    for (let i = 0; i < 320; i++) {
+      direction.set(tx - camera.position.x, tz - camera.position.z);
+      if (direction.length() < .11) {
+        player.stop();
+        return;
+      }
+      direction.normalize();
+      frame();
+    }
+    assert.fail(`could not reach ${tx}, ${tz} from ${camera.position.toArray()}`);
+  }
+  function assertFloor(height) {
+    assert.ok(Math.abs(camera.position.y - EYE_HEIGHT - height) < 1e-6);
+    assert.ok(player.grounded);
+  }
+
+  assert.equal(groundDoor.visible, false);
+  assert.equal(upperDoor.visible, true);
+  player.reset({ x: entry[0], z: entry[1] }, area);
+  walkTo(landingX, z);
+  assert.equal(nearestInteraction(area.interactions, camera.position), null);
+  walkTo(x, z);
+  assertFloor(0);
+  assert.equal(nearestInteraction(area.interactions, camera.position), ride);
+  player.look(.32, -.12);
+  const gaze = camera.rotation.toArray();
+  ride.act();
+  assert.equal(ride.active, false);
+  wait(140);
+  assert.ok(cabin.position.y > 4.5 && cabin.position.y < WALKWAY_HEIGHT);
+  assertFloor(cabin.position.y);
+  assert.deepEqual(camera.rotation.toArray(), gaze, 'the camera keeps its look orientation');
+  assert.ok(groundDoor.visible && upperDoor.visible);
+  assert.ok(area.blocksGround(front, z, PLAYER_RADIUS, cabin.position.y), 'closed doors keep the rider inside');
+  assert.ok(player.jump());
+  wait(31);
+  assert.ok(camera.position.y - EYE_HEIGHT >= cabin.position.y, 'jumping mid-trip keeps the moving floor underneath');
+  wait(220);
+  assertFloor(WALKWAY_HEIGHT);
+  assert.equal(upperDoor.visible, false);
+  assert.equal(groundDoor.visible, true);
+  player.look(-.32, .12);
+  walkTo(landingX, z);
+  walkTo(...entry);
+  assertFloor(WALKWAY_HEIGHT);
+  walkTo(x, z);
+  assert.equal(ride.label, 'Ride lift to ground floor');
+  ride.act();
+  wait(360);
+  assertFloor(0);
+  walkTo(landingX, z);
+  assert.equal(Math.abs(camera.position.y - EYE_HEIGHT), 0);
+
+  player.reset({ x: entry[0], z: entry[1], elevation: WALKWAY_HEIGHT }, area);
+  walkTo(landingX, z);
+  assert.equal(nearestInteraction(area.interactions, camera.position), callUpper);
+  assert.ok(area.blocksGround(front, z, PLAYER_RADIUS, WALKWAY_HEIGHT), 'an empty shaft is blocked');
+  callUpper.act();
+  wait(360);
+  assertFloor(WALKWAY_HEIGHT);
+  assert.equal(cabin.position.y, WALKWAY_HEIGHT);
+  assert.equal(upperDoor.visible, false);
+
+  player.reset({ x: entry[0], z: entry[1] }, area);
+  walkTo(landingX, z);
+  assert.equal(nearestInteraction(area.interactions, camera.position), callGround);
+  assert.ok(area.blocksGround(front, z, PLAYER_RADIUS, 0), 'the lower shaft is blocked when the cabin is upstairs');
+  callGround.act();
+  wait(360);
+  assertFloor(0);
+  assert.equal(cabin.position.y, 0);
+  walkTo(x, z);
+  ride.act();
+  wait(90);
+  assert.ok(cabin.position.y > 0);
+  worlds.reset();
+  assert.equal(cabin.position.y, 0);
+  assert.equal(groundDoor.visible, false);
+  assert.equal(upperDoor.visible, true);
+});
+
+test('the lift uses a short trip in reduced motion and clears its controls on unload', t => {
+  const { worlds, player, camera } = fixture({ reduced: true });
+  t.after(worlds.unload);
+  const { scene, area } = worlds.load(ID);
+  const { x, z } = walkwayLiftSite;
+  player.reset({ x, z }, area);
+  const ride = nearestInteraction(area.interactions, camera.position);
+  assert.equal(ride.label, 'Ride lift to Glass Walkway');
+  ride.act();
+  for (let i = 0; i < 30; i++) worlds.update(1 / 60, camera.position);
+  assert.ok(Math.abs(camera.position.y - EYE_HEIGHT - WALKWAY_HEIGHT) < 1e-6);
+  assert.equal(ride.label, 'Ride lift to ground floor');
+  const cabin = scene.getObjectByName('Glass lift cabin');
+  assert.ok(cabin.children.filter(mesh => mesh.isMesh).every(mesh => mesh.layers.isEnabled(PLAYER_ONLY_LAYER)));
+  worlds.unload();
+  assert.equal(cabin.position.y, 0);
+  assert.equal(ride.active, false);
 });
 
 test('both staircases connect the main level to the glass loop and all ten overlooks', t => {

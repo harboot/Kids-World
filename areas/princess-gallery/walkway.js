@@ -1,6 +1,7 @@
 import { addGroup, SURFACE_GAP } from '../../core/geometry.js';
 import { PLAYER_ONLY_LAYER } from '../../core/render-layers.js';
 import { addGallerySign, spaceTransform } from './parts.js';
+import { walkwayLiftSite } from './walkway-lift.js';
 
 export const WALKWAY_HEIGHT = 15.6;
 const halfSpan = 1.55;
@@ -184,6 +185,8 @@ export function buildWalkway({ THREE, document, parent, parts, exhibits, ceiling
     addGroup(THREE, walkway, exhibit.id + ' overlook', lookout[0], WALKWAY_HEIGHT, lookout[1]);
   }
   for (const staircase of walkwayStairs) connect(staircase.entry, [staircase.x, staircase.z], halfSpan, false);
+  const { entry, x, z, halfDepth, halfWidth } = walkwayLiftSite;
+  connect(entry, [x + halfDepth, z], halfWidth, false);
 
   for (const [index, sockets] of connections.entries()) {
     const center = ring[index];

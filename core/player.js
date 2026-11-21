@@ -53,6 +53,13 @@ export function createPlayer(THREE, camera) {
     updateCamera();
   }
 
+  function carryVertically(distance) {
+    if (seated) return;
+    elevation += distance;
+    camera.position.y = elevation + EYE_HEIGHT;
+    camera.updateMatrixWorld();
+  }
+
   function jump() {
     if (seated || !grounded) return false;
     verticalSpeed = JUMP_SPEED;
@@ -108,7 +115,7 @@ export function createPlayer(THREE, camera) {
   return {
     get seated() { return seated !== null; },
     get grounded() { return grounded && !seated; },
-    reset, sit, stand, jump, look, move,
+    reset, sit, stand, jump, look, move, carryVertically,
     stop() { speed.set(0, 0); },
   };
 }

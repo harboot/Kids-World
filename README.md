@@ -40,12 +40,12 @@ Players explore connected worlds, interact with objects, and complete simple mis
 - Collect three gears and repair the Clock Tower.
 
 ### Princess Gallery — 10 Exhibits to Explore
-- Glass Walkway — Take the stairs by the Grand Lobby or in the Royal Wing to look into every exhibit from above.
+- Glass Walkway — Take the stairs by the Grand Lobby or in the Royal Wing, or use the lift in the Adventure Wing.
 - Rapunzel — Jump onto the observation platform to make Rapunzel wave.
 - Snow White — Approach Snow White and the seven dwarfs to see them react.
 - Cinderella — Approach the glass slipper on the ballroom stairs to make it float and sparkle.
 - Aurora — Approach the enchanted rose to wake Aurora. Move away to let her sleep again.
-- Ariel — Walk up the shipwreck’s gangplank and stand on deck to see Ariel swim around you.
+- Ariel — Walk up the shipwreck’s gangplank and stand on deck to see Ariel swim around the wreck. Open and close the treasure chest on the seabed.
 - Approach the story displays for Belle, Jasmine, Mulan, Moana, and Tiana to complete the other five missions while their full exhibits are in development.
 
 ## Built for Expansion
