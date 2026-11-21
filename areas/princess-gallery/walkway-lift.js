@@ -126,7 +126,7 @@ export function buildWalkwayLift({ THREE, document, parent, parts, height, camer
   }
   function request(target) {
     const still = reducedMotion();
-    trip = { target, elapsed: 0, doorTime: still ? .13 : .43, travelTime: still ? .19 : 4.4 };
+    trip = { target, elapsed: 0, doorTime: still ? .13 : .43, travelTime: still ? .19 : 8.0 };
   }
   function render(open, dock) {
     cabinDoors(open);

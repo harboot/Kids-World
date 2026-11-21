@@ -46,7 +46,8 @@ Players explore connected worlds, interact with objects, and complete simple mis
 - Cinderella — Approach the glass slipper on the ballroom stairs to make it float and sparkle.
 - Aurora — Approach the enchanted rose to wake Aurora. Move away to let her sleep again.
 - Ariel — Walk up the shipwreck’s gangplank and stand on deck to see Ariel swim around the wreck. Open and close the treasure chest on the seabed.
-- Approach the story displays for Belle, Jasmine, Mulan, Moana, and Tiana to complete the other five missions while their full exhibits are in development.
+- Belle — Visit Belle and the Beast in the castle library and approach the tea table to see the teapot and cups dance.
+- Approach the story displays for Jasmine, Mulan, Moana, and Tiana to complete the other four missions while their full exhibits are in development.
 
 ## Built for Expansion
 

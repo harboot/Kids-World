@@ -1,5 +1,6 @@
 import { buildAriel } from './ariel.js';
 import { buildAurora } from './aurora.js';
+import { buildBelle } from './belle.js';
 import { buildCinderella } from './cinderella.js';
 import { buildRapunzel } from './rapunzel.js';
 import { buildSnowWhite } from './snow-white.js';
@@ -49,10 +50,10 @@ export const exhibits = [
   },
   {
     id: 'belle', title: 'Belle — Beauty and the Beast', accent: 0xc99856, wing: 'royal',
-    mission: 'Discover Belle’s enchanted book', display: 'Enchanted Book',
+    mission: 'Watch Belle’s enchanted tea set dance',
     position: { x: -23, z: -44 }, rotation: .27,
     bounds: { width: 21, depth: 19, height: 19 }, shape: 'chamfered', entrance: 6.2,
-    approach: [-17, -27], status: 'coming-soon',
+    approach: [-17, -27], status: 'complete', build: buildBelle,
   },
   {
     id: 'cinderella', title: 'Cinderella', accent: 0x799fc8, wing: 'royal',

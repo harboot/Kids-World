@@ -1,5 +1,5 @@
 {
-  "version": "cf7b4eb76560d8312022dff4ffc8dd4e3754394f6596571bbd3571764f05ec39",
+  "version": "bf84a90228343801b358e44067c6b4097c4a76f4a4ff7943a6d07a48fafadecc",
   "files": [
     {
       "path": "./areas/arendelle-village/buildings.js",
@@ -115,7 +115,7 @@
     },
     {
       "path": "./areas/princess-gallery/ariel-wreck.js",
-      "revision": "530fa5b9e9a02e7b70822a4f3656c42754503e88e93ab08c339f5769ce3333fa"
+      "revision": "ac98d6d44bb67c561b7a9486ea7895caf6f9e3e4704ab414979e78ae071e9e60"
     },
     {
       "path": "./areas/princess-gallery/ariel.js",
@@ -138,6 +138,22 @@
       "revision": "8fdd6494362ea732d692cc52c5f7ae293700326ae034eddc96ad92a3f9ba5387"
     },
     {
+      "path": "./areas/princess-gallery/belle-characters.js",
+      "revision": "5519916edcf6a3a310e3d1c5b4a136160da85dbd45bddf9040040782a9e30afc"
+    },
+    {
+      "path": "./areas/princess-gallery/belle-library.js",
+      "revision": "0fbb2abdb7eb406f3f3e1d36bf4c213390d1e617419a4dd8134739e224db9b04"
+    },
+    {
+      "path": "./areas/princess-gallery/belle-tea.js",
+      "revision": "55aafd7b1bfff813dcc40dcaafd7e2e7f442fc548a12acc55d979cd6e094e605"
+    },
+    {
+      "path": "./areas/princess-gallery/belle.js",
+      "revision": "a1f64f7a7a8c0c570be7ee012812b48ab71bbd128e66d5b4ca4142782c016938"
+    },
+    {
       "path": "./areas/princess-gallery/cinderella-character.js",
       "revision": "764e29b8dd0ef0a6cb65180db7e5a9ed53ec69d52e247f866fdc994ef69cfe3f"
     },
@@ -155,11 +171,11 @@
     },
     {
       "path": "./areas/princess-gallery/exhibits.js",
-      "revision": "1a63fc017c6da0e7f34dc4c3139a53315686af300e9e1b895d71829087f2c5f0"
+      "revision": "ee5630fe38e650c4ee8cdef70df51042465d291b58e7a065654b38e03c6c3e75"
     },
     {
       "path": "./areas/princess-gallery/gallery.js",
-      "revision": "8c7f228d69023b63021d93c516bc21e958bf7de5f861e51d718572ba53445039"
+      "revision": "2a2817bae63370dace7d84a5e9a1f5c4e30f1cbe82cc76ce956a6650e3ac12b5"
     },
     {
       "path": "./areas/princess-gallery/hanging-decor.js",
@@ -171,7 +187,7 @@
     },
     {
       "path": "./areas/princess-gallery/index.js",
-      "revision": "79b499eaed6d645d5510757febe9213ffca03da0b400a5d9c3c9bd4370cabec3"
+      "revision": "6db5d54166e9b2ea6ab792e16c818194e50bcb04dccb50a6e83538b71341d250"
     },
     {
       "path": "./areas/princess-gallery/parts.js",
@@ -179,7 +195,7 @@
     },
     {
       "path": "./areas/princess-gallery/preview-display.js",
-      "revision": "56ca7a4200306fe70b5c343d40a782a39b08c1ac0b7cad8e29e20cef4bec050a"
+      "revision": "b62ac32154574ee5c62bf1665e7e05f95af6295d3a0ef813cef2c74ec02ca20e"
     },
     {
       "path": "./areas/princess-gallery/princess-face.js",
@@ -223,7 +239,7 @@
     },
     {
       "path": "./areas/princess-gallery/walkway-lift.js",
-      "revision": "25ec1c4e726ad14c85a2023d9aa66e8fa8e5b95c5ccc425c217b7975b42657f2"
+      "revision": "e36b8abae767adb8426c2cee52522674e2fda4608a094e697b02dd5c2ecb33fd"
     },
     {
       "path": "./areas/princess-gallery/walkway.js",

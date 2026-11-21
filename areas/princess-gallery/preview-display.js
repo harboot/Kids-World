@@ -3,15 +3,6 @@ import { EYE_HEIGHT } from '../../core/player.js';
 import { addGallerySign, addRoundSolid, spaceTransform } from './parts.js';
 
 const props = {
-  belle({ THREE, part, gold, ivory, accent, model }) {
-    for (const side of [-1, 1]) {
-      const page = addGroup(THREE, model, '', side * .33, .10, 0);
-      page.rotation.z = side * .19;
-      part(page, 'box', accent, 0, -.038, 0, .72, .10, .87);
-      part(page, 'box', ivory, 0, .035, 0, .67, .095, .81);
-      for (let i = 0; i < 4; i++) part(page, 'box', gold, 0, .089, -.25 + i * .13, .47, .012, .026);
-    }
-  },
   jasmine({ THREE, part, beam, gold, ivory, model: lamp }) {
     part(lamp, 'sphere', gold, -.13, .24, 0, .44, .202, .23);
     part(lamp, 'drum', gold, -.13, .055, 0, .22, .10, .16);
