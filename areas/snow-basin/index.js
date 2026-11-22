@@ -1,6 +1,9 @@
 import { CHOPS, CHOP_COOLDOWN, FALL_DURATION, SNOWMAN_COUNT, createSnowActivity, snowMissionsComplete } from './activity.js';
 import { addAxe, addIceSculpture, addChopTree, addFrozenKey, addSnowPlay, showSnowmen } from './props.js';
 import { addWinterScenery } from './scenery.js';
+import { addSnowTerrain } from './terrain.js';
+import { addIceSlide } from './slide.js';
+import { addSnowCharacters } from './characters.js';
 import { metadata } from './metadata.js';
 import { music } from './music.js';
 
@@ -41,8 +44,12 @@ export default snowBasin;
 function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, hud, isPlaying, playCue, playerRadius = 0.34,
   completeLevel, reducedMotion, notify }) {
   const { width, depth, spawn } = snowBasin;
-  const kit = addWinterScenery({ THREE, scene, touch, width, depth });
+  const terrain = addSnowTerrain(THREE, scene, width, depth);
+  const ground = terrain.getGroundHeight;
+  const kit = addWinterScenery({ THREE, scene, touch, width, depth, ground, document: hud?.ownerDocument });
   const { obstacles } = kit;
+  const slide = addIceSlide(THREE, scene, kit, ground);
+  const characters = addSnowCharacters({ THREE, scene, kit, ground, playerRadius, reducedMotion, playCue, notify });
   const axe = addAxe(THREE, scene, viewmodel, kit, axeSite);
   const pine = addChopTree(THREE, scene, kit, treeSite);
   const treeBoundary = new THREE.Mesh(new THREE.RingGeometry(treeClearance - 0.045, treeClearance, 48).rotateX(-Math.PI / 2),
@@ -62,7 +69,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
   const activity = createSnowActivity({
     width, depth, spawn, obstacles,
     clearSpot(x, z) {
-      if (Math.abs(x) > width / 2 - 1.4 || Math.abs(z) > depth / 2 - 1.4) return false;
+      if (Math.abs(x) > 14.6 || Math.abs(z) > 13.6 || ground(x, z) !== 0) return false;
       if (Math.abs(x) < 5.7 && Math.abs(z + 0.7) < 6.0) return false;
       if (Math.hypot(x - treeSite.x, z - treeSite.z) < treeClearance + 1.02 ||
           Math.hypot(x - keySite.x, z - keySite.z) < 2.0) return false;
@@ -175,6 +182,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
 
   function reset() {
     activity.reset();
+    characters.reset();
     for (const [i, { x, z }] of state.targets.entries()) {
       const model = play.models[i].group;
       model.position.set(x, 0, z);
@@ -216,6 +224,10 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
   };
   return {
     obstacles,
+    getGroundHeight: ground,
+    blocksGround(x, z, radius, feet) {
+      return terrain.blocksGround(x, z, radius) || slide.blocksGround(x, z, radius, feet);
+    },
     get missionStatus() { return missionStatus; },
     interactions: [
       {
@@ -244,9 +256,11 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
         get active() { return activity.canMakeBall(); },
         act: activity.makeBall,
       })),
+      ...characters.interactions,
     ],
     update(dt) {
       activity.update(dt);
+      characters.update(dt);
       if (impactTime < 0.56) impactTime += dt;
       updateModels(dt);
     },

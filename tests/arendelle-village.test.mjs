@@ -83,7 +83,7 @@ test('the village roads connect the entrance, plaza, west lanes, bridge, stable,
   const { visit, worlds, camera } = await fixture();
   t.after(worlds.unload);
   const { area, definition, scene } = visit;
-  assert.ok(definition.width * definition.depth > areas.snow.width * areas.snow.depth * 3);
+  assert.deepEqual([definition.width, definition.depth], [84, 72]);
   for (const name of ['Village trail lantern', 'Village Square', 'Clock tower', 'Village fountain', 'Village house 1',
     'Stone bridge', 'Village stables', 'Stable enclosure', 'Bakery', 'Fruit Shop', 'Fish Shop',
     'Harbor seawall', 'Fishing pier', 'City boat pier', 'City passenger boat', 'Fjord mountains']) {
