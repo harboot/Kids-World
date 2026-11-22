@@ -1,4 +1,5 @@
 export const SUMMIT_HEIGHT = 8.1;
+export const LAKE_LEVEL = Math.fround(-0.38);
 
 // x, z, elevation. The east approach climbs around the head of the basin.
 export const MOUNTAIN_TRAIL = Object.freeze([
@@ -44,11 +45,13 @@ export function addSnowTerrain(THREE, scene, width, depth) {
   const stride = cols + 1;
   const positions = [];
   const colors = [];
-  const indices = [];
+  const land = [];
+  const ice = [];
   const heights = new Float32Array(stride * rows.length);
   const powder = new THREE.Color(0xd8e8f1);
   const drift = new THREE.Color(0xc4dbe9);
   const packed = new THREE.Color(0xaecbdc);
+  const lakeBlue = new THREE.Color(0x79b6cb);
   const cliff = new THREE.Color(0x698ba3);
   const color = new THREE.Color();
 
@@ -63,7 +66,10 @@ export function addSnowTerrain(THREE, scene, width, depth) {
         (1 - smoothstep(-18, -15, z));
       const trail = trailAt(x, z);
       const trailBlend = 1 - smoothstep(2.0, 5.2, trail.distance);
-      const y = rolls + mountain + (trail.elevation - mountain) * trailBlend;
+      const lakeRim = Math.hypot((x + 3.8) / 10.6, (z + 3.6) / 11.2) + wave * 0.04;
+      const lake = (1 - smoothstep(0.86, 1.10, lakeRim)) *
+        (1 - smoothstep(4, 6, x)) * (1 - smoothstep(6.55, 8, z));
+      const y = rolls + mountain + (trail.elevation - mountain) * trailBlend + LAKE_LEVEL * lake;
       heights[positions.length / 3] = y;
       positions.push(x, y, z);
 
@@ -71,22 +77,34 @@ export function addSnowTerrain(THREE, scene, width, depth) {
       color.copy(powder).lerp(drift, 0.23 + wave * 0.16);
       color.lerp(cliff, (1 - smoothstep(0.47, 0.87, ridge)) * smoothstep(0.34, 0.65, ridge) * 0.75);
       color.lerp(packed, (1 - smoothstep(0.75, 2.9, trail.distance)) * (1 - smoothstep(-14, -11, z)));
+      color.lerp(lakeBlue, lake * (0.88 + wave * 0.1));
       colors.push(color.r, color.g, color.b);
     }
+  }
+
+  function triangle(a, b, c) {
+    const indices = heights[a] === LAKE_LEVEL && heights[b] === LAKE_LEVEL && heights[c] === LAKE_LEVEL ? ice : land;
+    indices.push(a, b, c);
   }
 
   for (let row = 0; row < rows.length - 1; row++) {
     for (let col = 0; col < cols; col++) {
       const a = row * stride + col;
-      indices.push(a, a + stride, a + 1, a + 1, a + stride, a + stride + 1);
+      triangle(a, a + stride, a + 1);
+      triangle(a + 1, a + stride, a + stride + 1);
     }
   }
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
   geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-  geometry.setIndex(indices);
+  geometry.setIndex(land.concat(ice));
+  geometry.addGroup(0, land.length, 0);
+  geometry.addGroup(land.length, ice.length, 1);
   geometry.computeVertexNormals();
-  const ground = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }));
+  const ground = new THREE.Mesh(geometry, [
+    new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }),
+    new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 34, specular: 0x7ea9b9 }),
+  ]);
   ground.name = 'Snow Basin terrain';
   ground.receiveShadow = true;
   scene.add(ground);
@@ -116,6 +134,7 @@ export function addSnowTerrain(THREE, scene, width, depth) {
 
   return {
     getGroundHeight: (x, z) => sample(x, z),
+    getGroundTraction: (x, z) => sample(x, z) <= LAKE_LEVEL + 0.002 ? 0.15 : 1,
     blocksGround(x, z, radius) {
       return Math.abs(x) + radius > width / 2 || Math.abs(z) + radius > depth / 2 || sample(x, z, true) > 0.76;
     },

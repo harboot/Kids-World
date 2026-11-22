@@ -30,10 +30,11 @@ Ride the hot air balloon for a view of the lakes and forests, or walk through th
 - Turn off the TV.
 - Put away the toys.
 
-### Snow Basin — 3 Missions
+### Snow Basin — 4 Missions
 - Chop down the pine in 5 chops.
 - Destroy 3 snowmen from the western snowball station.
 - Climb Ice Mountain and ride the ice slide.
+- Meet Olaf by the frozen lake.
 
 ### Frozen Castle — 3 Missions
 - Activate 4 magical ice crystals.

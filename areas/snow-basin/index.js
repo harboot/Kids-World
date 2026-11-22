@@ -8,6 +8,7 @@ import { bindSnowballControls } from './snowball-controls.js';
 import { addSnowCharacters } from './characters.js';
 import { metadata } from './metadata.js';
 import { music } from './music.js';
+import { SURFACE_GAP } from '../../core/geometry.js';
 
 const axeSite = { x: 0.9, z: 5.9 };
 const treeSite = { x: 7.5, z: -1.85 };
@@ -44,13 +45,24 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
   const kit = addWinterScenery({ THREE, scene, touch, width, depth, ground, document: hud?.ownerDocument });
   const { obstacles } = kit;
   const slide = addIceSlide(THREE, scene, kit, ground);
-  const characters = addSnowCharacters({ THREE, scene, kit, ground, playerRadius, reducedMotion, playCue, notify });
+  let greetedOlaf = false;
+  const characters = addSnowCharacters({
+    THREE, scene, kit, ground, playerRadius, reducedMotion, playCue, notify,
+    onGreetOlaf() {
+      greetedOlaf = true;
+      finishLevel();
+    },
+  });
   const axe = addAxe(THREE, scene, viewmodel, kit, axeSite);
   const pine = addChopTree(THREE, scene, kit, treeSite);
   const treeBoundary = new THREE.Mesh(new THREE.RingGeometry(treeClearance - 0.045, treeClearance, 48).rotateX(-Math.PI / 2),
     new THREE.MeshBasicMaterial({ color: 0x315e76, toneMapped: false }));
   treeBoundary.name = 'Pine clearance';
-  treeBoundary.position.set(treeSite.x, 0.041, treeSite.z);
+  treeBoundary.position.set(treeSite.x, SURFACE_GAP.roof, treeSite.z);
+  const boundaryPoints = treeBoundary.geometry.getAttribute('position');
+  for (let i = 0; i < boundaryPoints.count; i++) {
+    boundaryPoints.setY(i, ground(treeSite.x + boundaryPoints.getX(i), treeSite.z + boundaryPoints.getZ(i)));
+  }
   scene.add(treeBoundary);
   const play = addSnowPlay(THREE, scene, viewmodel, kit);
   addIceSculpture(THREE, scene, kit, sculptureSite);
@@ -58,11 +70,15 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
   const direction = new THREE.Vector3();
   const origin = new THREE.Vector3();
   let impactTime = Infinity;
+  let lastEye;
   let completionReported = false;
   const activity = createSnowActivity({
     width, depth, obstacles,
     cue(name) {
-      if (name === 'land') impactTime = 0;
+      if (name === 'land') {
+        impactTime = 0;
+        dropAxe();
+      }
       playCue?.(cues[name]);
       if (name === 'hit' || name === 'land') finishLevel();
     },
@@ -75,6 +91,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
     get pine() { return activity.missions.pine; },
     get snowmen() { return activity.missions.snowmen; },
     get slide() { return ride.completed; },
+    get olaf() { return greetedOlaf; },
   };
 
   function finishLevel() {
@@ -134,19 +151,44 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
     panel?.show(state.held);
   }
 
+  function placeAxe(x, z) {
+    axe.axe.position.set(x, ground(x, z) + 0.17, z);
+  }
+
+  function dropAxe() {
+    const eye = lastEye ?? camera?.position ?? axeSite;
+    camera?.getWorldDirection(direction);
+    const x = THREE.MathUtils.clamp(eye.x + direction.x * 0.8, -width / 2 + 0.4, width / 2 - 0.4);
+    const z = THREE.MathUtils.clamp(eye.z + direction.z * 0.8, -depth / 2 + 0.4, depth / 2 - 0.4);
+    placeAxe(x, z);
+  }
+
+  function poseHeldAxe(fall) {
+    const holder = axe.holder;
+    const swinging = state.cooldown > 0;
+    holder.visible = state.axe && (!state.held || swinging) && !ride.riding;
+    const restX = Math.min(0.28, 0.32 * (camera?.aspect ?? 1));
+    const progress = swinging ? 1 - state.cooldown / CHOP_COOLDOWN : 1;
+    let side = 1;
+    if (progress < 0.2) {
+      side += 0.32 * THREE.MathUtils.smoothstep(progress, 0, 0.2);
+    } else if (progress < 0.68) {
+      side = 1.32 - 2.47 * THREE.MathUtils.smoothstep(progress, 0.2, 0.68);
+    } else {
+      side = -1.15 + 2.15 * THREE.MathUtils.smoothstep(progress, 0.68, 1);
+    }
+    const swing = Math.sin(Math.PI * progress);
+    const lowered = Math.min(1, fall * 7, (1 - fall) * 10);
+    holder.position.set(restX * side, -0.37 + swing * 0.14 - 0.56 * lowered, -0.88 - swing * 0.16);
+    holder.rotation.set(-0.24 * swing, 0.57 * (side - 1), -0.36 * (side - 1));
+  }
+
   function updateModels() {
-    axe.axe.visible = axe.ring.visible = !state.axe;
+    axe.axe.visible = !state.axe;
+    axe.ring.visible = !state.axe && state.tree === 'upright';
     treeBoundary.visible = state.tree !== 'fallen';
     const fall = state.fallTime / FALL_DURATION;
-    const swinging = state.cooldown > 0;
-    axe.holder.visible = state.axe && (!state.held || swinging);
-    if (axe.holder.visible) {
-      axe.holder.position.x = Math.min(0.28, 0.32 * (camera?.aspect ?? 1));
-      const lowered = Math.min(1, fall * 7, (1 - fall) * 10);
-      axe.holder.position.y = -0.37 - 0.56 * lowered;
-    }
-    const swing = Math.sin(Math.PI * state.cooldown / CHOP_COOLDOWN);
-    axe.holder.rotation.set(-0.93 * swing, 0.3 * swing, -0.56 * swing);
+    poseHeldAxe(fall);
     const lean = fall * fall * (1 + 0.65 * (1 - fall));
     pine.tree.rotation.z = -Math.PI / 2 * lean;
     pine.shadow.position.x = treeSite.x + lean * 3.75;
@@ -175,6 +217,10 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
     activity.reset();
     ride.reset();
     characters.reset();
+    greetedOlaf = false;
+    lastEye = undefined;
+    placeAxe(axeSite.x, axeSite.z);
+    axe.ring.position.y = ground(axeSite.x, axeSite.z) + SURFACE_GAP.detail;
     impactTime = Infinity;
     updateModels();
   }
@@ -196,6 +242,11 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
         get current() { return Number(missions.slide); },
         get complete() { return missions.slide; },
       },
+      {
+        id: 'olaf', title: 'Meet Olaf', total: 1,
+        get current() { return Number(missions.olaf); },
+        get complete() { return missions.olaf; },
+      },
     ],
     get hint() {
       if (snowMissionsComplete(missions)) return 'Snow Basin complete!';
@@ -205,20 +256,22 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
       if (!missions.slide && ride.interaction.reachable(camera?.position)) return 'Slide down from the summit.';
       if (!missions.pine) return state.axe ? 'Chop the pine from the pond side.' : 'Find the axe by the frozen lake.';
       if (!missions.snowmen) return 'Approach the snow pile in the west to pick up a snowball.';
-      return 'Follow the mountain trail to the ice slide.';
+      if (!missions.slide) return 'Follow the mountain trail to the ice slide.';
+      return 'Walk up to Olaf by the frozen lake.';
     },
   };
   return {
     obstacles,
     getGroundHeight: ground,
+    getGroundTraction: terrain.getGroundTraction,
     blocksGround(x, z, radius, feet) {
       return terrain.blocksGround(x, z, radius) || slide.blocksGround(x, z, radius, feet);
     },
     get missionStatus() { return missionStatus; },
     interactions: [
       {
-        ...axeSite, anchorY: 0.46, radius: 1.85, label: 'Pick up axe', silent: true,
-        get active() { return !state.axe; },
+        ...axeSite, anchorY: ground(axeSite.x, axeSite.z) + 0.46, radius: 1.85, label: 'Pick up axe', silent: true,
+        get active() { return !state.axe && state.tree === 'upright'; },
         act: activity.pickUpAxe,
       },
       {
@@ -236,8 +289,9 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
       ...characters.interactions,
     ],
     update(dt, player) {
+      lastEye = player;
       activity.update(dt, player);
-      characters.update(dt);
+      characters.update(dt, ride.riding ? undefined : player);
       ride.update(dt);
       if (impactTime < 0.56) impactTime += dt;
       updateModels();

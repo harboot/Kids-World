@@ -86,7 +86,7 @@ export function createSnowActivity({ width, depth, obstacles, cue = () => {} }) 
   }
 
   function pickUpAxe() {
-    if (state.axe) return false;
+    if (state.axe || state.tree !== 'upright') return false;
     state.axe = true;
     cue('pickup');
     return true;
@@ -185,6 +185,7 @@ export function createSnowActivity({ width, depth, obstacles, cue = () => {} }) 
       state.fallTime = Math.min(FALL_DURATION, state.fallTime + dt);
       if (state.fallTime === FALL_DURATION) {
         state.tree = 'fallen';
+        state.axe = false;
         cue('land');
       }
     }
@@ -200,5 +201,5 @@ export function createSnowActivity({ width, depth, obstacles, cue = () => {} }) 
 }
 
 export function snowMissionsComplete(missions) {
-  return missions.pine && missions.snowmen && missions.slide;
+  return missions.pine && missions.snowmen && missions.slide && missions.olaf;
 }

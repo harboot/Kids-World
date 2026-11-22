@@ -27,7 +27,7 @@ export function createPlayer(THREE, camera) {
     seated = null;
     guidedView = null;
     yaw = spawn.yaw ?? 0;
-    pitch = 0;
+    pitch = spawn.pitch ?? 0;
     elevation = ground;
     verticalSpeed = 0;
     grounded = true;
@@ -106,8 +106,9 @@ export function createPlayer(THREE, camera) {
     const xMotion = cos * movement.x + sin * movement.y;
     const zMotion = -sin * movement.x + cos * movement.y;
     motion.set(WALK_SPEED * xMotion, WALK_SPEED * zMotion);
-    speed.lerp(motion, 1 - Math.exp(-15 * dt));
     const { position } = camera;
+    const traction = grounded ? area.getGroundTraction?.(position.x, position.z) ?? 1 : 1;
+    speed.lerp(motion, 1 - Math.exp(-15 * traction * dt));
     const xLimit = definition.width / 2 - PLAYER_RADIUS;
     const zLimit = definition.depth / 2 - PLAYER_RADIUS;
     const x = clamp(position.x + speed.x * dt, -xLimit, xLimit);

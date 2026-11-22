@@ -30,7 +30,7 @@ class Element extends EventTarget {
 test('the picker lists all public areas with thumbnails, regardless of missions or current area', async () => {
   const list = new Element();
   list.ownerDocument = { createElement: () => new Element() };
-  let saved = JSON.stringify(['snow@2', 'secret-apartment']);
+  let saved = JSON.stringify(['snow@3', 'secret-apartment']);
   const progress = createLevelProgress(areas, () => ({
     getItem: () => saved,
     setItem(key, value) { saved = value; },
