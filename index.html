@@ -46,7 +46,7 @@
       </div>
       <p id="mission-toast" class="mission-toast" role="status"></p>
       <div class="hud-actions">
-        <button id="sound" class="hud-button sound-button" type="button" aria-label="Mute sound" aria-pressed="false" hidden>♪</button>
+        <button id="open-settings" class="hud-button" type="button" aria-label="Settings" title="Settings" aria-haspopup="dialog" disabled>⚙︎</button>
         <button id="choose-level" class="hud-button" type="button" aria-label="Choose area" title="Choose area" aria-haspopup="dialog" disabled>☷</button>
         <button id="fullscreen" class="hud-button" type="button" aria-label="Fullscreen" title="Fullscreen" hidden>⛶</button>
       </div>
@@ -105,16 +105,41 @@
           <div><kbd>Esc</kbd><span>Pause</span></div>
         </div>
         <div class="guide touch-guide" aria-label="Touch controls">
-          <div><kbd>Left stick</kbd><span>Move</span></div>
-          <div><kbd>Drag right side</kbd><span>Look</span></div>
+          <div class="stick-steering"><kbd>Joystick</kbd><span>Move and turn</span></div>
+          <div class="stick-strafing"><kbd>Joystick</kbd><span>Move</span></div>
+          <div class="stick-steering"><kbd>Drag right side</kbd><span>Look up or down</span></div>
+          <div class="stick-strafing"><kbd>Drag right side</kbd><span>Look</span></div>
           <div><kbd>Tap scene</kbd><span>Jump</span></div>
           <div><kbd>Tap circle</kbd><span>Interact</span></div>
         </div>
       </div>
     </section>
 
-    <dialog id="level-picker" aria-labelledby="level-picker-title">
-      <header class="level-picker-header">
+    <dialog id="settings" class="game-dialog" aria-labelledby="settings-title">
+      <header class="dialog-header">
+        <h2 id="settings-title">Settings</h2>
+        <form method="dialog"><button class="hud-button" aria-label="Close settings" autofocus>×</button></form>
+      </header>
+      <button id="sound" class="sound-setting" type="button" aria-label="Mute sound" aria-pressed="false" hidden>Sound: On</button>
+      <fieldset class="control-options">
+        <legend>Touch controls</legend>
+        <label>
+          <input id="controls-one-finger" type="radio" name="controls" value="one-finger" checked>
+          <span><strong>One finger</strong><small>Move and turn with the joystick.</small></span>
+        </label>
+        <label>
+          <input id="controls-two-finger" type="radio" name="controls" value="two-finger">
+          <span><strong>Two fingers</strong><small>Move with the joystick. Drag the right side to look.</small></span>
+        </label>
+        <label>
+          <input id="controls-third-person" type="radio" name="controls" value="third-person">
+          <span><strong>Behind the character</strong><small>See your character as you move and turn with the joystick.</small></span>
+        </label>
+      </fieldset>
+    </dialog>
+
+    <dialog id="level-picker" class="game-dialog" aria-labelledby="level-picker-title">
+      <header class="dialog-header">
         <h2 id="level-picker-title">Choose area</h2>
         <form method="dialog"><button class="hud-button" aria-label="Close area picker" autofocus>×</button></form>
       </header>

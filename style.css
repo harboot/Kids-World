@@ -216,18 +216,6 @@ button:focus-visible { outline: 3px solid #377b65; outline-offset: 3px; }
   font: 23px/1 system-ui, sans-serif;
 }
 .hud-button:hover:not(:disabled) { background: #fff; }
-.sound-button { position: relative; }
-.sound-button[aria-pressed="true"]::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 27%;
-  width: 46%;
-  height: 2px;
-  background: currentColor;
-  transform: rotate(-45deg);
-}
-
 .menu {
   position: absolute;
   z-index: 2;
@@ -296,6 +284,8 @@ kbd {
 }
 .touch-guide, [data-input="touch"] .desktop-guide { display: none; }
 [data-input="touch"] .touch-guide { display: flex; }
+[data-controls="two-finger"] .touch-guide .stick-steering,
+#game:not([data-controls="two-finger"]) .touch-guide .stick-strafing { display: none; }
 
 .fps-meter {
   position: absolute;
@@ -424,10 +414,12 @@ kbd {
 #game[data-input="mouse"] .snow-throw,
 #game[data-input="touch"] .snow-throw-key { display: none; }
 
-#level-picker {
+.game-dialog {
   width: min(680px, calc(100% - 24px));
   max-height: calc(100% - 32px);
   overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   padding: 20px;
   border: 1px solid #ffffffb8;
   border-radius: 20px;
@@ -436,10 +428,29 @@ kbd {
   box-shadow: 0 16px 48px #26394a44;
 }
 
-#level-picker::backdrop { background: #1f2e3a66; }
-.level-picker-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.level-picker-header h2 { margin: 0; font-size: 22px; }
-.level-picker-header .hud-button { box-shadow: none; }
+.game-dialog::backdrop { background: #1f2e3a66; }
+.dialog-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.dialog-header h2 { margin: 0; font-size: 22px; }
+.dialog-header .hud-button { box-shadow: none; }
+
+#settings { width: min(400px, calc(100% - 24px)); }
+.sound-setting, .control-options label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #ffffff80;
+}
+.sound-setting { width: 100%; margin-top: 12px; font-weight: 750; }
+.control-options { display: grid; gap: 8px; min-width: 0; margin: 12px 0 0; padding: 0; border: 0; }
+.control-options legend { margin-bottom: 8px; padding: 0; font-weight: 750; }
+.control-options label { cursor: pointer; }
+.control-options label:has(:checked) { border-color: var(--accent); }
+.control-options input { width: 18px; height: 18px; margin: 0; flex: none; accent-color: var(--accent); }
+.control-options small { display: block; color: var(--muted); }
 
 .area-list {
   display: grid;
@@ -504,7 +515,7 @@ kbd {
 }
 
 @media (max-width: 620px) {
-  #level-picker { padding: 14px; }
+  .game-dialog { padding: 14px; }
   .area-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
   .area-card-title { font-size: 14px; }
 }

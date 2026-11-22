@@ -1,6 +1,7 @@
 const moveCodes = { KeyW: 'forward', KeyA: 'left', KeyS: 'backward', KeyD: 'right' };
 const lookCodes = { ArrowUp: 'lookUp', ArrowDown: 'lookDown', ArrowLeft: 'lookLeft', ArrowRight: 'lookRight' };
 const inputCodes = { ...moveCodes, ...lookCodes };
+const stickTurnSpeed = 2.4;
 
 export function releaseCapture(element, pointerId) {
   try {
@@ -10,7 +11,7 @@ export function releaseCapture(element, pointerId) {
   }
 }
 
-export function createControls(THREE, { game, canvas, joystick, thumb, playing, seated, touchMode, look, jump, interact, pause }) {
+export function createControls(THREE, { game, canvas, joystick, thumb, playing, seated, touchMode, steerWithStick = () => false, look, jump, interact, pause }) {
   const keys = new Set();
   const presses = new Map();
   const stickAxis = new THREE.Vector2();
@@ -134,7 +135,8 @@ export function createControls(THREE, { game, canvas, joystick, thumb, playing, 
     if (!press) return;
     press.moved ||= Math.hypot(event.clientX - press.startX, event.clientY - press.startY) >= 9;
     if (press.moved && lookPointer === event.pointerId) {
-      look((event.clientX - press.x) * 0.004, (event.clientY - press.y) * 0.004);
+      const horizontal = !steerWithStick() || seated() ? (event.clientX - press.x) * 0.004 : 0;
+      look(horizontal, (event.clientY - press.y) * 0.004);
       press.x = event.clientX;
       press.y = event.clientY;
     }
@@ -162,7 +164,10 @@ export function createControls(THREE, { game, canvas, joystick, thumb, playing, 
   function sample(dt) {
     const horizontal = Number(keys.has('lookRight')) - Number(keys.has('lookLeft'));
     const vertical = Number(keys.has('lookDown')) - Number(keys.has('lookUp'));
-    const dx = horizontal * dt * 1.65 + mouseDelta.x * 0.0022;
+    const activeStick = stickAxis.lengthSq() > 0.01;
+    const steering = steerWithStick();
+    const stickTurn = activeStick && steering ? stickAxis.x * stickTurnSpeed : 0;
+    const dx = (horizontal * 1.65 + stickTurn) * dt + mouseDelta.x * 0.0022;
     const dy = vertical * dt * 1.65 + mouseDelta.y * 0.0022;
     mouseDelta.set(0, 0);
     if (dx || dy) look(dx, dy);
@@ -170,7 +175,10 @@ export function createControls(THREE, { game, canvas, joystick, thumb, playing, 
     const strafe = Number(keys.has('right')) - Number(keys.has('left'));
     const advance = Number(keys.has('backward')) - Number(keys.has('forward'));
     motion.set(strafe, advance);
-    if (stickAxis.lengthSq() > 0.01) motion.add(stickAxis);
+    if (activeStick) {
+      if (!steering) motion.x += stickAxis.x;
+      motion.y += stickAxis.y;
+    }
     return motion.clampLength(0, 1);
   }
 

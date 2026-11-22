@@ -73,6 +73,7 @@ export function createAudio(button) {
 
   function syncButton() {
     button.setAttribute('aria-pressed', String(muted));
+    button.textContent = muted ? 'Sound: Off' : 'Sound: On';
     button.title = muted ? 'Unmute sound' : 'Mute sound';
   }
 

@@ -89,20 +89,27 @@ export function createView(THREE, { game, canvas, fullscreen, touchDevice, conte
       observer.disconnect?.();
       renderer.dispose?.();
     },
-    render(scene, playing, activeCamera = camera) {
+    render(scene, playing, droneCamera, followCamera, viewmodel) {
       if (lost || disposed || !scene || !(playing || renderPending)) return false;
       renderPending = false;
-      if (activeCamera === camera) renderer.render(scene, camera);
-      else {
+      if (droneCamera) {
         const fog = scene.fog;
         // Distance fog is tuned for the player at ground level.
         scene.fog = null;
         try {
-          renderer.render(scene, activeCamera);
+          renderer.render(scene, droneCamera);
         } finally {
           scene.fog = fog;
         }
-      }
+      } else if (followCamera) {
+        const visible = viewmodel.visible;
+        viewmodel.visible = false;
+        try {
+          renderer.render(scene, followCamera);
+        } finally {
+          viewmodel.visible = visible;
+        }
+      } else renderer.render(scene, camera);
       return true;
     },
   };

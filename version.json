@@ -1,5 +1,5 @@
 {
-  "version": "4a7fe2cf045b4001d42d51a80734fc70da2f8566e290e886e2a78d947e59d25f",
+  "version": "4e29269e1aa5dd91d8e4fd56cbd988863252abdedede704a5e5aa2364966bb79",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -503,11 +503,11 @@
     },
     {
       "path": "./core/audio.js",
-      "revision": "3e1cd5d3f61c7eee11f71f74f4b0fc375b819b63eac482890b38b3cb2605bee6"
+      "revision": "208ac18f8605e122032ebd3ebfbb4938fef5054902029687b0493a88e6dce402"
     },
     {
       "path": "./core/controls.js",
-      "revision": "c1f373e93d043b72b0a4c225c1ad283c9059858cabdf26860d55636c8b31ab17"
+      "revision": "98d933fb8a279f385465c365ac7da8ca90eaacbc35abfe306271271deea5c486"
     },
     {
       "path": "./core/coordinate-picker.js",
@@ -523,7 +523,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "ce03b3610c3d68ad163562904ce9a65bd8ffcea3fac2de9f7fdc0802f542c28f"
+      "revision": "7f0ff6f3f7cbae03caa2ba7e88000a6243b984a3dc7e01bb7c4892b832575437"
     },
     {
       "path": "./core/geometry.js",
@@ -535,7 +535,7 @@
     },
     {
       "path": "./core/interactions.js",
-      "revision": "5fa62097e8e2e49a65e3d25c164b74d94f91e28f6473be18178350a330f2e856"
+      "revision": "9ef7748d5b94ebe01967a123df14600a09199dba1df9a77ec2634e0f9cff40f7"
     },
     {
       "path": "./core/level-progress.js",
@@ -563,7 +563,11 @@
     },
     {
       "path": "./core/renderer.js",
-      "revision": "1fa28c44c95dd123d817d30b080387bce67ca5145dfc972c4b7dc91300f469ea"
+      "revision": "a9a79edbc16a1e5f66937eb8c893e61f5e089fb2237920fb4953e070e87c7ced"
+    },
+    {
+      "path": "./core/third-person.js",
+      "revision": "770636f1d147e2fc24a0ba9b36c92f0c7f131ff21babe62285d869736f75ea06"
     },
     {
       "path": "./core/world-manager.js",
@@ -575,7 +579,7 @@
     },
     {
       "path": "./index.html",
-      "revision": "d1603b10540783e1d1cf90815d40b79876e4ab98ff59b00510b3656062b27256"
+      "revision": "170c8a88cde2060d8526135d0d7e8c9d30334c39c03ffa1575f557b46330c5b3"
     },
     {
       "path": "./manifest.webmanifest",
@@ -611,7 +615,7 @@
     },
     {
       "path": "./style.css",
-      "revision": "9f8060e285e59a805b31ffb982f2e4aef71ae8dd439f8d6ccd52b962f8fadf4c"
+      "revision": "c4753d4f138d91bf82abfc385cfa4a094d15442100eb98d3467325733f994faf"
     },
     {
       "path": "./vendor/three.LICENSE",
