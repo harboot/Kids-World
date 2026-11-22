@@ -1,13 +1,13 @@
 {
-  "version": "8d9bb79f7eec937be1f8041f36d6d2fd8af553cd3c11813e175ef03d1cd24137",
+  "version": "9a24099830d42e3ed8dc3699b7ee2cbfb506dfbea385ae8458ae080a5d9cf815",
   "files": [
     {
       "path": "./area-catalog.js",
-      "revision": "0987503a1ef7e8dcd04b4f9dbb02ad67df28f437085a5769022f417b4542ce86"
+      "revision": "b7b409307f9814144214d34491107e7b4c6fbc8c7682719e6f7725f2f88eab42"
     },
     {
       "path": "./area-stats.json",
-      "revision": "3e63aff59dd722c7924a0c45982ad44ef23a4c11f12a7f6cd3ad89bbbb7901c1"
+      "revision": "6c0a3526a8b1fe76350097c88ebc0751d5ee348ce5eb0e3e495730631dd8387d"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -319,7 +319,7 @@
     },
     {
       "path": "./areas/princess-gallery/exhibits.js",
-      "revision": "16c519ba1bb137c4aa0e30683a8b2fbaab834132e1fa52ca858a52011a35ff30"
+      "revision": "633cfb7ba0c7970243dc7e81ce0187dc8088e847d5538b7e3ab83682e31494be"
     },
     {
       "path": "./areas/princess-gallery/gallery.js",
@@ -335,7 +335,7 @@
     },
     {
       "path": "./areas/princess-gallery/index.js",
-      "revision": "f1e90bae152ff922512c1ebc1be0405e2fe89d63ce9b34a8d7b0cf60741b9b6e"
+      "revision": "7c2e370ad98c3ad14cb3bfca5ba400a317c8e70ce075e66b46136a08b09443d4"
     },
     {
       "path": "./areas/princess-gallery/jasmine-carpet.js",
@@ -355,7 +355,19 @@
     },
     {
       "path": "./areas/princess-gallery/metadata.js",
-      "revision": "be3f1f9ebc4f04fad1188f9e95db196a423858115b4dbdf376f1dc7a649f2889"
+      "revision": "167f6c6ed05b379c8ae4b0cbfdb82075b14de0a9866a7acadbd501e2fa15077b"
+    },
+    {
+      "path": "./areas/princess-gallery/mulan-character.js",
+      "revision": "62ce83e9f154aaba9e07f9ee07f9a20ac93c4dfc919605baf6f42b755e346948"
+    },
+    {
+      "path": "./areas/princess-gallery/mulan-garden.js",
+      "revision": "b1bf70cd61bffd66f89f7c820f940b1c90c8b8c0f903c63c2c3aad6bf023fad5"
+    },
+    {
+      "path": "./areas/princess-gallery/mulan.js",
+      "revision": "5b6c095832c6ba7237d6a8c3147c18e545661cc21187571c8055b4ecfac52946"
     },
     {
       "path": "./areas/princess-gallery/music.js",
@@ -367,7 +379,7 @@
     },
     {
       "path": "./areas/princess-gallery/preview-display.js",
-      "revision": "b62ac32154574ee5c62bf1665e7e05f95af6295d3a0ef813cef2c74ec02ca20e"
+      "revision": "15a0eb2725a03547b1f49d76ad4aea03fd766d7a9f558ab766304a27aedb64dc"
     },
     {
       "path": "./areas/princess-gallery/princess-face.js",
