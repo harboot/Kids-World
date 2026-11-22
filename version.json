@@ -1,5 +1,5 @@
 {
-  "version": "4e29269e1aa5dd91d8e4fd56cbd988863252abdedede704a5e5aa2364966bb79",
+  "version": "6866fb9f2595955f4786dc13d8b901867f6d76305bc1ea52942c5f339ad5e3a1",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "525878ba92559d8e487a1c3c69abe3c02d47e61af6b3ce024a499e04f5068ff3"
+      "revision": "573d6919f48e59a9104a87e51c5ec38746e50c3bac337cae90c6684bca6060f7"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -411,11 +411,15 @@
     },
     {
       "path": "./areas/snow-basin/characters.js",
-      "revision": "f5b158e74994e59a3667c1a9ca99bae836cfecc71b9c49515f314cc919e3f71d"
+      "revision": "2e98658abc5b01cd7b4a1dd9764799288aa9160f4971d5ba4ebd8ec5079dc609"
+    },
+    {
+      "path": "./areas/snow-basin/ice-tower.js",
+      "revision": "6c5bd06cab74a8cad33ebe4f7b3f54db094497f8b53c438c208380a4c9c622de"
     },
     {
       "path": "./areas/snow-basin/index.js",
-      "revision": "ea77c463765a75175829b8d678f9f0903e71d1af5d3799e59ae88117c7592ba5"
+      "revision": "b58de4e53b65d0f934efd1b34344eff2e6bea21c6937797b432cd3c9504132f4"
     },
     {
       "path": "./areas/snow-basin/metadata.js",
@@ -431,7 +435,7 @@
     },
     {
       "path": "./areas/snow-basin/scenery.js",
-      "revision": "0b0bbae1242623c8096232201ba9dc8a6569c0b5064296a01c67e61e051add07"
+      "revision": "8eabb1047a04d16d263c3822014bd30c13b02546e26b809452b4c3bb473db5a8"
     },
     {
       "path": "./areas/snow-basin/slide-ride.js",
@@ -451,7 +455,7 @@
     },
     {
       "path": "./areas/snow-basin/terrain.js",
-      "revision": "b897502b6dd31aa794991e07fbdee39de88894d794dc69b691747928a2d28f42"
+      "revision": "00717357e6a3e982c4151a67a54a33cee2fbee50fce69f7068b270fb6b998f90"
     },
     {
       "path": "./areas/wooden-house/cleaning.js",
@@ -523,7 +527,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "7f0ff6f3f7cbae03caa2ba7e88000a6243b984a3dc7e01bb7c4892b832575437"
+      "revision": "a8621bc119858344c75ce2d6e91f027f4fc670b23541758deec012d4fd34eacf"
     },
     {
       "path": "./core/geometry.js",
@@ -535,7 +539,7 @@
     },
     {
       "path": "./core/interactions.js",
-      "revision": "9ef7748d5b94ebe01967a123df14600a09199dba1df9a77ec2634e0f9cff40f7"
+      "revision": "5fa62097e8e2e49a65e3d25c164b74d94f91e28f6473be18178350a330f2e856"
     },
     {
       "path": "./core/level-progress.js",
@@ -563,11 +567,7 @@
     },
     {
       "path": "./core/renderer.js",
-      "revision": "a9a79edbc16a1e5f66937eb8c893e61f5e089fb2237920fb4953e070e87c7ced"
-    },
-    {
-      "path": "./core/third-person.js",
-      "revision": "770636f1d147e2fc24a0ba9b36c92f0c7f131ff21babe62285d869736f75ea06"
+      "revision": "1fa28c44c95dd123d817d30b080387bce67ca5145dfc972c4b7dc91300f469ea"
     },
     {
       "path": "./core/world-manager.js",
@@ -579,7 +579,7 @@
     },
     {
       "path": "./index.html",
-      "revision": "170c8a88cde2060d8526135d0d7e8c9d30334c39c03ffa1575f557b46330c5b3"
+      "revision": "1c838a99be2a991dbacf234551f08d486167f92264a88095a03726a9c97e5bf2"
     },
     {
       "path": "./manifest.webmanifest",

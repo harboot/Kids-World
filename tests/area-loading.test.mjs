@@ -407,7 +407,7 @@ test('hidden scene initialization errors are distinct from unavailable downloads
 
 test('settings default to one finger, pause gameplay, and restore a saved control mode', async t => {
   const garden = area('garden', async () => ({ default: visit(garden, []) }));
-  const preferences = new Map();
+  const preferences = new Map([['kids-world-controls', 'third-person']]);
   const first = gameFixture(t, { garden }, 'garden', { preferences });
   await first.ready;
   assert.equal(first.game.dataset.controls, 'one-finger');
@@ -418,15 +418,13 @@ test('settings default to one finger, pause gameplay, and restore a saved contro
   assert.equal(first.game.dataset.state, 'paused');
 
   const change = new Event('change');
-  Object.defineProperty(change, 'target', { value: { name: 'controls', value: 'third-person', checked: true } });
+  Object.defineProperty(change, 'target', { value: { name: 'controls', value: 'two-finger', checked: true } });
   dialog.dispatchEvent(change);
-  assert.equal(first.game.dataset.controls, 'third-person');
-  assert.equal(preferences.get('kids-world-controls'), 'third-person');
-  first.tick(16);
-  assert.ok(first.renders.at(-1).position.distanceTo(new THREE.Vector3(0, 1.68, 0)) > 1);
+  assert.equal(first.game.dataset.controls, 'two-finger');
+  assert.equal(preferences.get('kids-world-controls'), 'two-finger');
 
   const reopened = gameFixture(t, { garden }, 'garden', { preferences });
   await reopened.ready;
-  assert.equal(reopened.game.dataset.controls, 'third-person');
-  assert.equal(reopened.game.querySelector('#settings').querySelector('#controls-third-person').checked, true);
+  assert.equal(reopened.game.dataset.controls, 'two-finger');
+  assert.equal(reopened.game.querySelector('#settings').querySelector('#controls-two-finger').checked, true);
 });

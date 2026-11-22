@@ -214,10 +214,11 @@ export function addSnowCharacters({ THREE, scene, kit, ground, playerRadius, red
     scene.add(shadow);
   }
 
+  const greetingRadius = 4.4;
   let time = 0;
   const characters = [
     {
-      model: sven, width: 0.53, depth: 1.04, height: 1.54, greetingRadius: 4.4, duration: 1.32,
+      model: sven, width: 0.53, depth: 1.04, height: 1.54, duration: 1.32,
       action: () => playCue?.(svenCue),
       pose(t, reaction) {
         const happy = Math.sin(Math.PI * reaction);
@@ -230,7 +231,7 @@ export function addSnowCharacters({ THREE, scene, kit, ground, playerRadius, red
       },
     },
     {
-      model: kristoff, width: 0.36, depth: 0.26, height: 1.32, label: 'Talk to Kristoff', anchor: 1.72, duration: 1.62,
+      model: kristoff, width: 0.36, depth: 0.26, height: 1.32, duration: 1.62,
       action: () => notify?.('Kristoff: Follow the blue trail markers up the northern ice mountain!'),
       pose(t, reaction) {
         kristoffHead.rotation.y = Math.sin(t * 0.83) * 0.16;
@@ -242,7 +243,7 @@ export function addSnowCharacters({ THREE, scene, kit, ground, playerRadius, red
       },
     },
     {
-      model: olaf, width: 0.36, depth: 0.29, height: 0.61, greetingRadius: 4.4, duration: 1.08,
+      model: olaf, width: 0.36, depth: 0.29, height: 0.61, duration: 1.08,
       action() {
         playCue?.(olafCue);
         notify?.('Olaf: Hi! Nice to meet you!');
@@ -260,15 +261,8 @@ export function addSnowCharacters({ THREE, scene, kit, ground, playerRadius, red
     },
   ];
 
-  function react(character) {
-    character.remaining = character.duration;
-    character.action();
-    return true;
-  }
-
-  const interactions = [];
   for (const character of characters) {
-    const { model, width, depth, anchor, height, label } = character;
+    const { model, width, depth, height } = character;
     const { x, y, z } = model.position;
     const cos = Math.cos(model.rotation.y);
     const sin = Math.sin(model.rotation.y);
@@ -281,23 +275,22 @@ export function addSnowCharacters({ THREE, scene, kit, ground, playerRadius, red
           (dz * cos + dx * sin) / (depth + playerRadius)) < 1;
       },
     });
-    if (label) interactions.push({ x, z, anchorY: y + anchor, radius: 2.2, label, act: () => react(character) });
   }
 
   return {
-    interactions,
     update(dt, eye) {
       const still = reducedMotion?.();
       if (!still) time = (time + dt) % 600;
       for (const character of characters) {
-        const { greetingRadius, model } = character;
-        if (eye && greetingRadius) {
-          const { x, y, z } = model.position;
+        if (eye) {
+          const { x, y, z } = character.model.position;
           const distance = Math.hypot(eye.x - x, eye.z - z);
-          if (distance > greetingRadius + 0.65) character.nearby = false;
-          if (!character.nearby && distance <= greetingRadius && Math.abs(eye.y - y - EYE_HEIGHT) < 1) {
+          const vertical = Math.abs(eye.y - y - EYE_HEIGHT);
+          if (distance > greetingRadius + 0.65 || vertical >= 1.4) character.nearby = false;
+          if (!character.nearby && distance <= greetingRadius && vertical < 1) {
             character.nearby = true;
-            react(character);
+            character.remaining = character.duration;
+            character.action();
           }
         }
         if (still) character.remaining = 0;

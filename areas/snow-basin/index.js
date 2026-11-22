@@ -2,6 +2,7 @@ import { CHOPS, CHOP_COOLDOWN, FALL_DURATION, SNOWMAN_COUNT, THROWING_POSITION, 
 import { addAxe, addIceSculpture, addChopTree, addSnowPlay, showSnowmen } from './props.js';
 import { addWinterScenery } from './scenery.js';
 import { addSnowTerrain } from './terrain.js';
+import { addIceTower } from './ice-tower.js';
 import { addIceSlide } from './slide.js';
 import { createSlideRide } from './slide-ride.js';
 import { bindSnowballControls } from './snowball-controls.js';
@@ -13,7 +14,7 @@ import { SURFACE_GAP } from '../../core/geometry.js';
 const axeSite = { x: 0.9, z: 5.9 };
 const treeSite = { x: 7.5, z: -1.85 };
 const sculptureSite = { x: -2.3, z: 13.92 };
-const treeClearance = 2.72;
+const treeClearance = 5.8;
 const landingBounds = { left: treeSite.x + 2.09, right: treeSite.x + 8.12, front: treeSite.z - 1.93, back: treeSite.z + 1.93 };
 const cues = {
   pickup: [[71, { duration: 0.14, level: 0.12 }], [79, { duration: 0.13, level: 0.10 }, 0.055]],
@@ -45,6 +46,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
   const kit = addWinterScenery({ THREE, scene, touch, width, depth, ground, document: hud?.ownerDocument });
   const { obstacles } = kit;
   const slide = addIceSlide(THREE, scene, kit, ground);
+  const tower = addIceTower(THREE, scene, kit);
   let greetedOlaf = false;
   const characters = addSnowCharacters({
     THREE, scene, kit, ground, playerRadius, reducedMotion, playCue, notify,
@@ -262,10 +264,11 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
   };
   return {
     obstacles,
-    getGroundHeight: ground,
+    getGroundHeight: (x, z, feet) => Math.max(ground(x, z), tower.surface(x, z, feet) ?? -Infinity),
     getGroundTraction: terrain.getGroundTraction,
-    blocksGround(x, z, radius, feet) {
-      return terrain.blocksGround(x, z, radius) || slide.blocksGround(x, z, radius, feet);
+    blocksGround(x, z, radius, feet, from) {
+      return terrain.blocksGround(x, z, radius) || slide.blocksGround(x, z, radius, feet) ||
+        tower.blocksGround(x, z, radius, feet, from);
     },
     get missionStatus() { return missionStatus; },
     interactions: [
@@ -279,14 +282,13 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
         reachable(player) {
           const west = treeSite.x - player.x;
           const distance = Math.hypot(west, treeSite.z - player.z);
-          // Give the camera room to see the pine and keep the landing side clear.
-          return distance >= 5.8 && west >= distance * 0.45;
+          // The clearance ring keeps the player back. Chop only from the side opposite the fall.
+          return west >= distance * 0.45;
         },
         get active() { return activity.canChop(); },
         act: activity.chop,
       },
       ride.interaction,
-      ...characters.interactions,
     ],
     update(dt, player) {
       lastEye = player;
