@@ -10,7 +10,7 @@ const DECK_Y = SUMMIT_HEIGHT + SURFACE_GAP.roof;
 const LANDING_Y = SURFACE_GAP.roof;
 
 // World-space centerline of the ice surface, in descent order. The mesh uses
-// these same samples so a later guided ride can follow the visible channel.
+// these same samples as the guided ride.
 export const SLIDE_PATH = Object.freeze(Array.from({ length: SEGMENTS + 1 }, (_, i) => {
   const t = i / SEGMENTS;
   const ease = t * t * (3 - 2 * t);
@@ -22,6 +22,9 @@ export const SLIDE_PATH = Object.freeze(Array.from({ length: SEGMENTS + 1 }, (_,
 }));
 export const SLIDE_START = SLIDE_PATH[0];
 export const SLIDE_LANDING = SLIDE_PATH.at(-1);
+export const SLIDE_PLATFORM = Object.freeze({
+  x: SLIDE_START.x + 1.65, z: SLIDE_START.z, length: 3.3, width: 3.42,
+});
 
 function wallHeight(i) {
   return WALL_HEIGHT * Math.min(1, (SEGMENTS - i) / 5);
@@ -94,7 +97,7 @@ export function addIceSlide(THREE, scene, { mesh, material, box, block }, ground
   }
 
   const { x, y, z } = SLIDE_START;
-  const platform = mesh(box, pack, x + 1.65, y - 0.12, z, 3.3, 0.24, 3.42, false, group);
+  const platform = mesh(box, pack, SLIDE_PLATFORM.x, y - 0.12, z, SLIDE_PLATFORM.length, 0.24, SLIDE_PLATFORM.width, false, group);
   platform.name = 'Ice slide starting platform';
   for (const side of [-1, 1]) {
     mesh(box, post, x + 1.67, y + 0.28, z + side * 1.66, 2.95, 0.56, 0.17, false, group);
@@ -128,5 +131,5 @@ export function addIceSlide(THREE, scene, { mesh, material, box, block }, ground
     return false;
   }
 
-  return { blocksGround };
+  return { blocksGround, gate };
 }

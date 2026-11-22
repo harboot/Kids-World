@@ -50,7 +50,7 @@ test('every registered area provides a fresh mission status and releases its vis
   t.after(worlds.unload);
   for (const [id, totals] of [
     ['garden', [3, 1, 1, 1, 1]],
-    ['snow', [3, 5, 1]],
+    ['snow', [5, 3, 1]],
     ['wooden-house', [1, 1, 1, 1, 1]],
     ['frozen-castle', [4, 3, 3]],
     ['arendelle-village', [3, 1, 3]],

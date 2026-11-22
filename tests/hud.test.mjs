@@ -74,7 +74,7 @@ test('toasts expire, replace previous feedback and clear on restart or travel', 
   assert.equal(toast.textContent, '');
   assert.equal(pending.size, 0);
 
-  hud.notify('Frozen Key collected!', { duration: 10 });
+  hud.notify('Snow Basin complete!', { duration: 10 });
   advance(10);
   assert.equal(toast.textContent, '');
 });

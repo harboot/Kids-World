@@ -1,13 +1,13 @@
 {
-  "version": "d7fe15da9c7b36d4b9869530a980fcaeefe2e12a1d838038305a4fe92177640e",
+  "version": "0adbef08d9c3bc294c8f792108a2ccb93dbd5fbdb19194e330690f40c4787f69",
   "files": [
     {
       "path": "./area-catalog.js",
-      "revision": "e54344e62925d68d9f8bd1f2ae1aee517f7fe61da28a0cb8809633916be96769"
+      "revision": "31492035a957339706273ecaf2a7087fd7166ada1257fe8dc22bae2ce1d1a9fa"
     },
     {
       "path": "./area-stats.json",
-      "revision": "37507ecccfe06ce00845ed76b5375f647e0eb42181123a626c0f1a443417b908"
+      "revision": "d5a577c97fa3e82227e0eb7e194ee60e04bd94652814e734a3d8faa71af78013"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -407,7 +407,7 @@
     },
     {
       "path": "./areas/snow-basin/activity.js",
-      "revision": "24c46f78d2b27e4f5f000898f8ecf702a921b515018371271c6138a163d86703"
+      "revision": "9c63d09c136c2e8f7efdc2b9147bf0f7e25c3f0a4caf6d22b6be4bb3ef77ed6e"
     },
     {
       "path": "./areas/snow-basin/characters.js",
@@ -415,11 +415,11 @@
     },
     {
       "path": "./areas/snow-basin/index.js",
-      "revision": "a7e679c5d8cc09e994008d7b71f3fb48bb5dcbeeafbb30a068cf0af5705e0da3"
+      "revision": "3e7d1a5ccd5a3bbc982044b3024a9825f6bb1608b8ab8352eed5627168cfbde3"
     },
     {
       "path": "./areas/snow-basin/metadata.js",
-      "revision": "0f6d58a1c823a1144113cabc2b2630d3aa11d103a34ac9a16156b0b319feeaff"
+      "revision": "d164904f922c821529c4ed98f369a5580ed81747c99675a51aff1de61a79d483"
     },
     {
       "path": "./areas/snow-basin/music.js",
@@ -427,19 +427,27 @@
     },
     {
       "path": "./areas/snow-basin/props.js",
-      "revision": "0f45098dc373a14cfa512010107b4d7dfa2eb3cc0d6aad0d52a956f0daff6c74"
+      "revision": "8335e4df013909e66ad5fe33bb94746767f94439c3a64b750e5cdd829beb6f71"
     },
     {
       "path": "./areas/snow-basin/scenery.js",
       "revision": "84725631b9fde8492cab80a0abffa7ad5525d4d2817b7a23e20fa720af932333"
     },
     {
+      "path": "./areas/snow-basin/slide-ride.js",
+      "revision": "cee3fd11d0100367f86cd8a3ce4d51bfa760be402df80eb8335a0bf74d06ab72"
+    },
+    {
       "path": "./areas/snow-basin/slide.js",
-      "revision": "d0b644b0c5ec592d395d4bb63b5fe81a53e4d07e997d71367eb232f5d6c3f269"
+      "revision": "9feb7fe1e0a5ccc4de50333bcc26a02fa0e78e0ddf94edfd049286c0b38bdd4b"
     },
     {
       "path": "./areas/snow-basin/snow-basin.jpg",
       "revision": "07248eacd6c18ab91de9bad4b801906514cd2dfc93115cbac8d0c3fd8902f034"
+    },
+    {
+      "path": "./areas/snow-basin/snowball-controls.js",
+      "revision": "ec9e0945f4c633d08fd69c66e15a0c78f82786b661da24afbb35b09b1eea9e71"
     },
     {
       "path": "./areas/snow-basin/terrain.js",
