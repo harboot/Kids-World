@@ -4,8 +4,8 @@
     "publicAreas": 7,
     "hiddenAreas": 1,
     "totalFiles": 133,
-    "totalBytes": 1331811,
-    "totalJsLines": 21257,
+    "totalBytes": 1338657,
+    "totalJsLines": 21415,
     "largestMap": {
       "name": "Military Base",
       "mapArea": 23100
@@ -129,11 +129,11 @@
       "width": 64,
       "depth": 60,
       "mapArea": 3840,
-      "folderBytes": 100012,
+      "folderBytes": 106858,
       "totalFiles": 12,
       "jsFiles": 11,
-      "jsBytes": 74508,
-      "jsLines": 1795,
+      "jsBytes": 81354,
+      "jsLines": 1953,
       "imageFiles": 1,
       "imageBytes": 25504,
       "imageFormats": [

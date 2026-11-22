@@ -7,7 +7,7 @@ import {
   CHOP_COOLDOWN, CHOPS, FALL_DURATION, SNOWBALL_RELOAD, SNOWBALL_STATION, SNOWMAN_COUNT, THROWING_POSITION,
   createSnowActivity, snowMissionsComplete, sweepSphere,
 } from '../areas/snow-basin/activity.js';
-import { MOUNTAIN_TRAIL } from '../areas/snow-basin/terrain.js';
+import { LAKE_LEVEL, MOUNTAIN_TRAIL } from '../areas/snow-basin/terrain.js';
 import { SLIDE_START, SLIDE_PATH, SLIDE_LANDING, SLIDE_PLATFORM } from '../areas/snow-basin/slide.js';
 import { nearestInteraction } from '../core/interactions.js';
 import { createLevelProgress } from '../core/level-progress.js';
@@ -151,9 +151,9 @@ async function buildWorld({ reducedMotion = () => false, saved = [] } = {}) {
   function stand(spawn) {
     avatar.reset(spawn, worlds.active.area);
   }
-  function guideCamera() {
+  function guideCamera(look) {
     const current = worlds.active;
-    const stop = avatar.guide();
+    const stop = avatar.guide(look);
     return spawn => {
       if (worlds.active === current && current.state === 'active' && stop()) stand(spawn);
     };
@@ -166,11 +166,12 @@ async function buildWorld({ reducedMotion = () => false, saved = [] } = {}) {
   };
 }
 
-function assertProgress(area, { snowmen = 0, chops = 0, slide = 0, pineFallen = chops === CHOPS } = {}) {
+function assertProgress(area, { snowmen = 0, chops = 0, slide = 0, olaf = 0, pineFallen = chops === CHOPS } = {}) {
   assert.deepEqual(area.missionStatus.missions, [
     { id: 'pine', title: 'Chop Down the Pine', current: chops, total: 5, complete: pineFallen },
     { id: 'snowmen', title: 'Snowball Challenge', current: snowmen, total: 3, complete: snowmen === 3 },
     { id: 'slide', title: 'Ice Slide Adventure', current: slide, total: 1, complete: slide === 1 },
+    { id: 'olaf', title: 'Meet Olaf', current: olaf, total: 1, complete: olaf === 1 },
   ]);
 }
 
@@ -324,8 +325,10 @@ test('the expanded basin connects the original spawn to each zone and climbs the
   for (const [x, z] of [[17, -12], [23, 5], [-23, 4], [-4, 18], [-3, -24], [-27, -20.5]]) {
     assert.ok(reached.some(point => point.x === x && point.z === z), `route to (${x}, ${z})`);
   }
-  for (const label of ['Pet Sven', 'Talk to Kristoff', 'Greet Olaf']) {
-    assert.ok(reached.some(point => nearestInteraction(area.interactions, point)?.label === label), label);
+  assert.ok(reached.some(point => nearestInteraction(area.interactions, point)?.label === 'Talk to Kristoff'));
+  for (const name of ['Sven', 'Olaf']) {
+    const { x, z } = scene.getObjectByName(name).position;
+    assert.ok(reached.some(point => Math.hypot(point.x - x, point.z - z) < 4), name);
   }
 
   function walkTrail(trail) {
@@ -376,20 +379,24 @@ test('the ice slide follows an ordered descent with an accessible platform and o
   assert.equal(SLIDE_PATH.at(-1), SLIDE_LANDING);
   assert.ok(Object.isFrozen(SLIDE_PATH));
   assert.ok(SLIDE_START.y - SLIDE_LANDING.y >= 7 && SLIDE_START.y - SLIDE_LANDING.y <= 9);
+  let length = 0;
   for (const [i, point] of SLIDE_PATH.entries()) {
     assert.ok(Object.isFrozen(point));
     assert.ok(point.y > area.getGroundHeight(point.x, point.z));
     if (i) {
-      assert.ok(point.x < SLIDE_PATH[i - 1].x && point.y < SLIDE_PATH[i - 1].y);
+      const previous = SLIDE_PATH[i - 1];
+      assert.ok(point.y < previous.y);
+      length += Math.hypot(point.x - previous.x, point.y - previous.y, point.z - previous.z);
     }
   }
+  assert.ok(Math.abs(length / 22.91152 - 3) < 0.02);
   const approach = { x: -3, z: SLIDE_START.z };
   const feet = area.getGroundHeight(approach.x, approach.z);
   const deck = walkElevation(area, approach, platform.position.x, approach.z, feet, true);
   assert.ok(Math.abs(deck - SLIDE_START.y) < 0.05);
   assert.equal(walkElevation(area, approach, SLIDE_START.x + 0.2, approach.z, feet, true), null);
   assert.equal(walkElevation(area, approach, SLIDE_START.x + 0.2, approach.z, feet + 0.8, false), null);
-  const exit = { x: SLIDE_LANDING.x - 1.2, z: SLIDE_LANDING.z };
+  const exit = { x: SLIDE_LANDING.x, z: SLIDE_LANDING.z + 1.2 };
   assert.ok(walkElevation(area, exit, SLIDE_LANDING.x, SLIDE_LANDING.z, 0, true) !== null);
   const action = area.interactions.find(item => item.label === 'Slide Down');
   assert.equal(nearestInteraction(area.interactions, { ...SLIDE_PLATFORM, y: feet + EYE_HEIGHT }), action);
@@ -398,43 +405,50 @@ test('the ice slide follows an ordered descent with an accessible platform and o
   worlds.unload();
 });
 
-test('local character prompts animate, respect reduced motion, and reset independently of missions', async () => {
+test('Sven and Olaf react automatically from four units away with a cooldown until the player leaves', async t => {
   let still = false;
-  const { worlds, visit, missionHud, cues, completions } = await buildWorld({ reducedMotion: () => still });
-  const { area, scene } = visit;
-  const characters = [
-    ['Pet Sven', scene.getObjectByName('Sven head'), 'x'],
-    ['Talk to Kristoff', scene.getObjectsByProperty('name', 'Kristoff arm')[1], 'z'],
-    ['Greet Olaf', scene.getObjectByName('Olaf body'), 'y'],
-  ];
-  const initial = characters.map(([, part, axis]) => part.rotation[axis]);
+  const game = await buildWorld({ reducedMotion: () => still });
+  const { visit, cues, worlds, missionHud } = game;
+  t.after(worlds.unload);
+  const { scene, area } = visit;
+  for (const label of ['Pet Sven', 'Greet Olaf']) assert.ok(!area.interactions.some(item => item.label === label));
+  const kristoff = area.interactions.find(item => item.label === 'Talk to Kristoff');
+  assert.ok(kristoff.act());
+  assert.match(missionHud.toast.textContent, /blue trail markers/);
 
-  function interactWith(label) {
-    const item = area.interactions.find(item => item.label === label);
-    assert.equal(nearestInteraction(area.interactions, { x: item.x, z: item.z + 1.5 }), item);
-    assert.ok(item.act());
+  for (const [i, name, joint, axis] of [
+    [0, 'Sven', 'Sven head', 'x'], [1, 'Olaf', 'Olaf body', 'y'],
+  ]) {
+    const { x, z } = scene.getObjectByName(name).position;
+    const part = scene.getObjectByName(joint);
+    game.stand({ x, z: z - 5.1 });
+    game.frame(0);
+    assert.equal(cues.length, i);
+    game.stand({ x, z: z - 4.1 });
+    game.frame(0.28);
+    assert.equal(cues.length, i + 1);
+    assert.notEqual(part.rotation[axis], 0);
+    game.frame(1);
+    assert.equal(cues.length, i + 1);
   }
-  for (const [label] of characters) interactWith(label);
-  worlds.update(0.3, player);
-  for (const [i, [, part, axis]] of characters.entries()) assert.notEqual(part.rotation[axis], initial[i]);
-  assert.equal(cues.length, 2);
-  assert.match(missionHud.toast.textContent, /blue trail markers.*northern ice mountain/i);
-  assertProgress(area);
-  assert.deepEqual(completions, []);
+  assertProgress(area, { olaf: 1 });
+  assert.deepEqual(game.completions, []);
 
-  worlds.reset();
-  assert.deepEqual(characters.map(([, part, axis]) => part.rotation[axis]), initial);
+  const olaf = scene.getObjectByName('Olaf');
+  const { x, z } = olaf.position;
+  game.stand({ x, z: z + 5.2 });
+  game.frame(0);
   still = true;
-  for (const [label] of characters) interactWith(label);
-  worlds.update(0.3, player);
-  assert.deepEqual(characters.map(([, part, axis]) => part.rotation[axis]), initial);
-  assert.equal(cues.length, 4);
-  assert.match(missionHud.toast.textContent, /Kristoff/);
-
-  assert.ok(scene.getObjectByName('Olaf').visible);
-  assert.equal(scene.children.filter(node => /^Snowman \d/.test(node.name)).length, SNOWMAN_COUNT);
+  game.stand({ x, z: z + 4.1 });
+  game.frame(0.3);
+  assert.equal(cues.length, 3);
+  assert.equal(scene.getObjectByName('Olaf body').rotation.y, 0);
+  assertProgress(area, { olaf: 1 });
+  assert.equal(targetsIn(scene).length, SNOWMAN_COUNT);
+  worlds.reset();
   assertProgress(area);
-  worlds.unload();
+  game.frame(0.3);
+  assertProgress(area, { olaf: 1 });
 });
 
 test('unload disposes the new terrain, ice slide and character resources before a clean revisit', async () => {
@@ -443,7 +457,7 @@ test('unload disposes the new terrain, ice slide and character resources before 
   const terrain = scene.getObjectByName('Snow Basin terrain');
   const slide = scene.getObjectByName('Ice Mountain slide').children[0];
   const olaf = scene.getObjectByName('Olaf body').children.find(node => node.isInstancedMesh);
-  const resources = [terrain.geometry, terrain.material, slide.geometry, slide.material, olaf, olaf.geometry];
+  const resources = [terrain.geometry, ...terrain.material, slide.geometry, slide.material, olaf, olaf.geometry];
   const disposed = new Set();
   for (const resource of resources) resource.addEventListener('dispose', () => disposed.add(resource));
   await worlds.load('garden');
@@ -575,7 +589,7 @@ function startRide(game) {
 
 function finishRide(game, step = 1 / 60) {
   let duration = 0;
-  while (game.avatar.guided && duration < 7) {
+  while (game.avatar.guided && duration < 20) {
     game.frame(step);
     duration += step;
   }
@@ -606,23 +620,19 @@ test('Slide Down requires standing on the platform and restores ordinary movemen
   assert.equal(avatar.jump(), false);
   const initial = camera.position.clone();
   avatar.move(0.05, { x: 1, y: 1 }, visit);
-  avatar.look(1, 1);
   assert.ok(camera.position.equals(initial));
 
-  let elapsed = 0;
+  game.frame(0.62);
+  const orientation = camera.quaternion.clone();
+  avatar.look(0.8, 0.3);
+  game.frame(0);
+  assert.ok(camera.quaternion.angleTo(orientation) > 0.5);
+  let elapsed = 0.62;
   let sawBank = false;
-  while (elapsed < 6) {
+  while (elapsed < 15.8) {
     game.frame(1 / 60);
     elapsed += 1 / 60;
-    const { x, y, z } = camera.position;
-    if (x >= SLIDE_START.x || x <= SLIDE_LANDING.x) continue;
-    const i = SLIDE_PATH.findIndex(point => point.x < x);
-    assert.ok(i > 0);
-    const a = SLIDE_PATH[i - 1];
-    const b = SLIDE_PATH[i];
-    const u = (x - a.x) / (b.x - a.x);
-    assert.ok(Math.abs(z - (a.z + u * (b.z - a.z))) < 1e-8, 'eye stays on the channel centerline');
-    const height = y - (a.y + u * (b.y - a.y));
+    const height = camera.position.y - slideSurfaceAt(camera.position);
     assert.ok(height > 0.91 && height < 0.97);
     sawBank ||= Math.abs(camera.rotation.z) > 0.004;
   }
@@ -633,6 +643,7 @@ test('Slide Down requires standing on the platform and restores ordinary movemen
   assertProgress(area, { slide: 1 });
   assert.ok(gate.visible);
   const landing = camera.position.clone();
+  assert.ok(Math.abs(camera.rotation.x + 0.3) < 1e-8, 'landing preserves the rider’s pitch');
   avatar.move(0.05, { x: 0, y: -1 }, visit);
   assert.ok(!camera.position.equals(landing));
   assert.ok(avatar.jump());
@@ -642,25 +653,40 @@ test('Slide Down requires standing on the platform and restores ordinary movemen
   assert.deepEqual(game.completions, []);
 });
 
+function slideSurfaceAt({ x, z }) {
+  let closest = Infinity;
+  let height = NaN;
+  for (let i = 1; i < SLIDE_PATH.length; i++) {
+    const a = SLIDE_PATH[i - 1];
+    const b = SLIDE_PATH[i];
+    const dx = b.x - a.x;
+    const dz = b.z - a.z;
+    const t = THREE.MathUtils.clamp(((x - a.x) * dx + (z - a.z) * dz) / (dx * dx + dz * dz), 0, 1);
+    const distance = Math.hypot(x - a.x - dx * t, z - a.z - dz * t);
+    if (distance < closest) {
+      closest = distance;
+      height = a.y + (b.y - a.y) * t;
+    }
+  }
+  assert.ok(closest < 1e-6, 'eye follows the channel centerline');
+  return height;
+}
+
 test('reduced-motion ride is shorter, with a steady centerline and safe landing', async t => {
   const game = await buildWorld({ reducedMotion: () => true });
   t.after(game.worlds.unload);
   startRide(game);
   const { camera, avatar } = game;
   let elapsed = 0;
-  while (avatar.guided && elapsed < 7) {
+  while (avatar.guided && elapsed < 12) {
     game.frame(1 / 30);
     elapsed += 1 / 30;
     assert.ok(Math.abs(camera.rotation.z) < 1e-9);
-    const { x, y } = camera.position;
-    if (x >= SLIDE_START.x || x <= SLIDE_LANDING.x) continue;
-    const i = SLIDE_PATH.findIndex(point => point.x < x);
-    const a = SLIDE_PATH[i - 1];
-    const b = SLIDE_PATH[i];
-    const u = (x - a.x) / (b.x - a.x);
-    assert.ok(Math.abs(y - (a.y + u * (b.y - a.y)) - 0.94) < 1e-8);
+    if (elapsed > 0.49 && elapsed < 9.9) {
+      assert.ok(Math.abs(camera.position.y - slideSurfaceAt(camera.position) - 0.94) < 1e-8);
+    }
   }
-  assert.ok(elapsed > 3 && elapsed < 4.5);
+  assert.ok(elapsed > 10 && elapsed < 11);
   assert.deepEqual(camera.position.toArray(), [SLIDE_LANDING.x, EYE_HEIGHT, SLIDE_LANDING.z]);
   assertProgress(game.visit.area, { slide: 1 });
 });
@@ -701,11 +727,16 @@ test('pause freezes the guided ride, restart cancels it and travel drops stale c
   assert.deepEqual(game.completions, []);
 });
 
-test('completes exactly once in each of the six mission orders and preserves other area badges', async t => {
-  for (const order of ['pine snowmen slide', 'pine slide snowmen', 'snowmen pine slide',
-    'snowmen slide pine', 'slide pine snowmen', 'slide snowmen pine']) {
+test('completes exactly once in any mission order and preserves other area badges', async t => {
+  const orders = ['pine snowmen slide', 'pine slide snowmen', 'snowmen pine slide',
+    'snowmen slide pine', 'slide pine snowmen', 'slide snowmen pine'];
+  for (const order of orders.flatMap(base => Array.from({ length: 4 }, (_, index) => {
+    const steps = base.split(' ');
+    steps.splice(index, 0, 'olaf');
+    return steps.join(' ');
+  }))) {
     await t.test(order, async sub => {
-      const game = await buildWorld({ saved: ['snow', 'garden@2', 'frozen-castle'] });
+      const game = await buildWorld({ saved: ['snow@2', 'garden@2', 'frozen-castle'] });
       const { worlds, visit, progress, completions } = game;
       sub.after(worlds.unload);
       assert.equal(progress.has('snow'), false);
@@ -718,17 +749,21 @@ test('completes exactly once in each of the six mission orders and preserves oth
       for (const id of order.split(' ')) {
         if (id === 'pine') fallInWorld(worlds);
         else if (id === 'snowmen') shootSnowmen(game);
-        else {
+        else if (id === 'olaf') {
+          const { x, z } = visit.scene.getObjectByName('Olaf').position;
+          game.stand({ x, z: z + 3 });
+          game.frame(0);
+        } else {
           startRide(game);
           finishRide(game);
         }
         missions.add(id);
         assertProgress(visit.area, { chops: missions.has('pine') ? 5 : 0,
-          snowmen: missions.has('snowmen') ? 3 : 0, slide: Number(missions.has('slide')) });
-        assert.deepEqual(completions, missions.size === 3 ? ['snow'] : []);
+          snowmen: missions.has('snowmen') ? 3 : 0, slide: Number(missions.has('slide')), olaf: Number(missions.has('olaf')) });
+        assert.deepEqual(completions, missions.size === 4 ? ['snow'] : []);
       }
       assert.ok(progress.has('snow'));
-      assert.deepEqual(new Set(game.records()), new Set(['snow@2', 'garden@2', 'frozen-castle']));
+      assert.deepEqual(new Set(game.records()), new Set(['snow@3', 'garden@2', 'frozen-castle']));
       assert.equal(game.missionHud.toast.textContent, 'Snow Basin complete!');
       assert.equal(visit.area.missionStatus.hint, 'Snow Basin complete!');
       startRide(game);
@@ -743,9 +778,73 @@ test('completion requires each mission flag', () => {
   for (const pine of [false, true]) {
     for (const snowmen of [false, true]) {
       for (const slide of [false, true]) {
-        const missions = { pine, snowmen, slide };
-        assert.equal(snowMissionsComplete(missions), pine && snowmen && slide);
+        for (const olaf of [false, true]) {
+          const missions = { pine, snowmen, slide, olaf };
+          assert.equal(snowMissionsComplete(missions), pine && snowmen && slide && olaf);
+        }
       }
     }
   }
+});
+
+test('the axe strikes across the camera, drops when the tree lands, and returns on restart', async t => {
+  const game = await buildWorld();
+  const { area, scene, viewmodel } = game.visit;
+  t.after(game.worlds.unload);
+  const pickup = area.interactions.find(item => item.label === 'Pick up axe');
+  const chop = area.interactions.find(item => item.label === 'Chop tree');
+  const held = viewmodel.getObjectByName('Held axe');
+  const placed = scene.getObjectByName('Snow Basin axe');
+  const original = placed.position.clone();
+  game.stand({ x: -0.6, z: -4.1 });
+  assert.ok(pickup.act());
+  assert.ok(chop.act());
+  game.frame(CHOP_COOLDOWN * 0.18);
+  assert.ok(held.visible && held.position.x > 0.28);
+  game.frame(CHOP_COOLDOWN * 0.5);
+  assert.ok(held.position.x < -0.2);
+  game.frame(CHOP_COOLDOWN);
+  for (let i = 1; i < CHOPS; i++) {
+    assert.ok(chop.act());
+    if (i < CHOPS - 1) game.frame(CHOP_COOLDOWN);
+  }
+  game.frame(FALL_DURATION);
+  assert.equal(held.visible, false);
+  assert.equal(placed.visible, true);
+  assert.ok(placed.position.distanceTo(original) > 3);
+  assert.equal(pickup.active, false);
+  assert.equal(pickup.act(), false);
+  game.worlds.reset();
+  assert.ok(placed.position.equals(original));
+  assert.ok(pickup.active);
+});
+
+test('the frozen lake is lower than snow, has walkable banks, and carries momentum only on ice', async t => {
+  const game = await buildWorld();
+  t.after(game.worlds.unload);
+  const { visit, avatar, camera } = game;
+  const { area, scene } = visit;
+  const lake = scene.getObjectByName('Snow Basin terrain');
+  assert.ok(lake.geometry.groups.find(group => group.materialIndex === 1).count > 250);
+  assert.equal(area.getGroundHeight(-4, -7), LAKE_LEVEL);
+  assert.equal(area.getGroundHeight(0, 9.4), 0);
+  let z = 9.4;
+  let feet = 0;
+  while (z > -2) {
+    const next = walkElevation(area, { x: 0, z }, 0, z - 0.08, feet, true);
+    assert.notEqual(next, null);
+    z -= 0.08;
+    feet = next;
+  }
+  assert.equal(feet, LAKE_LEVEL);
+
+  function coastingDistance(spawn) {
+    game.stand(spawn);
+    for (let i = 0; i < 65; i++) avatar.move(0.02, { x: 0, y: 1 }, visit);
+    const release = camera.position.z;
+    for (let i = 0; i < 25; i++) avatar.move(0.02, { x: 0, y: 0 }, visit);
+    return camera.position.z - release;
+  }
+  assert.ok(coastingDistance({ x: -4, z: -9 }) > 1.1);
+  assert.ok(coastingDistance({ x: 0, z: 9.4 }) < 0.35);
 });

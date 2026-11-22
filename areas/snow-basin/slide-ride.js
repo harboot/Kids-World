@@ -2,8 +2,6 @@ import { EYE_HEIGHT } from '../../core/player.js';
 import { SLIDE_LANDING, SLIDE_PATH, SLIDE_PLATFORM, SLIDE_START } from './slide.js';
 
 const seatedEye = 0.94;
-const normal = { enter: 0.62, slide: 5.15, stand: 0.6 };
-const gentle = { enter: 0.48, slide: 3.15, stand: 0.45 };
 const slideCue = [
   [65, { endPitch: 48, duration: 1.12, attack: 0.27, level: 0.085, wave: 'triangle' }],
   [77, { endPitch: 60, duration: 0.75, attack: 0.19, level: 0.035 }, 0.2],
@@ -16,6 +14,10 @@ for (let i = 1; i < SLIDE_PATH.length; i++) {
   distances.push(distances[i - 1] + Math.hypot(b.x - a.x, b.y - a.y, b.z - a.z));
 }
 const pathLength = distances.at(-1);
+// Scale the timed descent with distance to preserve the original speed profile.
+const lengthRatio = pathLength / 22.91152;
+const normal = { enter: 0.62, slide: 5.15 * lengthRatio, stand: 0.6 };
+const gentle = { enter: 0.48, slide: 3.15 * lengthRatio, stand: 0.45 };
 
 function sample(distance, position) {
   let lo = 0;
@@ -44,15 +46,20 @@ export function createSlideRide({ THREE, camera, gate, ground, signal, isPlayerG
   const after = new THREE.Vector3();
   const landingEye = new THREE.Vector3(SLIDE_LANDING.x, ground(SLIDE_LANDING.x, SLIDE_LANDING.z) + EYE_HEIGHT, SLIDE_LANDING.z);
   sample(pathLength - 0.7, before);
-  const landing = {
-    x: SLIDE_LANDING.x, z: SLIDE_LANDING.z,
-    yaw: Math.atan2(before.x - SLIDE_LANDING.x, before.z - SLIDE_LANDING.z),
-  };
-  const entry = { x: 0, z: 0, yaw: 0 };
+  const exitHeading = Math.atan2(before.x - SLIDE_LANDING.x, before.z - SLIDE_LANDING.z);
+  const landing = { x: SLIDE_LANDING.x, z: SLIDE_LANDING.z, yaw: exitHeading, pitch: 0 };
+  const entry = { x: 0, z: 0, yaw: 0, pitch: 0 };
+  let lookYaw = 0;
+  let lookPitch = 0;
   let release = null;
   let time = 0;
   let timing = normal;
   let completed = false;
+
+  function look(dx, dy) {
+    lookYaw -= dx;
+    lookPitch = THREE.MathUtils.clamp(lookPitch - dy, -1.12, 1.12);
+  }
 
   function pose(distance, progress, steady) {
     sample(distance, rideEye);
@@ -64,8 +71,8 @@ export function createSlideRide({ THREE, camera, gate, ground, signal, isPlayerG
     const dz = after.z - before.z;
     const motion = steady ? 0 : Math.sin(Math.PI * progress) ** 2;
     rideEye.y += seatedEye + Math.sin(time * 10) * motion * 0.024;
-    angles.set(Math.atan2(dy, Math.hypot(dx, dz)) * (steady ? 0.48 : 0.78),
-      Math.atan2(-dx, -dz), Math.sin(progress * Math.PI * 4) * motion * 0.031, 'YXZ');
+    angles.set(lookPitch + Math.atan2(dy, Math.hypot(dx, dz)) * (steady ? 0.48 : 0.78),
+      Math.atan2(-dx, -dz) + lookYaw, Math.sin(progress * Math.PI * 4) * motion * 0.031, 'YXZ');
     rideRotation.setFromEuler(angles);
   }
 
@@ -94,8 +101,9 @@ export function createSlideRide({ THREE, camera, gate, ground, signal, isPlayerG
       entryEye.copy(camera.position);
       entryRotation.copy(camera.quaternion);
       angles.setFromQuaternion(entryRotation, 'YXZ');
-      Object.assign(entry, { x: entryEye.x, z: entryEye.z, yaw: angles.y });
-      const restore = guideCamera();
+      Object.assign(entry, { x: entryEye.x, z: entryEye.z, yaw: angles.y, pitch: angles.x });
+      lookYaw = lookPitch = 0;
+      const restore = guideCamera(look);
       if (typeof restore !== 'function') return false;
       release = restore;
       time = 0;
@@ -135,10 +143,12 @@ export function createSlideRide({ THREE, camera, gate, ground, signal, isPlayerG
       const t = ease((time - standStart) / stand);
       pose(pathLength, 1, steady);
       camera.position.lerpVectors(rideEye, landingEye, t);
-      camera.rotation.set(angles.x * (1 - t), landing.yaw, 0, 'YXZ');
+      camera.rotation.set(lookPitch + (angles.x - lookPitch) * (1 - t), exitHeading + lookYaw, 0, 'YXZ');
     }
     camera.updateMatrixWorld();
     if (time < duration) return;
+    landing.yaw = exitHeading + lookYaw;
+    landing.pitch = lookPitch;
     stop(landing);
     if (!completed) {
       completed = true;

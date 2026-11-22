@@ -29,7 +29,6 @@ export function addWinterScenery({ THREE, scene, touch, width, depth, ground, do
   const slate = 0x597686;
   const pine = 0x254d53;
   const wood = 0x664833;
-  const ice = 0x77a8bc;
   const batches = new Map();
   const dummy = new THREE.Object3D();
   const tint = new THREE.Color();
@@ -56,21 +55,25 @@ export function addWinterScenery({ THREE, scene, touch, width, depth, ground, do
 
   // The distant snowfield joins the horizon to the edge of the playable basin.
   const snowfield = new THREE.PlaneGeometry(114, 112).rotateX(-Math.PI / 2);
-  mesh(snowfield, material(0xb4cad8), 0, -0.32, 0, 1, 1, 1);
-  const pond = new THREE.CylinderGeometry(1, 1, 1, 7);
-  mesh(pond, material(frost), 0, 0.006, -0.7, 4.45, 0.025, 5.1).rotation.y = 0.29;
-  const pondY = 0.022;
-  const iceThickness = 0.018;
-  mesh(pond, material(ice), 0, pondY, -0.7, 4.17, iceThickness, 4.8).rotation.y = 0.29;
-  const crackY = pondY + iceThickness / 2 + SURFACE_GAP.detail;
+  mesh(snowfield, material(0xb4cad8), 0, -0.65, 0, 1, 1, 1);
   const cracks = new THREE.BufferGeometry();
-  cracks.setAttribute('position', new THREE.Float32BufferAttribute([
-    -3.25, crackY, -0.2, -1.4, crackY, -1.1, -1.4, crackY, -1.1, 0.1, crackY, -0.9,
-    0.1, crackY, -0.9, 1.05, crackY, -2.1, 1.05, crackY, -2.1, 2.15, crackY, -2.4,
-    0.1, crackY, -0.9, 0.75, crackY, 0.1, 0.75, crackY, 0.1, 2.38, crackY, 0.7,
-    0.75, crackY, 0.1, 0.2, crackY, 1.65,
-  ], 3));
-  scene.add(new THREE.LineSegments(cracks, new THREE.LineBasicMaterial({ color: 0xb6d8e4 })));
+  const crackPoints = [];
+  for (const stroke of [
+    [[-10.3, -3.5], [-8, -4.1], [-6.7, -3.35], [-4.5, -3.8], [-2.7, -5.2], [-0.2, -5.5], [2.1, -7.1]],
+    [[-6.7, -3.35], [-6.2, -1.3], [-4.5, -0.5], [-3.6, 1.2], [-1.5, 1.4]],
+    [[-4.5, -3.8], [-3.15, -2.2], [-1, -2.75], [0.7, -1.8], [2.3, -2.3], [4.1, -1.3]],
+    [[-8.3, -7.5], [-7.4, -7.85], [-6.0, -7.5], [-5, -8.8], [-3.65, -9.05]],
+    [[-8.5, 2.85], [-6.7, 3.15], [-5.4, 2.4], [-3.2, 3.4], [-2.1, 3.05]],
+    [[-1.5, 1.4], [-0.4, 2.1], [1.42, 1.92]],
+  ]) {
+    for (let i = 1; i < stroke.length; i++) {
+      for (const [x, z] of [stroke[i - 1], stroke[i]]) crackPoints.push(x, ground(x, z) + SURFACE_GAP.detail, z);
+    }
+  }
+  cracks.setAttribute('position', new THREE.Float32BufferAttribute(crackPoints, 3));
+  const iceVeins = new THREE.LineSegments(cracks, new THREE.LineBasicMaterial({ color: 0xc5e8ef }));
+  iceVeins.name = 'Frozen lake veins';
+  scene.add(iceVeins);
 
   function boulder(x, z, size) {
     const y = ground(x, z);
@@ -80,20 +83,20 @@ export function addWinterScenery({ THREE, scene, touch, width, depth, ground, do
   }
 
   for (const [x, z, size] of [
-    [-6.4, -5.7, 0.9], [6.6, -4.6, 0.72], [-6.2, 1.8, 1.15], [5.8, 3.2, 0.93],
+    [-12.9, -6.5, 0.9], [6.6, -4.6, 0.72], [-13.6, 1.8, 1.15], [5.8, 3.2, 0.93],
     [-22, -13, 1.5], [-27, 12, 1.25], [-16, 21, 1.2], [15, 20, 1.4],
     [21, -11, 1.65], [27, 4, 1.2], [22, 13, 1.2], [27, -19, 1.55],
-    [-13, -18, 1.35], [2, -17, 1.18],
+    [-13, -18, 1.35], [2, -17, 1.18], [-9.6, 10.5, 0.86], [6.7, 12.4, 0.95], [23.8, -0.4, 1.15],
   ]) boulder(x, z, size);
 
   for (const [x, z, scale] of [
-    [-7.3, 5.4, 0.95], [-7.7, -1.7, 1.1], [-5.1, -4.5, 0.8], [-6.1, -8.2, 1.05], [-3.7, -8.3, 0.72],
-    [7.5, 5.4, 1.03], [12.9, 5.2, 0.86], [5.1, -5.9, 1.02], [7.5, -7.7, 1.15], [3.9, -8.6, 0.68],
-    [-14.3, 3.8, 1.16], [-13.7, -7.4, 1.02], [13.7, -7.8, 1.02], [14.2, 8.3, 1.15],
+    [-9.5, 7.8, 0.95], [-13.8, -2.7, 1.1], [-12.3, -8.5, 0.8], [-9.1, -12.2, 1.05], [-4.3, -14.1, 0.72],
+    [7.5, 5.4, 1.03], [12.9, 5.2, 0.86], [6.6, -7.1, 1.02], [7.5, -7.7, 1.15], [5.9, -10.4, 0.68],
+    [-12.2, 4.9, 1.16], [-13.7, -7.4, 1.02], [13.7, -7.8, 1.02], [14.2, 8.3, 1.15],
     [18, -5, 1.25], [21, -8, 0.8], [24, -12, 1.4], [27, -16, 1.1], [29, -10, 1.4],
     [25, -4, 1.2], [22, 0, 0.8], [28, 0, 1.35], [29, 7, 0.95], [21, 8, 1.5], [18, 12, 0.85],
     [24, 12, 1.15], [26, 16, 1.3], [20, 18, 0.95], [29, 20, 1.2], [21, 24, 1.25], [11, 25, 1.15],
-    [7, 27, 1.32], [2, 28, 0.88], [-13, 26, 1.2], [-17, 24, 0.95], [-23, 23, 1.3], [-28, 17, 1.2],
+    [7, 27, 1.32], [2, 28, 0.88], [-13, 26, 1.2], [-17, 24, 0.95], [-23, 23, 1.3], [-29.1, 16.8, 1.2],
     [-29, 5, 0.9], [-29, -2, 1.4], [-25, -11, 1.2], [-20, -9, 0.86], [-16, -15, 1.25],
     [-8, -15.5, 0.84], [5, -15.5, 1.08], [22, -20, 0.92], [25, -24, 1.34], [29, -25, 1.15],
     [-24, -26.5, 1.18], [-29, -25, 1.38],
@@ -114,7 +117,7 @@ export function addWinterScenery({ THREE, scene, touch, width, depth, ground, do
   }
 
   for (const [x, z, scale] of [
-    [-3.8, -5.4, 0.55], [4.25, -3.9, 0.68], [-4.85, 3.6, 0.42], [4.05, 2.6, 0.38],
+    [-9.5, -10.1, 0.55], [4.45, -6.9, 0.68], [-11.8, 3.6, 0.42], [4.4, 3.4, 0.38],
     [22, -13, 0.96], [25.2, -1.2, 0.72], [18.9, 5.9, 0.9], [29.2, 12.6, 1.03],
     [-15.8, -20.8, 1.14], [-11.6, -27.4, 1.14], [-1.6, -27.4, 0.88], [-24.8, -17.4, 0.74],
   ]) {
@@ -128,7 +131,7 @@ export function addWinterScenery({ THREE, scene, touch, width, depth, ground, do
 
   for (const [x, z, sx, sz] of [
     [-29, -9, 2.7, 1.42], [-25, -5, 2.3, 1.15], [-21, -5.7, 2.25, 1.04], [-17, -7.1, 1.6, 0.96],
-    [-29, 10, 1.45, 2.75], [-23, 11, 2.8, 1], [-19, 11, 1.9, 1.14], [-26, 20, 2.4, 1.35],
+    [-29, 10, 1.45, 2.75], [-23, 11, 2.8, 1], [-19, 11, 1.9, 1.14], [-28.7, 21.6, 1.7, 1.35],
     [18, 21, 2.9, 1.23], [27, 22, 2.4, 1.6], [24, 3.2, 1.65, 1.35], [18, -3, 2.4, 1],
     [-17, -11, 2.5, 1.5], [-10, -17, 1.75, 1.3], [-22, -28, 2.6, 1.1],
   ]) part(rock, frost, x, ground(x, z) - 0.14, z, sx, 0.48, sz, 0, x * 0.42);
@@ -224,6 +227,31 @@ export function addWinterScenery({ THREE, scene, touch, width, depth, ground, do
   sign(-18.2, 5, 'SNOW PLAY', Math.PI / 2);
   sign(-7.3, 16, 'WINTER CABIN', Math.PI);
   sign(18, 1.8, 'PINE FOREST', -Math.PI / 2);
+  sign(-2.9, 8.2, 'FROZEN LAKE', Math.PI);
+
+  // Shore lights and resting places mark the way around the ice.
+  for (const [x, z] of [[-11.7, 6.1], [-7.4, 8.2], [3.8, 6.8], [7.2, -7.7], [-3.2, -14.3], [-13.2, -9.8], [-24.8, 21.6]]) {
+    const y = ground(x, z);
+    part(box, wood, x, y + 0.49, z, 0.11, 0.98, 0.11);
+    part(box, 0x39414a, x, y + 0.96, z, 0.28, 0.09, 0.28);
+    part(box, 0xf7be73, x, y + 1.1, z, 0.19, 0.21, 0.19);
+    part(cone, 0x39414a, x, y + 1.25, z, 0.22, 0.14, 0.22);
+    part(rock, frost, x, y + 1.31, z, 0.12, 0.06, 0.12);
+  }
+  for (const [x, z] of [[-6.9, 9.1], [4.7, 8.4], [-11.5, -10.9]]) {
+    const y = ground(x, z);
+    for (const dx of [-0.64, 0.64]) part(box, wood, x + dx, y + 0.22, z, 0.17, 0.44, 0.36);
+    part(box, 0xa97651, x, y + 0.48, z, 1.64, 0.11, 0.45);
+    part(box, 0x946343, x, y + 0.78, z + 0.2, 1.64, 0.24, 0.10);
+    block(x, z, 1.63, 0.48, y + 0.9);
+  }
+
+  for (const [x, z] of [[-12.4, 7.2], [8.7, 7.6], [21.4, 14.6], [5.7, 24.3]]) {
+    const y = ground(x, z);
+    part(box, wood, x, y + 0.23, z, 0.48, 0.46, 0.48, 0, x * 0.13);
+    part(box, 0xac7955, x, y + 0.47, z, 0.5, 0.06, 0.5, 0, x * 0.13);
+    block(x, z, 0.49, 0.49, y + 0.5);
+  }
 
   for (const [x, z] of [[19, -13], [19, -16], [18, -18.7], [16.1, -21.8], [16, -24.6],
     [13.9, -27.8], [10.1, -29], [6.1, -28.6], [2.5, -26.6], [-0.5, -26.1]]) {

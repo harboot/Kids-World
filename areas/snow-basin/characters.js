@@ -1,4 +1,5 @@
 import { addGroup, SURFACE_GAP } from '../../core/geometry.js';
+import { EYE_HEIGHT } from '../../core/player.js';
 
 const svenCue = [
   [54, { duration: 0.17, endPitch: 58, level: 0.105, wave: 'triangle' }],
@@ -6,7 +7,7 @@ const svenCue = [
 ];
 const olafCue = [[76, { duration: 0.14, level: 0.08 }], [81, { duration: 0.18, level: 0.07 }, 0.075]];
 
-export function addSnowCharacters({ THREE, scene, kit, ground, playerRadius, reducedMotion, playCue, notify }) {
+export function addSnowCharacters({ THREE, scene, kit, ground, playerRadius, reducedMotion, playCue, notify, onGreetOlaf }) {
   const { box, cone, material, obstacles } = kit;
   const facet = new THREE.DodecahedronGeometry(1);
   const cylinder = new THREE.CylinderGeometry(1, 1, 1, 5);
@@ -124,7 +125,7 @@ export function addSnowCharacters({ THREE, scene, kit, ground, playerRadius, red
     return arm;
   });
 
-  const olaf = addGroup(THREE, scene, 'Olaf', -3.12, ground(-3.12, 4.13), 4.13, 0.35);
+  const olaf = addGroup(THREE, scene, 'Olaf', -8.1, ground(-8.1, 5.3), 5.3, 0.35);
   const olafBody = addGroup(THREE, olaf, 'Olaf body');
   const snow = 0xf3f9fa;
   const twig = 0x5e4338;
@@ -216,7 +217,7 @@ export function addSnowCharacters({ THREE, scene, kit, ground, playerRadius, red
   let time = 0;
   const characters = [
     {
-      model: sven, width: 0.53, depth: 1.04, height: 1.54, label: 'Pet Sven', anchor: 2.15, duration: 1.32,
+      model: sven, width: 0.53, depth: 1.04, height: 1.54, greetingRadius: 4.4, duration: 1.32,
       action: () => playCue?.(svenCue),
       pose(t, reaction) {
         const happy = Math.sin(Math.PI * reaction);
@@ -241,8 +242,12 @@ export function addSnowCharacters({ THREE, scene, kit, ground, playerRadius, red
       },
     },
     {
-      model: olaf, width: 0.36, depth: 0.29, height: 0.61, label: 'Greet Olaf', anchor: 1.31, duration: 1.08,
-      action: () => playCue?.(olafCue),
+      model: olaf, width: 0.36, depth: 0.29, height: 0.61, greetingRadius: 4.4, duration: 1.08,
+      action() {
+        playCue?.(olafCue);
+        notify?.('Olaf: Hi! Nice to meet you!');
+        onGreetOlaf();
+      },
       pose(t, reaction) {
         const bounce = Math.sin(t * 2.02);
         const happy = Math.sin(Math.PI * reaction);
@@ -255,8 +260,15 @@ export function addSnowCharacters({ THREE, scene, kit, ground, playerRadius, red
     },
   ];
 
-  const interactions = characters.map(character => {
-    const { model, width, depth, anchor, height, duration, action, label } = character;
+  function react(character) {
+    character.remaining = character.duration;
+    character.action();
+    return true;
+  }
+
+  const interactions = [];
+  for (const character of characters) {
+    const { model, width, depth, anchor, height, label } = character;
     const { x, y, z } = model.position;
     const cos = Math.cos(model.rotation.y);
     const sin = Math.sin(model.rotation.y);
@@ -269,22 +281,25 @@ export function addSnowCharacters({ THREE, scene, kit, ground, playerRadius, red
           (dz * cos + dx * sin) / (depth + playerRadius)) < 1;
       },
     });
-    return {
-      x, z, anchorY: y + anchor, radius: 2.2, label, silent: character.model !== kristoff,
-      act() {
-        character.remaining = duration;
-        action();
-        return true;
-      },
-    };
-  });
+    if (label) interactions.push({ x, z, anchorY: y + anchor, radius: 2.2, label, act: () => react(character) });
+  }
 
   return {
     interactions,
-    update(dt) {
+    update(dt, eye) {
       const still = reducedMotion?.();
       if (!still) time = (time + dt) % 600;
       for (const character of characters) {
+        const { greetingRadius, model } = character;
+        if (eye && greetingRadius) {
+          const { x, y, z } = model.position;
+          const distance = Math.hypot(eye.x - x, eye.z - z);
+          if (distance > greetingRadius + 0.65) character.nearby = false;
+          if (!character.nearby && distance <= greetingRadius && Math.abs(eye.y - y - EYE_HEIGHT) < 1) {
+            character.nearby = true;
+            react(character);
+          }
+        }
         if (still) character.remaining = 0;
         else character.remaining = Math.max(0, character.remaining - dt);
         const reaction = character.remaining > 0 ? 1 - character.remaining / character.duration : 0;
@@ -295,6 +310,7 @@ export function addSnowCharacters({ THREE, scene, kit, ground, playerRadius, red
       time = 0;
       for (const character of characters) {
         character.remaining = 0;
+        character.nearby = false;
         character.pose(0, 0);
       }
     },

@@ -1,7 +1,6 @@
 import { SURFACE_GAP } from '../../core/geometry.js';
 import { SUMMIT_HEIGHT } from './terrain.js';
 
-const SEGMENTS = 32;
 const HALF_WIDTH = 1.18;
 const WALL_WIDTH = 0.24;
 const WALL_HEIGHT = 0.63;
@@ -9,17 +8,43 @@ const DECK_DEPTH = 0.2;
 const DECK_Y = SUMMIT_HEIGHT + SURFACE_GAP.roof;
 const LANDING_Y = SURFACE_GAP.roof;
 
-// World-space centerline of the ice surface, in descent order. The mesh uses
-// these same samples as the guided ride.
-export const SLIDE_PATH = Object.freeze(Array.from({ length: SEGMENTS + 1 }, (_, i) => {
-  const t = i / SEGMENTS;
-  const ease = t * t * (3 - 2 * t);
-  return Object.freeze({
-    x: -5.8 - 19.2 * t,
-    y: LANDING_Y + (DECK_Y - LANDING_Y) * (1 - ease),
-    z: -24 + 3.3 * ease + 2.65 * Math.sin(t * 2 * Math.PI) * Math.sin(t * Math.PI),
-  });
-}));
+// Keep the launch facing west, then wind back along the valley to the southwest runout.
+const turns = [
+  [-5.8, -24], [-11, -24], [-19, -23], [-23, -23], [-25.4, -19], [-23.4, -14.5],
+  [-17.7, -10.4], [-16.1, -5], [-16.1, 1.5], [-15.4, 7.7], [-17.5, 12.3],
+  [-22.4, 14.9], [-25.6, 18.6],
+];
+const sectionsPerTurn = 6;
+const SEGMENTS = (turns.length - 1) * sectionsPerTurn;
+
+function curve(a, b, c, d, t) {
+  return b + t * ((c - a) + t * (2 * a - 5 * b + 4 * c - d + t * (3 * (b - c) + d - a))) / 2;
+}
+
+function buildPath() {
+  const path = [{ x: turns[0][0], z: turns[0][1], distance: 0 }];
+  for (let i = 1; i < turns.length; i++) {
+    const [ax, az] = turns[Math.max(0, i - 2)];
+    const [bx, bz] = turns[i - 1];
+    const [cx, cz] = turns[i];
+    const [dx, dz] = turns[Math.min(turns.length - 1, i + 1)];
+    for (let step = 1; step <= sectionsPerTurn; step++) {
+      const t = step / sectionsPerTurn;
+      const x = curve(ax, bx, cx, dx, t);
+      const z = curve(az, bz, cz, dz, t);
+      const start = path.at(-1);
+      path.push({ x, z, distance: start.distance + Math.hypot(x - start.x, z - start.z) });
+    }
+  }
+  const length = path.at(-1).distance;
+  return Object.freeze(path.map(({ x, z, distance }) => {
+    const t = distance / length;
+    const descent = (t * t * (3 - 2 * t)) ** 1.3;
+    return Object.freeze({ x, y: LANDING_Y + (DECK_Y - LANDING_Y) * (1 - descent), z });
+  }));
+}
+
+export const SLIDE_PATH = buildPath();
 export const SLIDE_START = SLIDE_PATH[0];
 export const SLIDE_LANDING = SLIDE_PATH.at(-1);
 export const SLIDE_PLATFORM = Object.freeze({
@@ -85,7 +110,7 @@ export function addIceSlide(THREE, scene, { mesh, material, box, block }, ground
   const pack = material(0xc0e4f3);
   const post = material(0x6fa9c7);
   const trim = material(0xe0f5fa);
-  const supportSites = [11, 17, 23, 27];
+  const supportSites = [10, 17, 24, 31, 37, 43, 50, 57, 64];
   const support = new THREE.CylinderGeometry(0.46, 0.68, 1, 5);
   for (const i of supportSites) {
     const { x, y, z } = SLIDE_PATH[i];
@@ -108,8 +133,12 @@ export function addIceSlide(THREE, scene, { mesh, material, box, block }, ground
   const gate = mesh(box, pack, x + 0.18, y + 0.48, z, 0.17, 0.22, 2.58, false, group);
   gate.name = 'Ice slide gate';
 
+  const left = Math.min(...SLIDE_PATH.map(point => point.x)) - HALF_WIDTH - WALL_WIDTH;
+  const north = Math.min(...SLIDE_PATH.map(point => point.z)) - HALF_WIDTH - WALL_WIDTH;
+  const south = SLIDE_LANDING.z + HALF_WIDTH + WALL_WIDTH;
+
   function blocksGround(px, pz, radius, feet = 0) {
-    if (px < SLIDE_LANDING.x || px > SLIDE_START.x + 3.35 + radius || pz < -27 || pz > -17.5) return false;
+    if (px < left - radius || px > x + 3.35 + radius || pz < north - radius || pz > south + radius) return false;
     const platformEdge = Math.abs(pz - z);
     if (px >= x + 0.05 - radius && px <= x + 3.19 + radius &&
         Math.abs(platformEdge - 1.66) < radius + 0.105 && feet >= y - 1.8) return true;
@@ -117,10 +146,11 @@ export function addIceSlide(THREE, scene, { mesh, material, box, block }, ground
 
     if (px > x + radius) return false;
     const reach = HALF_WIDTH + WALL_WIDTH + radius;
-    for (let i = 1; i <= SEGMENTS - 3; i++) {
+    for (let i = 1; i <= SEGMENTS - 4; i++) {
       const a = SLIDE_PATH[i - 1];
       const b = SLIDE_PATH[i];
-      if (px < b.x - reach || px > a.x + reach) continue;
+      if (px < Math.min(a.x, b.x) - reach || px > Math.max(a.x, b.x) + reach ||
+          pz < Math.min(a.z, b.z) - reach || pz > Math.max(a.z, b.z) + reach) continue;
       const dx = b.x - a.x;
       const dz = b.z - a.z;
       const t = Math.max(0, Math.min(1, ((px - a.x) * dx + (pz - a.z) * dz) / (dx * dx + dz * dz)));
