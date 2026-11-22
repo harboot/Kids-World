@@ -31,9 +31,9 @@ Ride the hot air balloon for a view of the lakes and forests, or walk through th
 - Put away the toys.
 
 ### Snow Basin — 3 Missions
-- Destroy 3 snowmen with snowballs.
-- Chop down the large tree.
-- Find the Frozen Key.
+- Chop down the pine in 5 chops.
+- Destroy 3 snowmen from the western snowball station.
+- Climb Ice Mountain and ride the ice slide.
 
 ### Frozen Castle — 3 Missions
 - Activate 4 magical ice crystals.

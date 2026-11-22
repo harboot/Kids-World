@@ -10,38 +10,17 @@ export const SNOWMAN_SPHERES = [
   { y: 1.68, radius: 0.29 },
 ];
 
-const MIN_PLAYER_DISTANCE = 3.2;
-const MIN_TARGET_SPACING = 2.8;
 const BALL_SPEED = 18;
 const BALL_GRAVITY = 8;
 const BALL_LIFETIME = 1.9;
+export const SNOWBALL_RELOAD = 0.5;
+export const SNOWBALL_STATION = Object.freeze({ x: -18.3, z: 3.1, radius: 2 });
+export const THROWING_POSITION = Object.freeze({ x: -19.55, z: 3.1 });
 
-// Clear, open pockets of snow. Each slot can fall back to its surveyed center.
-const slots = [
-  [-12.3, -11.4], [-5.8, -12.5], [5.7, -12.3], [11.4, -11.4],
-  [-11.1, -5.3], [-12.2, 0.1], [-11.4, 5.9], [-10.9, 11.8],
-  [-4.7, 10.7], [5.4, 10.8], [11.8, 11.5], [10.3, 5.4],
-];
+const targetSites = [0.65, 3.1, 5.55].map(z => ({ x: -26, z }));
 
-function chooseTargets(player, clearSpot, random) {
-  const shuffled = slots.slice();
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const swap = Math.floor(random() * (i + 1));
-    [shuffled[i], shuffled[swap]] = [shuffled[swap], shuffled[i]];
-  }
-  const targets = [];
-  for (const [x, z] of shuffled) {
-    for (let attempt = 0; attempt <= 3; attempt++) {
-      const tx = attempt === 3 ? x : x + (random() - 0.5) * 1.1;
-      const tz = attempt === 3 ? z : z + (random() - 0.5) * 1.1;
-      if (Math.hypot(player.x - tx, player.z - tz) < MIN_PLAYER_DISTANCE || !clearSpot(tx, tz)) continue;
-      if (targets.some(target => Math.hypot(target.x - tx, target.z - tz) < MIN_TARGET_SPACING)) continue;
-      targets.push({ x: tx, z: tz, intact: true, breakTime: 0 });
-      if (targets.length === SNOWMAN_COUNT) return targets;
-      break;
-    }
-  }
-  throw new Error(`Snow Basin requires ${SNOWMAN_COUNT} clear snowman spawn slots.`);
+function atStation(player) {
+  return player && Math.hypot(player.x - SNOWBALL_STATION.x, player.z - SNOWBALL_STATION.z) <= SNOWBALL_STATION.radius;
 }
 
 // Returns the first intersection along a normalized segment, or Infinity on a miss.
@@ -85,7 +64,7 @@ function sweepBox(start, end, obstacle) {
   return first;
 }
 
-export function createSnowActivity({ width, depth, spawn, obstacles, clearSpot, random = Math.random, cue = () => {} }) {
+export function createSnowActivity({ width, depth, obstacles, cue = () => {} }) {
   const projectiles = Array.from({ length: 3 }, () => ({ active: false }));
   const state = {
     projectiles,
@@ -93,17 +72,16 @@ export function createSnowActivity({ width, depth, spawn, obstacles, clearSpot, 
   };
   const missions = {
     get snowmen() { return state.destroyed === SNOWMAN_COUNT; },
-    get tree() { return state.tree === 'fallen'; },
-    get key() { return state.hasFrozenKey; },
+    get pine() { return state.tree === 'fallen'; },
   };
   const next = { x: 0, y: 0, z: 0 };
 
   function reset() {
     Object.assign(state, {
       axe: false, held: false, chops: 0, cooldown: 0,
-      tree: 'upright', fallTime: 0, hasFrozenKey: false,
+      tree: 'upright', fallTime: 0, reload: 0,
     });
-    state.targets = chooseTargets(spawn, clearSpot, random);
+    state.targets = targetSites.map(site => ({ ...site, intact: true, breakTime: 0 }));
     for (const ball of projectiles) ball.active = false;
   }
 
@@ -130,33 +108,26 @@ export function createSnowActivity({ width, depth, spawn, obstacles, clearSpot, 
     return true;
   }
 
-  function canMakeBall() {
-    return !state.held;
-  }
-
-  function canPickUpKey() {
-    return missions.tree && !missions.key;
-  }
-
-  function pickUpKey() {
-    if (!canPickUpKey()) return false;
-    state.hasFrozenKey = true;
-    cue('key');
-    return true;
-  }
-
-  function makeBall() {
-    if (!canMakeBall()) return false;
-    state.held = true;
-    cue('pack');
-    return true;
+  function prepareBall(dt, player) {
+    state.reload = Math.max(0, state.reload - dt);
+    if (!atStation(player) || missions.snowmen) {
+      state.held = false;
+    } else if (!state.held && state.reload === 0) {
+      state.held = true;
+      cue('pack');
+    }
   }
 
   function throwBall(origin, direction) {
-    if (!state.held) return false;
+    if (!atStation(origin)) {
+      state.held = false;
+      return false;
+    }
+    if (!state.held || missions.snowmen) return false;
     const ball = projectiles.find(item => !item.active);
     if (!ball) return false;
     state.held = false;
+    state.reload = SNOWBALL_RELOAD;
     Object.assign(ball, {
       active: true, age: 0,
       x: origin.x + direction.x * 0.52,
@@ -208,7 +179,7 @@ export function createSnowActivity({ width, depth, spawn, obstacles, clearSpot, 
     ball.vy -= BALL_GRAVITY * dt;
   }
 
-  function update(dt) {
+  function update(dt, player) {
     state.cooldown = Math.max(0, state.cooldown - dt);
     if (state.tree === 'falling') {
       state.fallTime = Math.min(FALL_DURATION, state.fallTime + dt);
@@ -221,12 +192,13 @@ export function createSnowActivity({ width, depth, spawn, obstacles, clearSpot, 
       if (!target.intact) target.breakTime = Math.min(BREAK_DURATION, target.breakTime + dt);
     }
     for (const ball of projectiles) if (ball.active) moveBall(ball, dt);
+    prepareBall(dt, player);
   }
 
   reset();
-  return { state, missions, reset, pickUpAxe, canChop, chop, canPickUpKey, pickUpKey, canMakeBall, makeBall, throwBall, update };
+  return { state, missions, reset, pickUpAxe, canChop, chop, throwBall, update };
 }
 
 export function snowMissionsComplete(missions) {
-  return missions.snowmen && missions.tree && missions.key;
+  return missions.pine && missions.snowmen && missions.slide;
 }

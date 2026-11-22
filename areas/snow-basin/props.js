@@ -1,5 +1,5 @@
 import { SURFACE_GAP } from '../../core/geometry.js';
-import { BALL_RADIUS, BREAK_DURATION, CHOPS, SNOWMAN_COUNT, SNOWMAN_SPHERES } from './activity.js';
+import { BALL_RADIUS, BREAK_DURATION, CHOPS, SNOWBALL_STATION, SNOWMAN_COUNT, SNOWMAN_SPHERES, THROWING_POSITION } from './activity.js';
 
 export function addAxe(THREE, scene, viewmodel, kit, site) {
   const { box, mesh, material } = kit;
@@ -104,7 +104,7 @@ function makeCuttableTrunk(THREE) {
   return { geometry, setChops };
 }
 
-export function addSnowPlay(THREE, scene, viewmodel, kit, piles) {
+export function addSnowPlay(THREE, scene, viewmodel, kit) {
   const { box, cone, mesh, material, block } = kit;
   const snow = material(0xeaf8ff);
   const powder = material(0xd9effa);
@@ -113,12 +113,19 @@ export function addSnowPlay(THREE, scene, viewmodel, kit, piles) {
   const carrot = material(0xf59446);
   const sphere = new THREE.IcosahedronGeometry(1, 1);
   const colors = [0xd67876, 0x369d98, 0xb885ce];
-  for (const { x, z } of piles) {
-    mesh(sphere, powder, x, 0.14, z, 0.98, 0.34, 0.73);
-    mesh(sphere, snow, x + 0.48, 0.20, z - 0.11, 0.49, 0.31, 0.50);
-    mesh(sphere, snow, x - 0.32, 0.32, z + 0.15, 0.62, 0.38, 0.52);
-    block(x, z, 1.35, 0.93, 0.41);
-  }
+  const pile = new THREE.Group();
+  const { x, z } = SNOWBALL_STATION;
+  pile.name = 'Snowball station';
+  pile.position.set(x, 0, z);
+  scene.add(pile);
+  mesh(sphere, powder, 0, 0.14, 0, 0.98, 0.34, 0.73, false, pile);
+  mesh(sphere, snow, 0.48, 0.20, -0.11, 0.49, 0.31, 0.50, false, pile);
+  mesh(sphere, snow, -0.32, 0.32, 0.15, 0.62, 0.38, 0.52, false, pile);
+  block(x, z, 1.35, 0.93, 0.41);
+
+  const ring = new THREE.RingGeometry(0.44, 0.53, 24).rotateX(-Math.PI / 2);
+  const marker = mesh(ring, material(0x4082aa), THROWING_POSITION.x, SURFACE_GAP.detail, THROWING_POSITION.z, 1, 1, 1);
+  marker.name = 'Snowball throwing position';
 
   const scarfRing = new THREE.CylinderGeometry(1, 1, 1, 10);
   const models = Array.from({ length: SNOWMAN_COUNT }, (_, i) => {
@@ -177,47 +184,6 @@ export function showSnowmen(models, targets) {
       mesh.scale.setScalar(radius * (1 - elapsed / BREAK_DURATION * 0.88));
     }
   }
-}
-
-export function addFrozenKey(THREE, scene, kit, site) {
-  const { box, mesh } = kit;
-  const model = new THREE.Group();
-  model.name = 'Frozen Key';
-  model.position.set(site.x, 0, site.z);
-  scene.add(model);
-
-  const gold = new THREE.MeshLambertMaterial({ color: 0xf8c673, emissive: 0x4c3111 });
-  const ice = new THREE.MeshLambertMaterial({ color: 0x9fe9f9, emissive: 0x296075 });
-  const key = new THREE.Group();
-  model.add(key);
-  const bow = new THREE.TorusGeometry(0.225, 0.069, 6, 14);
-  mesh(bow, ice, -0.32, 0.055, 0, 1, 1, 1, false, key);
-  const shaftDepth = 0.124;
-  const toothDepth = shaftDepth + 2 * SURFACE_GAP.detail;
-  mesh(box, gold, 0.219, 0.039, 0, 0.64, 0.126, shaftDepth, false, key);
-  mesh(box, ice, -0.038, 0.038, 0, 0.14, 0.179, 0.147, false, key);
-  mesh(box, gold, 0.295, -0.083, 0, 0.122, 0.173, toothDepth, false, key);
-  mesh(box, gold, 0.49, -0.116, 0, 0.123, 0.238, toothDepth, false, key);
-
-  const light = new THREE.MeshBasicMaterial({ color: 0xc2f5ff, toneMapped: false });
-  const ring = new THREE.RingGeometry(0.48, 0.54, 20).rotateX(-Math.PI / 2);
-  mesh(ring, light, 0, 0.022, 0, 1, 1, 1, false, model);
-  const shard = new THREE.OctahedronGeometry(1);
-  const glints = [-1, 0, 1].map(() => mesh(shard, light, 0, 0, 0, 1, 1, 1, false, key));
-
-  return {
-    model,
-    pose(time) {
-      key.position.y = 0.59 + 0.07 * Math.sin(time * 2.5);
-      key.rotation.y = -0.94 + 0.32 * Math.sin(time * 1.5);
-      glints.forEach((star, i) => {
-        const phase = time * 3.4 + i * 2.1;
-        star.position.set(-0.47 + i * 0.46, 0.31 + 0.11 * Math.sin(phase), 0.08 + i * 0.045);
-        const size = 0.055 + 0.023 * Math.cos(phase);
-        star.scale.set(size * 0.56, size, size * 0.56);
-      });
-    },
-  };
 }
 
 export function addIceSculpture(THREE, scene, kit, { x, z }) {

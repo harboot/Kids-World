@@ -35,7 +35,7 @@ test('the link-only area opens by explicit URL and never enters public progress'
   assert.equal(progress.has(ID), false);
   assert.deepEqual(JSON.parse(saved), [ID, 'garden@2']);
   progress.complete('snow');
-  assert.deepEqual(JSON.parse(saved), ['garden@2', 'snow']);
+  assert.deepEqual(JSON.parse(saved), ['garden@2', 'snow@2']);
   assert.equal(progress.has('garden'), true);
 });
 
