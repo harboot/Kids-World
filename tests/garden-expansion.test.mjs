@@ -137,8 +137,13 @@ test('both cows keep their routes and collision footprint while walking and gree
   const knees = cows.flatMap(cow => parts(cow, 'knee'));
   assert.equal(hips.length, 8);
   assert.equal(knees.length, 8);
-  assert.equal(parts(cows[0], 'head')[0].children[0].geometry, parts(cows[1], 'head')[0].children[0].geometry);
-  assert.notEqual(parts(cows[0], 'torso')[0].children[0].geometry, parts(cows[1], 'torso')[0].children[0].geometry);
+  const bodyGeometry = parts(cows[0], 'torso')[0].children[0].geometry;
+  assert.equal(bodyGeometry.type, 'BoxGeometry');
+  for (const cow of cows) {
+    cow.children[0].traverse(part => {
+      if (part.isMesh) assert.equal(part.geometry, bodyGeometry);
+    });
+  }
   const swungForward = new Set();
   const swungBack = new Set();
   const bent = new Set();

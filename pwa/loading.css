@@ -88,7 +88,7 @@
 .pwa-meter { display: flex; align-items: center; gap: 11px; }
 #pwa-percent { font-size: .91rem; font-weight: 800; font-variant-numeric: tabular-nums; }
 #pwa-percent:empty { display: none; }
-#pwa-count { min-height: 1.2em; margin: 7px 0 0; color: #52664d; font-size: .83rem; }
+#pwa-version { min-height: 1.2em; margin: 7px 0 0; color: #52664d; font-size: .83rem; }
 
 #pwa-progress {
   appearance: none;

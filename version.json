@@ -1,5 +1,5 @@
 {
-  "version": "43eac3e4da2d17ae9c28dbff3095a640da8314e01320c162eeff566e74396dd9",
+  "version": "7eb24f060ffc553c4b006f6471fa7adb99fcb4b37127c45ce3e78c33df8ed982",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "5693e16fb26b8ae19bdc20aeb877fed9c225b1cd23bd4e3cdb1fd4593cd860ac"
+      "revision": "f2cf2d1bfc69ed7c101ce07568b3ca4155d509ecb84ccf26ff93fb9d4b920638"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -87,7 +87,7 @@
     },
     {
       "path": "./areas/flower-garden/garden-animals.js",
-      "revision": "f380101642f133a4e885f4d6a141311c5443b7bf65066809a9a00e9308159f82"
+      "revision": "2c1f16855258c3d9bcf4821254521ed499dae62371634eb5e97778b724328fa1"
     },
     {
       "path": "./areas/flower-garden/garden-balloon.js",
@@ -104,10 +104,6 @@
     {
       "path": "./areas/flower-garden/garden-cave.js",
       "revision": "b906b2978bc225cabb2c32d0592687670b1c364007f32bed193e1f23cbc0234a"
-    },
-    {
-      "path": "./areas/flower-garden/garden-cow.js",
-      "revision": "366a195da850600bbdd1dbcc81c85fb829cfd5a04d08fd8654948fe4198e3ed9"
     },
     {
       "path": "./areas/flower-garden/garden-orchard.js",
@@ -559,7 +555,7 @@
     },
     {
       "path": "./index.html",
-      "revision": "d8237361139d2d150c4c83108c6dfeaf07f243aebe03d796f574035c08bdc843"
+      "revision": "d1603b10540783e1d1cf90815d40b79876e4ab98ff59b00510b3656062b27256"
     },
     {
       "path": "./manifest.webmanifest",
@@ -567,15 +563,15 @@
     },
     {
       "path": "./pwa/bootstrap.js",
-      "revision": "985057cb95fb6992d03e9ced608775b7c5cc7e395436be31c1e525e309f3df34"
+      "revision": "9bdb7b73efcf6d83726a2a8a4cf13c4bd9cd34800ae9a5b990e81229aefd01f2"
     },
     {
       "path": "./pwa/cache.js",
-      "revision": "05ac9cb1675121713528994be4cc7b1e2e6c4eb2b457674773994dae57ca3944"
+      "revision": "eb11cb92aeda9814baec18479b43e1699eb992e2163412ebdba5f0a4e62ca861"
     },
     {
       "path": "./pwa/loading.css",
-      "revision": "5caf6b5fed3b6be7dbc14cf05f790bd8c0490919a8256fca8eb48bfb3a6ef85f"
+      "revision": "e8ab3a19f9ee485943e9644eae7a1ee8e1e75dc8b9abc9a69286d80776517a5c"
     },
     {
       "path": "./pwa/release.js",
