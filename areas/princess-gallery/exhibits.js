@@ -3,6 +3,7 @@ import { buildAurora } from './aurora.js';
 import { buildBelle } from './belle.js';
 import { buildCinderella } from './cinderella.js';
 import { buildJasmine } from './jasmine.js';
+import { buildMulan } from './mulan.js';
 import { buildRapunzel } from './rapunzel.js';
 import { buildSnowWhite } from './snow-white.js';
 import { metadata } from './metadata.js';
@@ -73,10 +74,10 @@ export const exhibits = [
   },
   {
     id: 'mulan', title: 'Mulan', accent: 0xb85d75, wing: 'adventure',
-    mission: 'Discover Mulan’s painted fan', display: 'Painted Fan',
+    mission: 'Strike the great gong and watch Mulan’s sword demonstration',
     position: { x: 54, z: -17 }, rotation: -1.26,
     bounds: { width: 21, depth: 22, height: 18 }, shape: 'polygon', entrance: 6.3,
-    approach: [34, -11], status: 'coming-soon',
+    approach: [34, -11], status: 'complete', build: buildMulan,
   },
   {
     id: 'ariel', title: 'Ariel — The Little Mermaid', accent: 0x6fa3a4, wing: 'adventure',

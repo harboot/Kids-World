@@ -12,18 +12,6 @@ const props = {
     part(lamp, 'sphere', gold, .53, .416, 0, .26, .096, .105).rotation.z = .29;
     part(lamp, new THREE.TorusGeometry(.18, .035, 8, 20), gold, -.51, .32, 0, 1, 1, 1);
   },
-  mulan({ THREE, part, beam, gold, accent, model: group }) {
-    const shape = new THREE.Shape();
-    shape.moveTo(0, .07);
-    shape.absarc(0, .07, .72, .18, Math.PI - .18, false);
-    shape.closePath();
-    part(group, new THREE.ShapeGeometry(shape, 18), accent, 0, 0, 0, 1, 1, 1).material.side = THREE.DoubleSide;
-    for (let i = 0; i < 9; i++) {
-      const a = .22 + i * .338;
-      beam(group, gold, [0, .08, .025], [.705 * Math.cos(a), .07 + .705 * Math.sin(a), .025], .026);
-    }
-    part(group, 'gem', gold, 0, .069, .056, .074, .080, .034);
-  },
   moana({ part, beam, gold, ivory, accent, model: paddle }) {
     beam(paddle, gold, [-.46, .08, 0], [.28, .68, 0], .095);
     part(paddle, 'sphere', accent, .36, .73, 0, .158, .303, .055).rotation.z = -.71;

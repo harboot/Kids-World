@@ -6,6 +6,8 @@ import { wreckDeck } from '../areas/princess-gallery/ariel-wreck.js';
 import { ATRIUM_RADII } from '../areas/princess-gallery/atrium.js';
 import { exhibits, exhibitOutline } from '../areas/princess-gallery/exhibits.js';
 import { CARPET_DOCK } from '../areas/princess-gallery/jasmine-carpet.js';
+import { MULAN_DEMONSTRATION_TIME } from '../areas/princess-gallery/mulan-character.js';
+import { GONG_SITE } from '../areas/princess-gallery/mulan.js';
 import { spaceTransform } from '../areas/princess-gallery/parts.js';
 import { observationPlatform } from '../areas/princess-gallery/rapunzel.js';
 import { WALKWAY_HEIGHT } from '../areas/princess-gallery/walkway.js';
@@ -38,6 +40,7 @@ function fixture({ saved = [], reduced = false } = {}) {
   const camera = new THREE.PerspectiveCamera();
   const player = createPlayer(THREE, camera);
   const notices = [];
+  const cues = [];
   const worlds = createWorldManager(THREE, {
     areas, camera, touch: true, playerRadius: PLAYER_RADIUS,
     services: {
@@ -45,11 +48,12 @@ function fixture({ saved = [], reduced = false } = {}) {
       isPlayerGrounded: () => player.grounded,
       carryPlayer: player.carryVertically,
       notify: message => notices.push(message),
+      playCue: notes => cues.push(notes),
       isLevelComplete: progress.has,
       completeLevel: progress.complete,
     },
   });
-  return { worlds, camera, player, progress, storage, notices };
+  return { worlds, camera, player, progress, storage, notices, cues };
 }
 
 function assertSafeSpawn(spawn, visit, game) {
@@ -159,8 +163,8 @@ test('ten distinct and nonoverlapping footprints surround the Central Atrium', a
     'rapunzel', 'snow-white', 'cinderella', 'aurora', 'ariel', 'belle', 'jasmine', 'mulan', 'tiana', 'moana',
   ]));
   assert.deepEqual(exhibits.filter(entry => entry.status === 'complete' && entry.build).map(entry => entry.id),
-    ['rapunzel', 'snow-white', 'aurora', 'belle', 'cinderella', 'jasmine', 'ariel']);
-  assert.equal(exhibits.filter(entry => entry.status === 'coming-soon' && !entry.build).length, 3);
+    ['rapunzel', 'snow-white', 'aurora', 'belle', 'cinderella', 'jasmine', 'mulan', 'ariel']);
+  assert.equal(exhibits.filter(entry => entry.status === 'coming-soon' && !entry.build).length, 2);
   assert.ok(new Set(exhibits.map(entry => entry.shape)).size >= 5);
   assert.ok(new Set(exhibits.map(entry => entry.rotation)).size >= 8);
   for (const key of ['width', 'depth', 'height']) {
@@ -1231,6 +1235,19 @@ test('the ten gallery missions record one interaction per exhibit and replay aft
           for (let i = 0; i < 110; i++) step(game.camera.position);
           break;
         }
+        case 'mulan': {
+          const gong = area.interactions.find(item => item.label === 'Strike the great gong');
+          position = point(exhibit, GONG_SITE.x, GONG_SITE.z + 2);
+          const entrance = point(exhibit, 0, exhibit.bounds.depth / 2 - 1.75);
+          assertWalkable(area, [entrance.x, entrance.z], [position.x, position.z], 'Mulan gong approach');
+          step(position);
+          assert.deepEqual(completed(), expected, 'approaching the gong does not count');
+          game.camera.position.copy(position);
+          gong.act();
+          assert.deepEqual(completed(), expected, 'the demonstration must finish');
+          for (let time = 0; time < MULAN_DEMONSTRATION_TIME + .2; time += .2) step(position);
+          break;
+        }
         case 'ariel': {
           const deck = scene.getObjectByName('Shipwreck deck').getWorldPosition(new THREE.Vector3());
           step({ x: deck.x, y: EYE_HEIGHT, z: deck.z });
@@ -1262,6 +1279,88 @@ test('the ten gallery missions record one interaction per exhibit and replay aft
   assert.equal(progress.has(ID), true, 'reset preserves the saved level record');
   await worlds.load(CASTLE);
   assert.ok((await worlds.load(ID)).area.missionStatus.missions.every(mission => !mission.complete));
+});
+
+test('Mulan’s gong starts one demonstration from the garden path and can be struck again', async t => {
+  const { worlds, camera, cues } = fixture();
+  t.after(worlds.unload);
+  const { area, scene } = await worlds.load(ID);
+  const exhibit = exhibits.find(entry => entry.id === 'mulan');
+  const { toWorld } = spaceTransform(exhibit);
+  const room = scene.getObjectByName('mulan exhibit');
+  for (const name of ['Three-tier garden pagoda', 'Sakura grove', 'Lotus pond', 'Great gong', 'Mulan practice sword']) {
+    assert.ok(room.getObjectByName(name), name);
+  }
+  const gong = area.interactions.find(item => item.label === 'Strike the great gong');
+  const disk = room.getObjectByName('Suspended bronze disk');
+  const blade = room.getObjectByName('Mulan practice sword');
+  const body = room.getObjectByName('Mulan body');
+  const mission = area.missionStatus.missions.find(entry => entry.id === 'mulan');
+  const pose = () => [disk.rotation.x, ...blade.rotation.toArray(), ...body.rotation.toArray(), ...body.position.toArray()];
+  const idle = pose();
+  function stand(z, height = EYE_HEIGHT) {
+    const [x, worldZ] = toWorld(GONG_SITE.x, GONG_SITE.z + z);
+    camera.position.set(x, height, worldZ);
+  }
+  for (const [distance, height] of [[-1.9, EYE_HEIGHT], [1.9, EYE_HEIGHT + 1.2], [3.3, EYE_HEIGHT]]) {
+    stand(distance, height);
+    assert.equal(nearestInteraction([gong], camera.position), null);
+    gong.act();
+  }
+  assert.equal(cues.length, 0);
+  assert.deepEqual(pose(), idle);
+  stand(1.9);
+  assert.equal(nearestInteraction([gong], camera.position, () => false), null);
+  assert.equal(nearestInteraction([gong], camera.position, () => true), gong);
+  gong.act();
+  gong.act();
+  assert.equal(cues.length, 1);
+  assert.equal(gong.active, false);
+  worlds.update(.05, camera.position, .33);
+  assert.notEqual(disk.rotation.x, 0);
+  assert.notDeepEqual(pose(), idle);
+  assert.equal(mission.complete, false);
+  for (let i = 0; i < 25; i++) worlds.update(.05, camera.position, .24);
+  assert.equal(mission.complete, true);
+  assert.deepEqual(pose(), idle);
+  assert.equal(gong.active, true);
+
+  gong.act();
+  assert.equal(cues.length, 2);
+  worlds.update(.05, camera.position, .24);
+  worlds.reset();
+  assert.equal(mission.complete, false);
+  assert.equal(gong.active, true);
+  assert.deepEqual(pose(), idle);
+  gong.act();
+  worlds.unload();
+  assert.equal(gong.active, false);
+  assert.deepEqual(pose(), idle);
+});
+
+test('Mulan’s reduced-motion demonstration holds a steady pose and still completes the mission', async t => {
+  const { worlds, camera, cues } = fixture({ reduced: true });
+  t.after(worlds.unload);
+  const { area, scene } = await worlds.load(ID);
+  const exhibit = exhibits.find(entry => entry.id === 'mulan');
+  const [x, z] = spaceTransform(exhibit).toWorld(GONG_SITE.x, GONG_SITE.z + 1.9);
+  const gong = area.interactions.find(item => item.label === 'Strike the great gong');
+  const disk = scene.getObjectByName('Suspended bronze disk');
+  const blade = scene.getObjectByName('Mulan practice sword');
+  const idle = blade.rotation.z;
+  camera.position.set(x, EYE_HEIGHT, z);
+  gong.act();
+  const greeting = blade.rotation.z;
+  assert.notEqual(greeting, idle);
+  for (let i = 0; i < 12; i++) {
+    worlds.update(.05, camera.position, .25);
+    assert.equal(blade.rotation.z, greeting);
+    assert.equal(disk.rotation.x, 0);
+  }
+  for (let i = 0; i < 12; i++) worlds.update(.05, camera.position, .25);
+  assert.ok(area.missionStatus.missions.find(entry => entry.id === 'mulan').complete);
+  assert.equal(blade.rotation.z, idle);
+  assert.equal(cues.length, 1);
 });
 
 test('the Glass Walkway lift can be called from either landing and carries the player both ways', async t => {

@@ -3,7 +3,7 @@ export const metadata = {
   title: 'Princess Gallery',
   heading: ['Princess', 'Gallery'],
   description: 'Explore the Central Atrium, then take the Glass Walkway for a view into every exhibit.',
-  canvasLabel: '3D enchanted exhibition park with Rapunzel, Snow White, Cinderella, Aurora, Ariel, Belle, and Jasmine',
+  canvasLabel: '3D enchanted exhibition park with Rapunzel, Snow White, Cinderella, Aurora, Ariel, Belle, Jasmine, and Mulan',
   themeColor: '#705184',
   width: 140,
   depth: 120,
