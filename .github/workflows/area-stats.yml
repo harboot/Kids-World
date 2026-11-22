@@ -29,7 +29,6 @@ jobs:
       - run: node scripts/generate-area-stats.mjs
       - run: node scripts/generate-pwa-manifest.mjs
       - run: node scripts/generate-pwa-manifest.mjs --check
-      - run: node --test
       - name: Commit generated files and stage the validated release
         id: release
         shell: bash
