@@ -1,5 +1,5 @@
 {
-  "version": "0adbef08d9c3bc294c8f792108a2ccb93dbd5fbdb19194e330690f40c4787f69",
+  "version": "84155f65f29ac9f2c69482a7a18437fdbfe20ec47fb3353ee557901bc152fa94",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,11 +7,11 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "d5a577c97fa3e82227e0eb7e194ee60e04bd94652814e734a3d8faa71af78013"
+      "revision": "2deac5a60f1cb62adb8a39d391ac8c1ef3df571f8f9c4360931adf030db2c1e3"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
-      "revision": "9b9436863a1c143e66c9db97a917300ee6dc1c7bb647ba0e8c4853eeb2b231c0"
+      "revision": "1375473289e2f957a59af2d5fd4530ef61b582d016c52ab0784cd2c75f284f50"
     },
     {
       "path": "./areas/arendelle-village/buildings.js",
@@ -83,7 +83,7 @@
     },
     {
       "path": "./areas/flower-garden/flower-garden.jpg",
-      "revision": "8be857c4c5e3f7e38fd57df3a8532b25d3831a353e90b9d433bf5cbbb0bbd748"
+      "revision": "465ff7c6af126999dd22c1f629399b4d5157c83e284dcf0dc83c2cc6f927def0"
     },
     {
       "path": "./areas/flower-garden/garden-animals.js",
@@ -151,7 +151,7 @@
     },
     {
       "path": "./areas/frozen-castle/frozen-castle.jpg",
-      "revision": "dc940a7f2b14dc669cad21420d95e024b80243448fdcde5a591021c59d67014c"
+      "revision": "e681ccf349b0e43ebbadcd3a0d071b426124fe71a4077fa0b882f7c9d156e3a6"
     },
     {
       "path": "./areas/frozen-castle/index.js",
@@ -211,7 +211,7 @@
     },
     {
       "path": "./areas/military-base/military-base.jpg",
-      "revision": "457ff0fc34e6f37d6bd659b1d22bb29ad03c2c9f564ec73baa635c8e77f57bdd"
+      "revision": "60ca118670558f9a31f36920d25f9a5a09fbcdb190b9d289cf8f8b1df9888982"
     },
     {
       "path": "./areas/military-base/mission-props.js",
@@ -359,7 +359,7 @@
     },
     {
       "path": "./areas/princess-gallery/princess-gallery.jpg",
-      "revision": "a0ab0a1ae072ff5edacbd22929b1a38368fd7d2de0e5510126bbcff5773d18c1"
+      "revision": "dcb2ae9d046ca72b9124b4dbc2f3a89f581ee876e2b6145238ce30572f77dd1d"
     },
     {
       "path": "./areas/princess-gallery/promenade-furniture.js",
@@ -443,7 +443,7 @@
     },
     {
       "path": "./areas/snow-basin/snow-basin.jpg",
-      "revision": "07248eacd6c18ab91de9bad4b801906514cd2dfc93115cbac8d0c3fd8902f034"
+      "revision": "ecb3e8c685ecc423255c3d47b4f6f03527250037fe5aab94bf90ecf64c3f51eb"
     },
     {
       "path": "./areas/snow-basin/snowball-controls.js",
@@ -483,7 +483,7 @@
     },
     {
       "path": "./areas/wooden-house/wooden-house.jpg",
-      "revision": "74dfe81e79e97108ba144827e2c11b6cc690c21e4b9c1044f72e7180dada5bb5"
+      "revision": "bc78128ff3e239c9e6810300f1fe95f1dc5826497dbe7b519481b05d4951b06d"
     },
     {
       "path": "./assets/icons/icon-192.png",
@@ -607,7 +607,7 @@
     },
     {
       "path": "./stats.html",
-      "revision": "763a9f644108a6ce6651251daf2e3e5d4f0d15eafddfba31298ceceabcf4e9b2"
+      "revision": "26f4cb6b57d36ac7149dc60248671effd9e01be407d62ec8083ce31913f0b638"
     },
     {
       "path": "./style.css",

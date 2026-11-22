@@ -279,7 +279,8 @@ export async function readAreaSources(root) {
     const depth = Number.isFinite(rawDepth) && rawDepth > 0 ? rawDepth : null;
     const mapArea = width !== null && depth !== null && Number.isFinite(width * depth) ? width * depth : null;
     const directory = folder ?? (posix.dirname(entry) === 'areas' ? entry.slice(0, -extname(entry).length) : posix.dirname(entry));
-    areas.push({ id, name: title, visibility, width, depth, mapArea, entry, directory, metadataPath });
+    const thumbnail = folder ? './' + posix.join(folder, posix.basename(folder) + '.jpg') : null;
+    areas.push({ id, name: title, visibility, thumbnail, width, depth, mapArea, entry, directory, metadataPath });
   }
   return areas;
 }
