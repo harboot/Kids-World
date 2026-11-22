@@ -1,5 +1,9 @@
 export const SUMMIT_HEIGHT = 8.1;
 export const LAKE_LEVEL = Math.fround(-0.38);
+export const ICE_HILLS = [
+  { x: 24, z: -12, width: 6, depth: 7, height: 2.15 },
+  { x: 23, z: 21, width: 8, depth: 7, height: 2.65 },
+];
 
 // x, z, elevation. The east approach climbs around the head of the basin.
 export const MOUNTAIN_TRAIL = Object.freeze([
@@ -69,7 +73,12 @@ export function addSnowTerrain(THREE, scene, width, depth) {
       const lakeRim = Math.hypot((x + 3.8) / 10.6, (z + 3.6) / 11.2) + wave * 0.04;
       const lake = (1 - smoothstep(0.86, 1.10, lakeRim)) *
         (1 - smoothstep(4, 6, x)) * (1 - smoothstep(6.55, 8, z));
-      const y = rolls + mountain + (trail.elevation - mountain) * trailBlend + LAKE_LEVEL * lake;
+      let hills = 0;
+      for (const hill of ICE_HILLS) {
+        const distance = Math.hypot((x - hill.x) / hill.width, (z - hill.z) / hill.depth);
+        hills += hill.height * (1 - smoothstep(0.15, 1, distance));
+      }
+      const y = rolls + hills + mountain + (trail.elevation - mountain) * trailBlend + LAKE_LEVEL * lake;
       heights[positions.length / 3] = y;
       positions.push(x, y, z);
 
@@ -77,6 +86,7 @@ export function addSnowTerrain(THREE, scene, width, depth) {
       color.copy(powder).lerp(drift, 0.23 + wave * 0.16);
       color.lerp(cliff, (1 - smoothstep(0.47, 0.87, ridge)) * smoothstep(0.34, 0.65, ridge) * 0.75);
       color.lerp(packed, (1 - smoothstep(0.75, 2.9, trail.distance)) * (1 - smoothstep(-14, -11, z)));
+      color.lerp(lakeBlue, smoothstep(0.2, 2.3, hills) * (0.56 + wave * 0.08));
       color.lerp(lakeBlue, lake * (0.88 + wave * 0.1));
       colors.push(color.r, color.g, color.b);
     }
@@ -134,7 +144,7 @@ export function addSnowTerrain(THREE, scene, width, depth) {
 
   return {
     getGroundHeight: (x, z) => sample(x, z),
-    getGroundTraction: (x, z) => sample(x, z) <= LAKE_LEVEL + 0.002 ? 0.15 : 1,
+    getGroundTraction: (x, z) => sample(x, z) <= LAKE_LEVEL + 0.002 ? 0.08 : 1,
     blocksGround(x, z, radius) {
       return Math.abs(x) + radius > width / 2 || Math.abs(z) + radius > depth / 2 || sample(x, z, true) > 0.76;
     },

@@ -7,7 +7,8 @@ import {
   CHOP_COOLDOWN, CHOPS, FALL_DURATION, SNOWBALL_RELOAD, SNOWBALL_STATION, SNOWMAN_COUNT, THROWING_POSITION,
   createSnowActivity, snowMissionsComplete, sweepSphere,
 } from '../areas/snow-basin/activity.js';
-import { LAKE_LEVEL, MOUNTAIN_TRAIL } from '../areas/snow-basin/terrain.js';
+import { ICE_TOWER, towerStairPoint } from '../areas/snow-basin/ice-tower.js';
+import { ICE_HILLS, LAKE_LEVEL, MOUNTAIN_TRAIL } from '../areas/snow-basin/terrain.js';
 import { SLIDE_START, SLIDE_PATH, SLIDE_LANDING, SLIDE_PLATFORM } from '../areas/snow-basin/slide.js';
 import { nearestInteraction } from '../core/interactions.js';
 import { createLevelProgress } from '../core/level-progress.js';
@@ -242,7 +243,10 @@ test('the pine can be chopped from several positions with a clear view and a pro
     assert.equal(nearestInteraction(area.interactions, position), chop);
     assert.equal(walkElevation(area, position, position.x, position.z, 0, true), 0);
   }
-  assert.equal(chop.reachable({ x: 4.67, z: -1.85 }), false);
+  const ring = boundary.geometry.parameters.outerRadius;
+  const near = { x: chop.x - ring - 0.06, z: chop.z };
+  assert.equal(nearestInteraction(area.interactions, near), chop);
+  assert.equal(walkElevation(area, near, chop.x - ring + 0.06, chop.z, area.getGroundHeight(near.x, near.z), true), null);
   assert.equal(nearestInteraction([chop], { x: -5, z: -1.85 }), null);
   assert.equal(nearestInteraction([chop], { x: 14, z: -1.85 }), null);
   assert.ok(reachableCells(area).some(cell => chop.reachable(cell)));
@@ -325,8 +329,7 @@ test('the expanded basin connects the original spawn to each zone and climbs the
   for (const [x, z] of [[17, -12], [23, 5], [-23, 4], [-4, 18], [-3, -24], [-27, -20.5]]) {
     assert.ok(reached.some(point => point.x === x && point.z === z), `route to (${x}, ${z})`);
   }
-  assert.ok(reached.some(point => nearestInteraction(area.interactions, point)?.label === 'Talk to Kristoff'));
-  for (const name of ['Sven', 'Olaf']) {
+  for (const name of ['Sven', 'Olaf', 'Kristoff']) {
     const { x, z } = scene.getObjectByName(name).position;
     assert.ok(reached.some(point => Math.hypot(point.x - x, point.z - z) < 4), name);
   }
@@ -405,16 +408,29 @@ test('the ice slide follows an ordered descent with an accessible platform and o
   worlds.unload();
 });
 
-test('Sven and Olaf react automatically from four units away with a cooldown until the player leaves', async t => {
+test('Sven, Olaf and Kristoff react on approach and can greet again after the player leaves', async t => {
   let still = false;
   const game = await buildWorld({ reducedMotion: () => still });
   const { visit, cues, worlds, missionHud } = game;
   t.after(worlds.unload);
   const { scene, area } = visit;
-  for (const label of ['Pet Sven', 'Greet Olaf']) assert.ok(!area.interactions.some(item => item.label === label));
-  const kristoff = area.interactions.find(item => item.label === 'Talk to Kristoff');
-  assert.ok(kristoff.act());
+  for (const label of ['Pet Sven', 'Greet Olaf', 'Talk to Kristoff']) {
+    assert.ok(!area.interactions.some(item => item.label === label));
+  }
+  const kristoff = scene.getObjectByName('Kristoff').position;
+  game.stand({ x: kristoff.x, z: kristoff.z - 5.1 });
+  game.frame(0);
+  assert.doesNotMatch(missionHud.toast.textContent, /Kristoff/);
+  game.stand({ x: kristoff.x, z: kristoff.z - 4.1 });
+  game.frame(0.2);
   assert.match(missionHud.toast.textContent, /blue trail markers/);
+  game.frame(0.2);
+  assert.equal(missionHud.notifications.filter(message => message.startsWith('Kristoff')).length, 1);
+  game.stand({ x: kristoff.x, z: kristoff.z - 5.2 });
+  game.frame(0);
+  game.stand({ x: kristoff.x, z: kristoff.z - 4.1 });
+  game.frame(0.2);
+  assert.equal(missionHud.notifications.filter(message => message.startsWith('Kristoff')).length, 2);
 
   for (const [i, name, joint, axis] of [
     [0, 'Sven', 'Sven head', 'x'], [1, 'Olaf', 'Olaf body', 'y'],
@@ -842,9 +858,74 @@ test('the frozen lake is lower than snow, has walkable banks, and carries moment
     game.stand(spawn);
     for (let i = 0; i < 65; i++) avatar.move(0.02, { x: 0, y: 1 }, visit);
     const release = camera.position.z;
-    for (let i = 0; i < 25; i++) avatar.move(0.02, { x: 0, y: 0 }, visit);
+    for (let i = 0; i < 50; i++) avatar.move(0.02, { x: 0, y: 0 }, visit);
     return camera.position.z - release;
   }
-  assert.ok(coastingDistance({ x: -4, z: -9 }) > 1.1);
+  assert.ok(coastingDistance({ x: -4, z: -9 }) > 1.85);
   assert.ok(coastingDistance({ x: 0, z: 9.4 }) < 0.35);
+});
+
+test('the spiral reaches the Ice Tower lookout and can be walked down without jumping', async t => {
+  const game = await buildWorld();
+  t.after(game.worlds.unload);
+  const { visit, avatar, camera } = game;
+  const { area, scene } = visit;
+  const entrance = towerStairPoint(0);
+  game.stand({ x: entrance.x, z: entrance.z - 1, yaw: 0 });
+
+  function walkTo(point) {
+    for (let i = 0; i < 100; i++) {
+      const dx = point.x - camera.position.x;
+      const dz = point.z - camera.position.z;
+      const distance = Math.hypot(dx, dz);
+      if (distance <= 0.075) return;
+      avatar.move(0.02, { x: dx / distance, y: dz / distance }, visit);
+    }
+    assert.fail(`blocked near (${point.x.toFixed(2)}, ${point.z.toFixed(2)})`);
+  }
+
+  const stair = scene.getObjectByName('Ice Tower spiral stairs');
+  scene.updateMatrixWorld(true);
+  const down = new THREE.Vector3(0, -1, 0);
+  const ray = new THREE.Raycaster();
+  const deckTread = ICE_TOWER.stairEnd - 2;
+  for (let tread = 0; tread <= deckTread; tread += 0.5) {
+    const point = towerStairPoint(tread);
+    walkTo(point);
+    assert.ok(avatar.grounded);
+    assert.ok(Math.abs(camera.position.y - EYE_HEIGHT - point.y) < 0.065, `tread ${tread}`);
+    if (tread % 1 === 0.5) {
+      ray.set(new THREE.Vector3(point.x, point.y + 0.3, point.z), down);
+      assert.ok(Math.abs(ray.intersectObject(stair)[0].point.y - point.y) < 1e-5);
+    }
+  }
+
+  const deck = towerStairPoint(deckTread);
+  assert.equal(area.getGroundHeight(deck.x, deck.z, ICE_TOWER.deckHeight), ICE_TOWER.deckHeight);
+  assert.ok(area.getGroundHeight(deck.x, deck.z, 0) < 0.3, 'the ground level is separate from the deck');
+  const edge = towerStairPoint(deckTread, 4.46);
+  assert.ok(area.blocksGround(edge.x, edge.z, 0.34, ICE_TOWER.deckHeight, deck));
+  const endRail = towerStairPoint(ICE_TOWER.stairEnd + 0.1);
+  assert.ok(area.blocksGround(endRail.x, endRail.z, 0.34, ICE_TOWER.deckHeight, deck));
+  for (let tread = deckTread - 0.5; tread >= 0; tread -= 0.5) walkTo(towerStairPoint(tread));
+  walkTo({ x: entrance.x, z: entrance.z - 1 });
+  assert.ok(avatar.grounded && Math.abs(camera.position.y - EYE_HEIGHT) < 0.05);
+});
+
+test('both ice hills have walkable approaches to their summits', async t => {
+  const { worlds, visit } = await buildWorld();
+  t.after(worlds.unload);
+  const { area } = visit;
+  for (const hill of ICE_HILLS) {
+    let x = hill.x - hill.width - 0.3;
+    const { z } = hill;
+    let feet = area.getGroundHeight(x, z);
+    while (x < hill.x) {
+      const next = Math.min(hill.x, x + 0.12);
+      feet = walkElevation(area, { x, z }, next, z, feet, true);
+      assert.notEqual(feet, null, `hill blocked at ${next.toFixed(2)}, ${z}`);
+      x = next;
+    }
+    assert.ok(feet >= hill.height - 0.25);
+  }
 });

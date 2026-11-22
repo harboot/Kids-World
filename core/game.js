@@ -11,13 +11,12 @@ import { createLevelProgress } from './level-progress.js';
 import { PLAYER_RADIUS } from './movement.js';
 import { createPlayer } from './player.js';
 import { createView } from './renderer.js';
-import { createThirdPerson } from './third-person.js';
 import { AreaInitializationError, areaURL, createWorldManager, resolveArea } from './world-manager.js';
 
 const areaKey = 'kids-world-last-area';
 const controlKey = 'kids-world-controls';
 const defaultControls = 'one-finger';
-const controlModes = new Set([defaultControls, 'two-finger', 'third-person']);
+const controlModes = new Set([defaultControls, 'two-finger']);
 const areaLoadTimeout = 30_000;
 
 function savedArea() {
@@ -78,8 +77,6 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   settings.querySelector(`#controls-${controlMode}`).checked = true;
 
   let drone;
-  let thirdPerson;
-  let displayedCamera;
   let route;
   let transition;
   let activeURL;
@@ -180,8 +177,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     button: game.querySelector('#interaction'),
     glyph: game.querySelector('#interaction-glyph'),
     label: game.querySelector('#interaction-label'),
-    camera, displayCamera: () => player.seated ? camera : displayedCamera ?? camera,
-    playing: () => playerInput() && !player.guided, touchMode,
+    camera, playing: () => playerInput() && !player.guided, touchMode,
     runAction(item) {
       const visit = worlds.active;
       const revision = interactionRevision;
@@ -265,7 +261,6 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   function relocate(spawn) {
     controls.clear();
     player.reset(spawn, worlds.active.area);
-    displayedCamera = null;
   }
 
   function preparePresentation({ definition, area }) {
@@ -319,7 +314,6 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
 
   function disposeView() {
     try {
-      thirdPerson?.dispose();
       view.dispose();
     } catch (error) {
       console.error('Could not finish renderer cleanup.', error);
@@ -578,26 +572,18 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     if (terminal || suspended || document.hidden || visit?.state !== 'active') return;
     try {
       const activePlayer = playerInput();
-      let dt = 0;
-      const { x, z } = camera.position;
       if (activePlayer) {
         const elapsed = previousFrame === null ? 0 : Math.min(0.25, Math.max(0, (stamp - previousFrame) / 1000));
-        dt = Math.min(elapsed, 0.05);
+        const dt = Math.min(elapsed, 0.05);
         previousFrame = stamp;
         player.move(dt, controls.sample(dt), visit);
         worlds.update(dt, camera.position, elapsed);
         if (worlds.active !== visit || terminal) return;
         missionHud.update(visit.area.missionStatus);
+        interactions.update();
       }
-      displayedCamera = null;
-      if (controlMode === 'third-person' && !drone?.camera && !player.seated) {
-        thirdPerson ??= createThirdPerson(THREE, camera);
-        const distanceWalked = motionPreference.matches ? 0 : Math.hypot(camera.position.x - x, camera.position.z - z);
-        displayedCamera = thirdPerson.update(visit, dt, distanceWalked);
-      } else thirdPerson?.hide();
-      if (activePlayer) interactions.update();
       drone?.update();
-      const rendered = view.render(visit.scene, activePlayer, drone?.camera, displayedCamera, visit.viewmodel);
+      const rendered = view.render(visit.scene, activePlayer, drone?.camera);
       if (rendered && route?.fps) frameMeter.sample(stamp);
       if (playerInput()) scheduleFrame();
     } catch (error) {
