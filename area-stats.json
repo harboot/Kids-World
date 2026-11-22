@@ -4,15 +4,15 @@
     "publicAreas": 7,
     "hiddenAreas": 1,
     "totalFiles": 138,
-    "totalBytes": 1132987,
-    "totalJsLines": 22336,
+    "totalBytes": 1136853,
+    "totalJsLines": 22434,
     "largestMap": {
       "name": "Military Base",
       "mapArea": 23100
     },
     "largestFolder": {
       "name": "Princess Gallery",
-      "folderBytes": 419827
+      "folderBytes": 423693
     }
   },
   "areas": [
@@ -100,11 +100,11 @@
       "width": 140,
       "depth": 120,
       "mapArea": 16800,
-      "folderBytes": 419827,
+      "folderBytes": 423693,
       "totalFiles": 43,
       "jsFiles": 42,
-      "jsBytes": 396609,
-      "jsLines": 8407,
+      "jsBytes": 400475,
+      "jsLines": 8505,
       "imageFiles": 1,
       "imageBytes": 23218,
       "imageFormats": [
