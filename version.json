@@ -1,5 +1,5 @@
 {
-  "version": "c214cebd7dda8b61ddafb3118c67f9ae3bcfdc3f696e94aa801184e54a6d1610",
+  "version": "8d9bb79f7eec937be1f8041f36d6d2fd8af553cd3c11813e175ef03d1cd24137",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "41525d16beae9a46d234d5c5fce9c069ad9d7f9262fe4963eeb62eb51d62f7e6"
+      "revision": "3e63aff59dd722c7924a0c45982ad44ef23a4c11f12a7f6cd3ad89bbbb7901c1"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -403,7 +403,7 @@
     },
     {
       "path": "./areas/princess-gallery/snow-white.js",
-      "revision": "b842827f10b1eafeeb8903d244f9f85c9e497e93ea560f33b5e108117620b2e1"
+      "revision": "ce7d391ea28be60696d920cd640177ba620e53662ea1c54681afdb5ae6ca123e"
     },
     {
       "path": "./areas/princess-gallery/tasting.js",

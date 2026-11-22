@@ -50,6 +50,133 @@ const profiles = [
   },
 ];
 
+function buildSnowWhiteModel(THREE, { part, matte }, { torso, head, arms, legs }, colors) {
+  const { coat, trim, hat, skin, shoe, white, gold } = colors;
+  const sleeve = matte(0x3b79bd);
+  const hair = matte(0x242130);
+  const bangs = matte(0x302b3d);
+  const ink = matte(0x372330);
+  const iris = matte(0x482934);
+  const rouge = matte(0xd88982);
+  const lips = matte(0xa83950);
+  const tint = matte(0xffffff);
+  const facets = new THREE.DodecahedronGeometry(1);
+  const cuff = new THREE.CylinderGeometry(1, 1, 1, 8);
+  const waistY = 1.145;
+  const dressLathe = (profile, segments = 12, start = 0, sweep = Math.PI * 2) =>
+    new THREE.LatheGeometry(profile.map(([r, y]) => new THREE.Vector2(r, y)), segments, start, sweep);
+
+  const skirt = dressLathe([
+    [0, .07], [.51, .07], [.56, .13], [.55, .28], [.47, .57], [.36, .86],
+    [.266, 1.07], [.239, waistY], [.235, 1.19],
+  ]);
+  const hem = skirt.getAttribute('position');
+  for (let i = 0; i < hem.count; i++) {
+    const x = hem.getX(i);
+    const z = hem.getZ(i);
+    const falloff = Math.max(0, 1 - hem.getY(i) / waistY);
+    const pleat = 1 + .09 * falloff * Math.cos(Math.atan2(x, z) * 6);
+    hem.setX(i, x * pleat);
+    hem.setZ(i, z * pleat);
+  }
+  part(torso, skirt, matte(trim.color, { flatShading: true }), 0, 0, 0, 1, 1, .78).name = 'Snow White fitted skirt';
+
+  const bodice = dressLathe([
+    [.23, 1.105], [.246, 1.18], [.286, 1.49], [.263, 1.63], [.197, 1.72], [.113, 1.75],
+  ]);
+  part(torso, bodice, coat, 0, 0, 0, 1, 1, .78).name = 'Snow White fitted bodice';
+  const sash = dressLathe([[.245, 1.122], [.259, 1.132], [.257, 1.164], [.243, 1.174]]);
+  part(torso, sash, gold, 0, 0, 0, 1, 1, .78);
+  part(torso, facets, skin, 0, 1.76, .019, .111, .153, .088);
+  // A folded standing collar leaves the throat open at the front.
+  const collar = dressLathe([[.159, 1.681], [.226, 1.815], [.217, 1.823], [.15, 1.686]],
+    8, Math.PI * .46, Math.PI * 1.08);
+  part(torso, collar, white, 0, 0, -.036, 1, 1, .78);
+  part(torso, 'gem', gold, 0, 1.55, .219, .039, .047, .024);
+
+  // Turn a pentagonal facet toward the face. Taper the jaw behind that plane.
+  const face = facets.clone().rotateX(Math.atan((1 + Math.sqrt(5)) / 2));
+  const faceVertices = face.getAttribute('position');
+  for (let i = 0; i < faceVertices.count; i++) {
+    const x = faceVertices.getX(i);
+    const y = faceVertices.getY(i);
+    const z = faceVertices.getZ(i);
+    faceVertices.setX(i, x * (.91 + .11 * z + .19 * Math.min(0, y)));
+    if (y < 0) faceVertices.setY(i, y * .88);
+  }
+  face.computeVertexNormals();
+  // Soften the lighting across the cheeks while keeping the faceted outline.
+  const faceNormals = face.getAttribute('normal');
+  const normal = new THREE.Vector3();
+  const radial = new THREE.Vector3();
+  for (let i = 0; i < faceNormals.count; i++) {
+    radial.fromBufferAttribute(faceVertices, i).normalize();
+    normal.fromBufferAttribute(faceNormals, i).lerp(radial, .36).normalize();
+    faceNormals.setXYZ(i, normal.x, normal.y, normal.z);
+  }
+  part(head, face, skin, 0, .052, .021, .367, .33, .315);
+  part(head, facets, hair, 0, .101, -.107, .399, .396, .325);
+  part(head, facets, bangs, -.105, .274, .157, .242, .119, .178).rotation.z = .39;
+  part(head, facets, hair, .148, .262, .147, .194, .117, .174).rotation.z = -.51;
+  for (const side of [-1, 1]) {
+    part(head, facets, hair, side * .269, .021, -.043, .15, .247, .242).rotation.z = side * .17;
+    part(head, facets, hat, side * .103, .409, .121, .124, .072, .069).rotation.z = side * .43;
+
+    const x = side * .104;
+    part(head, facets, white, x, .062, .267, .068, .073, .026).rotation.z = side * .16;
+    part(head, facets, iris, x + .005, .064, .287, .032, .047, .016);
+    part(head, 'gem', white, x - .004, .082, .302, .011, .014, .006);
+    part(head, facets, ink, x, .153, .27, .063, .015, .013).rotation.z = -side * .18;
+    part(head, facets, rouge, side * .156, -.039, .269, .045, .026, .010).rotation.z = side * .13;
+  }
+  part(head, facets, hat, 0, .398, .14, .056, .051, .072);
+  part(head, facets, skin, 0, -.015, .272, .04, .041, .05);
+  const smile = new THREE.Shape([
+    [-.068, .012], [-.029, .003], [0, .006], [.029, .003], [.068, .012],
+    [.042, -.012], [0, -.023], [-.042, -.012],
+  ].map(([x, y]) => new THREE.Vector2(x, y)));
+  part(head, new THREE.ShapeGeometry(smile), lips, 0, -.081, .275, 1, 1, 1);
+  batchCostumeParts(head);
+
+  for (const { upper, forearm } of arms) {
+    part(upper, facets, sleeve, 0, -.105, 0, .146, .185, .141);
+    part(upper, facets, hat, 0, -.111, .131, .053, .09, .040);
+    part(upper, cuff, trim, 0, -.268, 0, .101, .066, .098);
+    part(forearm, facets, skin, 0, -.097, .012, .065, .181, .069);
+    part(forearm, facets, skin, 0, -.274, .032, .086, .114, .071);
+    batchCostumeParts(upper);
+    batchCostumeParts(forearm);
+  }
+  for (const leg of legs) {
+    part(leg, facets, trim, 0, -.076, 0, .098, .143, .092);
+    part(leg, facets, shoe, 0, -.191, .078, .111, .081, .154);
+    batchCostumeParts(leg);
+  }
+
+  // Like the Snow Basin characters, instance by geometry and tint per instance.
+  // Each batch stays in the local space of its animated pivot.
+  function batchCostumeParts(pivot) {
+    const batches = new Map();
+    for (const mesh of pivot.children) {
+      if (!mesh.isMesh) continue;
+      if (!batches.has(mesh.geometry)) batches.set(mesh.geometry, []);
+      batches.get(mesh.geometry).push(mesh);
+    }
+    for (const [geometry, meshes] of batches) {
+      if (meshes.length < 2) continue;
+      const instances = new THREE.InstancedMesh(geometry, tint, meshes.length);
+      for (const [index, mesh] of meshes.entries()) {
+        mesh.updateMatrix();
+        instances.setMatrixAt(index, mesh.matrix);
+        instances.setColorAt(index, mesh.material.color);
+      }
+      instances.computeBoundingSphere();
+      pivot.remove(...meshes);
+      pivot.add(instances);
+    }
+  }
+}
+
 function createActor({ THREE, parts, bay, ground, profile, toWorld, obstacles, palette, glasses }) {
   const { part, beam, batch, matte } = parts;
   const { name, x, z, yaw, seat = 0, coat: coatColor, trim: trimColor, hat: hatColor, beard: beardColor } = profile;
@@ -58,42 +185,14 @@ function createActor({ THREE, parts, bay, ground, profile, toWorld, obstacles, p
   const trim = matte(trimColor);
   const hat = matte(hatColor);
   const beard = beardColor && matte(beardColor);
-  const { skin, blush, dark, white, shoe, gold, hair } = palette;
+  const { skin, blush, dark, white, shoe, gold } = palette;
   const y = ground(x, z) + seat;
   const [wx, wz] = toWorld(x, z);
   const actor = addGroup(THREE, bay, name, x, y, z, yaw);
   const torso = addGroup(THREE, actor, name + ' body');
-  const bodyY = princess ? 1.41 : .77;
   const shoulderY = princess ? 1.64 : .96;
-  if (princess) {
-    const waistY = 1.145;
-    const skirtShape = new THREE.LatheGeometry([
-      [.52, .055], [.56, .088], [.57, .16], [.553, .27], [.495, .51],
-      [.414, .77], [.317, .96], [.258, 1.09], [.239, waistY], [.235, 1.19],
-    ].map(([r, y]) => new THREE.Vector2(r, y)), 48);
-    const folds = skirtShape.getAttribute('position');
-    for (let i = 0; i < folds.count; i++) {
-      const x = folds.getX(i);
-      const z = folds.getZ(i);
-      const falloff = Math.max(0, 1 - folds.getY(i) / waistY);
-      const fold = 1 + .086 * falloff * Math.cos(Math.atan2(x, z) * 8);
-      folds.setX(i, x * fold);
-      folds.setZ(i, z * fold);
-    }
-    skirtShape.computeVertexNormals();
-    part(torso, skirtShape, trim, 0, 0, 0, 1, 1, .78).name = 'Snow White fitted skirt';
-
-    const bodiceShape = new THREE.LatheGeometry([
-      [.231, 1.105], [.241, waistY], [.243, 1.24], [.274, 1.41],
-      [.286, 1.54], [.262, 1.63], [.209, 1.707], [.127, 1.746],
-    ].map(([r, y]) => new THREE.Vector2(r, y)), 32);
-    part(torso, bodiceShape, coat, 0, 0, 0, 1, 1, .78).name = 'Snow White fitted bodice';
-    const piping = new THREE.TorusGeometry(1, .052, 6, 32);
-    part(torso, piping, gold, 0, waistY, 0, .247, .193, .268).rotation.x = Math.PI / 2;
-    part(torso, 'sphere', white, 0, 1.75, -.08, .28, .141, .19);
-    part(torso, 'gem', gold, 0, 1.53, .226, .079, .11, .044);
-  } else {
-    part(torso, 'sphere', coat, 0, bodyY, -.013, .37, .43, .25);
+  if (!princess) {
+    part(torso, 'sphere', coat, 0, .77, -.013, .37, .43, .25);
     part(torso, 'drum', coat, 0, .49, 0, .326, .25, .24);
     part(torso, 'drum', shoe, 0, .62, 0, .353, .095, .244);
     part(torso, 'box', gold, 0, .627, .242 + SURFACE_GAP.detail, .15, .112, .053);
@@ -102,79 +201,72 @@ function createActor({ THREE, parts, bay, ground, profile, toWorld, obstacles, p
   }
 
   const head = addGroup(THREE, torso, name + ' head', 0, princess ? 1.99 : 1.27, .025);
-  const headWidth = princess ? .327 : name === 'Happy' ? .443 : .393;
-  const headDepth = princess ? .285 : .328;
-  part(head, 'sphere', skin, 0, 0, .013, headWidth, princess ? .359 : .335, headDepth);
-  if (princess) {
-    part(head, 'sphere', hair, 0, .084, -.110, .381, .395, .308);
-    for (const side of [-1, 1]) {
-      part(head, 'sphere', hair, side * .283, -.027, -.043, .124, .317, .221).rotation.z = side * .12;
-      part(head, 'sphere', hair, side * .136, .229, .164, .217, .131, .138).rotation.z = side * -.52;
-      part(head, 'sphere', hat, side * .13, .417, -.007, .135, .086, .095).rotation.z = side * .47;
-    }
-    part(head, 'sphere', hat, 0, .40, .033, .063, .074, .079);
-  } else {
+  if (!princess) {
+    const headWidth = name === 'Happy' ? .443 : .393;
+    const headDepth = .328;
+    part(head, 'sphere', skin, 0, 0, .013, headWidth, .335, headDepth);
     const tip = name === 'Sleepy' || name === 'Dopey' ? -.44 : name === 'Doc' ? .17 : -.22;
     part(head, 'sphere', hat, 0, .205, -.057, headWidth * 1.02, .22, .327);
     part(head, 'sphere', hat, tip * .38, .36, -.109, .255, .27, .255).rotation.z = -tip;
     part(head, 'cone', hat, tip * .77, .501, -.119, .197, .35, .188).rotation.z = -tip * 1.52;
     part(head, 'sphere', trim, tip * 1.1, .656, -.123, .081, .069, .078);
     part(head, 'sphere', trim, 0, .205, .143, headWidth * 1.005, .065, .177);
-  }
-  if (beard) {
-    const short = name === 'Bashful' || name === 'Sneezy';
-    part(head, 'sphere', beard, 0, -.205, .095, headWidth * .89, short ? .18 : .25, .252);
-    for (const side of [-1, 1]) {
-      part(head, 'gem', beard, side * .134, -.30, .209, .153, short ? .17 : .24, .129).rotation.z = side * .30;
-      part(head, 'sphere', beard, side * .116, -.127, .318, .154, .061, .075).rotation.z = side * .15;
+    if (beard) {
+      const short = name === 'Bashful' || name === 'Sneezy';
+      part(head, 'sphere', beard, 0, -.205, .095, headWidth * .89, short ? .18 : .25, .252);
+      for (const side of [-1, 1]) {
+        part(head, 'gem', beard, side * .134, -.30, .209, .153, short ? .17 : .24, .129).rotation.z = side * .30;
+        part(head, 'sphere', beard, side * .116, -.127, .318, .154, .061, .075).rotation.z = side * .15;
+      }
     }
-  }
 
-  const eyeX = princess ? .110 : .135;
-  const eyeY = .054;
-  const faceZ = headDepth * .91 + .016;
-  for (const side of [-1, 1]) {
-    part(head, 'sphere', skin, side * headWidth, -.026, -.006,
-      name === 'Dopey' ? .131 : .064, name === 'Dopey' ? .163 : .09, .077);
-    part(head, 'sphere', blush, side * headWidth * .65, -.056, faceZ - .025, .092, .056, .043);
-    if (name === 'Sleepy') {
-      beam(head, dark, [side * eyeX - .045, eyeY, faceZ + .027],
-        [side * eyeX + .045, eyeY - .012, faceZ + .031], .021);
-    } else {
-      part(head, 'sphere', white, side * eyeX, eyeY, faceZ, .059, .070, .032);
-      part(head, 'sphere', dark, side * eyeX, eyeY, faceZ + .026, .033, .045, .021);
-      part(head, 'sphere', white, side * eyeX - .012, eyeY + .019, faceZ + .043, .012, .014, .008);
+    const eyeX = .135;
+    const eyeY = .054;
+    const faceZ = headDepth * .91 + .016;
+    for (const side of [-1, 1]) {
+      part(head, 'sphere', skin, side * headWidth, -.026, -.006,
+        name === 'Dopey' ? .131 : .064, name === 'Dopey' ? .163 : .09, .077);
+      part(head, 'sphere', blush, side * headWidth * .65, -.056, faceZ - .025, .092, .056, .043);
+      if (name === 'Sleepy') {
+        beam(head, dark, [side * eyeX - .045, eyeY, faceZ + .027],
+          [side * eyeX + .045, eyeY - .012, faceZ + .031], .021);
+      } else {
+        part(head, 'sphere', white, side * eyeX, eyeY, faceZ, .059, .070, .032);
+        part(head, 'sphere', dark, side * eyeX, eyeY, faceZ + .026, .033, .045, .021);
+        part(head, 'sphere', white, side * eyeX - .012, eyeY + .019, faceZ + .043, .012, .014, .008);
+      }
+      part(head, 'sphere', dark, side * eyeX, .146, faceZ - .013, .071, .020, .021)
+        .rotation.z = name === 'Grumpy' ? side * .45 : side * -.16;
+      if (name === 'Doc') part(head, glasses, gold, side * eyeX, eyeY, faceZ + .044, .084, .084, .084);
     }
-    part(head, 'sphere', dark, side * eyeX, .146, faceZ - .013, .071, .020, .021)
-      .rotation.z = name === 'Grumpy' ? side * .45 : side * -.16;
-    if (name === 'Doc') part(head, glasses, gold, side * eyeX, eyeY, faceZ + .044, .084, .084, .084);
+    if (name === 'Doc') beam(head, gold, [-.05, eyeY, faceZ + .045], [.05, eyeY, faceZ + .045], .017);
+    part(head, 'sphere', skin, 0, -.038, headDepth + .018, .092, .084, .105);
+    const mouthY = -.154;
+    const mouthZ = faceZ + (beard ? .077 : -.002);
+    const mouth = name === 'Sneezy' ? .045 : name === 'Happy' || name === 'Dopey' ? .092 : .067;
+    const end = name === 'Grumpy' ? -.021 : .022;
+    if (name === 'Sneezy' || name === 'Happy' || name === 'Dopey') {
+      part(head, 'sphere', dark, 0, mouthY, mouthZ, mouth, name === 'Sneezy' ? .033 : .043, .030);
+      if (name !== 'Sneezy') part(head, 'sphere', white, 0, mouthY + .019, mouthZ + .020, mouth * .71, .013, .010);
+    } else {
+      for (const side of [-1, 1]) beam(head, dark, [0, mouthY, mouthZ],
+        [side * mouth, mouthY + end, mouthZ - .018], .019);
+    }
   }
-  if (name === 'Doc') beam(head, gold, [-.05, eyeY, faceZ + .045], [.05, eyeY, faceZ + .045], .017);
-  part(head, 'sphere', skin, 0, -.038, headDepth + .018, princess ? .051 : .092,
-    princess ? .059 : .084, princess ? .072 : .105);
-  const mouthY = princess ? -.137 : -.154;
-  const mouthZ = faceZ + (beard ? .077 : -.002);
-  const mouth = name === 'Sneezy' ? .045 : name === 'Happy' || name === 'Dopey' ? .092 : .067;
-  const end = name === 'Grumpy' ? -.021 : .022;
-  if (name === 'Sneezy' || name === 'Happy' || name === 'Dopey') {
-    part(head, 'sphere', dark, 0, mouthY, mouthZ, mouth, name === 'Sneezy' ? .033 : .043, .030);
-    if (name !== 'Sneezy') part(head, 'sphere', white, 0, mouthY + .019, mouthZ + .020, mouth * .71, .013, .010);
-  } else {
-    for (const side of [-1, 1]) beam(head, dark, [0, mouthY, mouthZ],
-      [side * mouth, mouthY + end, mouthZ - .018], .019);
-  }
-  if (princess) for (const side of [-1, 1]) part(head, 'sphere', gold, side * .312, -.114, .067, .042, .054, .04);
 
   const arms = [-1, 1].map(side => {
     const upper = addGroup(THREE, torso, name + (side < 0 ? ' left shoulder' : ' right shoulder'),
       side * (princess ? .258 : .31), shoulderY, 0);
     const length = princess ? .32 : .232;
-    part(upper, 'sphere', coat, 0, -length * .43, 0, .139, length * .62, .132);
-    part(upper, 'drum', trim, 0, -length * .76, 0, .102, .066, .096);
+    if (!princess) {
+      part(upper, 'sphere', coat, 0, -length * .43, 0, .139, length * .62, .132);
+      part(upper, 'drum', trim, 0, -length * .76, 0, .102, .066, .096);
+    }
     const forearm = addGroup(THREE, upper, name + ' elbow', 0, -length, 0);
-    part(forearm, 'sphere', skin, 0, -length * .38, .017, .067, length * .47, .074);
-    part(forearm, 'sphere', skin, 0, -length * .90, .029, .090, .115, .074);
-    if (princess) part(upper, 'gem', hat, 0, -.092, .124, .056, .097, .044);
+    if (!princess) {
+      part(forearm, 'sphere', skin, 0, -length * .38, .017, .067, length * .47, .074);
+      part(forearm, 'sphere', skin, 0, -length * .90, .029, .090, .115, .074);
+    }
     if (name === 'Doc' && side > 0) {
       part(forearm, 'box', shoe, .02, -.22, .11, .32, .25, .069).rotation.z = -.19;
       part(forearm, 'box', white, .02, -.22, .148, .28, .215, .038).rotation.z = -.19;
@@ -185,16 +277,22 @@ function createActor({ THREE, parts, bay, ground, profile, toWorld, obstacles, p
 
   const legs = [-1, 1].map(side => {
     const leg = addGroup(THREE, torso, name + ' leg', side * .146, princess ? .26 : .49, .01);
-    part(leg, 'sphere', princess ? trim : coat, 0, princess ? -.091 : -.149, 0, .129, princess ? .14 : .226, .131);
-    part(leg, 'sphere', shoe, 0, princess ? -.196 : -.396, .089, .139, .093, .207);
-    part(leg, 'gem', gold, 0, princess ? -.122 : -.31, .184, .062, .031, .055);
+    if (!princess) {
+      part(leg, 'sphere', coat, 0, -.149, 0, .129, .226, .131);
+      part(leg, 'sphere', shoe, 0, -.396, .089, .139, .093, .207);
+      part(leg, 'gem', gold, 0, -.31, .184, .062, .031, .055);
+    }
     return leg;
   });
 
-  // Face details share the head pivot and can render in material batches.
-  const face = new THREE.Group();
-  face.add(...head.children);
-  batch(face, head);
+  if (princess) {
+    buildSnowWhiteModel(THREE, parts, { torso, head, arms, legs }, { ...palette, coat, trim, hat });
+  } else {
+    // Face details share the head pivot and can render in material batches.
+    const face = new THREE.Group();
+    face.add(...head.children);
+    batch(face, head);
+  }
 
   let blend = 0;
   let time = 0;
@@ -573,7 +671,7 @@ export function buildSnowWhite({ THREE, document, bay, exhibit, parts, obstacles
 
   const palette = {
     skin: matte(0xf0b99d), blush: matte(0xd9827f), dark: matte(0x352e3c), white: matte(0xffedcf),
-    shoe: matte(0x49363c), gold, hair: matte(0x31273c),
+    shoe: matte(0x49363c), gold,
   };
   const glasses = new THREE.TorusGeometry(1, .15, 6, 16);
   const actors = profiles.map(profile => createActor({ THREE, parts, bay, ground, profile, toWorld, obstacles, palette, glasses }));
