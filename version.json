@@ -1,13 +1,13 @@
 {
-  "version": "6866fb9f2595955f4786dc13d8b901867f6d76305bc1ea52942c5f339ad5e3a1",
+  "version": "c214cebd7dda8b61ddafb3118c67f9ae3bcfdc3f696e94aa801184e54a6d1610",
   "files": [
     {
       "path": "./area-catalog.js",
-      "revision": "a89a0b5a40f5fc4e40d9fc7183d35d892fbb97b58a5f3138b500088e07c7f6e6"
+      "revision": "0987503a1ef7e8dcd04b4f9dbb02ad67df28f437085a5769022f417b4542ce86"
     },
     {
       "path": "./area-stats.json",
-      "revision": "573d6919f48e59a9104a87e51c5ec38746e50c3bac337cae90c6684bca6060f7"
+      "revision": "41525d16beae9a46d234d5c5fce9c069ad9d7f9262fe4963eeb62eb51d62f7e6"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -319,11 +319,11 @@
     },
     {
       "path": "./areas/princess-gallery/exhibits.js",
-      "revision": "52392e76930bb76200a6c2aa9c4f02d95256b1ffa082b67de6c1cce9e962880c"
+      "revision": "16c519ba1bb137c4aa0e30683a8b2fbaab834132e1fa52ca858a52011a35ff30"
     },
     {
       "path": "./areas/princess-gallery/gallery.js",
-      "revision": "2a2817bae63370dace7d84a5e9a1f5c4e30f1cbe82cc76ce956a6650e3ac12b5"
+      "revision": "7f6f02a1625e0de6ebdc461fd27f036cc8923c0d47c84d1cd9644937a2a997c0"
     },
     {
       "path": "./areas/princess-gallery/hanging-decor.js",
@@ -335,11 +335,27 @@
     },
     {
       "path": "./areas/princess-gallery/index.js",
-      "revision": "2ea231bf17cd791175a4fbea64afc936c8c48f4afff9d0d16ffa3ed1bfd51c1e"
+      "revision": "f1e90bae152ff922512c1ebc1be0405e2fe89d63ce9b34a8d7b0cf60741b9b6e"
+    },
+    {
+      "path": "./areas/princess-gallery/jasmine-carpet.js",
+      "revision": "7353f086a845882b4b7d4f386c12c00d3a6e9b78d77ca8e2341242bc3278c43b"
+    },
+    {
+      "path": "./areas/princess-gallery/jasmine-characters.js",
+      "revision": "8e12ee85c675d1bc576ddd70fa254f8f3f17483846a7a8a19446730f9eb10046"
+    },
+    {
+      "path": "./areas/princess-gallery/jasmine-palace.js",
+      "revision": "9790f7d410b7f11563f0d4db750094697623da39deb2800c6a8f1cbfc3973f5c"
+    },
+    {
+      "path": "./areas/princess-gallery/jasmine.js",
+      "revision": "e787fb810c27eb09327065c1f530d6c7224c44198f466134b6a9d8cdf2e9f6a5"
     },
     {
       "path": "./areas/princess-gallery/metadata.js",
-      "revision": "0bec0f502984d75983b4551cc69046673df86d0161ccc8d05aca9aa7bb091eaf"
+      "revision": "be3f1f9ebc4f04fad1188f9e95db196a423858115b4dbdf376f1dc7a649f2889"
     },
     {
       "path": "./areas/princess-gallery/music.js",

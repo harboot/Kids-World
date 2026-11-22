@@ -54,7 +54,8 @@ Ride the hot air balloon for a view of the lakes and forests, or walk through th
 - Aurora — Approach the enchanted rose to wake Aurora. Move away to let her sleep again.
 - Ariel — Walk up the shipwreck’s gangplank and stand on deck to see Ariel swim around the wreck. Open and close the treasure chest on the seabed.
 - Belle — Visit Belle and the Beast in the castle library and approach the tea table to see the teapot and cups dance.
-- Approach the story displays for Jasmine, Mulan, Moana, and Tiana to complete the other four missions while their full exhibits are in development.
+- Jasmine — Visit Agrabah Palace, fly around its golden domes on the magic carpet, and rub the lamp to meet Jin.
+- Approach the story displays for Mulan, Moana, and Tiana to complete their missions while their full exhibits are in development.
 
 ### Military Base — 5 Missions
 

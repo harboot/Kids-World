@@ -5,6 +5,7 @@ import { areas } from '../game.js';
 import { wreckDeck } from '../areas/princess-gallery/ariel-wreck.js';
 import { ATRIUM_RADII } from '../areas/princess-gallery/atrium.js';
 import { exhibits, exhibitOutline } from '../areas/princess-gallery/exhibits.js';
+import { CARPET_DOCK } from '../areas/princess-gallery/jasmine-carpet.js';
 import { spaceTransform } from '../areas/princess-gallery/parts.js';
 import { observationPlatform } from '../areas/princess-gallery/rapunzel.js';
 import { WALKWAY_HEIGHT } from '../areas/princess-gallery/walkway.js';
@@ -158,8 +159,8 @@ test('ten distinct and nonoverlapping footprints surround the Central Atrium', a
     'rapunzel', 'snow-white', 'cinderella', 'aurora', 'ariel', 'belle', 'jasmine', 'mulan', 'tiana', 'moana',
   ]));
   assert.deepEqual(exhibits.filter(entry => entry.status === 'complete' && entry.build).map(entry => entry.id),
-    ['rapunzel', 'snow-white', 'aurora', 'belle', 'cinderella', 'ariel']);
-  assert.equal(exhibits.filter(entry => entry.status === 'coming-soon' && !entry.build).length, 4);
+    ['rapunzel', 'snow-white', 'aurora', 'belle', 'cinderella', 'jasmine', 'ariel']);
+  assert.equal(exhibits.filter(entry => entry.status === 'coming-soon' && !entry.build).length, 3);
   assert.ok(new Set(exhibits.map(entry => entry.shape)).size >= 5);
   assert.ok(new Set(exhibits.map(entry => entry.rotation)).size >= 8);
   for (const key of ['width', 'depth', 'height']) {
@@ -1220,6 +1221,14 @@ test('the ten gallery missions record one interaction per exhibit and replay aft
         case 'belle': {
           const tea = scene.getObjectByName('Belle enchanted tea table');
           position = point(exhibit, tea.position.x, tea.position.z + 2.55);
+          break;
+        }
+        case 'jasmine': {
+          const ride = area.interactions.find(item => item.label === 'Ride the magic carpet');
+          position = point(exhibit, CARPET_DOCK.x, CARPET_DOCK.landingZ);
+          game.camera.position.set(position.x, position.y, position.z);
+          ride.act({ guideCamera: () => () => {} });
+          for (let i = 0; i < 110; i++) step(game.camera.position);
           break;
         }
         case 'ariel': {
