@@ -15,17 +15,18 @@ export function nearestInteraction(items, position, inView) {
   return nearest;
 }
 
-export function createInteractions(THREE, { button, glyph, label, camera, playing, touchMode, runAction }) {
+export function createInteractions(THREE, { button, glyph, label, camera, displayCamera = () => camera, playing, touchMode, runAction }) {
   const point = new THREE.Vector3();
   const { clamp } = THREE.MathUtils;
   let items = [];
   let pinned = null;
 
   function project(item) {
-    point.set(item.x, item.anchorY ?? 1.38, item.z).project(camera);
+    const view = displayCamera();
+    point.set(item.x, item.anchorY ?? 1.38, item.z).project(view);
     const { x, y, z } = point;
     const onScreen = z >= -1 && z <= 1 && Math.abs(x) <= 1 && Math.abs(y) <= 1;
-    return onScreen && (!item.aimRadius || Math.hypot(x * camera.aspect, y) <= item.aimRadius);
+    return onScreen && (!item.aimRadius || Math.hypot(x * view.aspect, y) <= item.aimRadius);
   }
 
   function nearby() {

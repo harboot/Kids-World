@@ -52,7 +52,7 @@ class Element extends EventTarget {
   click() { this.dispatchEvent(new Event('click')); }
 }
 
-function gameFixture(t, areas, startingArea, { online = true } = {}) {
+function gameFixture(t, areas, startingArea, { online = true, preferences = new Map() } = {}) {
   const window = new EventTarget();
   const document = new Element();
   document.createElement = () => new Element();
@@ -78,7 +78,7 @@ function gameFixture(t, areas, startingArea, { online = true } = {}) {
     navigator: { maxTouchPoints: 0, onLine: online },
     requestAnimationFrame(callback) { const id = nextFrame++; frames.set(id, callback); return id; },
     cancelAnimationFrame(id) { frames.delete(id); },
-    localStorage: { getItem: () => null, setItem: () => {} },
+    localStorage: { getItem: key => preferences.get(key) ?? null, setItem: (key, value) => preferences.set(key, value) },
   })) {
     const previous = Object.getOwnPropertyDescriptor(globalThis, name);
     Object.defineProperty(globalThis, name, { configurable: true, value });
@@ -403,4 +403,30 @@ test('hidden scene initialization errors are distinct from unavailable downloads
   assert.equal(cleaned, 1);
   assert.equal(f.game.dataset.state, 'error');
   assert.match(f.game.querySelector('#menu-message').textContent, /secret could not initialize/);
+});
+
+test('settings default to one finger, pause gameplay, and restore a saved control mode', async t => {
+  const garden = area('garden', async () => ({ default: visit(garden, []) }));
+  const preferences = new Map();
+  const first = gameFixture(t, { garden }, 'garden', { preferences });
+  await first.ready;
+  assert.equal(first.game.dataset.controls, 'one-finger');
+  first.game.querySelector('#start').click();
+  first.game.querySelector('#open-settings').click();
+  const dialog = first.game.querySelector('#settings');
+  assert.equal(dialog.open, true);
+  assert.equal(first.game.dataset.state, 'paused');
+
+  const change = new Event('change');
+  Object.defineProperty(change, 'target', { value: { name: 'controls', value: 'third-person', checked: true } });
+  dialog.dispatchEvent(change);
+  assert.equal(first.game.dataset.controls, 'third-person');
+  assert.equal(preferences.get('kids-world-controls'), 'third-person');
+  first.tick(16);
+  assert.ok(first.renders.at(-1).position.distanceTo(new THREE.Vector3(0, 1.68, 0)) > 1);
+
+  const reopened = gameFixture(t, { garden }, 'garden', { preferences });
+  await reopened.ready;
+  assert.equal(reopened.game.dataset.controls, 'third-person');
+  assert.equal(reopened.game.querySelector('#settings').querySelector('#controls-third-person').checked, true);
 });

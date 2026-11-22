@@ -11,9 +11,13 @@ import { createLevelProgress } from './level-progress.js';
 import { PLAYER_RADIUS } from './movement.js';
 import { createPlayer } from './player.js';
 import { createView } from './renderer.js';
+import { createThirdPerson } from './third-person.js';
 import { AreaInitializationError, areaURL, createWorldManager, resolveArea } from './world-manager.js';
 
 const areaKey = 'kids-world-last-area';
+const controlKey = 'kids-world-controls';
+const defaultControls = 'one-finger';
+const controlModes = new Set([defaultControls, 'two-finger', 'third-person']);
 const areaLoadTimeout = 30_000;
 
 function savedArea() {
@@ -22,6 +26,16 @@ function savedArea() {
   } catch {
     return null;
   }
+}
+
+function savedControls() {
+  try {
+    const mode = localStorage.getItem(controlKey);
+    if (controlModes.has(mode)) return mode;
+  } catch {
+    // Use the default when local storage is unavailable.
+  }
+  return defaultControls;
 }
 
 function rememberArea(areas, id) {
@@ -37,10 +51,13 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   validateAreaRegistry(areas);
 
   const canvas = game.querySelector('#view');
+  const joystick = game.querySelector('#joystick');
   const start = game.querySelector('#start');
   const startLabel = game.querySelector('#start-label');
   const droneEntry = game.querySelector('#open-drone');
   const chooseLevel = game.querySelector('#choose-level');
+  const openSettings = game.querySelector('#open-settings');
+  const settings = game.querySelector('#settings');
   const levelPicker = game.querySelector('#level-picker');
   const areaList = game.querySelector('#area-list');
   const restart = game.querySelector('#restart');
@@ -56,8 +73,13 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   const touchDevice = matchMedia('(pointer: coarse)').matches ||
     (navigator.maxTouchPoints > 0 && matchMedia('(hover: none)').matches);
   game.dataset.input = touchDevice ? 'touch' : 'mouse';
+  let controlMode = savedControls();
+  syncControlMode();
+  settings.querySelector(`#controls-${controlMode}`).checked = true;
 
   let drone;
+  let thirdPerson;
+  let displayedCamera;
   let route;
   let transition;
   let activeURL;
@@ -72,6 +94,11 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   const playerInput = () => playing() && !drone?.camera;
   const touchMode = () => game.dataset.input === 'touch';
 
+  function syncControlMode() {
+    game.dataset.controls = controlMode;
+    joystick.setAttribute('aria-label', controlMode === 'two-finger' ? 'Movement joystick' : 'Movement and steering joystick');
+  }
+
   function showError(message) {
     drone?.stop();
     droneEntry.hidden = true;
@@ -84,6 +111,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     start.disabled = false;
     restart.disabled = true;
     chooseLevel.disabled = true;
+    openSettings.disabled = true;
     retryArea.hidden = true;
   }
 
@@ -152,7 +180,8 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     button: game.querySelector('#interaction'),
     glyph: game.querySelector('#interaction-glyph'),
     label: game.querySelector('#interaction-label'),
-    camera, playing: () => playerInput() && !player.guided, touchMode,
+    camera, displayCamera: () => player.seated ? camera : displayedCamera ?? camera,
+    playing: () => playerInput() && !player.guided, touchMode,
     runAction(item) {
       const visit = worlds.active;
       const revision = interactionRevision;
@@ -171,8 +200,9 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     },
   });
   const controls = createControls(THREE, {
-    game, canvas, joystick: game.querySelector('#joystick'), thumb: game.querySelector('#joystick-thumb'),
+    game, canvas, joystick, thumb: game.querySelector('#joystick-thumb'),
     playing: playerInput, touchMode, seated: () => player.seated,
+    steerWithStick: () => controlMode !== 'two-finger',
     look: player.look, interact: interactions.interact,
     jump() { if (player.jump()) audio.effect('jump'); },
     pause() { menu(true); },
@@ -223,6 +253,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     start.disabled = false;
     restart.disabled = false;
     chooseLevel.disabled = false;
+    openSettings.disabled = false;
     startLabel.textContent = paused ? 'Resume exploring' : 'Explore';
     menuMessage.textContent = paused ? 'Take a break, then continue exploring.' : worlds.active.definition.description;
     notice.textContent = '';
@@ -234,6 +265,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   function relocate(spawn) {
     controls.clear();
     player.reset(spawn, worlds.active.area);
+    displayedCamera = null;
   }
 
   function preparePresentation({ definition, area }) {
@@ -259,6 +291,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   function clearVisitPresentation() {
     interactionRevision++;
     if (levelPicker.open) levelPicker.close();
+    if (settings.open) settings.close();
     missionHud.reset();
     drone?.stop();
     interactions.setItems([]);
@@ -286,6 +319,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
 
   function disposeView() {
     try {
+      thirdPerson?.dispose();
       view.dispose();
     } catch (error) {
       console.error('Could not finish renderer cleanup.', error);
@@ -318,6 +352,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
       game.dataset.state = 'traveling';
       stopPlaying();
       if (levelPicker.open) levelPicker.close();
+      if (settings.open) settings.close();
       drone?.stop();
       droneEntry.hidden = true;
       retryArea.hidden = true;
@@ -325,6 +360,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
       start.disabled = true;
       restart.disabled = true;
       chooseLevel.disabled = true;
+      openSettings.disabled = true;
       notice.textContent = areas[id].loadingMessage ?? `Loading ${areas[id].title}…`;
       view.invalidate();
 
@@ -373,6 +409,24 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
       }
     }
   }
+
+  openSettings.addEventListener('click', () => {
+    if (openSettings.disabled || settings.open) return;
+    if (playing()) menu(true);
+    settings.showModal();
+  });
+  settings.addEventListener('change', ({ target }) => {
+    if (target.name !== 'controls' || !target.checked || !controlModes.has(target.value)) return;
+    controlMode = target.value;
+    syncControlMode();
+    controls.clear();
+    try {
+      localStorage.setItem(controlKey, controlMode);
+    } catch {
+      // Keep the selection for this page when storage is unavailable.
+    }
+    view.invalidate();
+  });
 
   chooseLevel.addEventListener('click', () => {
     if (levelPicker.open || !worlds.active || transition || game.dataset.state === 'error') return;
@@ -488,6 +542,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     if (game.dataset.state === 'playing') menu(true);
     else stopPlaying();
     if (levelPicker.open) levelPicker.close();
+    if (settings.open) settings.close();
     drone?.stop();
     missionHud.clearNotification();
     if (!event.persisted) {
@@ -523,18 +578,26 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     if (terminal || suspended || document.hidden || visit?.state !== 'active') return;
     try {
       const activePlayer = playerInput();
+      let dt = 0;
+      const { x, z } = camera.position;
       if (activePlayer) {
         const elapsed = previousFrame === null ? 0 : Math.min(0.25, Math.max(0, (stamp - previousFrame) / 1000));
-        const dt = Math.min(elapsed, 0.05);
+        dt = Math.min(elapsed, 0.05);
         previousFrame = stamp;
         player.move(dt, controls.sample(dt), visit);
         worlds.update(dt, camera.position, elapsed);
         if (worlds.active !== visit || terminal) return;
         missionHud.update(visit.area.missionStatus);
-        interactions.update();
       }
+      displayedCamera = null;
+      if (controlMode === 'third-person' && !drone?.camera && !player.seated) {
+        thirdPerson ??= createThirdPerson(THREE, camera);
+        const distanceWalked = motionPreference.matches ? 0 : Math.hypot(camera.position.x - x, camera.position.z - z);
+        displayedCamera = thirdPerson.update(visit, dt, distanceWalked);
+      } else thirdPerson?.hide();
+      if (activePlayer) interactions.update();
       drone?.update();
-      const rendered = view.render(visit.scene, activePlayer, drone?.camera);
+      const rendered = view.render(visit.scene, activePlayer, drone?.camera, displayedCamera, visit.viewmodel);
       if (rendered && route?.fps) frameMeter.sample(stamp);
       if (playerInput()) scheduleFrame();
     } catch (error) {
