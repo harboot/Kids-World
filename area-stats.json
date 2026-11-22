@@ -4,7 +4,7 @@
     "publicAreas": 7,
     "hiddenAreas": 1,
     "totalFiles": 133,
-    "totalBytes": 1331811,
+    "totalBytes": 1084059,
     "totalJsLines": 21257,
     "largestMap": {
       "name": "Military Base",
@@ -12,7 +12,7 @@
     },
     "largestFolder": {
       "name": "Princess Gallery",
-      "folderBytes": 412010
+      "folderBytes": 383347
     }
   },
   "areas": [
@@ -20,16 +20,17 @@
       "id": "arendelle-village",
       "name": "Arendelle Village",
       "visibility": "Public",
+      "thumbnail": "./areas/arendelle-village/arendelle-village.jpg",
       "width": 84,
       "depth": 72,
       "mapArea": 6048,
-      "folderBytes": 149783,
+      "folderBytes": 124827,
       "totalFiles": 18,
       "jsFiles": 17,
       "jsBytes": 105046,
       "jsLines": 2424,
       "imageFiles": 1,
-      "imageBytes": 44737,
+      "imageBytes": 19781,
       "imageFormats": [
         "JPG"
       ]
@@ -38,16 +39,17 @@
       "id": "frozen-castle",
       "name": "Frozen Castle",
       "visibility": "Public",
+      "thumbnail": "./areas/frozen-castle/frozen-castle.jpg",
       "width": 40,
       "depth": 40,
       "mapArea": 1600,
-      "folderBytes": 87447,
+      "folderBytes": 67231,
       "totalFiles": 9,
       "jsFiles": 8,
       "jsBytes": 48671,
       "jsLines": 1158,
       "imageFiles": 1,
-      "imageBytes": 38776,
+      "imageBytes": 18560,
       "imageFormats": [
         "JPG"
       ]
@@ -56,16 +58,17 @@
       "id": "garden",
       "name": "Flower Garden",
       "visibility": "Public",
+      "thumbnail": "./areas/flower-garden/flower-garden.jpg",
       "width": 45,
       "depth": 58,
       "mapArea": 2610,
-      "folderBytes": 125572,
+      "folderBytes": 109241,
       "totalFiles": 15,
       "jsFiles": 14,
       "jsBytes": 95681,
       "jsLines": 2267,
       "imageFiles": 1,
-      "imageBytes": 29891,
+      "imageBytes": 13560,
       "imageFormats": [
         "JPG"
       ]
@@ -74,16 +77,17 @@
       "id": "military-base",
       "name": "Military Base",
       "visibility": "Public",
+      "thumbnail": "./areas/military-base/military-base.jpg",
       "width": 154,
       "depth": 150,
       "mapArea": 23100,
-      "folderBytes": 284938,
+      "folderBytes": 163231,
       "totalFiles": 18,
       "jsFiles": 17,
       "jsBytes": 139212,
       "jsLines": 3001,
       "imageFiles": 1,
-      "imageBytes": 145726,
+      "imageBytes": 24019,
       "imageFormats": [
         "JPG"
       ]
@@ -92,16 +96,17 @@
       "id": "princess-gallery",
       "name": "Princess Gallery",
       "visibility": "Public",
+      "thumbnail": "./areas/princess-gallery/princess-gallery.jpg",
       "width": 140,
       "depth": 120,
       "mapArea": 16800,
-      "folderBytes": 412010,
+      "folderBytes": 383347,
       "totalFiles": 39,
       "jsFiles": 38,
       "jsBytes": 360129,
       "jsLines": 7606,
       "imageFiles": 1,
-      "imageBytes": 51881,
+      "imageBytes": 23218,
       "imageFormats": [
         "JPG"
       ]
@@ -110,6 +115,7 @@
       "id": "secret-apartment",
       "name": "Secret Apartment — 17E",
       "visibility": "Hidden",
+      "thumbnail": null,
       "width": 220,
       "depth": 84,
       "mapArea": 18480,
@@ -126,16 +132,17 @@
       "id": "snow",
       "name": "Snow Basin",
       "visibility": "Public",
+      "thumbnail": "./areas/snow-basin/snow-basin.jpg",
       "width": 64,
       "depth": 60,
       "mapArea": 3840,
-      "folderBytes": 100012,
+      "folderBytes": 87065,
       "totalFiles": 12,
       "jsFiles": 11,
       "jsBytes": 74508,
       "jsLines": 1795,
       "imageFiles": 1,
-      "imageBytes": 25504,
+      "imageBytes": 12557,
       "imageFormats": [
         "JPG"
       ]
@@ -144,16 +151,17 @@
       "id": "wooden-house",
       "name": "Wooden House",
       "visibility": "Public",
+      "thumbnail": "./areas/wooden-house/wooden-house.jpg",
       "width": 12.8,
       "depth": 10.8,
       "mapArea": 138.24,
-      "folderBytes": 81226,
+      "folderBytes": 58294,
       "totalFiles": 8,
       "jsFiles": 7,
       "jsBytes": 40002,
       "jsLines": 912,
       "imageFiles": 1,
-      "imageBytes": 41224,
+      "imageBytes": 18292,
       "imageFormats": [
         "JPG"
       ]

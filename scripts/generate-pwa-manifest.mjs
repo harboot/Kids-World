@@ -34,7 +34,7 @@ const mandatory = new Set(inventory.filter(path => !path.startsWith('areas/')));
 const optional = new Set();
 const owners = new Set();
 
-for (const { id, visibility, entry, directory, metadataPath } of areas) {
+for (const { id, visibility, thumbnail, entry, directory, metadataPath } of areas) {
   if (owners.has(directory) || !entry.startsWith(directory + '/') || metadataPath !== posix.join(directory, 'metadata.js') ||
       !sources.has(entry) || !sources.has(metadataPath)) {
     throw new Error(`Could not verify release files owned by area "${id}"`);
@@ -47,9 +47,8 @@ for (const { id, visibility, entry, directory, metadataPath } of areas) {
   for (const path of inventory) {
     if (path.startsWith(directory + '/')) (show ? mandatory : optional).add(path);
   }
-  if (show) {
-    const thumbnail = directory + '/' + posix.basename(directory) + '.jpg';
-    if (!sources.has(thumbnail)) throw new Error(`Missing public thumbnail for area "${id}": ${thumbnail}`);
+  if (show && !sources.has(thumbnail?.slice(2))) {
+    throw new Error(`Missing public thumbnail for area "${id}": ${thumbnail}`);
   }
 }
 validateAreaRegistry(registry);

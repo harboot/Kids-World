@@ -88,7 +88,7 @@
       font-variant-numeric: tabular-nums;
     }
     th, td { padding: .77rem .55rem; border-block-start: 1px solid var(--line); text-align: right; }
-    tr > :nth-child(-n+2), tr > :last-child { text-align: left; }
+    tr > :nth-child(-n+2) { text-align: left; }
     thead th { padding: 0; background: #eff3e5; }
     thead button {
       display: flex;
@@ -104,12 +104,26 @@
       text-align: inherit;
       cursor: pointer;
     }
-    thead th:nth-child(-n+2) button, thead th:last-child button { justify-content: start; }
+    thead th:nth-child(-n+2) button { justify-content: start; }
     thead button:hover, thead th[aria-sort] { background: #e3ecd6; }
     thead button:focus-visible { outline-offset: -3px; }
     .sort-icon { width: .8em; color: #63745d; }
     tbody tr:nth-child(even) { background: #f8f9ee; }
-    tbody a { text-underline-offset: .18em; }
+    tbody a {
+      display: inline-flex;
+      align-items: center;
+      gap: .55rem;
+      text-underline-offset: .18em;
+    }
+    .thumbnail {
+      display: block;
+      flex: none;
+      width: 64px;
+      height: 36px;
+      border-radius: .35rem;
+      background: #e3ecd6;
+      object-fit: cover;
+    }
     .visibility { display: inline-block; padding: .18rem .52rem; border-radius: 1rem; font-weight: 700; }
     .public { background: #e2eedc; color: #2c542f; }
     .hidden { background: #f2e9db; color: #6c4b2b; }
@@ -165,14 +179,10 @@
               <th scope="col"><button type="button" data-sort="visibility">Visibility <span class="sort-icon" aria-hidden="true">↕</span></button></th>
               <th scope="col"><button type="button" data-sort="dimensions">Map Dimensions <span class="sort-icon" aria-hidden="true">↕</span></button></th>
               <th scope="col"><button type="button" data-sort="mapArea">Map Area <span class="sort-icon" aria-hidden="true">↕</span></button></th>
-              <th scope="col"><button type="button" data-sort="folderBytes">Folder Size <span class="sort-icon" aria-hidden="true">↕</span></button></th>
-              <th scope="col"><button type="button" data-sort="totalFiles">Total Files <span class="sort-icon" aria-hidden="true">↕</span></button></th>
               <th scope="col"><button type="button" data-sort="jsFiles">JS Files <span class="sort-icon" aria-hidden="true">↕</span></button></th>
               <th scope="col"><button type="button" data-sort="jsBytes">JS Size <span class="sort-icon" aria-hidden="true">↕</span></button></th>
               <th scope="col"><button type="button" data-sort="jsLines">Lines of Code <span class="sort-icon" aria-hidden="true">↕</span></button></th>
-              <th scope="col"><button type="button" data-sort="imageFiles">Image Files <span class="sort-icon" aria-hidden="true">↕</span></button></th>
               <th scope="col"><button type="button" data-sort="imageBytes">Image Size <span class="sort-icon" aria-hidden="true">↕</span></button></th>
-              <th scope="col"><button type="button" data-sort="imageFormats">Image Formats <span class="sort-icon" aria-hidden="true">↕</span></button></th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -197,6 +207,7 @@
     const status = document.getElementById('status');
     const sortButtons = document.querySelectorAll('button[data-sort]');
     const body = document.querySelector('tbody');
+    const statsPath = document.documentElement.dataset.statsUrl;
     let sortBy = 'name';
     let ascending = true;
 
@@ -224,7 +235,6 @@
 
     function sortValue(area) {
       if (sortBy === 'dimensions') return area.width === null || area.depth === null ? null : area.width;
-      if (sortBy === 'imageFormats') return area.imageFormats.join(', ');
       return area[sortBy];
     }
 
@@ -244,7 +254,21 @@
       nameCell.scope = 'row';
       const link = document.createElement('a');
       link.href = `./?area=${encodeURIComponent(area.id)}`;
-      link.textContent = area.name;
+      const thumbnail = document.createElement(area.thumbnail ? 'img' : 'span');
+      thumbnail.className = 'thumbnail';
+      if (area.thumbnail) {
+        thumbnail.width = 64;
+        thumbnail.height = 36;
+        thumbnail.alt = '';
+        thumbnail.decoding = 'async';
+        // Cached statistics are served from the same versioned directory as their images.
+        thumbnail.src = new URL(area.thumbnail, new URL(statsPath, document.baseURI)).href;
+      } else {
+        thumbnail.setAttribute('aria-hidden', 'true');
+      }
+      const title = document.createElement('span');
+      title.textContent = area.name;
+      link.append(thumbnail, title);
       nameCell.append(link);
       row.append(nameCell);
 
@@ -256,9 +280,9 @@
       const dimensions = area.width === null && area.depth === null
         ? unavailable : `${units(area.width)} × ${units(area.depth)} wu`;
       for (const value of [
-        dimensions, squareUnits(area.mapArea), size(area.folderBytes), number.format(area.totalFiles),
+        dimensions, squareUnits(area.mapArea),
         number.format(area.jsFiles), size(area.jsBytes), number.format(area.jsLines),
-        number.format(area.imageFiles), size(area.imageBytes), area.imageFormats.join(', ') || unavailable,
+        size(area.imageBytes),
       ]) row.insertCell().textContent = value;
       return row;
     }
@@ -280,7 +304,7 @@
     }
 
     try {
-      const response = await fetch(document.documentElement.dataset.statsUrl, { cache: 'no-cache' });
+      const response = await fetch(statsPath, { cache: 'no-cache' });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const { areas, summary } = await response.json();
       const render = () => showAreas(areas);
