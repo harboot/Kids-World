@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
+import { areas as registry } from '../game.js';
 import { generateAreaStats } from '../scripts/generate-area-stats.mjs';
 
 const root = new URL('../', import.meta.url);
@@ -70,11 +71,11 @@ test('reads public and hidden definitions, owns only area files, and counts phys
   const winterFolder = winterBytes + 75 + Buffer.byteLength('area notes');
   const secretBytes = Buffer.byteLength(secret);
   assert.deepEqual(stats.areas, [{
-    id: 'secret-area', name: 'Secret Area', visibility: 'Hidden', width: null, depth: 4, mapArea: null,
+    id: 'secret-area', name: 'Secret Area', visibility: 'Hidden', thumbnail: null, width: null, depth: 4, mapArea: null,
     folderBytes: secretBytes, totalFiles: 1, jsFiles: 1, jsBytes: secretBytes, jsLines: 4,
     imageFiles: 0, imageBytes: 0, imageFormats: [],
   }, {
-    id: 'snow', name: "Snow's Basin", visibility: 'Public', width: 12.5, depth: 24, mapArea: 300,
+    id: 'snow', name: "Snow's Basin", visibility: 'Public', thumbnail: './areas/winter-yard/winter-yard.jpg', width: 12.5, depth: 24, mapArea: 300,
     folderBytes: winterFolder, totalFiles: 8, jsFiles: 3, jsBytes: winterBytes, jsLines: 12,
     imageFiles: 4, imageBytes: 75, imageFormats: ['JPG', 'PNG', 'WebP'],
   }]);
@@ -131,10 +132,13 @@ class Element extends EventTarget {
   querySelector() { return this.children[0]; }
 }
 
-test('the dashboard reads generated JSON and renders every reported field, including hidden links', async () => {
+test('the dashboard renders the remaining columns, registered thumbnails, and hidden area links', async () => {
   const html = await readFile(new URL('stats.html', root), 'utf8');
   const json = await readFile(new URL('area-stats.json', root), 'utf8');
   const { areas, summary } = JSON.parse(json);
+  const manifest = JSON.parse(await readFile(new URL('version.json', root), 'utf8'));
+  const precachedPaths = new Set(manifest.files.map(file => file.path));
+  const page = new URL('https://example.test/Kids-World/stats.html');
   const script = html.match(/<script type="module">([\s\S]+)<\/script>/)[1];
   const dataPath = html.match(/data-stats-url="([^"]+)"/)[1];
   const buttons = [...html.matchAll(/data-sort="([^"]+)"/g)].map(([, property]) => {
@@ -144,14 +148,19 @@ test('the dashboard reads generated JSON and renders every reported field, inclu
     button.append(new Element());
     return button;
   });
+  assert.deepEqual(buttons.map(button => button.dataset.sort), [
+    'name', 'visibility', 'dimensions', 'mapArea', 'jsFiles', 'jsBytes', 'jsLines', 'imageBytes',
+  ]);
   const selectors = Object.fromEntries(['tbody', '.summary', '.table-scroll'].map(name => [name, new Element()]));
   const ids = Object.fromEntries([...html.matchAll(/id="([^"]+)"/g)].map(([, id]) => [id, new Element()]));
   const requests = [];
   await runInNewContext(`(async () => {${script}\n})()`, {
     console,
+    URL,
     document: {
+      baseURI: page.href,
       documentElement: { dataset: { statsUrl: dataPath } },
-      createElement: () => new Element(),
+      createElement: tagName => Object.assign(new Element(), { tagName }),
       getElementById: id => ids[id],
       querySelector: selector => selectors[selector],
       querySelectorAll: () => buttons,
@@ -169,11 +178,28 @@ test('the dashboard reads generated JSON and renders every reported field, inclu
   assert.equal(selectors['.table-scroll'].hidden, false);
   const rows = () => selectors.tbody.children;
   const linkFor = row => row.children[0].children[0];
+  const titleFor = row => linkFor(row).children[1].textContent;
   assert.equal(rows().length, areas.length);
   for (const area of areas) {
     const row = rows().find(row => linkFor(row).href === `./?area=${encodeURIComponent(area.id)}`);
     assert.ok(row, area.id);
-    assert.equal(linkFor(row).textContent, area.name);
+    assert.equal(titleFor(row), area.name);
+    const [thumbnail] = linkFor(row).children;
+    const registeredThumbnail = registry[area.id].thumbnail;
+    if (registeredThumbnail) {
+      assert.equal(new URL(area.thumbnail, root).href, registeredThumbnail);
+      assert.ok(precachedPaths.has(area.thumbnail));
+      assert.equal(thumbnail.tagName, 'img');
+      assert.equal(thumbnail.src, new URL(area.thumbnail, page).href);
+      assert.equal(thumbnail.alt, '');
+      assert.equal(thumbnail.width, 64);
+      assert.equal(thumbnail.height, 36);
+    } else {
+      assert.equal(area.thumbnail, null);
+      assert.equal(thumbnail.tagName, 'span');
+      assert.equal(thumbnail.src, undefined);
+      assert.equal(thumbnail.attributes.get('aria-hidden'), 'true');
+    }
     assert.equal(row.children[1].children[0].textContent, area.visibility);
     assert.equal(row.children.length, buttons.length);
     assert.ok(row.children.slice(2).every(cell => cell.textContent && !/NaN|undefined/.test(cell.textContent)));
@@ -189,9 +215,9 @@ test('the dashboard reads generated JSON and renders every reported field, inclu
 
   ids.search.value = '';
   ids.filter.value = '';
-  const folderSort = buttons.find(button => button.dataset.sort === 'folderBytes');
-  folderSort.dispatchEvent(new Event('click'));
-  folderSort.dispatchEvent(new Event('click'));
-  assert.equal(folderSort.parentElement.attributes.get('aria-sort'), 'descending');
-  assert.equal(linkFor(rows()[0]).textContent, summary.largestFolder.name);
+  const mapSort = buttons.find(button => button.dataset.sort === 'mapArea');
+  mapSort.dispatchEvent(new Event('click'));
+  mapSort.dispatchEvent(new Event('click'));
+  assert.equal(mapSort.parentElement.attributes.get('aria-sort'), 'descending');
+  assert.equal(titleFor(rows()[0]), summary.largestMap.name);
 });
