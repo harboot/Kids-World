@@ -112,7 +112,7 @@ export function createReleaseCache({ scope, storage = caches, fetchAsset = fetch
     const total = manifest.files.length;
 
     function progress(stage) {
-      report({ stage, completed, downloaded, total });
+      report({ stage, version: manifest.version, completed, downloaded, total });
     }
 
     async function save(file) {

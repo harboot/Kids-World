@@ -11,7 +11,7 @@ const status = document.querySelector('#pwa-status');
 const progressPanel = document.querySelector('#pwa-progress-panel');
 const meter = document.querySelector('#pwa-progress');
 const percent = document.querySelector('#pwa-percent');
-const count = document.querySelector('#pwa-count');
+const versionLabel = document.querySelector('#pwa-version');
 const play = document.querySelector('#pwa-play');
 const retry = document.querySelector('#pwa-retry');
 const update = document.querySelector('#pwa-update');
@@ -23,24 +23,28 @@ let lastCheck = 0;
 let checking = false;
 let booting = false;
 
-function showProgress({ stage, completed, total, downloaded }) {
+function showVersion(version) {
+  versionLabel.textContent = /^[a-f0-9]{64}$/.test(version)
+    ? `Version: ${version.slice(0, 12)}` : 'Version unavailable';
+}
+
+function showProgress({ stage, completed, total, version }) {
+  if (stage === 'checking') versionLabel.textContent = 'Checking version…';
+  else if (version) showVersion(version);
   progressPanel.hidden = false;
   status.textContent = stage === 'checking' ? 'Checking for updates…' :
     stage === 'verifying' ? 'Verifying downloaded files…' : 'Preparing your adventure…';
   if (stage === 'checking' || !Number.isSafeInteger(total) || total <= 0 ||
-      !Number.isSafeInteger(completed) || !Number.isSafeInteger(downloaded)) {
+      !Number.isSafeInteger(completed)) {
     meter.removeAttribute('value');
     percent.textContent = '';
-    count.textContent = '';
     return;
   }
 
   completed = Math.min(total, Math.max(0, completed));
-  downloaded = Math.min(completed, Math.max(0, downloaded));
   meter.max = total;
   meter.value = completed;
   percent.textContent = `${Math.floor(completed / total * 100)}%`;
-  count.textContent = `${completed} / ${total} files ready · ${downloaded} downloaded`;
 }
 
 function localController() {
@@ -137,6 +141,9 @@ async function selectRelease(requested) {
 async function boot() {
   const requested = new URL(location.href).searchParams.get(selectionParam);
   const result = await selectRelease(requested);
+  // A cached shell's versioned module URL identifies the release it can load.
+  showVersion(result?.version ?? ((!result || result.status === 'storage') && releaseTag.test(shellTag)
+    ? shellTag.slice(0, 64) : undefined));
   if (!result || result.status === 'storage') {
     clearSelection();
     if (shellTag) {

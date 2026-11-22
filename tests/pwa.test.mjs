@@ -359,11 +359,14 @@ test('the worker shares a download and serves lazy area modules and versioned st
   }
   await import('../pwa/worker.js');
 
-  function prepare(isOffline = false) {
+  function prepare(isOffline = false, report = () => {}) {
     return new Promise((resolve, reject) => {
       events.get('message')({
         data: { type: 'prepare', offline: isOffline }, source: client,
-        ports: [{ postMessage(message) { if (message.stage === 'complete') resolve(message.result); } }],
+        ports: [{ postMessage(message) {
+          if (message.stage === 'complete') resolve(message.result);
+          else report(message);
+        } }],
         waitUntil: task => task.catch(reject),
       });
     });
@@ -377,12 +380,20 @@ test('the worker shares a download and serves lazy area modules and versioned st
     }));
   }
 
-  const [first, second] = await Promise.all([prepare(), prepare()]);
+  const progress = [];
+  const [first, second] = await Promise.all([prepare(false, status => progress.push(status)), prepare()]);
+  assert.equal(progress[0].stage, 'checking');
+  assert.equal(progress[1].completed, 0);
+  assert.equal(progress.at(-1).completed, progress.at(-1).total);
+  assert.ok(progress.slice(1).every(status => status.version === release.manifest.version));
+  assert.equal(first.version, release.manifest.version);
   assert.equal(first.tag, second.tag);
   assert.equal(requests.length, release.manifest.files.length + 1);
   assert.equal((await storage.keys()).length, 1);
   offline = true;
-  assert.equal((await prepare(true)).tag, first.tag);
+  const cached = await prepare(true);
+  assert.equal(cached.tag, first.tag);
+  assert.equal(cached.version, first.version);
   const response = await request('index.html?area=snow');
   assert.equal(response.status, 200);
   assert.ok((await response.text()).includes(assetBase(scope, first.tag).pathname + 'pwa/bootstrap.js'));
@@ -419,6 +430,16 @@ test('the worker shares a download and serves lazy area modules and versioned st
   assert.equal(requests.length, downloaded);
   offline = false;
   release = await fixture({ ...files, './area-stats.json': '{"revision":2}' });
+  const updateURL = new URL('area-stats.json', scope).href;
+  const validUpdate = release.payloads.get(updateURL);
+  release.payloads.set(updateURL, 'corrupt update');
+  const attempted = [];
+  const fallback = await prepare(false, status => attempted.push(status));
+  assert.ok(attempted.some(status => status.version === release.manifest.version));
+  assert.equal(fallback.status, 'fallback');
+  assert.equal(fallback.tag, first.tag);
+  assert.equal(fallback.version, first.version);
+  release.payloads.set(updateURL, validUpdate);
   const newPage = await (await request('stats.html')).text();
   const newData = newPage.match(/data-stats-url="([^"]+)"/)[1];
   assert.notEqual(newData, firstData.pathname);

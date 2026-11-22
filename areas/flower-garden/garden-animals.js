@@ -1,14 +1,11 @@
-import { createCowFactory } from './garden-cow.js';
-
 export function createAnimals(THREE, scene, playerRadius, finishMission) {
-  const createCow = createCowFactory(THREE);
   const block = new THREE.BoxGeometry(1, 1, 1);
   const shadowShape = new THREE.CircleGeometry(1, 14).rotateX(-Math.PI / 2);
   const shadowMaterial = new THREE.MeshBasicMaterial({
     color: 0x161811, transparent: true, opacity: 0.24, depthWrite: false,
   });
   const palette = Object.fromEntries(Object.entries({
-    cream: 0xece2c9, dark: 0x352c29,
+    cream: 0xece2c9, dark: 0x352c29, pink: 0xd59a92,
     red: 0xc5442e, gold: 0xe9a447, buff: 0xb97749, wing: 0x8f573b,
   }).map(([name, color]) => [name, new THREE.MeshLambertMaterial({ color })]));
 
@@ -44,9 +41,92 @@ export function createAnimals(THREE, scene, playerRadius, finishMission) {
   }
 
   function buildCow(body, variant) {
-    const cow = createCow(variant);
-    body.add(cow.root);
-    return cow;
+    const fullTurn = 2 * Math.PI;
+    function pivot(parent, name, x, y, z) {
+      const group = new THREE.Group();
+      group.name = name;
+      group.position.set(x, y, z);
+      parent.add(group);
+      return group;
+    }
+
+    const torso = pivot(body, 'Cow torso', 0, 0.93, 0);
+    part(torso, 'cream', 0, 0, 0, 0.83, 0.68, 1.42);
+    part(torso, 'dark', 0, 0.07, -0.38, 0.854, 0.585, 0.43);
+    part(torso, 'dark', 0.429, -0.05, 0.3, 0.03, 0.29, 0.43);
+    part(torso, 'cream', 0, 0.16, 0.64, 0.41, 0.55, 0.53);
+    const head = pivot(torso, 'Cow head', 0, 0.24, 0.75);
+    part(head, 'cream', 0, 0.05, 0.18, 0.47, 0.48, 0.51);
+    part(head, 'pink', 0, -0.09, 0.46, 0.49, 0.23, 0.24);
+    const eyes = pivot(head, 'Cow eyes', 0, 0.12, 0);
+    const tail = pivot(torso, 'Cow tail', 0, 0.16, -0.7);
+    part(tail, 'dark', 0, -0.25, 0, 0.08, 0.55, 0.09);
+
+    const ears = [];
+    const legs = [];
+    for (const side of [-1, 1]) {
+      part(eyes, 'dark', side * 0.238, 0, 0.28, 0.025, 0.078, 0.08);
+      const ear = pivot(head, 'Cow ear', side * 0.29, 0.26, 0.13);
+      part(ear, 'pink', 0, 0, 0, 0.23, 0.10, 0.16);
+      ears.push({ side, pivot: ear });
+      part(head, 'cream', side * 0.15, 0.36, 0.11, 0.08, 0.19, 0.09).rotation.z = -side * 0.38;
+      for (const end of [-1, 1]) {
+        const hip = pivot(body, 'Cow hip', side * 0.28, 0.65, end * 0.48);
+        part(hip, 'cream', 0, -0.15, 0, 0.144, 0.38, 0.146);
+        const knee = leg(hip, 0, -0.305, 0, 0.345, 0.13, 'cream', 'dark');
+        knee.name = 'Cow knee';
+        knee.children[1].scale.x = 0.148;
+        legs.push({ hip, knee, phase: side === end ? 0 : Math.PI });
+      }
+    }
+
+    const offset = variant * 1.3;
+    let elapsed = 0, stride = offset, walk = 0;
+
+    function pose(greetingProgress) {
+      const idle = elapsed + offset;
+      const greeting = Math.sin(Math.PI * greetingProgress);
+      const nod = greeting * (1 - Math.cos(greetingProgress * fullTurn * 2)) * 0.19;
+      const breath = Math.sin(idle * 2.2);
+      const bob = walk * Math.abs(Math.sin(stride)) * 0.025;
+      torso.position.y = 0.93 + bob;
+      torso.scale.set(1 + breath * 0.013, 1 + breath * 0.022, 1);
+      head.rotation.x = 0.035 * Math.sin(idle * 1.53) + nod + walk * Math.sin(stride * 2) * 0.025;
+      head.rotation.y = 0.12 * Math.sin(idle * 0.84) * Math.sin(idle * 0.43) + greeting * 0.12;
+
+      const blinkTime = (elapsed + variant * 0.9 + 0.7) % 4.6;
+      eyes.scale.y = 1 - 0.93 * Math.sin(Math.PI * Math.min(blinkTime / 0.18, 1));
+      for (const { side, pivot } of ears) {
+        pivot.rotation.z = side * (0.30 + 0.065 * Math.sin(idle * 2.9 + side)
+          + greeting * 0.19 * Math.sin(greetingProgress * fullTurn * 3 + side));
+        pivot.rotation.y = side * (0.13 + greeting * 0.18);
+      }
+      tail.rotation.x = 0.34 + 0.12 * Math.sin(idle * 1.9);
+      tail.rotation.z = 0.30 * Math.sin(idle * 2.5) + greeting * 0.24 * Math.sin(greetingProgress * fullTurn * 2);
+
+      for (const { hip, knee, phase } of legs) {
+        const step = stride + phase;
+        const lift = Math.max(0, Math.sin(step)) * walk;
+        hip.rotation.x = Math.cos(step) * walk * 0.32;
+        hip.position.y = 0.65 + lift * 0.037;
+        knee.rotation.x = 0.32 * lift;
+      }
+    }
+
+    return {
+      update(dt, speed, greetingProgress = 0) {
+        elapsed += dt;
+        stride = (stride + speed * dt * 11) % fullTurn;
+        walk = THREE.MathUtils.damp(walk, Math.min(speed / 0.46, 1), 10, dt);
+        pose(greetingProgress);
+      },
+      reset() {
+        elapsed = 0;
+        stride = offset;
+        walk = 0;
+        pose(0);
+      },
+    };
   }
 
   function animal(name, build, x, z, rx, rz, pace, offset, width, depth, height, front) {
