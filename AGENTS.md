@@ -8,6 +8,12 @@ Minimize triangles and draw calls. Reuse geometry and materials, preserve batchi
 
 Keep area-specific models and behavior in their area. Group simple models or animals with shared behavior in one module. Give complex models a dedicated module when their responsibilities justify it. Move logic into shared code only when multiple areas actually use it.
 
+## Codex testing (required before PR merge)
+
+GitHub Actions intentionally does not run `node --test`; Codex is responsible for running the complete automated test suite on the final changes before a pull request is merged. Run `node --test` after updating any generated release files, fix failures before merge, and do not report unrun tests as passed. If a test cannot be executed, report the reason and do not claim full test coverage.
+
+Run `node scripts/generate-pwa-manifest.mjs --check` after release generation. When area files change, also run `node scripts/generate-area-stats.mjs --check`. Include the test commands, pass/fail results, and any blockers in the pull request summary and final task response.
+
 ## Codex final responses
 
 End every completed task response with `Version: <short-version>`. Read the first 12 hexadecimal characters of the `version` field in the generated root `version.json`. Never invent or manually increment a release version.
