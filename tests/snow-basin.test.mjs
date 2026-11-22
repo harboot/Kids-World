@@ -3,6 +3,8 @@ import { test } from 'node:test';
 import * as THREE from '../vendor/three.module.min.js';
 import { areas } from '../game.js';
 import { snowBasin } from '../areas/snow-basin/index.js';
+import { MOUNTAIN_TRAIL } from '../areas/snow-basin/terrain.js';
+import { SLIDE_START, SLIDE_PATH, SLIDE_LANDING } from '../areas/snow-basin/slide.js';
 import { CHOP_COOLDOWN, CHOPS, FALL_DURATION, SNOWMAN_COUNT, sweepSphere, createSnowActivity, snowMissionsComplete } from '../areas/snow-basin/activity.js';
 import { nearestInteraction } from '../core/interactions.js';
 import { walkElevation } from '../core/movement.js';
@@ -162,7 +164,7 @@ class Element extends EventTarget {
   setAttribute() {}
 }
 
-async function buildWorld(saved = false) {
+async function buildWorld(saved = false, reducedMotion = () => false) {
   const camera = new THREE.PerspectiveCamera();
   const target = new EventTarget();
   const completed = new Set(saved ? ['snow'] : []);
@@ -178,7 +180,7 @@ async function buildWorld(saved = false) {
     } },
     camera, touch: true, playerRadius: 0.34,
     services: {
-      hud, isPlaying: () => true, isLevelComplete: id => completed.has(id),
+      hud, reducedMotion, isPlaying: () => true, isLevelComplete: id => completed.has(id),
       completeLevel(id) { completions.push(id); completed.add(id); },
       playCue: cue => cues.push(cue),
       notify: missionHud.notify,
@@ -200,7 +202,7 @@ function fallInWorld(worlds, position = player) {
   worlds.update(FALL_DURATION, position);
 }
 
-function reachableCells(area) {
+function reachableCells(area, width = 32, depth = 30) {
   const key = ({ x, z }) => x + ',' + z;
   const reached = new Set();
   const start = { x: 0, z: 8 };
@@ -209,8 +211,8 @@ function reachableCells(area) {
   for (const { x, z } of queue) {
     for (const [dx, dz] of [[0.5, 0], [-0.5, 0], [0, 0.5], [0, -0.5]]) {
       const next = { x: x + dx, z: z + dz };
-      if (Math.abs(next.x) > 15.5 || Math.abs(next.z) > 14.5 || reached.has(key(next))) continue;
-      if (walkElevation(area, { x, z }, next.x, next.z, 0, true) === null) continue;
+      if (Math.abs(next.x) >= width / 2 || Math.abs(next.z) >= depth / 2 || reached.has(key(next))) continue;
+      if (walkElevation(area, { x, z }, next.x, next.z, area.getGroundHeight(x, z), true) === null) continue;
       reached.add(key(next));
       queue.push(next);
     }
@@ -516,4 +518,155 @@ test('Snow Basin completion requires every mission flag, including combinations 
       }
     }
   }
+});
+
+
+test('the expanded basin connects the original spawn to each zone and climbs the marked trail', async () => {
+  const { worlds, visit } = await buildWorld();
+  const { area, scene } = visit;
+  const { width, depth, spawn } = snowBasin;
+  assert.deepEqual([width, depth, spawn], [64, 60, { x: 0, z: 9.4 }]);
+  assert.equal(walkElevation(area, spawn, spawn.x, spawn.z, 0, true), 0);
+
+  const reached = reachableCells(area, width, depth);
+  for (const [x, z] of [[17, -12], [23, 5], [-23, 4], [-4, 18], [-3, -24], [-27, -20.5]]) {
+    assert.ok(reached.some(point => point.x === x && point.z === z), `route to (${x}, ${z})`);
+  }
+  for (const label of ['Pet Sven', 'Talk to Kristoff', 'Greet Olaf']) {
+    assert.ok(reached.some(point => nearestInteraction(area.interactions, point)?.label === label), label);
+  }
+
+  function walkTrail(trail) {
+    let [x, z] = trail[0];
+    let feet = area.getGroundHeight(x, z);
+    for (const [nextX, nextZ] of trail.slice(1)) {
+      const startX = x;
+      const startZ = z;
+      const steps = Math.ceil(Math.hypot(nextX - x, nextZ - z) / 0.12);
+      for (let i = 1; i <= steps; i++) {
+        const px = startX + (nextX - startX) * i / steps;
+        const pz = startZ + (nextZ - startZ) * i / steps;
+        const floor = walkElevation(area, { x, z }, px, pz, feet, true);
+        assert.ok(floor !== null, `trail blocked at (${px}, ${pz})`);
+        assert.equal(floor, area.getGroundHeight(px, pz));
+        x = px;
+        z = pz;
+        feet = floor;
+      }
+    }
+    return feet;
+  }
+  assert.ok(Math.abs(walkTrail(MOUNTAIN_TRAIL) - 8.1) < 1e-5);
+  assert.equal(walkTrail(MOUNTAIN_TRAIL.slice().reverse()), 0);
+  assert.ok(area.blocksGround(-4, -18, 0.34, 0), 'steep south face has no climbing shortcut');
+  for (const [x, z] of [[-32, 0], [32, 0], [0, -30], [0, 30]]) {
+    assert.ok(area.blocksGround(x, z, 0.34, 0));
+  }
+
+  scene.updateMatrixWorld(true);
+  const mesh = scene.getObjectByName('Snow Basin terrain');
+  const ray = new THREE.Raycaster();
+  const down = new THREE.Vector3(0, -1, 0);
+  for (const [x, z] of [[12.92, -25.4], [8.43, -26.71], [2.42, -24.55], [-5.61, -18.37], [23.2, 7.3]]) {
+    ray.set(new THREE.Vector3(x, 20, z), down);
+    const [surface] = ray.intersectObject(mesh);
+    assert.ok(Math.abs(surface.point.y - area.getGroundHeight(x, z)) < 1e-5);
+  }
+  worlds.unload();
+});
+
+test('the ice slide follows an ordered descent with an accessible platform and open runout', async () => {
+  const { worlds, visit } = await buildWorld();
+  const { scene, area } = visit;
+  const slide = scene.getObjectByName('Ice Mountain slide');
+  const platform = slide.getObjectByName('Ice slide starting platform');
+  assert.equal(SLIDE_PATH[0], SLIDE_START);
+  assert.equal(SLIDE_PATH.at(-1), SLIDE_LANDING);
+  assert.ok(Object.isFrozen(SLIDE_PATH));
+  assert.ok(SLIDE_START.y - SLIDE_LANDING.y >= 7 && SLIDE_START.y - SLIDE_LANDING.y <= 9);
+  for (const [i, point] of SLIDE_PATH.entries()) {
+    assert.ok(Object.isFrozen(point));
+    assert.ok(point.y > area.getGroundHeight(point.x, point.z));
+    if (i) {
+      assert.ok(point.x < SLIDE_PATH[i - 1].x && point.y < SLIDE_PATH[i - 1].y);
+    }
+  }
+  const approach = { x: -3, z: SLIDE_START.z };
+  const feet = area.getGroundHeight(approach.x, approach.z);
+  const deck = walkElevation(area, approach, platform.position.x, approach.z, feet, true);
+  assert.ok(Math.abs(deck - SLIDE_START.y) < 0.05);
+  assert.equal(walkElevation(area, approach, SLIDE_START.x + 0.2, approach.z, feet, true), null);
+  assert.equal(walkElevation(area, approach, SLIDE_START.x + 0.2, approach.z, feet + 0.8, false), null);
+  const exit = { x: SLIDE_LANDING.x - 1.2, z: SLIDE_LANDING.z };
+  assert.ok(walkElevation(area, exit, SLIDE_LANDING.x, SLIDE_LANDING.z, 0, true) !== null);
+  assert.ok(!area.interactions.some(item => /slide/i.test(item.label)));
+  assertProgress(area);
+  worlds.unload();
+});
+
+test('local character prompts animate, respect reduced motion, and reset independently of missions', async () => {
+  let still = false;
+  const { worlds, visit, camera, target, missionHud, cues, completions } = await buildWorld(false, () => still);
+  const { area, scene } = visit;
+  const characters = [
+    ['Pet Sven', scene.getObjectByName('Sven head'), 'x'],
+    ['Talk to Kristoff', scene.getObjectsByProperty('name', 'Kristoff arm')[1], 'z'],
+    ['Greet Olaf', scene.getObjectByName('Olaf body'), 'y'],
+  ];
+  const initial = characters.map(([, part, axis]) => part.rotation[axis]);
+
+  function interactWith(label) {
+    const item = area.interactions.find(item => item.label === label);
+    assert.equal(nearestInteraction(area.interactions, { x: item.x, z: item.z + 1.5 }), item);
+    assert.ok(item.act());
+  }
+  for (const [label] of characters) interactWith(label);
+  worlds.update(0.3, player);
+  for (const [i, [, part, axis]] of characters.entries()) assert.notEqual(part.rotation[axis], initial[i]);
+  assert.equal(cues.length, 2);
+  assert.match(missionHud.toast.textContent, /blue trail markers.*northern ice mountain/i);
+  assertProgress(area);
+  assert.deepEqual(completions, []);
+
+  worlds.reset();
+  assert.deepEqual(characters.map(([, part, axis]) => part.rotation[axis]), initial);
+  still = true;
+  for (const [label] of characters) interactWith(label);
+  worlds.update(0.3, player);
+  assert.deepEqual(characters.map(([, part, axis]) => part.rotation[axis]), initial);
+  assert.equal(cues.length, 4);
+  assert.match(missionHud.toast.textContent, /Kristoff/);
+
+  const olaf = scene.getObjectByName('Olaf');
+  const { x, z } = olaf.position;
+  const pile = area.interactions.find(item => item.label === 'Make snowball');
+  assert.ok(pile.act());
+  camera.position.set(x, 1.19, z + 1.5);
+  camera.lookAt(x, 1.19, z);
+  assert.equal(target.dispatchEvent(Object.assign(new Event('keydown', { cancelable: true }), { code: 'KeyF' })), false);
+  worlds.update(0.12, camera.position);
+  const ball = scene.children.find(node => /^Snowball in flight/.test(node.name) && node.visible);
+  assert.ok(ball.position.z < z, 'the ball crossed Olaf without scoring or breaking him');
+  assert.ok(olaf.visible);
+  assertProgress(area);
+  worlds.unload();
+});
+
+test('unload disposes the new terrain, ice slide and character resources before a clean revisit', async () => {
+  const { worlds, visit } = await buildWorld();
+  const { scene } = visit;
+  const terrain = scene.getObjectByName('Snow Basin terrain');
+  const slide = scene.getObjectByName('Ice Mountain slide').children[0];
+  const olaf = scene.getObjectByName('Olaf body').children.find(node => node.isInstancedMesh);
+  const resources = [terrain.geometry, terrain.material, slide.geometry, slide.material, olaf, olaf.geometry];
+  const disposed = new Set();
+  for (const resource of resources) resource.addEventListener('dispose', () => disposed.add(resource));
+  await worlds.load('garden');
+  assert.equal(scene.children.length, 0);
+  assert.equal(disposed.size, resources.length);
+  const again = await worlds.load('snow');
+  assert.notEqual(again.scene.getObjectByName('Snow Basin terrain').geometry, terrain.geometry);
+  assert.ok(again.scene.getObjectByName('Olaf').visible);
+  assertProgress(again.area);
+  worlds.unload();
 });

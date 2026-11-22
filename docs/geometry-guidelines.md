@@ -2,8 +2,8 @@
 
 ## Procedural model design
 
-- Use colorful, geometric low-poly shapes across areas. Start with boxes and simple polygons, distinct silhouettes, solid colors, and flat or simple shading. Preserve the character of geometric objects.
-- Use spheres, cylinders, and other curved primitives where they help communicate the shape. Choose the lowest useful segment count for the object's size, visibility, and role. Prefer faceted curves when they suit the model. Add subdivisions only when they provide a clear visual or gameplay benefit.
+- Use colorful, geometric low-poly shapes across areas. Build distinct silhouettes from the simplest shapes that fit the subject. Use solid colors and flat or simple shading.
+- Choose spheres, cylinders, and other curved primitives for rounded forms. Olaf’s snowball body and eyes can share a low-segment sphere. Choose the lowest useful segment count for the object's size, visibility, and role. Prefer faceted curves when they suit the model. Add subdivisions only when they provide a clear visual or gameplay benefit.
 - Budget triangles and draw calls for mobile first. Share geometry and materials, preserve existing batching, and use `InstancedMesh` for repeated parts when it measurably helps. Limit transparency and real-time shadows. Reuse existing resources during updates and keep geometry and material allocation out of the frame loop. Use the existing Three.js renderer without new rendering libraries or post-processing.
 - Organize models by area and responsibility. Small props can share a module, and animals with shared movement, interaction, and collision logic can live together. Use dedicated modules for complex models with independent behavior. Keep area gameplay in its area and put genuinely reusable engine logic in shared modules.
 

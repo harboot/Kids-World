@@ -1,13 +1,13 @@
 {
-  "version": "7eb24f060ffc553c4b006f6471fa7adb99fcb4b37127c45ce3e78c33df8ed982",
+  "version": "d7fe15da9c7b36d4b9869530a980fcaeefe2e12a1d838038305a4fe92177640e",
   "files": [
     {
       "path": "./area-catalog.js",
-      "revision": "bb98a42bf80a7c4ef0abad2cfedc56f10ff5238e2f868f8d3bcb89fdc9cbc760"
+      "revision": "e54344e62925d68d9f8bd1f2ae1aee517f7fe61da28a0cb8809633916be96769"
     },
     {
       "path": "./area-stats.json",
-      "revision": "f2cf2d1bfc69ed7c101ce07568b3ca4155d509ecb84ccf26ff93fb9d4b920638"
+      "revision": "37507ecccfe06ce00845ed76b5375f647e0eb42181123a626c0f1a443417b908"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -410,12 +410,16 @@
       "revision": "24c46f78d2b27e4f5f000898f8ecf702a921b515018371271c6138a163d86703"
     },
     {
+      "path": "./areas/snow-basin/characters.js",
+      "revision": "8bce91b2b019b9903004217da89ffb000292fecab32ecfe547f85503f5ae3d8b"
+    },
+    {
       "path": "./areas/snow-basin/index.js",
-      "revision": "6417477215f8dfbf910614638f4314c5a6cca27b5a120c1399eafdb2f5f0ba2c"
+      "revision": "a7e679c5d8cc09e994008d7b71f3fb48bb5dcbeeafbb30a068cf0af5705e0da3"
     },
     {
       "path": "./areas/snow-basin/metadata.js",
-      "revision": "6648f741801fd8f5a2feb3e91df2da4a22c18dfeb7084d69ebde8b555ae9f919"
+      "revision": "0f6d58a1c823a1144113cabc2b2630d3aa11d103a34ac9a16156b0b319feeaff"
     },
     {
       "path": "./areas/snow-basin/music.js",
@@ -427,11 +431,19 @@
     },
     {
       "path": "./areas/snow-basin/scenery.js",
-      "revision": "a850ac9fc61e492c53e8ab6629e65ef30c907ededa7a8366e8f26c87797cb28a"
+      "revision": "84725631b9fde8492cab80a0abffa7ad5525d4d2817b7a23e20fa720af932333"
+    },
+    {
+      "path": "./areas/snow-basin/slide.js",
+      "revision": "d0b644b0c5ec592d395d4bb63b5fe81a53e4d07e997d71367eb232f5d6c3f269"
     },
     {
       "path": "./areas/snow-basin/snow-basin.jpg",
       "revision": "07248eacd6c18ab91de9bad4b801906514cd2dfc93115cbac8d0c3fd8902f034"
+    },
+    {
+      "path": "./areas/snow-basin/terrain.js",
+      "revision": "03a69858b46434073ccd8cef746229f2e7359e725c17efa40889f28e4678c028"
     },
     {
       "path": "./areas/wooden-house/cleaning.js",
