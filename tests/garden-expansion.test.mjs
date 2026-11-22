@@ -115,6 +115,91 @@ test('both pen gates swing out and the shelters contain feed and rows of eggs', 
   assert.ok(gates.every(gate => gate.label === 'Open'));
 });
 
+test('both cows keep their routes and collision footprint while walking and greeting', async t => {
+  const { area, scene, worlds } = await fixture(t);
+  const cows = scene.children.filter(object => /^Cow [12]$/.test(object.name));
+  const greetings = area.animals.interactions.filter(item => item.label === 'Greet cow');
+  const cowMission = area.missionStatus.missions.find(mission => mission.id === 'cow');
+  assert.equal(cows.length, 2);
+  assert.equal(greetings.length, 2);
+
+  const parts = (cow, name) => cow.getObjectsByProperty('name', 'Cow ' + name);
+  const pose = cow => {
+    const transforms = [];
+    cow.traverse(({ position, rotation, scale }) => {
+      transforms.push([position.toArray(), rotation.toArray(), scale.toArray()]);
+    });
+    return transforms;
+  };
+  const initial = cows.map(pose);
+  const routes = [[-7.45, .52, 1.14, .43, 1.9], [-3.39, .58, 1.07, -.39, .65]];
+  const hips = cows.flatMap(cow => parts(cow, 'hip'));
+  const knees = cows.flatMap(cow => parts(cow, 'knee'));
+  assert.equal(hips.length, 8);
+  assert.equal(knees.length, 8);
+  assert.equal(parts(cows[0], 'head')[0].children[0].geometry, parts(cows[1], 'head')[0].children[0].geometry);
+  assert.notEqual(parts(cows[0], 'torso')[0].children[0].geometry, parts(cows[1], 'torso')[0].children[0].geometry);
+  const swungForward = new Set();
+  const swungBack = new Set();
+  const bent = new Set();
+  for (let frame = 1; frame <= 180; frame++) {
+    area.animals.update(.1, { x: 0, z: 9 });
+    cows.forEach((cow, i) => {
+      const [center, rx, rz, pace, offset] = routes[i];
+      const angle = frame * .1 * pace + offset;
+      assert.ok(Math.abs(cow.position.x - (center + rx * Math.cos(angle))) < 1e-9);
+      assert.ok(Math.abs(cow.position.z - (-6.96 + rz * Math.sin(angle))) < 1e-9);
+      assert.ok(cow.position.x > -9.8 && cow.position.x < -.9);
+      assert.ok(cow.position.z > -11.5 && cow.position.z < -2.1);
+    });
+    hips.forEach(hip => {
+      if (hip.rotation.x < -.05) swungForward.add(hip);
+      if (hip.rotation.x > .05) swungBack.add(hip);
+    });
+    knees.forEach(knee => {
+      if (knee.rotation.x > .05) bent.add(knee);
+    });
+  }
+  assert.equal(swungForward.size, 8);
+  assert.equal(swungBack.size, 8);
+  assert.equal(bent.size, 8);
+
+  const [cow] = cows;
+  const [greet] = greetings;
+  const localPoint = (x, z) => cow.localToWorld(new THREE.Vector3(x, 0, z));
+  const inside = localPoint(.45 + PLAYER_RADIUS - .01, .24);
+  const outside = localPoint(.45 + PLAYER_RADIUS + .01, .24);
+  assert.ok(area.animals.blocks(inside.x, inside.z, 1.49));
+  assert.equal(area.animals.blocks(inside.x, inside.z, 1.5), false);
+  assert.equal(area.animals.surface(inside.x, inside.z, 1.5), 1.5);
+  assert.equal(area.animals.blocks(outside.x, outside.z, 0), false);
+  assert.equal(area.animals.surface(outside.x, outside.z, 1.5), -Infinity);
+
+  const position = cow.position.clone();
+  const tail = parts(cow, 'tail')[0];
+  const sway = tail.rotation.z;
+  for (let frame = 0; frame < 20; frame++) area.animals.update(.05, position);
+  assert.ok(cow.position.equals(position), 'the route pauses instead of walking into the player');
+  assert.ok(hips.slice(0, 4).every(hip => Math.abs(hip.rotation.x) < .001));
+  assert.notEqual(tail.rotation.z, sway);
+
+  greet.act();
+  assert.equal(greet.active, false);
+  assert.equal(cowMission.complete, true);
+  area.animals.update(.3, { x: 0, z: 9 });
+  assert.ok(cow.position.equals(position));
+  assert.ok(parts(cow, 'head')[0].rotation.x > .18);
+  worlds.reset();
+  assert.deepEqual(cows.map(pose), initial);
+  assert.ok(greetings.every(interaction => interaction.active));
+  assert.equal(cowMission.complete, false);
+
+  area.animals.update(3.99, cow.position.clone());
+  assert.ok(parts(cow, 'eyes')[0].scale.y < .1);
+  area.animals.update(.15, cow.position.clone());
+  assert.ok(parts(cow, 'eyes')[0].scale.y > .99);
+});
+
 test('both cave mouths connect along the walkable corridor and release bats on approach', async t => {
   const { area, scene, camera, relocate, follow, advance, worlds } = await fixture(t);
   const [west, east] = CAVE_MOUTHS;

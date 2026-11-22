@@ -1,5 +1,5 @@
 {
-  "version": "392e16d9fb8a2135360927519561d81043623289836917392c9dc584d9897264",
+  "version": "43eac3e4da2d17ae9c28dbff3095a640da8314e01320c162eeff566e74396dd9",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "91725f5067f801502a4d0d4ae725cb9cfd9c0f9b234f0c83d0d86dac92e57257"
+      "revision": "5693e16fb26b8ae19bdc20aeb877fed9c225b1cd23bd4e3cdb1fd4593cd860ac"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -86,6 +86,10 @@
       "revision": "8be857c4c5e3f7e38fd57df3a8532b25d3831a353e90b9d433bf5cbbb0bbd748"
     },
     {
+      "path": "./areas/flower-garden/garden-animals.js",
+      "revision": "f380101642f133a4e885f4d6a141311c5443b7bf65066809a9a00e9308159f82"
+    },
+    {
       "path": "./areas/flower-garden/garden-balloon.js",
       "revision": "d9d20c31a3fef0ce479c22b1c35e07b916e6246b549213a1dc5fce7fa41745c6"
     },
@@ -100,6 +104,10 @@
     {
       "path": "./areas/flower-garden/garden-cave.js",
       "revision": "b906b2978bc225cabb2c32d0592687670b1c364007f32bed193e1f23cbc0234a"
+    },
+    {
+      "path": "./areas/flower-garden/garden-cow.js",
+      "revision": "366a195da850600bbdd1dbcc81c85fb829cfd5a04d08fd8654948fe4198e3ed9"
     },
     {
       "path": "./areas/flower-garden/garden-orchard.js",
@@ -127,7 +135,7 @@
     },
     {
       "path": "./areas/flower-garden/index.js",
-      "revision": "5ccafadd4dca18a07f3e328ae3469160ff265efb8c9a04e92c366338bde0ef6e"
+      "revision": "6b45d455f4915ca86c636a5a7f2f22654ae42e19846ab1fbafe3bddf64edce52"
     },
     {
       "path": "./areas/flower-garden/metadata.js",
