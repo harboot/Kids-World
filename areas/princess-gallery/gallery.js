@@ -310,7 +310,8 @@ export function buildGallery(THREE, scene, document, obstacles, services) {
     const enclosed = id === 'rapunzel';
     const sleepingChamber = id === 'aurora';
     const undersea = id === 'ariel';
-    const fullWalls = enclosed || sleepingChamber || undersea || id === 'cinderella' || id === 'belle';
+    const fullWalls = enclosed || sleepingChamber || undersea || id === 'cinderella' ||
+      id === 'belle' || id === 'jasmine';
     const height = fullWalls ? bounds.height : id === 'snow-white' ? 4.25 : wing === 'royal' ? 4.5 : 2.85;
     const thickness = enclosed ? .44 : .55;
     const interiorFace = front - thickness / 2;
@@ -370,7 +371,8 @@ export function buildGallery(THREE, scene, document, obstacles, services) {
 
     batch(local, bay);
     const context = { THREE, document, bay, exhibit, parts, obstacles, interiorFace, outline,
-      reducedMotion: services.reducedMotion, camera: services.camera, isActive: services.isActive };
+      reducedMotion: services.reducedMotion, camera: services.camera, isActive: services.isActive,
+      isPlayerGrounded: services.isPlayerGrounded, playCue: services.playCue };
     const visit = build ? build(context) : buildPreviewDisplay({ ...context, palette: { gold, ivory, plum } });
     exhibitVisits.push({ id, ...visit });
   }

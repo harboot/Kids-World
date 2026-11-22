@@ -3,7 +3,7 @@ import { buildGallery } from './gallery.js';
 import { metadata } from './metadata.js';
 import { music } from './music.js';
 
-const hint = 'Visit Rapunzel and jump onto the observation platform to make her wave. Approach Snow White and the seven dwarfs to see them react. Find Cinderella’s glass slipper on the ballroom stairs. Approach the enchanted rose to wake Aurora. Move away to let her sleep again. Take the stairs or the Adventure Wing lift to the Glass Walkway, or stop at a snack cart for a taste. Board Ariel’s shipwreck and open the treasure chest. Approach Belle’s enchanted tea table to see it dance. Approach the story displays in the four preview rooms.';
+const hint = 'Visit Rapunzel and jump onto the observation platform to make her wave. Approach Snow White and the seven dwarfs to see them react. Find Cinderella’s glass slipper on the ballroom stairs. Approach the enchanted rose to wake Aurora. Move away to let her sleep again. Take the stairs or the Adventure Wing lift to the Glass Walkway, or stop at a snack cart for a taste. Board Ariel’s shipwreck and open the treasure chest. Approach Belle’s enchanted tea table to see it dance. Ride Jasmine’s magic carpet around Agrabah Palace and rub the lamp to meet Jin. Approach the story displays in the three preview rooms.';
 
 export const princessGallery = {
   ...metadata,
@@ -31,7 +31,7 @@ export const princessGallery = {
     }
     const isActive = () => !released && !signal?.aborted;
     const { exhibitVisits, ceiling, walkway, lift, people, carts } = buildGallery(THREE, scene, document, obstacles, {
-      viewmodel, camera, playCue, reducedMotion, isActive, carryPlayer,
+      viewmodel, camera, playCue, reducedMotion, isPlayerGrounded, isActive, carryPlayer,
     });
     return {
       obstacles,
@@ -50,7 +50,7 @@ export const princessGallery = {
         }
         return 0;
       },
-      update(dt, player) {
+      update(dt, player, elapsed = dt) {
         if (!isActive() || !player) return;
         const grounded = isPlayerGrounded();
         const still = reducedMotion();
@@ -58,7 +58,7 @@ export const princessGallery = {
         people.update(dt, still, player);
         carts.update(dt, still);
         for (const visit of exhibitVisits) {
-          const interacted = visit.update(dt, player, grounded, still);
+          const interacted = visit.update(dt, player, grounded, still, elapsed);
           const mission = missionById.get(visit.id);
           if (!interacted || mission.complete) continue;
           mission.current = 1;

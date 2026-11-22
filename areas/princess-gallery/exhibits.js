@@ -2,6 +2,7 @@ import { buildAriel } from './ariel.js';
 import { buildAurora } from './aurora.js';
 import { buildBelle } from './belle.js';
 import { buildCinderella } from './cinderella.js';
+import { buildJasmine } from './jasmine.js';
 import { buildRapunzel } from './rapunzel.js';
 import { buildSnowWhite } from './snow-white.js';
 import { metadata } from './metadata.js';
@@ -65,10 +66,10 @@ export const exhibits = [
   },
   {
     id: 'jasmine', title: 'Jasmine — Aladdin', accent: 0x5ea99b, wing: 'royal',
-    mission: 'Discover Jasmine’s magic lamp', display: 'Magic Lamp',
+    mission: 'Fly around Agrabah Palace on the magic carpet',
     position: { x: 35, z: -43 }, rotation: -.60,
     bounds: { width: 23, depth: 21, height: 23 }, shape: 'polygon', entrance: 7.3,
-    approach: [25, -24], status: 'coming-soon',
+    approach: [25, -24], status: 'complete', build: buildJasmine,
   },
   {
     id: 'mulan', title: 'Mulan', accent: 0xb85d75, wing: 'adventure',
