@@ -1,3 +1,4 @@
+import { addAdultCouple, buildGarageProps } from './basement-props.js';
 import { buildCarDoor } from './car-door.js';
 import { SURFACE_GAP } from '../../core/geometry.js';
 import { COLORS, ceilingLight, pointLight, wallX, wallZ } from './geometry.js';
@@ -7,17 +8,17 @@ const FRONT = -13.5;
 const BACK = 13;
 const HEIGHT = 3.85;
 
-function sedan(THREE, architecture, b, x, z, yaw, paint, { special, offset, mission, playerPosition }) {
+function sedan(THREE, architecture, b, x, z, yaw, paint, { special, occupied = false, offset, mission, playerPosition }) {
   const body = architecture.group(b.root, special ? 'Sedan with illuminated cabin' : 'Parked sedan', x, 0, z, yaw);
   const p = architecture.builder(body);
-  const glass = special ? 0xd9a46c : 0x354852;
+  const glass = special ? 0xd9a46c : occupied ? 0x8ea8ae : 0x354852;
   const chrome = 0xb8babe;
   const dark = 0x262b2e;
   const glazing = new THREE.MeshStandardMaterial({
     color: glass, roughness: 0.37, emissive: special ? 0xe0a052 : 0x141c25,
     emissiveIntensity: special ? 0.26 : 0.16,
-    transparent: special, opacity: special ? 0.42 : 1, depthWrite: !special,
-    side: special ? THREE.DoubleSide : THREE.FrontSide,
+    transparent: special || occupied, opacity: special ? .42 : occupied ? .26 : 1, depthWrite: !special && !occupied,
+    side: special || occupied ? THREE.DoubleSide : THREE.FrontSide,
   });
   let driverDoor;
   if (special) {
@@ -38,6 +39,7 @@ function sedan(THREE, architecture, b, x, z, yaw, paint, { special, offset, miss
     cabin.rotation.y = -Math.PI / 2;
     cabin.position.set(0.795, 0.87, 0);
     body.add(cabin);
+    if (occupied) addAdultCouple(architecture, body);
     p.part(paint, 0, 0.615, 0, 1.86, 0.485, 4.47);
   }
   p.part(dark, 0, 0.31, 0, 1.7, 0.23, 4.37);
@@ -160,12 +162,12 @@ export function buildBasement(THREE, architecture, { b, doorZ, x: offset }, miss
     }
   }
   let driverDoor;
-  for (const [x, z, color, special] of [
-    [-9.25, -5.85, 0x8b293b, false], [-9.25, 0.55, 0xc8cfd5, false],
+  for (const [x, z, color, special, occupied] of [
+    [-9.25, -5.85, 0x8b293b, false], [-9.25, 0.55, 0xc8cfd5, false, true],
     [-9.25, 6.95, 0x266460, false], [9.25, -2.65, 0x465a8b, false],
     [9.25, 3.75, 0xb3723b, true], [9.25, 10.15, 0x666874, false],
   ]) {
-    const door = sedan(THREE, architecture, b, x, z, Math.sign(x) * Math.PI / 2, color, { special, offset, mission, playerPosition });
+    const door = sedan(THREE, architecture, b, x, z, Math.sign(x) * Math.PI / 2, color, { special, occupied, offset, mission, playerPosition });
     if (door) driverDoor = door;
   }
 
@@ -195,8 +197,15 @@ export function buildBasement(THREE, architecture, { b, doorZ, x: offset }, miss
   architecture.sign(b.root, ['PARKING  ·  B'], 15.842, 1.91, 2.8, 2.42, 0.6, { yaw: -Math.PI / 2 });
   pointLight(THREE, b.root, 0, 3.15, -7.1, 0xffe4ac, 36, 12);
   pointLight(THREE, b.root, -4.4, 3.18, 3.2, 0xe0ebf9, 28, 12);
+  const props = buildGarageProps(architecture, { b, x: offset }, mission);
   return {
     ...driverDoor,
-    update(dt) { driverDoor.update(dt, reducedMotion()); },
+    interactions: [...driverDoor.interactions, ...props.interactions],
+    reset() { driverDoor.reset(); props.reset(); },
+    update(dt) {
+      const still = reducedMotion();
+      driverDoor.update(dt, still);
+      props.update(dt, still);
+    },
   };
 }

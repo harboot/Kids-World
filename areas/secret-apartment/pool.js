@@ -1,4 +1,4 @@
-import { SURFACE_GAP } from '../../core/geometry.js';
+import { rectangleBounds, SURFACE_GAP } from '../../core/geometry.js';
 import { PLAYER_RADIUS } from '../../core/movement.js';
 import { COLORS } from './geometry.js';
 
@@ -204,7 +204,18 @@ function tower(architecture, parent, { x, z, facing, width, floors, variant }) {
   const ivory = 0xf0e3c8;
   const glass = [0x344955, 0x4a6572, 0x5a7584, 0x698390, 0x435767];
   const bays = width > 13 ? [-4.9, -2.55, 2.55, 4.9] : [-3.52, -1.5, 1.5, 3.52];
-  part(warm, 0, height / 2, -1.99, width, height, 4);
+  const depth = 9.45 + variant * 1.35;
+  part(warm, 0, height / 2, -depth / 2 + .03, width, height, depth);
+  part(stone, 0, .56, -depth / 2 + .02, width + .16, 1.14, depth + .16);
+  part(ivory, 0, height - .10, -depth / 2 + .018, width + .25, .22, depth + .36);
+  for (const side of [-1, 1]) {
+    for (const bay of [-2.08, -4.33, -6.62]) {
+      for (let i = 1; i < floors - 1; i++) {
+        part(0x655e57, side * (width / 2 + .02), i * step + 1.26, bay, .056, 1.71, 1.46);
+        part(glass[(i + variant) % glass.length], side * (width / 2 + .061), i * step + 1.27, bay, .039, 1.48, 1.20);
+      }
+    }
+  }
   part(stone, 0, 1.4, 0.024, width - 0.23, 2.8, 0.12);
   part(ivory, 0, height - 0.04, 0.1, width + 0.19, 0.32, 0.5);
   part(stone, 0, height + 0.71, -1.05, width * 0.83, 1.42, 1.93);
@@ -298,7 +309,7 @@ function landscaping(architecture, b) {
   }
 }
 
-function loungeChairs(architecture, b) {
+function loungeChairs(architecture, b, walkables) {
   for (const [x, z, yaw, color] of [
     [-17.2, 8.1, Math.PI / 2, 0xe9e3cb], [-17.3, 10.3, Math.PI / 2, 0xcadbd7], [-17.2, 12.6, Math.PI / 2, 0xe9e3cb],
     [17.9, 15, -Math.PI / 2, 0xebe2cd], [17.85, 17.28, -Math.PI / 2, 0xcadbd7], [17.9, 19.57, -Math.PI / 2, 0xebe2cd],
@@ -313,8 +324,14 @@ function loungeChairs(architecture, b) {
     part(color, 0, 0.354, 0.363, 0.62, 0.10, 1.34);
     part(color, 0, 0.57, -0.643, 0.622, 0.098, 0.82, { pitch: 0.62 });
     finish();
-    b.solid(x + Math.sin(yaw) * 0.07, z + Math.cos(yaw) * 0.07, Math.abs(Math.sin(yaw)) > 0.9 ? 2.14 : 0.73,
-      Math.abs(Math.sin(yaw)) > 0.9 ? 0.73 : 2.14);
+    for (const [offset, width, depth, height] of [[.36, .69, 1.34, .41], [-.66, .69, .74, .81]]) {
+      const across = Math.abs(Math.sin(yaw)) > .9;
+      walkables.push({
+        ...rectangleBounds(x + Math.sin(yaw) * offset, z + Math.cos(yaw) * offset,
+          across ? depth : width, across ? width : depth),
+        height,
+      });
+    }
   }
 }
 
@@ -357,10 +374,37 @@ function gazebo(architecture, b) {
   return table;
 }
 
-export function buildPool(THREE, architecture, { b }) {
+function podiumAndGardens(b) {
+  // Join the walkable deck to the tower faces and give the entire podium a solid base.
+  b.part(0xaa9f89, 0, -4.40, 20.85, 78.6, 4.68, 69.2);
+  for (const side of [-1, 1]) {
+    b.part(0x829268, side * 25.86, -.24, 15.58, 4.05, .46, 42.35);
+    b.part(0x829268, side * 19.11, -.25, -7.54, 16.98, .48, 4.42);
+    b.part(0x998b75, side * 27.82, .32, 15.56, .28, 1.16, 42.38);
+    for (let i = 0; i < 47; i++) {
+      const z = -4.99 + i * .87;
+      const x = side * (24.60 + Math.sin(i * 2.1) * .23);
+      b.part(i % 3 ? 0x506f41 : 0x71874f, x, .30, z, 1.36, .93 + .32 * Math.sin(i * 7) ** 2, 1.51,
+        { shape: 'leaf', yaw: i * .53 });
+    }
+    for (let i = 0; i < 13; i++) {
+      const x = side * (11.35 + i * 1.26);
+      b.part(i % 2 ? 0x41664a : 0x648252, x, .30, -6.21, 1.65, 1.13, 1.40, { shape: 'leaf', yaw: i });
+    }
+    b.block(0xa69c83, side * 17.31, .53, -5.18, 13.35, 1.06, .30);
+  }
+  b.part(0x83936c, 0, -.24, 39.28, 55.75, .46, 4.58);
+  b.part(0xa79b80, 0, .40, 41.56, 55.72, 1.24, .34);
+  for (let i = 0; i < 55; i++) {
+    b.part(i % 2 ? 0x466e46 : 0x65874b, -27 + i, .33, 37.67, 1.59, 1.36, 1.52, { shape: 'leaf', yaw: i });
+  }
+}
+
+export function buildPool(THREE, architecture, { b, walkables }) {
   const basins = buildBasins(THREE, architecture, b);
+  podiumAndGardens(b);
   landscaping(architecture, b);
-  loungeChairs(architecture, b);
+  loungeChairs(architecture, b, walkables);
   const gazeboTable = gazebo(architecture, b);
   for (const towerInfo of [
     { x: -16.5, z: 40.2, facing: Math.PI, width: 15.7, floors: 14, variant: 0 },
@@ -371,7 +415,7 @@ export function buildPool(THREE, architecture, { b }) {
     { x: 26.0, z: 26.1, facing: -Math.PI / 2, width: 14.3, floors: 15, variant: 0 },
     { x: 26.9, z: 7.55, facing: -Math.PI / 2, width: 16.0, floors: 13, variant: 2 },
     { x: -17.4, z: -7.65, facing: 0, width: 11.5, floors: 14, variant: 0 },
-    { x: 17.9, z: -7.75, facing: 0, width: 12.7, floors: 15, variant: 2 },
+
   ]) tower(architecture, b.root, towerInfo);
 
   for (const [x, z, yaw] of [[-11.95, 7.59, 0.65], [14.9, 16.62, -1.0]]) {

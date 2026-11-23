@@ -54,7 +54,7 @@ test('every registered area provides a fresh mission status and releases its vis
     ['wooden-house', [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]],
     ['frozen-castle', [4, 3, 3]],
     ['arendelle-village', [3, 1, 3]],
-    ['secret-apartment', [2, 2, 5]],
+    ['secret-apartment', [2, 2, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]],
   ]) {
     const previous = worlds.active;
     const { area, scene } = await worlds.load(id);

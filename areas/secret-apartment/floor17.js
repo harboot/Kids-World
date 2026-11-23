@@ -43,7 +43,7 @@ export function buildFloor17(THREE, architecture, zone, reducedMotion, mission) 
   return {
     unit,
     interactions: [{
-      x: offset + ENTRY_X, z: z - 0.18, anchorY: 1.27, radius: 2.20, label: 'Open Unit 17E',
+      x: offset + ENTRY_X, z: z - 0.18, anchorY: 1.27, radius: 2.20, label: 'Open Unit 17E', silent: true,
       reachable: position => position.z < z - 0.27,
       get active() { return mission.ready(STEP.UNIT); },
       act() { mission.openUnit(); },
