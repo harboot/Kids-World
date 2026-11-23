@@ -352,8 +352,8 @@ test('three apples fall once, the trunk shakes, and delivery advances the single
   assert.ok(drops.every(drop => !drop.visible));
 });
 
-test('the house has a usable door and loft, and the monkey reveals itself headfirst on approach', async t => {
-  const { area, scene, camera, relocate, advance, follow, cues } = await fixture(t);
+test('the furnished single-storey house is walkable under its closed roof', async t => {
+  const { area, scene, camera, relocate, advance, follow, player } = await fixture(t);
   const door = area.interactions.find(item => item.label === 'Open house door');
   const leaf = scene.getObjectByName('Garden house door');
   relocate({ x: door.x, z: -11 });
@@ -363,10 +363,30 @@ test('the house has a usable door and loft, and the monkey reveals itself headfi
   door.act();
   advance(1);
   assert.equal(leaf.rotation.y, Math.PI / 2);
-  follow([[door.x, -18.4], [-16.98, -19.9], [-16.98, -25.25]]);
-  assert.ok(camera.position.y > EYE_HEIGHT + 3.6);
-  assert.ok(area.getGroundHeight(BACK_HILL.x, BACK_HILL.z) > HILL.height * 1.8);
+  for (const name of ['Closed garden house roof', 'Garden house ceiling', 'Garden house bed',
+    'Garden house kitchen', 'Garden house toilet and partition']) assert.ok(scene.getObjectByName(name), name);
+  follow([[door.x, -18.4], [-16.3, -20.91], [-16.49, -23.4], [-16.49, -27.05], [-15.82, -27.05]]);
+  assert.equal(camera.position.y, EYE_HEIGHT + 1.02);
+  const ceiling = area.getCeilingHeight(camera.position.x, camera.position.z);
+  assert.ok(Number.isFinite(ceiling));
+  assert.ok(player.jump());
+  for (let frame = 0; frame < 40; frame++) {
+    advance(.025);
+    assert.ok(camera.position.y + .14 <= ceiling + 1e-8);
+  }
+  follow([[-16.49, -27.05], [-16.49, -23.4], [-20.16, -23.4], [-20.16, -24.21]]);
+  assert.equal(camera.position.y, EYE_HEIGHT + 1.02);
+  const feet = camera.position.y - EYE_HEIGHT;
+  assert.equal(walkElevation(area, camera.position, -20.16, -24.65, feet, true), null, 'the bed is solid');
+  assert.equal(walkElevation(area, { x: -16.3, z: -20.91 }, -15.25, -20.91, feet, true), null, 'the counter is solid');
+  assert.equal(walkElevation(area, { x: -16.8, z: -27 }, -17.12, -27, feet, true), null, 'the toilet partition is solid');
+  follow([[-20.16, -23.4], [door.x, -23.4], [door.x, -15.5]]);
+  assert.equal(area.getCeilingHeight(door.x, -15.5), Infinity);
+});
 
+test('the monkey reveals itself headfirst on approach and the back hill remains taller', async t => {
+  const { area, scene, relocate, advance, cues } = await fixture(t);
+  assert.ok(area.getGroundHeight(BACK_HILL.x, BACK_HILL.z) > HILL.height * 1.8);
   const tail = scene.getObjectByName('Swaying monkey tail');
   const monkey = scene.getObjectByName('Upside-down monkey');
   const oldAngle = tail.rotation.z;

@@ -1,5 +1,5 @@
 {
-  "version": "3b63313432c9e4a2ca7f62397c6aabde1ac81984942b3a40be83b1692b25db96",
+  "version": "0164ea2d7d688635d0598190c8496984c83edb5c9847d981982f464d20cf1c53",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "d5a7f91ecc6b51001dc5878f1733a17bfa99a7343e01c0ff82e8832d89b21edb"
+      "revision": "ae00a2892de96f0a934dedff8432813809acec59bf09883862a0b380b13617cd"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -98,8 +98,12 @@
       "revision": "03e58b6eddb778c157164bcc5979d3d17b0b734de0390df0207c9c0fb9164375"
     },
     {
+      "path": "./areas/flower-garden/garden-cabin-interior.js",
+      "revision": "d8a4a1f8dcccf0ea88e6f4fb83fd64266ce6931ae552c3986ef541e9cb6f1967"
+    },
+    {
       "path": "./areas/flower-garden/garden-cabin.js",
-      "revision": "719cd3f59a8c1f79314f2d887f8ecea793b3293e2e647bbd8fda996ff373950d"
+      "revision": "0ed703ad7da9aae569955afdf467036caa683c1bd3f60135b86659357400865a"
     },
     {
       "path": "./areas/flower-garden/garden-cave.js",
@@ -135,7 +139,7 @@
     },
     {
       "path": "./areas/flower-garden/index.js",
-      "revision": "3b6366f2c1bae53c74eaf5f59ac7eb585fddb707201b5d64565bab3ac9542556"
+      "revision": "d1b4dce89ad46701224aed69ac4c9851b5dd4bb3ec4cd1566947d978dd169f15"
     },
     {
       "path": "./areas/flower-garden/metadata.js",

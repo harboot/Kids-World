@@ -1,3 +1,5 @@
+import { furnishCabin } from './garden-cabin-interior.js';
+
 export function addCabin(THREE, { scene, mesh, box, matte, obstacles, collision, batchParts, playCue, finishMission }) {
   const left = -22.5;
   const right = -13.62;
@@ -29,26 +31,26 @@ export function addCabin(THREE, { scene, mesh, box, matte, obstacles, collision,
   obstacles.push(collision(x, (back + deckFront) / 2, right - left, deckFront - back, deck));
   for (const px of [left + .25, right - .25]) {
     for (const pz of [back + .27, -22.5, deckFront - .25]) part(darkWood, px, .49, pz, .32, .98, .34);
-    part(darkWood, px, deck + 1.48, deckFront - .26, .23, 2.96, .24);
-    obstacles.push(collision(px, deckFront - .26, .23, .24, deck + 2.96));
+    part(darkWood, px, deck + 1.44, deckFront - .26, .23, 2.88, .24);
+    obstacles.push(collision(px, deckFront - .26, .23, .24, deck + 2.88));
   }
-  function stairs(px, pz, count, base, rise, run, stairWidth) {
-    for (let i = 0; i < count; i++) {
-      const height = rise * (count - i) / count;
-      const stepZ = pz + run * (i + .5);
-      part(i % 2 ? wood : paleWood, px, base + height / 2, stepZ, stairWidth, height, run);
-      obstacles.push(collision(px, stepZ, stairWidth, run, base + height));
-    }
+  for (let i = 0; i < 5; i++) {
+    const height = deck * (5 - i) / 5;
+    const stepZ = deckFront + .44 * (i + .5);
+    part(i % 2 ? wood : paleWood, -17.6, height / 2, stepZ, 2.06, height, .44);
+    obstacles.push(collision(-17.6, stepZ, 2.06, .44, height));
   }
-  stairs(-17.6, deckFront, 5, 0, deck, .44, 2.06);
 
   const doorX = -17.6;
   const doorWidth = 1.48;
   const doorHeight = 2.24;
-  const eaves = 3.22;
+  const eaves = 3.02;
+  const ceiling = deck + eaves - .16;
   function wall(px, pz, sx, sz, base = 0) {
     const rows = Math.ceil((eaves - base) / .25);
     const height = (eaves - base) / rows;
+    const alongX = sx > sz;
+    part(wood, px, deck + (base + eaves) / 2, pz, sx - (alongX ? 0 : .03), eaves - base, sz - (alongX ? .03 : 0));
     for (let row = 0; row < rows; row++) {
       part(row % 3 === 0 ? wood : paleWood, px, deck + base + (row + .5) * height, pz, sx, height - .013, sz);
     }
@@ -68,24 +70,31 @@ export function addCabin(THREE, { scene, mesh, box, matte, obstacles, collision,
   }
   part(darkWood, doorX, deck + doorHeight + .065, front + .05, doorWidth + .28, .13, .15);
 
-  const pitch = .56;
   const roofRun = width / 2 + .25;
-  for (const side of [-1, 1]) {
-    part(roof, x + side * roofRun / 2, deck + eaves + roofRun * Math.tan(pitch) / 2,
-      z, roofRun / Math.cos(pitch), .22, depth + .45).rotation.z = -side * pitch;
-    part(darkWood, x + side * roofRun, deck + eaves, z, .15, .15, depth + .49);
-  }
-  part(roof, x, deck + eaves + roofRun * Math.tan(pitch), z, .18, .18, depth + .48);
+  const roofRise = roofRun * .37;
+  const roofProfile = new THREE.Shape();
+  roofProfile.moveTo(-roofRun, 0);
+  roofProfile.lineTo(0, roofRise);
+  roofProfile.lineTo(roofRun, 0);
+  roofProfile.lineTo(roofRun, .19);
+  roofProfile.lineTo(0, roofRise + .19);
+  roofProfile.lineTo(-roofRun, .19);
+  roofProfile.closePath();
+  const roofShape = new THREE.ExtrudeGeometry(roofProfile, { depth: depth + .5, bevelEnabled: false });
+  mesh(roofShape, roof, x, deck + eaves - .1, back - .25, 1, 1, 1, cabin, true).name = 'Closed garden house roof';
   part(roof, x, deck + 2.94, (front + deckFront) / 2, width + .27, .17, deckFront - front + .3).rotation.x = .09;
 
-  const gable = new THREE.BufferGeometry();
-  const gableRise = width / 2 * Math.tan(pitch);
-  gable.setAttribute('position', new THREE.Float32BufferAttribute([
-    -width / 2, 0, 0, width / 2, 0, 0, 0, gableRise, 0,
-  ], 3));
-  gable.computeVertexNormals();
-  mesh(gable, wood, x, deck + eaves, front - .14, 1, 1, 1, cabin, true);
-  mesh(gable, wood, x, deck + eaves, back + .15, 1, 1, 1, cabin, true).rotation.y = Math.PI;
+  const gableProfile = new THREE.Shape();
+  gableProfile.moveTo(-width / 2, 0);
+  gableProfile.lineTo(-width / 2, .12);
+  gableProfile.lineTo(0, roofRise + .035);
+  gableProfile.lineTo(width / 2, .12);
+  gableProfile.lineTo(width / 2, 0);
+  gableProfile.closePath();
+  const gable = new THREE.ExtrudeGeometry(gableProfile, { depth: .24, bevelEnabled: false });
+  for (const pz of [back, front - .24]) {
+    mesh(gable, wood, x, deck + eaves - .12, pz, 1, 1, 1, cabin, true);
+  }
   function window(px, y, w, h, flowerBox = false) {
     part(darkWood, px, y, front + .035, w + .21, h + .21, .12);
     part(glass, px, y, front + .112, w, h, .06);
@@ -107,27 +116,8 @@ export function addCabin(THREE, { scene, mesh, box, matte, obstacles, collision,
   }
   window(-20.12, deck + 1.59, 1.45, 1.04, true);
   window(-15.12, deck + 1.59, 1.38, 1.04);
-  window(x, deck + eaves + .78, 1.45, .86);
 
-  const loftY = deck + 2.6;
-  const loftFront = -24;
-  const loftLeft = x + .22;
-  const loftWidth = outerRight - loftLeft - .24;
-  part(wood, loftLeft + loftWidth / 2, (loftY + deck) / 2, (back + loftFront) / 2,
-    loftWidth, loftY - deck, loftFront - back);
-  obstacles.push(collision(loftLeft + loftWidth / 2, (back + loftFront) / 2, loftWidth, loftFront - back, loftY));
-  const stairX = loftLeft + .86;
-  stairs(stairX, loftFront, 12, deck, loftY - deck, .29, 1.72);
-  for (const [px, pz, sx, sz] of [
-    [loftLeft + .08, (back + loftFront) / 2, .16, loftFront - back - .28],
-    [-15.92, (back + loftFront) / 2, .16, loftFront - back - .28],
-    [(-15.92 + outerRight - .24) / 2, loftFront - .08, outerRight - .24 + 15.92, .16],
-  ]) {
-    part(darkWood, px, loftY + .77, pz, sx, .14, sz);
-    for (const side of [-1, 1]) part(paleWood, px + side * (sx - .14) / 2, loftY + .4,
-      pz + side * (sz - .14) / 2, .14, .8, .14);
-    obstacles.push(collision(px, pz, sx, sz, loftY + .84));
-  }
+  furnishCabin(THREE, { cabin, mesh, box, matte, obstacles, collision, batchParts, deck, ceiling });
 
   part(paleWood, benchX, deck + .47, porchZ, 1.62, .115, .5);
   for (const legX of [benchX - .59, benchX + .59]) {
@@ -146,6 +136,7 @@ export function addCabin(THREE, { scene, mesh, box, matte, obstacles, collision,
   }
   obstacles.push(collision(table.x, table.z, 1.24, .86, table.y));
   batchParts(cabin);
+  part(paleWood, x, ceiling + .08, z, width, .16, depth).name = 'Garden house ceiling';
 
   const leaf = new THREE.Group();
   leaf.name = 'Garden house door';
@@ -173,6 +164,9 @@ export function addCabin(THREE, { scene, mesh, box, matte, obstacles, collision,
 
   return {
     table,
+    ceiling(px, pz) {
+      return px >= outerLeft && px <= outerRight && pz >= back && pz <= front ? ceiling : Infinity;
+    },
     door: {
       x: doorX, z: front, radius: 1.85, anchorY: deck + 1.15, silent: true,
       get label() { return open ? 'Close house door' : 'Open house door'; },

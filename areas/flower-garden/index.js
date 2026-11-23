@@ -325,7 +325,7 @@ function loadGarden({ THREE, scene, viewmodel, camera, touch, playerRadius = .34
       return blocksPondTravel(x, z, radius) || cave.blocks(x, z, radius) ||
         balloon.blocks(x, z, radius, feet) || orchard.blocks(x, z, radius, from) || rabbits.blocks(x, z, feet);
     },
-    getCeilingHeight: cave.ceiling,
+    getCeilingHeight(x, z) { return Math.min(cave.ceiling(x, z), cabin.ceiling(x, z)); },
     animals,
     interactions: [...orchard.interactions, ...rabbits.interactions, pond.feedingSpot, cabin.door, cabin.bench, balloon.ride],
     update(dt, player) {
