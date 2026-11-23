@@ -1,5 +1,5 @@
 {
-  "version": "3a49cf38df886f9e82a4b43b2a0e8972f72b6ac4598a7a7fbcf0d02da4908108",
+  "version": "529070f603a1c1bd52d49576111dd00fa117409567ed134ed33caeb4493dad30",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "cfa772c38992ea9176a99be92289e525030480cd56cc7d4e8a87c95a2fc88472"
+      "revision": "06c68b60ce270d20db5c8ea29d52bd8c78b8c53f30de8bf8ca7285d77c2ab01e"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -499,7 +499,7 @@
     },
     {
       "path": "./areas/wooden-house/cleaning.js",
-      "revision": "1f637ce2f99c8e21e45d1790ecd73f6bbbb84eed8b13c2a042ca74451ce821bf"
+      "revision": "be84a3c674781c8e2021c3d9a74c6d6d95c4374b381c8266f8e13ff866955fd9"
     },
     {
       "path": "./areas/wooden-house/clearance.js",
@@ -507,7 +507,7 @@
     },
     {
       "path": "./areas/wooden-house/family.js",
-      "revision": "91a5adf0a520c444079a2c72217b26192f355529253d6976c2af635d8a292ab0"
+      "revision": "44655d97dcf7e558d13319796a13ec49bc398e74d5d3193872166984205b077c"
     },
     {
       "path": "./areas/wooden-house/furniture.js",
@@ -515,15 +515,15 @@
     },
     {
       "path": "./areas/wooden-house/index.js",
-      "revision": "4d28007182ef42330d13183a11fad26be817f3e5cc842ac9bd7287e2e867b749"
+      "revision": "139339dfcc47891e0646eecef631962e89f0a5c8449fe42638d168d1544bfef7"
     },
     {
       "path": "./areas/wooden-house/interior.js",
-      "revision": "a373035d5c98f43395e3d415d24d5850b7e1ad69252a3541689cad89458a5571"
+      "revision": "9035d145c8e7ef3ecc1509250efff8fba4322fa7b51c7b338064ae19b82033a2"
     },
     {
       "path": "./areas/wooden-house/layout.js",
-      "revision": "98e6c2a4003e603cec883ae0a7d4b22d47d9404d3cd200eee11db5b7058fa010"
+      "revision": "06b379c78080de9bbcbae4d9990606a346b4fb5960f95dc5f43a711136a529b6"
     },
     {
       "path": "./areas/wooden-house/metadata.js",
@@ -535,7 +535,7 @@
     },
     {
       "path": "./areas/wooden-house/upstairs-decor.js",
-      "revision": "f4a9ed2ff2633bf102cd09a34021677312a8cbcfc30e484e8566e8d74331058e"
+      "revision": "9a853dbe5f370a0df0d32e61791142ac706fb57c190a254ce5d602c605d40967"
     },
     {
       "path": "./areas/wooden-house/wooden-house.jpg",

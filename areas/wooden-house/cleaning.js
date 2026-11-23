@@ -32,7 +32,7 @@ const cues = {
 export function createCleaningMissions(THREE, scene, models, { playCue, reducedMotion, signal, celebrate }) {
   const outlineMaterial = clearanceMaterial(THREE);
   const tasks = models.map(model => ({
-    model, completed: false, elapsed: null,
+    model, completed: false, elapsed: null, nearby: false,
     outline: model.clearance && addClearanceOutline(THREE, scene, model.label, model.clearance, outlineMaterial, (model.floor ?? 0) + .036),
   }));
   const allClean = () => tasks.every(task => task.completed);
@@ -40,6 +40,7 @@ export function createCleaningMissions(THREE, scene, models, { playCue, reducedM
   function finish(task) {
     task.model.render(1, false);
     task.elapsed = null;
+    if (task.completed) return;
     task.completed = true;
     if (task.outline) task.outline.visible = false;
     if (allClean()) {
@@ -55,7 +56,8 @@ export function createCleaningMissions(THREE, scene, models, { playCue, reducedM
   }
 
   function available(task) {
-    return !signal?.aborted && !task.completed && task.elapsed === null && (!task.model.ready || task.model.ready());
+    return !signal?.aborted && (!task.completed || task.model.replayOnApproach === true) &&
+      task.elapsed === null && (!task.model.ready || task.model.ready());
   }
 
   function start(task) {
@@ -98,11 +100,17 @@ export function createCleaningMissions(THREE, scene, models, { playCue, reducedM
       if (signal?.aborted) return;
       const still = reducedMotion();
       for (const task of tasks) {
-        if (task.completed) continue;
         const { model } = task;
+        if (task.completed && !model.replayOnApproach) continue;
+        let entered = false;
+        if (model.automatic && position) {
+          const nearby = Math.hypot(position.x - model.x, position.z - model.z) <= model.radius &&
+            reachable(model, position);
+          entered = nearby && !task.nearby;
+          if (!nearby || task.elapsed === null) task.nearby = nearby;
+        }
         if (task.elapsed === null) {
-          if (model.automatic && position && Math.hypot(position.x - model.x, position.z - model.z) <= model.radius &&
-              reachable(model, position)) start(task);
+          if (entered) start(task);
           else if (!still) model.idle?.(dt);
           continue;
         }
@@ -115,6 +123,7 @@ export function createCleaningMissions(THREE, scene, models, { playCue, reducedM
       for (const task of tasks) {
         task.completed = false;
         task.elapsed = null;
+        task.nearby = false;
         if (task.outline) task.outline.visible = true;
         task.model.render(0, false);
         task.model.idle?.(0);

@@ -190,14 +190,12 @@ export function buildInterior(THREE, scene, { group, part, solid }) {
   }
   window(back, -4.35, 2.41, 1.85, rose);
   window(back, 2.2, 2.42, 1.63);
-  window(front, -3.42, 2.24, 1.99, mint);
   window(front, 3.52, 2.24, 2.12, rose);
   window(right, 1.68, 2.36, 1.85, mint);
   window(left, 3.93, 2.48, 1.5);
 
   window(back, -4.3, UPSTAIRS + 2.0, 2.12, colors.blue);
   window(back, 3.2, UPSTAIRS + 2.0, 1.94, rose);
-  window(front, -6.86, UPSTAIRS + 1.88, 1.7, mint);
   window(left, -1.47, UPSTAIRS + 1.89, 1.76, colors.blue);
   const facade = group('Exterior window frames', 0, 0, FRONT);
   for (const [x, floor, tint] of [[-4.35, 0, mint], [4.35, 0, rose], [-4.35, UPSTAIRS, colors.blue], [4.35, UPSTAIRS, rose]]) {
@@ -209,7 +207,7 @@ export function buildInterior(THREE, scene, { group, part, solid }) {
 
 
   for (const [x, z, y] of [[-2.8, -1.75, UPSTAIRS - .21], [2.8, .15, UPSTAIRS - .21],
-    [-3.4, -2.4, HEIGHT], [3.1, -2.2, HEIGHT], [.65, 3.55, HEIGHT]]) {
+    [-3.4, -2.4, HEIGHT], [3.1, -2.2, HEIGHT], [.65, 2.82, HEIGHT]]) {
     part(room, walnut, x, y - .19, z, .05, .39, .05, 'round');
     part(room, gold, x, y - .39, z, .62, .24, .62, 'taper').rotation.z = Math.PI;
     part(room, 0xffe7b4, x, y - .51, z, .43, .085, .43, 'ball', false);

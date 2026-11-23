@@ -37,21 +37,47 @@ function person({ group, part }, parent, name, { x, y = 0, z, skin, hair, shirt,
 
 export function buildFamily(scene, builder) {
   const { group, part, solid } = builder;
+  const stoveX = 4.44;
+  const potZ = -4.40;
+  const momZ = -3.47;
+  const skin = 0xd89b74;
+  const shirt = 0xd07b65;
   const mother = person(builder, scene, 'Mother cooking', {
-    x: 4.44, z: -3.30, skin: 0xd89b74, hair: 0x603b2c, shirt: 0xd07b65, pants: 0x5b745e, scale: .99,
+    x: stoveX, z: momZ, skin, hair: 0x603b2c, shirt, pants: 0x5b745e,
   });
+  mother.root.rotation.y = Math.PI;
   part(mother.head, 0x603b2c, 0, .085, -.217, .28, .30, .28, 'ball');
   part(mother.root, linen, 0, .84, .154, .37, .49, .095, 'ball');
-  const spoon = group('Cooking spoon', 0, -.37, .06, mother.arms[1]);
-  part(spoon, oak, 0, 0, .105, .053, .046, .27);
-  part(spoon, oak, 0, -.008, .25, .113, .056, .15, 'ball');
-  const cookingPot = group('Soup pot', 4.44, 1.055, -4.40);
+  const stirringArm = mother.arms[1];
+  stirringArm.clear();
+  const shoulder = stirringArm.position.clone();
+  const elbow = shoulder.clone();
+  const alongArm = shoulder.clone();
+  const up = shoulder.clone().set(0, 1, 0);
+  const sleeve = part(mother.root, shirt, 0, 0, 0, .145, .34, .15, 'ball');
+  const forearm = part(mother.root, skin, 0, 0, 0, .12, .34, .12, 'ball');
+  const hand = group('Stirring hand', 0, 0, 0, mother.root);
+  part(hand, skin, 0, 0, 0, .132, .133, .14, 'ball');
+  const spoon = group('Cooking spoon', 0, 0, 0, hand);
+  spoon.rotation.x = .60;
+  part(spoon, oak, 0, 0, .145, .043, .041, .344);
+  const spoonBowl = part(spoon, oak, 0, 0, .33, .10, .041, .133, 'ball');
+  spoonBowl.name = 'Spoon bowl';
+
+  function poseArm(mesh, from, to) {
+    alongArm.subVectors(to, from);
+    mesh.scale.y = alongArm.length() + .13;
+    mesh.position.lerpVectors(from, to, .5);
+    mesh.quaternion.setFromUnitVectors(up, alongArm.normalize());
+  }
+
+  const cookingPot = group('Soup pot', stoveX, 1.055, potZ);
   part(cookingPot, 0xa25e54, 0, .165, 0, .53, .29, .53, 'taper');
   part(cookingPot, 0xf0bc69, 0, .311, 0, .478, .026, .478, 'round');
   for (const side of [-1, 1]) part(cookingPot, walnut, side * .30, .228, 0, .155, .076, .13);
-  const steam = group('Soup steam', 4.44, 1.42, -4.40, scene);
+  const steam = group('Soup steam', stoveX, 1.39, potZ, scene);
   const wisps = [0, 1, 2].map(i => part(steam, linen, i * .09 - .09, .15, 0, .105, .19, .105, 'ball', false));
-  solid(4.44, -3.29, .49, .45, 1.8);
+  solid(stoveX, momZ, .49, .45, 1.8);
 
   const tableX = 3.08;
   const tableZ = 2.28;
@@ -182,7 +208,7 @@ export function buildFamily(scene, builder) {
     ({ id, label, hint, x, z, floor, anchorY: floor + anchorY, radius, duration, sound, render });
 
   const tasks = {
-    mother: task('mother', 'Help Mom stir the soup', 'Walk up to Mom at the stove beside the downstairs sink.', 4.44, -3.30, 0, 1.14, 2.35, 1.25,
+    mother: task('mother', 'Help Mom stir the soup', 'Walk up to Mom at the stove beside the downstairs sink.', stoveX, momZ, 0, 1.14, 2.35, 1.25,
       [cue(51, 68, .12, .10), cue(54, 76, .15, .11, .26), cue(68, 79, .2, .10, .68)], (t, moving) => {
         stirring = moving ? Math.sin(t * Math.PI) : 0;
       }),
@@ -219,19 +245,27 @@ export function buildFamily(scene, builder) {
       }),
   };
   for (const id of ['mother', 'father', 'wake', 'girl']) tasks[id].automatic = true;
+  for (const id of ['mother', 'father', 'girl']) tasks[id].replayOnApproach = true;
   tasks.wake.approach = player => player.z < -.80 && player.x < 0;
   tasks.girl.approach = player => player.z < -.80 && player.x > 0;
 
   function pose(still) {
     const t = still ? 0 : time;
-    mother.root.rotation.y = Math.PI - .23 - stirring * .16;
-    mother.arms[0].rotation.set(-.83, 0, -.22);
-    mother.arms[1].rotation.set(-1.15 + Math.sin(t * (4 + stirring * 3)) * .22, 0, .16 + Math.cos(t * 4) * .16);
-    mother.head.rotation.x = .14 + stirring * .17;
+    const phase = t * 4.4;
+    const stirRadius = .067 + stirring * .051;
+    mother.arms[0].rotation.set(-.67 - stirring * .15, 0, -.16);
+    hand.position.set(Math.cos(phase) * stirRadius, 1.55 + Math.sin(phase * 2) * .016,
+      momZ - potZ - .33 * Math.cos(spoon.rotation.x) + Math.sin(phase) * stirRadius);
+    elbow.set(.29 + hand.position.x * .32, 1.22, .36);
+    poseArm(sleeve, shoulder, elbow);
+    poseArm(forearm, elbow, hand.position);
+    mother.head.rotation.x = .29 + stirring * .12 + Math.sin(phase) * .035;
+    mother.head.rotation.y = hand.position.x * .50;
     wisps.forEach((wisp, i) => {
       const rise = (t * .53 + i / 3) % 1;
-      wisp.position.set(Math.sin(t * 1.8 + i) * .16, .075 + rise * .56, .10);
-      wisp.scale.setScalar(.13 * Math.sin(rise * Math.PI));
+      wisp.position.set(Math.sin(t * 1.8 + i) * .12, .025 + rise * .56, -.03);
+      const spread = Math.sin(rise * Math.PI);
+      wisp.scale.set(.12 * spread, .18 * spread, .12 * spread);
     });
     dad.root.rotation.y = -1.71;
     dad.head.rotation.y = .12 + Math.sin(t * 1.3) * .15;
@@ -246,7 +280,7 @@ export function buildFamily(scene, builder) {
     girl.root.rotation.y = -.18;
     girl.legs.forEach((leg, i) => { leg.rotation.x = -1.19; leg.rotation.z = i ? .26 : -.26; });
     girl.arms[0].rotation.x = -1.01 + .23 * Math.sin(t * 3.2);
-    girl.arms[1].rotation.x = -.76 - .42 * Math.sin(t * 3.2);
+    girl.arms[1].rotation.x = -.76 - .42 * Math.sin(t * 3.2) - playing * .28;
     girl.head.rotation.x = .18 + Math.sin(t * 2.1) * .08;
     dolls.forEach((doll, i) => {
       const bounce = (i === 1 ? .19 : .03) + .24 * playing;
