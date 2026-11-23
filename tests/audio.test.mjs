@@ -130,9 +130,11 @@ function setup(t, { muted = false, failResume = false } = {}) {
   return { contexts, renders, started, storage, AudioContext, tick: () => t.mock.timers.tick(0) };
 }
 
-test('all eight areas export distinct local compositions compatible with the generic audio engine', async t => {
+test('the eight scored areas export distinct local compositions compatible with the generic audio engine', async t => {
   const folders = { garden: 'flower-garden', snow: 'snow-basin' };
-  assert.equal(Object.keys(areas).length, 8);
+  const { 'kung-fu-hustle': courtyard, ...scoredAreas } = areas;
+  assert.equal((await courtyard.loadModule()).default.music, undefined);
+  assert.equal(Object.keys(scoredAreas).length, 8);
   const { contexts, renders, started, tick } = setup(t);
   const audio = createAudio(new SoundButton());
   const compositions = new Set();
@@ -140,7 +142,7 @@ test('all eight areas export distinct local compositions compatible with the gen
 
   audio.unlock();
   audio.setPlaying(true);
-  for (const [id, area] of Object.entries(areas)) {
+  for (const [id, area] of Object.entries(scoredAreas)) {
     const { music } = await import(`../areas/${folders[id] ?? id}/music.js`);
     assert.equal((await area.loadModule()).default.music, music, id);
     assert.ok(music.beat > 0 && music.bars.length > 0);

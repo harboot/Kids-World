@@ -15,6 +15,7 @@ const publicFolders = {
   'arendelle-village': 'arendelle-village',
   'princess-gallery': 'princess-gallery',
   'military-base': 'military-base',
+  'kung-fu-hustle': 'kung-fu-hustle',
 };
 
 class Element extends EventTarget {

@@ -13,6 +13,7 @@ export const areas = {
   'arendelle-village': publicArea(areaMetadata['arendelle-village'], 'arendelle-village', () => import('./areas/arendelle-village/index.js')),
   'princess-gallery': publicArea(areaMetadata['princess-gallery'], 'princess-gallery', () => import('./areas/princess-gallery/index.js')),
   'military-base': publicArea(areaMetadata['military-base'], 'military-base', () => import('./areas/military-base/index.js')),
+  'kung-fu-hustle': publicArea(areaMetadata['kung-fu-hustle'], 'kung-fu-hustle', () => import('./areas/kung-fu-hustle/index.js')),
   'secret-apartment': {
     ...areaMetadata['secret-apartment'], show: false, loadModule: () => import('./areas/secret-apartment/index.js'),
   },
