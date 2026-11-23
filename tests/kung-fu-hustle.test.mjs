@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import * as THREE from '../vendor/three.module.min.js';
-import { footprint, wingX } from '../areas/kung-fu-hustle/layout.js';
+import { footprint, gateHalfWidth, gateZ, wingX } from '../areas/kung-fu-hustle/layout.js';
 import { areas } from '../game.js';
 import { createPlayer, EYE_HEIGHT } from '../core/player.js';
 import { createWorldManager, resolveArea } from '../core/world-manager.js';
@@ -38,10 +38,10 @@ test('the public courtyard route starts within the gate and resets to the same s
   assert.equal(visit.definition.id, id);
   assert.equal(areas[id].show, true);
   assert.deepEqual(visit.area.missionStatus.missions, []);
-  assert.deepEqual(position.toArray(), [0, EYE_HEIGHT, 12]);
+  assert.deepEqual(position.toArray(), [0, EYE_HEIGHT, gateZ - 2.2]);
   assert.ok(walk(3, 4));
   reset();
-  assert.deepEqual(position.toArray(), [0, EYE_HEIGHT, 12]);
+  assert.deepEqual(position.toArray(), [0, EYE_HEIGHT, gateZ - 2.2]);
 });
 
 test('a wide central L, both narrow side flights, and the upper central stair connect four floors', async t => {
@@ -103,10 +103,10 @@ test('a wide central L, both narrow side flights, and the upper central stair co
 
 test('the gate, door facades, stair rails and gallery rails contain the player', async t => {
   const { visit, player, position, walk } = await start(t);
-  assert.equal(walk(0, 16, 75), false);
-  assert.ok(position.z < 14.2);
+  assert.equal(walk(0, gateZ + 1, 75), false);
+  assert.ok(position.z < gateZ);
   player.jump();
-  assert.equal(walk(0, 16, 75), false);
+  assert.equal(walk(0, gateZ + 1, 75), false);
 
   player.reset({ x: 0, z: -9, elevation: 6.5 }, visit.area);
   assert.equal(walk(0, -11, 60), false);
@@ -133,8 +133,9 @@ test('stocked shops can be entered and paths to the hexagonal fence corners are 
     assert.ok(walk(side * 17.4, 7.7));
     assert.ok(walk(side * 20.5, 10.6));
     assert.ok(walk(side * 21.25, 13.2));
-    assert.equal(walk(side * 21.25, 15.2, 55), false);
-    assert.ok(position.z < 14.2);
+    assert.ok(walk(side * 21.25, 16.5));
+    assert.equal(walk(side * 26.5, 16.5, 120), false);
+    assert.ok(Math.abs(position.x) < 24);
   }
 
   for (const [i, [x, z]] of footprint.entries()) {
@@ -144,6 +145,22 @@ test('stocked shops can be entered and paths to the hexagonal fence corners are 
     const centerZ = (z + nextZ) / 2;
     assert.equal(visit.area.blocksGround(centerX, centerZ, .34, 0), true);
   }
+});
+
+test('the paved extension reaches the wider gate with no barrier across the old entrance', async t => {
+  const { visit, player, position, walk } = await start(t);
+  player.reset({ x: 0, z: 12.8 }, visit.area);
+  assert.ok(walk(0, 17.5));
+  assert.ok(walk(gateHalfWidth - .75, gateZ - .75));
+  assert.equal(walk(gateHalfWidth - .75, gateZ + 1, 90), false);
+  assert.ok(position.z < gateZ);
+  assert.equal(visit.area.blocksGround(gateHalfWidth - .75, gateZ, .34, 0), false);
+  assert.equal(visit.area.blocksGround(gateHalfWidth + 2, gateZ, .34, 0), true);
+
+  visit.scene.updateMatrixWorld(true);
+  const ray = new THREE.Raycaster(new THREE.Vector3(12, 8, 17.5), new THREE.Vector3(0, -1, 0));
+  const [surface] = ray.intersectObjects(visit.scene.children);
+  assert.ok(surface && Math.abs(surface.point.y) < .065);
 });
 
 test('the hand-shaped breach is physically open through the rear wall', async t => {
