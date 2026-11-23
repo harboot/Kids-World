@@ -196,7 +196,6 @@ export function buildInterior(THREE, scene, { group, part, solid }) {
 
   window(back, -4.3, UPSTAIRS + 2.0, 2.12, colors.blue);
   window(back, 3.2, UPSTAIRS + 2.0, 1.94, rose);
-  window(front, -6.86, UPSTAIRS + 1.88, 1.7, mint);
   window(left, -1.47, UPSTAIRS + 1.89, 1.76, colors.blue);
   const facade = group('Exterior window frames', 0, 0, FRONT);
   for (const [x, floor, tint] of [[-4.35, 0, mint], [4.35, 0, rose], [-4.35, UPSTAIRS, colors.blue], [4.35, UPSTAIRS, rose]]) {

@@ -1,5 +1,5 @@
 {
-  "version": "75cc3776b55a25d8de1ab4a056bff7a022405215d560dd4d66bbb77cfd839890",
+  "version": "529070f603a1c1bd52d49576111dd00fa117409567ed134ed33caeb4493dad30",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "08113a362811baac1769e9dbb27f2a01cea45d262e90bcda9b23c921121ba3d6"
+      "revision": "06c68b60ce270d20db5c8ea29d52bd8c78b8c53f30de8bf8ca7285d77c2ab01e"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -519,7 +519,7 @@
     },
     {
       "path": "./areas/wooden-house/interior.js",
-      "revision": "9f8aaf0902797d06e417340cb54bff6669f7ce6f9e00b12371a89d38af671e20"
+      "revision": "9035d145c8e7ef3ecc1509250efff8fba4322fa7b51c7b338064ae19b82033a2"
     },
     {
       "path": "./areas/wooden-house/layout.js",
