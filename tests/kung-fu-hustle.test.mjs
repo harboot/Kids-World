@@ -173,3 +173,61 @@ test('each stair run has a single continuous mesh with one tread hit from above'
     assert.deepEqual(overlaps, []);
   }
 });
+
+test('jumping clears rails on the highest gallery and lands quickly in the courtyard', async t => {
+  const { visit, player, position } = await start(t);
+  const height = 3 * 3.25;
+  player.reset({ x: -7, z: -8.17, elevation: height }, visit.area);
+  assert.ok(player.jump(visit.area));
+  const forward = new THREE.Vector2(0, 1);
+  let peak = height;
+  let landed = 0;
+  for (let frame = 1; frame < 150; frame++) {
+    player.move(1 / 60, forward, visit);
+    peak = Math.max(peak, position.y - EYE_HEIGHT);
+    if (player.grounded) {
+      landed = frame;
+      break;
+    }
+  }
+  assert.ok(peak > height + 1.4);
+  assert.ok(position.z > -7);
+  assert.equal(position.y, EYE_HEIGHT);
+  assert.ok(landed > 60 && landed < 88, `Landing took ${landed} frames`);
+});
+
+test('the open ground-floor markets have room to browse under their ceilings', async t => {
+  const { visit, player, position, walk } = await start(t);
+  player.reset({ x: -1, z: -9.40 }, visit.area);
+  assert.ok(walk(-1, -11.40));
+  assert.ok(position.z < -10.7);
+  assert.equal(visit.area.getCeilingHeight(-1, -11.40, 0), 3.25);
+  assert.ok(walk(-1, -9.4));
+  player.reset({ x: -13, z: -8.8, elevation: 3.25 }, visit.area);
+  assert.equal(walk(-13, -11.4, 60), false);
+});
+
+test('the rear upper-left facade contains a recessed window with room in front of the wall', async t => {
+  const { visit } = await start(t);
+  visit.scene.updateMatrixWorld(true);
+  const wall = visit.scene.getObjectByName('Hand-shaped breach');
+  const ray = new THREE.Raycaster(new THREE.Vector3(-9.52, 11.65, -9.9), new THREE.Vector3(0, 0, -1));
+  assert.deepEqual(ray.intersectObject(wall), []);
+  ray.ray.origin.x = -11.2;
+  assert.ok(ray.intersectObject(wall).length > 0);
+});
+
+test('a side stair can be vaulted toward the yard while walking still collides with its rail', async t => {
+  const { visit, player, position, walk } = await start(t);
+  const z = 1.4;
+  const x = wingX(1, 11.6, z);
+  player.reset({ x, z, elevation: 4.875 }, visit.area);
+  assert.equal(walk(x - 1.9, z, 40), false);
+  assert.ok(player.jump(visit.area));
+  assert.ok(walk(x - 2, z, 85));
+  assert.ok(position.x < wingX(1, 10.8, z));
+  assert.ok(position.y >= EYE_HEIGHT);
+  const stop = new THREE.Vector2();
+  for (let i = 0; i < 60 && !player.grounded; i++) player.move(1 / 60, stop, visit);
+  assert.equal(position.y, EYE_HEIGHT);
+});

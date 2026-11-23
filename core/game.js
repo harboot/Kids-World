@@ -46,6 +46,32 @@ function rememberArea(areas, id) {
   }
 }
 
+function speedSetting(dialog, id) {
+  const slider = dialog.querySelector('#' + id);
+  const display = dialog.querySelector('#' + id + '-value');
+  const key = 'kids-world-' + id;
+  let ratio = 1;
+
+  function update(value) {
+    const speed = Number(value || 100);
+    const percent = Number.isFinite(speed) ? Math.min(100, Math.max(50, Math.round(speed))) : 100;
+    slider.value = String(percent);
+    slider.setAttribute('aria-valuetext', percent + '%');
+    display.textContent = percent + '%';
+    ratio = percent / 100;
+  }
+
+  try { update(localStorage.getItem(key)); } catch { update(100); }
+  slider.addEventListener('input', () => update(slider.value));
+  slider.addEventListener('change', () => {
+    update(slider.value);
+    try { localStorage.setItem(key, slider.value); } catch {
+      // The setting still applies for this session.
+    }
+  });
+  return () => ratio;
+}
+
 export async function createGame({ game, loadThree, areas, defaultArea }) {
   validateAreaRegistry(areas);
 
@@ -57,6 +83,8 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   const chooseLevel = game.querySelector('#choose-level');
   const openSettings = game.querySelector('#open-settings');
   const settings = game.querySelector('#settings');
+  const turnSpeed = speedSetting(settings, 'turn-speed');
+  const moveSpeed = speedSetting(settings, 'move-speed');
   const levelPicker = game.querySelector('#level-picker');
   const areaList = game.querySelector('#area-list');
   const restart = game.querySelector('#restart');
@@ -201,8 +229,9 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     game, canvas, joystick, thumb: game.querySelector('#joystick-thumb'),
     playing: playerInput, touchMode, seated: () => player.seated,
     steerWithStick: () => controlMode !== 'two-finger',
-    look: player.look, interact: interactions.interact,
-    jump() { if (player.jump()) audio.effect('jump'); },
+    look(dx, dy) { player.look(dx * turnSpeed(), dy * turnSpeed()); },
+    interact: interactions.interact,
+    jump() { if (player.jump(worlds.active?.area)) audio.effect('jump'); },
     pause() { menu(true); },
   });
   function syncFrameMeter() {
@@ -586,7 +615,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
         const elapsed = previousFrame === null ? 0 : Math.min(0.25, Math.max(0, (stamp - previousFrame) / 1000));
         const dt = Math.min(elapsed, 0.05);
         previousFrame = stamp;
-        stepDistance += player.move(dt, controls.sample(dt), visit);
+        stepDistance += player.move(dt, controls.sample(dt).multiplyScalar(moveSpeed()), visit);
         if (stepDistance >= 1.55) {
           audio.effect('step');
           stepDistance -= 1.55;

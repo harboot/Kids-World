@@ -11,6 +11,8 @@ export default {
     buildCourtyard(THREE, scene, layout, touch);
     return {
       obstacles: layout.obstacles,
+      jumpSpeed: 7.65,
+      fallGravity: 36,
       interactions: [],
       getGroundHeight: layout.getGroundHeight,
       getCeilingHeight: layout.getCeilingHeight,

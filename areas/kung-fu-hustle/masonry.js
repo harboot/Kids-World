@@ -11,6 +11,8 @@ export const ink = {
 
 export function masonryKit(THREE, scene) {
   const parts = new Map();
+  const labels = new Map();
+  const labelMaterials = new Map();
   const boxGeometry = new THREE.BoxGeometry();
   const drumGeometry = new THREE.CylinderGeometry(.5, .5, 1, 12);
   const ringGeometry = new THREE.CylinderGeometry(.5, .5, 1, 14, 1, true);
@@ -27,6 +29,7 @@ export function masonryKit(THREE, scene) {
   ].map(([x, y]) => new THREE.Vector2(x, y)));
   const chipGeometry = new THREE.ShapeGeometry(chip);
   const panelGeometry = new THREE.PlaneGeometry();
+  const ovalGeometry = new THREE.SphereGeometry(.5, 12, 8);
   const leafGeometry = new THREE.DodecahedronGeometry(.5);
   const ground = new THREE.Shape(footprint.map(([x, z]) => new THREE.Vector2(x, z)));
   const groundGeometry = new THREE.ExtrudeGeometry(ground, { depth: .32, bevelEnabled: false });
@@ -60,6 +63,23 @@ export function masonryKit(THREE, scene) {
     face.panel = (paint, u, y, v, width, height) =>
       place(panelGeometry, paint, originX + cos * u + sin * v, y, originZ - sin * u + cos * v,
         width, height, 1, yaw, 0, 0, false);
+    face.label = (title, u, y, v, width, height) => {
+      if (!labels.has(title)) {
+        const texture = paintCanvasTexture(THREE, globalThis.document, 96, 40, ctx => {
+          ctx.fillStyle = '#48392e';
+          ctx.font = 'bold 31px "Noto Serif CJK SC", serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(title, 48, 21);
+        });
+        if (!texture) return;
+        const geometry = new THREE.PlaneGeometry();
+        labels.set(title, geometry);
+        labelMaterials.set(geometry, new THREE.MeshBasicMaterial({ map: texture, alphaTest: .48 }));
+      }
+      place(labels.get(title), 0xffffff, originX + cos * u + sin * v, y, originZ - sin * u + cos * v,
+        width, height, 1, yaw, 0, 0, false);
+    };
     return face;
   }
 
@@ -73,6 +93,7 @@ export function masonryKit(THREE, scene) {
       geometry.name = name;
       place(geometry, paint, x, y, z, 1, 1, 1, yaw);
     },
+    oval(...args) { place(ovalGeometry, ...args); },
     leaf(...args) { place(leafGeometry, ...args); },
     gateLetter(letter, x, y, z) {
       const texture = paintCanvasTexture(THREE, globalThis.document, 64, 64, ctx => {
@@ -113,7 +134,7 @@ export function masonryKit(THREE, scene) {
     },
     finish() {
       for (const { geometry, shadow, instances } of parts.values()) {
-        const mesh = new THREE.InstancedMesh(geometry, material, instances.length);
+        const mesh = new THREE.InstancedMesh(geometry, labelMaterials.get(geometry) ?? material, instances.length);
         mesh.name = geometry.name;
         mesh.castShadow = shadow;
         mesh.receiveShadow = true;
