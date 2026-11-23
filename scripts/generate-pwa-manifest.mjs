@@ -50,6 +50,7 @@ for (const { id, visibility, thumbnail, entry, directory, metadataPath } of area
   if (show && !sources.has(thumbnail?.slice(2))) {
     throw new Error(`Missing public thumbnail for area "${id}": ${thumbnail}`);
   }
+  if (thumbnail) mandatory.add(thumbnail.slice(2));
 }
 validateAreaRegistry(registry);
 

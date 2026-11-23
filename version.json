@@ -1,5 +1,5 @@
 {
-  "version": "d00e5b8cb72c2597a2625866e90010a3f7883f0e7dc0c7e4a3b44212d1dbfbd9",
+  "version": "d00f031beb55186d670245d55082dabaf3072de4855c59165850ce0f437b1a1d",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "eb0bd77efe0ecc27ae17c73617de45235ac57cce021ad117d7f5acd92816146b"
+      "revision": "c8d666d1584ae622b0d6047dd0d0390249c08ccc125499f4a3a1b89380ac2122"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -442,6 +442,10 @@
       "revision": "d2b0ebbf3fb1339fadf4bc87ada7b05f5dc70e93a3470c8d8d29e61bc9061264"
     },
     {
+      "path": "./areas/secret-apartment/secret-apartment.jpg",
+      "revision": "30e066e7291eda8f03ae4e9453775c7e6e18ffa5907427b6c53d19eb07f1db79"
+    },
+    {
       "path": "./areas/snow-basin/activity.js",
       "revision": "e85fbd049e92da35fd8abcc54bf6299f4d82a633356d6490f3f14a4a1f714d81"
     },
@@ -639,7 +643,7 @@
     },
     {
       "path": "./pwa/worker.js",
-      "revision": "d06e359cefe939c38eed344ef9a9b055586cafc95f1b6b920dff00439ed2808d"
+      "revision": "1399d48705b8fce6217f9cf85a4673de05ab14a87e15abbd6ea92fc096e1b41e"
     },
     {
       "path": "./snow.html",
@@ -647,7 +651,7 @@
     },
     {
       "path": "./stats.html",
-      "revision": "ad6f1aab47d50d90d5ada282e154c8dcfe805dd56e162b66460c8bb234d633c2"
+      "revision": "4a5fbd022768d5374b3e097dfe2d91631297bcedc6cad8971f28beba3c5d12ff"
     },
     {
       "path": "./style.css",
