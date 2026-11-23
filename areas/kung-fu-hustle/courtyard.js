@@ -309,11 +309,15 @@ export function courtyard(kit, layout, random) {
 
   // A wrought-iron arch with two closed gate leaves.
   function archY(x) { return 3.10 + 1.46 * (1 - (x / 2.57) ** 2); }
-  for (let i = 0; i < 16; i++) {
-    const a = -2.56 + i * .32;
-    const b = a + .32;
-    beam(ink.iron, a, archY(a), gateZ, b, archY(b), gateZ, .14);
-    beam(ink.iron, a, archY(a) - .43, gateZ, b, archY(b) - .43, gateZ, .085);
+  const archPoints = Array.from({ length: 17 }, (_, i) => -2.56 + i * .32);
+  for (const [offset, height, depth] of [[0, .135, .151], [-.43, .083, .108]]) {
+    const top = archPoints.map(x => [x, archY(x) + offset + height / 2]);
+    const bottom = archPoints.map(x => [x, archY(x) + offset - height / 2]).reverse();
+    kit.extrude('Gate arch strip', ink.iron, [...top, ...bottom], depth, 0, 0, gateZ - depth / 2);
+  }
+  for (let i = 0; i < archPoints.length - 1; i++) {
+    const a = archPoints[i];
+    const b = archPoints[i + 1];
     beam(ink.iron, a, archY(a) - .43, gateZ, b, archY(b), gateZ, .066);
   }
   for (const [i, letter] of Array.from('永安里').entries()) {

@@ -1,5 +1,5 @@
 {
-  "version": "87628244f7e3de41650fbcd7cf86b4db7c12d4677d742e616ea88048f30661b0",
+  "version": "0839a5e5d62961d210c415724aa0cd3913a328aae7bddb341385d2be9d5d3cf1",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "6bd65b06f821a2c07b16e90eac3fd8a659480dcaad436579242223d1f90cae1a"
+      "revision": "bf2c99ba8ef1e1f36714eef1440fee813fb57cb1ba947c33806e888638d66fca"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -187,27 +187,31 @@
     },
     {
       "path": "./areas/kung-fu-hustle/courtyard.js",
-      "revision": "b598f73c5612da5d6ccc84176dc11a745ef6d9e32af2353fa2d76283e0ec80c6"
+      "revision": "b85a029796b48c1eec24e92cce124435225e25f76999a5b9cdb058f6f7606c6a"
     },
     {
       "path": "./areas/kung-fu-hustle/damage.js",
-      "revision": "60b4a37b1236013683a6af1325a1ce0e22f8ca4480b5bdd19145a0ef29ec87b3"
+      "revision": "9f49be17b2b54cc70fcddb3d9ed108db7582140c63ad9d232b1a947b4f3b25b3"
     },
     {
       "path": "./areas/kung-fu-hustle/index.js",
-      "revision": "1feaee30f4264d94c18fb77d02138b86e93a617b394418db489d0161f1076be6"
+      "revision": "fc6c22acddfa4f29441b2a0dee7007c5946cf6221b81fada4ce0df85e636220f"
     },
     {
       "path": "./areas/kung-fu-hustle/kung-fu-hustle.jpg",
-      "revision": "3993e815770ad3aaa559b84d9f886c161a6c5c73f50ae159384086e3e81fd10b"
+      "revision": "351209781cdf59d2f1c485de259b993745be794dc0df6ce194a240b99c1825bc"
     },
     {
       "path": "./areas/kung-fu-hustle/layout.js",
-      "revision": "f4d550466f168d4610b9b778869a5b7a56809ab97fba371a88dfcf42aa5fbaed"
+      "revision": "2d0e2cf0f71c5418159fc8f0f390839a61123289ffa829817acb9c941b9962ee"
+    },
+    {
+      "path": "./areas/kung-fu-hustle/market.js",
+      "revision": "59c169a33527463054c0a54ab8acbd1537bf6868163e20e46fe62b381e92cc54"
     },
     {
       "path": "./areas/kung-fu-hustle/masonry.js",
-      "revision": "5a206b49224b61489c400f10c27fdb9b65e673a4625da7ce30a162629410c874"
+      "revision": "98ceea74d3a2daacac1415cff15799def42391c3deed74a74f95416816036978"
     },
     {
       "path": "./areas/kung-fu-hustle/metadata.js",
@@ -218,8 +222,12 @@
       "revision": "dd6a0dd5b40f802bf7c64b31679760c6af5d7e8e2600af1c7a8559057dbe8872"
     },
     {
+      "path": "./areas/kung-fu-hustle/resident.js",
+      "revision": "bd69957e5b70e5c8d971f3524fd5a9dd1ba8e9f6e98cc18c6dcbef0a5496d6d1"
+    },
+    {
       "path": "./areas/kung-fu-hustle/scene.js",
-      "revision": "aa65f27c7c1b8013787afcf54fae15e7f62fcaa2478f70bea12e397995eaf38d"
+      "revision": "caec9c899c4ed3f18c67b743d6d92cea6d8e3c1f16b71a11254aff717f286e1e"
     },
     {
       "path": "./areas/military-base/buildings.js",
@@ -615,7 +623,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "f278e7104716078075fc2ab4caa5459738f9096f879314c3f99c57c074e237eb"
+      "revision": "bb1c9fa8e8ea31973cd3c82e65afd66045d42b90477401b29953b4cbeff2183d"
     },
     {
       "path": "./core/geometry.js",
@@ -639,11 +647,11 @@
     },
     {
       "path": "./core/movement.js",
-      "revision": "9a4eeaa03a70ca5518d8282fbada533fa441bb3af5a1baafb1c485f514bbf986"
+      "revision": "93c151132023317409ff447a1b90d0bb32b3cf7236f32517c3a3b5f75b63ef30"
     },
     {
       "path": "./core/player.js",
-      "revision": "43f649db31f791a9addfa21e9db6dcc8ea2cce2007900dcfe88f45a83a342f70"
+      "revision": "4b301e41778b0ecf32026fb32d151ec76d33bbf855965e8316ebbd784b4cd437"
     },
     {
       "path": "./core/random.js",
@@ -667,7 +675,7 @@
     },
     {
       "path": "./index.html",
-      "revision": "69c02e945e6a3b3ed3b6d6daf7d3d818531fc867e0b8594d6186e7847e625bd9"
+      "revision": "5c2d715abf5e90be3658a92d1f37eafb2058bc5f2a233a47033c700a7d33ffb8"
     },
     {
       "path": "./manifest.webmanifest",
@@ -703,7 +711,7 @@
     },
     {
       "path": "./style.css",
-      "revision": "85a0f25de5231ccb72d1759daf17df2a76da8f496457ac1c9533812552ed6ec0"
+      "revision": "ce4b4665b979252d573d001a19164856c96087461763a2112747b239827336df"
     },
     {
       "path": "./vendor/three.LICENSE",

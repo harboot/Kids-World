@@ -74,9 +74,9 @@ export function createPlayer(THREE, camera) {
     camera.updateMatrixWorld();
   }
 
-  function jump() {
+  function jump(world) {
     if (seated || guidedView || !grounded) return false;
-    verticalSpeed = JUMP_SPEED;
+    verticalSpeed = world?.jumpSpeed ?? JUMP_SPEED;
     grounded = false;
     return true;
   }
@@ -121,7 +121,7 @@ export function createPlayer(THREE, camera) {
     walkTo(area, position, position.x, z);
 
     const floor = floorHeight(area, position.x, position.z, elevation);
-    advanceFall(elevation, verticalSpeed, floor, dt, falling);
+    advanceFall(elevation, verticalSpeed, floor, dt, falling, verticalSpeed <= 0 ? area.fallGravity : undefined);
     const ceiling = (area.getCeilingHeight?.(position.x, position.z, elevation) ?? Infinity) - HEAD_HEIGHT;
     if (falling.feet > ceiling) {
       falling.feet = ceiling;

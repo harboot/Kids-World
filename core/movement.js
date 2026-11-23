@@ -44,8 +44,8 @@ export function floorHeight(world, x, z, feet) {
   return floor;
 }
 
-export function advanceFall(feet, speed, floor, dt, result) {
-  const velocity = speed - GRAVITY * dt;
+export function advanceFall(feet, speed, floor, dt, result, gravity = GRAVITY) {
+  const velocity = speed - gravity * dt;
   result.feet = Math.max(floor, feet + velocity * dt);
   result.grounded = result.feet === floor && velocity <= 0;
   result.speed = result.grounded ? 0 : velocity;

@@ -90,7 +90,7 @@ function gameFixture(t, areas, startingArea, { online = true, preferences = new 
   class WebGLRenderer {
     shadowMap = {};
     renderLists = { dispose() {} };
-    render(scene, camera) { renders.push({ scene, position: camera.position.clone() }); }
+    render(scene, camera) { renders.push({ scene, position: camera.position.clone(), yaw: camera.rotation.y }); }
     dispose() { disposed++; }
   }
 
@@ -427,4 +427,41 @@ test('settings default to one finger, pause gameplay, and restore a saved contro
   await reopened.ready;
   assert.equal(reopened.game.dataset.controls, 'two-finger');
   assert.equal(reopened.game.querySelector('#settings').querySelector('#controls-two-finger').checked, true);
+});
+
+test('speed sliders clamp persisted values and scale keyboard turn and movement independently', async t => {
+  const garden = area('garden', async () => ({ default: visit(garden, []) }));
+  const preferences = new Map([['kids-world-turn-speed', '130'], ['kids-world-move-speed', '45']]);
+  const fixture = gameFixture(t, { garden }, 'garden', { preferences });
+  const { game, window, renders } = fixture;
+  await fixture.ready;
+  const dialog = game.querySelector('#settings');
+  const turn = dialog.querySelector('#turn-speed');
+  const move = dialog.querySelector('#move-speed');
+  assert.equal(turn.value, '100');
+  assert.equal(move.value, '50');
+  assert.equal(dialog.querySelector('#move-speed-value').textContent, '50%');
+
+  turn.value = '50';
+  turn.dispatchEvent(new Event('input'));
+  game.querySelector('#start').click();
+  const key = (event, code) => window.dispatchEvent(Object.assign(new Event(event), { code }));
+  key('keydown', 'ArrowRight');
+  for (let i = 0; i <= 10; i++) fixture.tick(i * 20);
+  assert.ok(Math.abs(renders.at(-1).yaw + .165) < 1e-8);
+  key('keyup', 'ArrowRight');
+
+  const start = renders.at(-1).position;
+  key('keydown', 'KeyW');
+  for (let i = 11; i <= 30; i++) fixture.tick(i * 20);
+  const distance = renders.at(-1).position.distanceTo(start);
+  assert.ok(distance > .75 && distance < .82, `Unexpected movement distance ${distance}`);
+  key('keyup', 'KeyW');
+
+  turn.dispatchEvent(new Event('change'));
+  move.value = '73';
+  move.dispatchEvent(new Event('change'));
+  assert.equal(preferences.get('kids-world-turn-speed'), '50');
+  assert.equal(preferences.get('kids-world-move-speed'), '73');
+  assert.equal(dialog.querySelector('#move-speed-value').textContent, '73%');
 });

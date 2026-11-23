@@ -120,6 +120,12 @@
         <form method="dialog"><button class="hud-button" aria-label="Close settings" autofocus>×</button></form>
       </header>
       <button id="sound" class="sound-setting" type="button" aria-label="Mute sound" aria-pressed="false" hidden>Sound: On</button>
+      <div class="speed-options">
+        <label for="turn-speed">Turn speed <output id="turn-speed-value" for="turn-speed">100%</output></label>
+        <input id="turn-speed" type="range" min="50" max="100" step="1" value="100">
+        <label for="move-speed">Movement speed <output id="move-speed-value" for="move-speed">100%</output></label>
+        <input id="move-speed" type="range" min="50" max="100" step="1" value="100">
+      </div>
       <fieldset class="control-options">
         <legend>Touch controls</legend>
         <label>

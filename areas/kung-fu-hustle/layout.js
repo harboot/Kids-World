@@ -37,6 +37,7 @@ export function courtyardLayout() {
   const edges = [];
   const obstacles = [];
   const barriers = [];
+  const ceilings = [];
   const { inner, outer, top, foot, rear, front } = stair;
 
   function surface(left, right, near, far, low, high = low, side = 0, axis = 'z') {
@@ -160,6 +161,9 @@ export function courtyardLayout() {
 
   return {
     surfaces, guards, obstacles, solid, perimeter, addBarrier: barrier => barriers.push(barrier),
+    addCeiling(x, z, width, depth, height, side) {
+      ceilings.push({ ...rectangleBounds(x, z, width, depth), height, side });
+    },
     getGroundHeight(x, z, feet = 0) {
       let ground = 0;
       // Keep the player on the current story while allowing a walking step uphill.
@@ -173,6 +177,9 @@ export function courtyardLayout() {
     },
     getCeilingHeight(x, z, feet = 0) {
       let ceiling = Infinity;
+      for (const roof of ceilings) {
+        if (feet < roof.height && inside(roof, wingX(-roof.side, x, z), z)) ceiling = Math.min(ceiling, roof.height);
+      }
       for (const patch of surfaces) {
         const localX = wingX(-patch.side, x, z);
         if (!inside(patch, localX, z)) continue;
@@ -186,12 +193,12 @@ export function courtyardLayout() {
       for (const { x1, z1, x2, z2 } of edges) {
         if (segmentDistanceSquared(x1, z1, x2, z2, x, z) < (radius + .27) ** 2) return true;
       }
-      for (const { x1, z1, x2, z2, low, high } of guards) {
-        if (feet < low - .36 || feet >= high + 1.4) continue;
+      for (const { x1, z1, x2, z2, low, high, repaired } of guards) {
+        if (feet < low - .36 || feet >= high + 1.23) continue;
         const t = nearestFraction(x1, z1, x2, z2, x, z);
         if (segmentDistanceSquared(x1, z1, x2, z2, x, z, t) >= (radius + .09) ** 2) continue;
         const height = low + (high - low) * t;
-        if (feet >= height - .36 && feet < height + 1.4) return true;
+        if (feet >= height - .36 && feet < height + (repaired ? 1.10 : 1.23)) return true;
       }
       return false;
     },
