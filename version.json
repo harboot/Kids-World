@@ -1,5 +1,5 @@
 {
-  "version": "5fa4c04a7bb84b0b0a2e9edf1af1b082303311415dc92f4bbd41e7997e660585",
+  "version": "87628244f7e3de41650fbcd7cf86b4db7c12d4677d742e616ea88048f30661b0",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "50227f8d0cd9929b69d4b446111d71084e411788cdcc0701e84cc63506e88cd6"
+      "revision": "6bd65b06f821a2c07b16e90eac3fd8a659480dcaad436579242223d1f90cae1a"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
