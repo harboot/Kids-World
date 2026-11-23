@@ -228,7 +228,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   const controls = createControls(THREE, {
     game, canvas, joystick, thumb: game.querySelector('#joystick-thumb'),
     playing: playerInput, touchMode, seated: () => player.seated,
-    steerWithStick: () => controlMode !== 'two-finger',
+    steeringMode: () => controlMode !== 'two-finger',
     look(dx, dy) { player.look(dx * turnSpeed(), dy * turnSpeed()); },
     interact: interactions.interact,
     jump() { if (player.jump(worlds.active?.area)) audio.effect('jump'); },

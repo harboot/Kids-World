@@ -465,3 +465,38 @@ test('speed sliders clamp persisted values and scale keyboard turn and movement 
   assert.equal(preferences.get('kids-world-move-speed'), '73');
   assert.equal(dialog.querySelector('#move-speed-value').textContent, '73%');
 });
+
+test('desktop A and D turn in one-finger mode and strafe in two-finger mode', async t => {
+  const garden = area('garden', async () => ({ default: visit(garden, []) }));
+  const fixture = gameFixture(t, { garden }, 'garden');
+  const { game, window, renders } = fixture;
+  const hold = (event, code) => window.dispatchEvent(Object.assign(new Event(event), { code }));
+  await fixture.ready;
+  assert.equal(game.dataset.input, 'mouse');
+  game.querySelector('#start').click();
+
+  hold('keydown', 'KeyD');
+  for (let i = 0; i <= 10; i++) fixture.tick(i * 20);
+  const oneFinger = renders.at(-1);
+  assert.ok(Math.abs(oneFinger.yaw + .33) < 1e-8);
+  assert.deepEqual(oneFinger.position.toArray(), [0, 1.68, 0]);
+
+  // Change modes with the key held to cover the real settings and pause flow.
+  game.querySelector('#open-settings').click();
+  const dialog = game.querySelector('#settings');
+  const change = new Event('change');
+  Object.defineProperty(change, 'target', { value: { name: 'controls', checked: true, value: 'two-finger' } });
+  dialog.dispatchEvent(change);
+  dialog.close();
+  game.querySelector('#start').click();
+  fixture.tick(220);
+  fixture.tick(240);
+  assert.deepEqual(renders.at(-1).position.toArray(), oneFinger.position.toArray());
+
+  hold('keydown', 'KeyD');
+  for (let i = 13; i <= 23; i++) fixture.tick(i * 20);
+  const twoFinger = renders.at(-1);
+  assert.equal(twoFinger.yaw, oneFinger.yaw);
+  assert.ok(twoFinger.position.x > .55);
+  hold('keyup', 'KeyD');
+});

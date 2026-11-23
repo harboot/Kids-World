@@ -18,10 +18,11 @@ export function walkElevation(world, from, x, z, feet, grounded) {
   // Foot height distinguishes an elevated walkway from the floor underneath.
   const currentGround = sample(from.x, from.z, feet);
   const nextGround = sample(x, z, feet);
-  const followsGround = grounded && feet <= currentGround + 1e-5;
+  let followsGround = grounded && feet <= currentGround + 1e-5;
   if (!Number.isFinite(nextGround)) return null;
   if (followsGround && Math.abs(nextGround - currentGround) > MAX_GRADE * Math.hypot(x - from.x, z - from.z) + 1e-5) {
-    return null;
+    if (nextGround >= currentGround || !world.canDropFrom?.(from.x, from.z, feet)) return null;
+    followsGround = false;
   }
   if (!followsGround && nextGround > feet + 1e-5) return null;
 

@@ -1,4 +1,4 @@
-import { footprint, gateHalfWidth, gateZ } from './layout.js';
+import { footprint, gateHalfWidth, gateZ, perimeterCap } from './layout.js';
 import { crack, exposedBrick, ink, laundry, roof } from './masonry.js';
 
 const gatePierWidth = .77;
@@ -12,7 +12,7 @@ function perimeterWall(kit, layout, random, x1, z1, x2, z2) {
   const yaw = Math.atan2(z1 - z2, x2 - x1);
   const draw = wall(x, z, yaw);
   draw(ink.plaster, 0, .87, 0, width + .10, 1.74, .52);
-  draw(ink.cream, 0, 1.83, 0, width + .17, .18, .67);
+  draw(ink.cream, 0, perimeterCap.height - .09, 0, width + .17, .18, perimeterCap.width);
   draw(ink.band, 0, .17, 0, width + .12, .34, .63);
   layout.perimeter(x1, z1, x2, z2);
   const bays = Math.floor(width / 3.1);

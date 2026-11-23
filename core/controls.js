@@ -11,7 +11,7 @@ export function releaseCapture(element, pointerId) {
   }
 }
 
-export function createControls(THREE, { game, canvas, joystick, thumb, playing, seated, touchMode, steerWithStick = () => false, look, jump, interact, pause }) {
+export function createControls(THREE, { game, canvas, joystick, thumb, playing, seated, touchMode, steeringMode = () => false, look, jump, interact, pause }) {
   const keys = new Set();
   const presses = new Map();
   const stickAxis = new THREE.Vector2();
@@ -134,7 +134,7 @@ export function createControls(THREE, { game, canvas, joystick, thumb, playing, 
     if (!press) return;
     press.moved ||= Math.hypot(event.clientX - press.startX, event.clientY - press.startY) >= 9;
     if (press.moved && lookPointer === event.pointerId) {
-      const horizontal = !steerWithStick() || seated() ? (event.clientX - press.x) * 0.004 : 0;
+      const horizontal = !steeringMode() || seated() ? (event.clientX - press.x) * 0.004 : 0;
       look(horizontal, (event.clientY - press.y) * 0.004);
       press.x = event.clientX;
       press.y = event.clientY;
@@ -164,14 +164,16 @@ export function createControls(THREE, { game, canvas, joystick, thumb, playing, 
     const horizontal = Number(keys.has('lookRight')) - Number(keys.has('lookLeft'));
     const vertical = Number(keys.has('lookDown')) - Number(keys.has('lookUp'));
     const activeStick = stickAxis.lengthSq() > 0.01;
-    const steering = steerWithStick();
+    const steering = steeringMode();
     const stickTurn = activeStick && steering ? stickAxis.x * stickTurnSpeed : 0;
-    const dx = (horizontal * 1.65 + stickTurn) * dt + mouseDelta.x * 0.0022;
+    const sideways = Number(keys.has('right')) - Number(keys.has('left'));
+    const keyTurn = steering ? sideways * 1.65 : 0;
+    const dx = (horizontal * 1.65 + keyTurn + stickTurn) * dt + mouseDelta.x * 0.0022;
     const dy = vertical * dt * 1.65 + mouseDelta.y * 0.0022;
     mouseDelta.set(0, 0);
     if (dx || dy) look(dx, dy);
 
-    const strafe = Number(keys.has('right')) - Number(keys.has('left'));
+    const strafe = steering ? 0 : sideways;
     const advance = Number(keys.has('backward')) - Number(keys.has('forward'));
     motion.set(strafe, advance);
     if (activeStick) {
