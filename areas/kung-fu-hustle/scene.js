@@ -2,7 +2,7 @@ import { seededRandom } from '../../core/random.js';
 import { damagedRearWall } from './damage.js';
 import { courtyard } from './courtyard.js';
 import { marketRow } from './market.js';
-import { buildResidentWindow } from './resident.js';
+import { buildResident, buildResidentWindow, residentWindow } from './resident.js';
 import { floorRise, gallery, stair, stories, wingX } from './layout.js';
 import { crack, exposedBrick, ink, laundry, masonryKit, roof } from './masonry.js';
 
@@ -35,7 +35,7 @@ function doorsAndWindows(face, x, y, hasAwning, hasDoor) {
   }
 }
 
-function apartmentFacade(draw, span, bays, random, damaged = false) {
+function apartmentFacade(draw, span, bays, random, { damaged = false, occupiedWindow = false } = {}) {
   const spacing = span / bays;
   for (let level = 1; level < stories; level++) {
     const y = level * floorRise;
@@ -46,7 +46,8 @@ function apartmentFacade(draw, span, bays, random, damaged = false) {
     }
     for (let bay = 0; bay < bays; bay++) {
       const center = -span / 2 + (bay + .5) * spacing;
-      if (damaged && (center > 4.1 || (level === stories - 1 && bay === 1))) continue;
+      if (damaged && center > 4.1) continue;
+      if (occupiedWindow && level === stories - 1 && bay === 0) continue;
       draw.chip(bay % 2 ? 0x9d826c : 0xab8c72, center + .29, y + 1.03, .012, spacing * .86, 2.08, .11);
       if ((bay + level) % 3 !== 1) {
         exposedBrick(draw, center + (bay % 2 ? 1.55 : -.40), y + .78 + random() * .32,
@@ -70,8 +71,7 @@ function tenement(kit, layout, random) {
   const wingsZ = -1;
   damagedRearWall(kit, layout, height, random);
   marketRow(kit, layout, { x: 0, z: gallery.rear, yaw: 0, span: 37.5, bays: 9, depth: 4.3 }, random);
-  buildResidentWindow(kit, random);
-  apartmentFacade(wall(0, gallery.rear, 0), gallery.outer * 2, 7, random, true);
+  apartmentFacade(wall(0, gallery.rear, 0), gallery.outer * 2, 7, random, { damaged: true });
   for (const x of [-11.95, -8, -1.60, 8, 11.95]) {
     const postHeight = x === -1.60 ? height : floorRise * (x === 8 ? 2 : 3) - .09;
     box(ink.band, x, postHeight / 2, -7.59, .28, postHeight, .30);
@@ -95,7 +95,14 @@ function tenement(kit, layout, random) {
   for (const side of [-1, 1]) {
     kit.gable(ink.cream, side * 18.75, height - .04, -11.65, 8.8, 1.33, .13, -side * Math.PI / 2);
     kit.wing(side, () => {
-      box(side > 0 ? 0xc3a88b : 0xbba189, side * sideX, (height + floorRise) / 2, wingsZ, 3.4, height - floorRise, 19);
+      if (side < 0) {
+        kit.extrude('West wing wall', 0xbba189,
+          [[-gallery.front, floorRise], [-gallery.rear, floorRise], [-gallery.rear, height], [-gallery.front, height]],
+          3.4, -18.75, 0, 0, Math.PI / 2, [residentWindow.aperture]);
+        buildResidentWindow(kit, random);
+      } else {
+        box(0xc3a88b, sideX, (height + floorRise) / 2, wingsZ, 3.4, height - floorRise, 19);
+      }
       const yaw = -side * Math.PI / 2;
       marketRow(kit, layout, { x: side * gallery.outer, z: wingsZ, yaw, span: 19, bays: 4, depth: 3.4, side }, random);
       layout.addBarrier((x, z, radius, feet) => {
@@ -103,7 +110,7 @@ function tenement(kit, layout, random) {
         return feet >= floorRise && feet < height && z >= gallery.rear - radius && z <= gallery.front + radius &&
           wallX >= gallery.outer - radius && wallX <= 18.75 + radius;
       });
-      apartmentFacade(wall(side * gallery.outer, wingsZ, -side * Math.PI / 2), 19, 4, random);
+      apartmentFacade(wall(side * gallery.outer, wingsZ, -side * Math.PI / 2), 19, 4, random, { occupiedWindow: side < 0 });
       const outer = wall(side * 18.75, wingsZ, side * Math.PI / 2);
       for (const z of [-6.4, -1.9, 3.1, 6.4]) {
         exposedBrick(outer, z, 1.9 + random() * 7, 2.6, 2.5, random);
@@ -256,6 +263,7 @@ export function buildCourtyard(THREE, scene, layout, touch) {
   scene.add(sun);
 
   tenement(kit, layout, random);
+  buildResident(THREE, kit);
   walkways(kit, layout);
   courtyard(kit, layout, random);
 

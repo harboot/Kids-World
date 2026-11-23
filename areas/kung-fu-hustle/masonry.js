@@ -93,6 +93,14 @@ export function masonryKit(THREE, scene) {
       geometry.name = name;
       place(geometry, paint, x, y, z, 1, 1, 1, yaw);
     },
+    mesh(name, paint, geometry) {
+      geometry.name = name;
+      place(geometry, paint, 0, 0, 0, 1, 1, 1);
+    },
+    frame(x, y, z, yaw, draw) {
+      projection.makeRotationY(yaw).setPosition(x, y, z);
+      try { draw(); } finally { projection.identity(); }
+    },
     oval(...args) { place(ovalGeometry, ...args); },
     leaf(...args) { place(leafGeometry, ...args); },
     gateLetter(letter, x, y, z) {

@@ -207,14 +207,34 @@ test('the open ground-floor markets have room to browse under their ceilings', a
   assert.equal(walk(-13, -11.4, 60), false);
 });
 
-test('the rear upper-left facade contains a recessed window with room in front of the wall', async t => {
+test('the resident has a full robe and a real wing window below the selected roof point', async t => {
   const { visit } = await start(t);
   visit.scene.updateMatrixWorld(true);
-  const wall = visit.scene.getObjectByName('Hand-shaped breach');
-  const ray = new THREE.Raycaster(new THREE.Vector3(-9.52, 11.65, -9.9), new THREE.Vector3(0, 0, -1));
-  assert.deepEqual(ray.intersectObject(wall), []);
-  ray.ray.origin.x = -11.2;
-  assert.ok(ray.intersectObject(wall).length > 0);
+  const windowWall = visit.scene.getObjectByName('West wing wall');
+  const ray = new THREE.Raycaster(new THREE.Vector3(-19.98, 11.65, 5.76), new THREE.Vector3(-1, 0, 0));
+  assert.equal(ray.intersectObject(windowWall).length, 0);
+  ray.ray.origin.z = 3.9;
+  assert.ok(ray.intersectObject(windowWall).length > 0);
+
+  const rear = visit.scene.getObjectByName('Hand-shaped breach');
+  ray.ray.origin.set(-9.52, 11.65, -9.9);
+  ray.ray.direction.set(0, 0, -1);
+  assert.ok(ray.intersectObject(rear).length > 0);
+
+  const robe = visit.scene.getObjectByName('Resident full-length robe');
+  const cups = visit.scene.getObjectByName('Bra cups');
+  assert.ok(robe && cups);
+  robe.geometry.computeBoundingBox();
+  const transform = new THREE.Matrix4();
+  robe.getMatrixAt(0, transform);
+  const bounds = robe.geometry.boundingBox.clone().applyMatrix4(transform);
+  assert.ok(bounds.min.y < 10 && bounds.max.y > 11);
+  cups.getMatrixAt(0, transform);
+  assert.equal(Math.round(transform.elements[14] * 100) / 100, 5.76);
+
+  ray.ray.origin.set(-19.98, 20, 5.76);
+  ray.ray.direction.set(0, -1, 0);
+  assert.ok(Math.abs(ray.intersectObjects(visit.scene.children)[0].point.y - 13.51) < .02);
 });
 
 test('a side stair can be vaulted toward the yard while walking still collides with its rail', async t => {
