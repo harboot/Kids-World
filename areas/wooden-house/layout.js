@@ -6,13 +6,14 @@ export const SIDE = 8.65;
 export const BACK = -5.4;
 export const FRONT = 5.7;
 
-export const STAIR_Z = 4.15;
+const STAIR_WIDTH = 2.04;
+// Align the wall edge of the treads with the face of the front baseboard.
+const SHAFT_BACK = FRONT - .20;
+export const STAIR_Z = SHAFT_BACK - STAIR_WIDTH / 2;
 export const STAIR_START = 6.30;
 export const STAIR_END = .30;
-const STAIR_WIDTH = 2.04;
 const STAIR_LENGTH = STAIR_START - STAIR_END;
 const SHAFT_FRONT = STAIR_Z - STAIR_WIDTH / 2;
-const SHAFT_BACK = STAIR_Z + STAIR_WIDTH / 2;
 const WALL = 0.18;
 const layers = [0xc2926a, 0xd0a078, 0xdbac85, 0xc99971];
 
@@ -24,9 +25,8 @@ export function buildUpperFloor({ group, part, solid }) {
   const root = group('Second floor and staircase', 0, 0, 0);
   const panels = [
     [-SIDE, SIDE, BACK, SHAFT_FRONT],
-    [-SIDE, SIDE, SHAFT_BACK, FRONT],
-    [-SIDE, STAIR_END, SHAFT_FRONT, SHAFT_BACK],
-    [STAIR_START, SIDE, SHAFT_FRONT, SHAFT_BACK],
+    [-SIDE, STAIR_END, SHAFT_FRONT, FRONT],
+    [STAIR_START, SIDE, SHAFT_FRONT, FRONT],
   ];
   // Leave a continuous opening through the floor above the stairs.
   for (const [left, right, front, back] of panels) {
@@ -49,16 +49,15 @@ export function buildUpperFloor({ group, part, solid }) {
     const x = STAIR_START - (i + .5) * tread;
     part(root, layers[i % layers.length], x, height / 2, STAIR_Z, tread, height, STAIR_WIDTH);
   }
-  for (const z of [SHAFT_FRONT - .06, SHAFT_BACK + .06]) {
-    for (let i = 0; i <= 6; i++) {
-      const x = STAIR_START - i * STAIR_LENGTH / 6;
-      const base = i * UPSTAIRS / 6;
-      part(root, 0x855b40, x, base + .43, z, .12, .86, .12);
-    }
-    part(root, 0x855b40, middle, UPSTAIRS / 2 + .89, z, Math.hypot(STAIR_LENGTH, UPSTAIRS), .12, .13)
-      .rotation.z = -Math.atan2(UPSTAIRS, STAIR_LENGTH);
-    solid(middle, z, STAIR_LENGTH, .14, UPSTAIRS + 1.5, 'stairs');
+  const railZ = SHAFT_FRONT - .06;
+  for (let i = 0; i <= 6; i++) {
+    const x = STAIR_START - i * STAIR_LENGTH / 6;
+    const base = i * UPSTAIRS / 6;
+    part(root, 0x855b40, x, base + .43, railZ, .12, .86, .12);
   }
+  part(root, 0x855b40, middle, UPSTAIRS / 2 + .89, railZ, Math.hypot(STAIR_LENGTH, UPSTAIRS), .12, .13)
+    .rotation.z = -Math.atan2(UPSTAIRS, STAIR_LENGTH);
+  solid(middle, railZ, STAIR_LENGTH, .14, UPSTAIRS + 1.5, 'stairs');
 
   function wall(x, z, width, depth, tint) {
     part(root, tint, x, UPSTAIRS + 1.58, z, width, 3.16, depth);
@@ -81,7 +80,6 @@ export function buildUpperFloor({ group, part, solid }) {
 
   for (const [x, z, width, depth] of [
     [middle, SHAFT_FRONT - .08, STAIR_LENGTH, .13],
-    [middle, SHAFT_BACK + .08, STAIR_LENGTH, .13],
     [STAIR_START + .08, STAIR_Z, .12, STAIR_WIDTH],
   ]) {
     part(root, 0x855b40, x, UPSTAIRS + .92, z, width, .125, depth);

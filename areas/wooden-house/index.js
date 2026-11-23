@@ -2,7 +2,7 @@ import { addCleaningSparkles, createCleaningMissions } from './cleaning.js';
 import { buildFamily } from './family.js';
 import { buildFurniture } from './furniture.js';
 import { buildInterior, createHouseBuilder } from './interior.js';
-import { BACK, FRONT, SIDE, buildUpperFloor, houseCeiling, houseGround, upstairsBlockers } from './layout.js';
+import { BACK, FRONT, SIDE, UPSTAIRS, buildUpperFloor, houseCeiling, houseGround, upstairsBlockers } from './layout.js';
 import { metadata } from './metadata.js';
 import { music } from './music.js';
 import { decorativeDoor, furnishUpperHall } from './upstairs-decor.js';
@@ -23,7 +23,7 @@ function loadHouse({ THREE, scene, signal, playCue = () => {}, reducedMotion = (
   const builder = createHouseBuilder(THREE, scene, obstacles, upper);
   buildInterior(THREE, scene, builder);
   buildUpperFloor(builder);
-  decorativeDoor(builder, 'Wooden House front door', 0, 0, 0xb57b56, scene, 1.8);
+  decorativeDoor(builder, 'Wooden House front door', 7.57, UPSTAIRS, 0xb57b56, scene, 5.21);
   furnishUpperHall(THREE, scene, builder);
   const [bed, dishes, painting, tv, toys] = buildFurniture(THREE, scene, builder);
   const family = buildFamily(scene, builder);

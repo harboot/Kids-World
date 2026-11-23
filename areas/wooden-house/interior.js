@@ -190,7 +190,6 @@ export function buildInterior(THREE, scene, { group, part, solid }) {
   }
   window(back, -4.35, 2.41, 1.85, rose);
   window(back, 2.2, 2.42, 1.63);
-  window(front, -3.42, 2.24, 1.99, mint);
   window(front, 3.52, 2.24, 2.12, rose);
   window(right, 1.68, 2.36, 1.85, mint);
   window(left, 3.93, 2.48, 1.5);
@@ -209,7 +208,7 @@ export function buildInterior(THREE, scene, { group, part, solid }) {
 
 
   for (const [x, z, y] of [[-2.8, -1.75, UPSTAIRS - .21], [2.8, .15, UPSTAIRS - .21],
-    [-3.4, -2.4, HEIGHT], [3.1, -2.2, HEIGHT], [.65, 3.55, HEIGHT]]) {
+    [-3.4, -2.4, HEIGHT], [3.1, -2.2, HEIGHT], [.65, 2.82, HEIGHT]]) {
     part(room, walnut, x, y - .19, z, .05, .39, .05, 'round');
     part(room, gold, x, y - .39, z, .62, .24, .62, 'taper').rotation.z = Math.PI;
     part(room, 0xffe7b4, x, y - .51, z, .43, .085, .43, 'ball', false);

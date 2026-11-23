@@ -2,10 +2,13 @@ import { paintCanvasTexture } from '../../core/geometry.js';
 import { colors, rug } from './interior.js';
 import { FRONT, SIDE, UPSTAIRS } from './layout.js';
 
-export function decorativeDoor(builder, name, x, floor, tint, parent, width = 1.38) {
+export function decorativeDoor(builder, name, x, floor, tint, parent, z = FRONT - .173) {
   const { group, part } = builder;
-  const door = group(name, x, floor, FRONT - .173, parent);
-  part(door, colors.walnut, 0, 1.25, 0, width + .21, 2.50, .12);
+  const width = 1.38;
+  const door = group(name, x, floor, z, parent);
+  const recess = FRONT - .095 - z;
+  const frameDepth = Math.max(.12, recess + .06);
+  part(door, colors.walnut, 0, 1.25, frameDepth / 2 - .06, width + .21, 2.50, frameDepth);
   part(door, tint, 0, 1.18, -.065, width, 2.33, .085);
   for (const y of [.61, 1.62]) {
     part(door, colors.oak, 0, y, -.114, width - .24, .67, .026);

@@ -136,6 +136,9 @@ test('the player starts inside and takes the front staircase to the decorated up
   assert.ok(camera.position.z < FRONT - 1);
   assert.equal(tasks.door, undefined);
   assert.equal(walkElevation(area, camera.position, 0, FRONT, 0, true), null);
+  const door = scene.getObjectByName('Wooden House front door');
+  assert.deepEqual(door.position.toArray(), [7.57, 3.36, 5.21]);
+  assert.equal(area.getGroundHeight(3.3, FRONT - .21, 0), area.getGroundHeight(3.3, STAIR_Z, 0));
   for (const name of ['Wooden House front door', 'Parents’ room decorative door', 'Study decorative door',
     'Toilet decorative door', 'Upstairs linen console', 'Upstairs reading bench']) {
     assert.ok(scene.getObjectByName(name), name);
@@ -170,7 +173,7 @@ test('the player starts inside and takes the front staircase to the decorated up
   walk(definition.spawn.x, definition.spawn.z);
 });
 
-test('family missions start on approach, stay on their own floor, and use no prompts', async t => {
+test('family missions count one approach while Mom, Dad and the girl react again on return', async t => {
   const { worlds, cues } = fixture();
   t.after(worlds.unload);
   const { area } = await worlds.load(house);
@@ -190,8 +193,28 @@ test('family missions start on approach, stay on their own floor, and use no pro
     assert.equal(done(id), true);
     approachFamily(worlds, id);
     assert.equal(cues.length, count + 1);
+    worlds.update(.02, new THREE.Vector3(6.84, EYE_HEIGHT, 2.28));
+    approachFamily(worlds, id);
+    assert.equal(cues.length, count + (id === 'wake' ? 1 : 2));
+    worlds.update(1.7, new THREE.Vector3(x, y, z));
+    assert.deepEqual(area.missionStatus.missions, missionProgress([id]));
     if (id === 'wake') assert.equal(tasks.bed.active, true);
     worlds.reset();
+  }
+});
+
+test('Mom stirs the pot with the spoon throughout the approach animation', async t => {
+  const { worlds } = fixture();
+  t.after(worlds.unload);
+  const { scene } = await worlds.load(house);
+  const bowl = scene.getObjectByName('Spoon bowl');
+  const position = new THREE.Vector3();
+  approachFamily(worlds, 'mother');
+  for (let frame = 0; frame < 90; frame++) {
+    worlds.update(1 / 60);
+    bowl.getWorldPosition(position);
+    assert.ok(Math.hypot(position.x - 4.44, position.z + 4.40) < .13);
+    assert.ok(position.y > 1.34 && position.y < 1.39);
   }
 });
 
@@ -324,6 +347,11 @@ test('all eleven tasks show one hint and can be completed in different orders', 
     assert.deepEqual(area.missionStatus.missions, success);
     assert.equal(area.missionStatus.hint, '');
     assert.ok(progress.has(house));
+    worlds.update(.02, new THREE.Vector3(6.84, EYE_HEIGHT, 2.28));
+    approachFamily(worlds, 'mother');
+    worlds.update(1.6);
+    assert.deepEqual(area.missionStatus.missions, success);
+    assert.ok(!model.stars.visible);
     const reopened = createLevelProgress(areas, getStorage);
     assert.ok(reopened.has(house));
     assert.ok(reopened.has('garden') && reopened.has('snow'));
@@ -334,7 +362,7 @@ test('all eleven tasks show one hint and can be completed in different orders', 
   assert.deepEqual(completions, [house, house]);
   assert.deepEqual(notifications, Array(2).fill('Great job helping the whole family!'));
   assert.equal(writes.length, 1);
-  assert.equal(cues.length, 24);
+  assert.equal(cues.length, 26);
   await worlds.load('garden');
   const revisit = await worlds.load(house);
   assert.deepEqual(revisit.area.missionStatus.missions, missionProgress());
