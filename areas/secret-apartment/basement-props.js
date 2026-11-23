@@ -8,18 +8,30 @@ export function addAdultCouple(architecture, body) {
   ];
   for (const { side, skin, hair, shirt, neck } of figures) {
     const adult = architecture.group(couple, side < 0 ? 'Adult passenger' : 'Adult driver',
-      side * .25, .89, -.49);
+      side * .305, .912, -.423);
     const p = architecture.builder(adult);
-    p.part(shirt, -side * .043, .126, .076, .347, .372, .23, { shape: 'oval', roll: side * .34 });
+    p.part(shirt, -side * .065, .112, .059, .342, .35, .229, { shape: 'oval', roll: side * .40 });
+    p.part(shirt, side * .101, .064, -.051, .126, .235, .135, { shape: 'oval', pitch: .58 });
+    p.part(skin, side * .061, .013, -.160, .100, .105, .19, { shape: 'oval', yaw: side * .16 });
+    p.part(shirt, -side * .139, .133, -.025, .098, .196, .121, { shape: 'oval', roll: side * .37 });
+    p.part(skin, -side * .198, .158, -.089, .096, .073, .146, { shape: 'oval', yaw: side * .47 });
     p.part(skin, -side * .13, .268, .04, .135, .165, .13, { shape: 'oval' });
-    const faceX = -side * .139;
+    const faceX = -side * .191;
     const head = architecture.group(adult, 'Inclined face', faceX, .363, .044, -side * Math.PI / 2);
+    head.rotation.z = neck;
     const h = architecture.builder(head);
     h.part(skin, 0, 0, 0, .215, .244, .205, { shape: 'oval', roll: neck });
     h.part(hair, 0, .07, -.045, .236, .159, .23, { shape: 'oval' });
     h.part(skin, 0, -.018, .104, .062, .046, .046, { shape: 'oval' });
     h.part(0x975753, 0, -.051, .113, .065, .024, .021, { shape: 'oval' });
-    for (const edge of [-1, 1]) h.part(hair, edge * .051, .028, .09, .055, .012, .010);
+    for (const edge of [-1, 1]) {
+      h.part(skin, edge * .101, -.017, -.012, .059, .092, .055, { shape: 'oval' });
+      h.part(hair, edge * .049, .025, .093, .047, .010, .010, { roll: edge * .17 });
+    }
+    if (side < 0) {
+      h.part(hair, 0, -.078, -.091, .218, .31, .132, { shape: 'oval' });
+      h.part(0xba8565, -.076, .058, .056, .082, .132, .032, { shape: 'oval', roll: -.42 });
+    }
     h.finish();
     p.finish();
   }

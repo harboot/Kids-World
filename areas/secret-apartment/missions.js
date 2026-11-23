@@ -37,11 +37,10 @@ const activities = [
   ['lift', 'Call the resident elevator', 'Press the call button beside the resident elevator.', [note(71, 78, .22, .13), note(82, 86, .16, .08, .14)]],
   ['directory', 'Check the parking directory', 'In the basement, look at the directory kiosk behind your starting point.', [note(68, 77, .22, .14), note(76, 81, .18, .11, .17)]],
   ['recycle', 'Recycle a bottle', 'In the basement, look at the green recycling bin by the back wall.', [note(63, 79, .12, .09), note(78, 48, .20, .16, .26)]],
-  ['basement-return', 'Ride the elevator back to the basement', 'Use Go to Basement on the elevator panel.', []],
   ['terrace', 'Walk through the pool terrace doors', 'On Floor 8, approach the glass doors and walk through once they slide open.', []],
   ['fountain', 'Turn on the garden fountain', 'Look at the round fountain near the terrace entrance on Floor 8.', [note(70, 84, .19, .13), note(83, 92, .24, .11, .14)]],
   ['gym', 'Enter the resident gym', 'Turn left after leaving the glass doors and walk into the resident gym.', []],
-  ['treadmill', 'Start a gym treadmill', 'Inside the gym, look at the leftmost treadmill and start it.', [note(71, 78, .15, .13), note(54, 60, .29, .13, .18)]],
+  ['treadmill', 'Start a gym treadmill', 'Inside the gym, turn on the leftmost treadmill. Jump onto its belt from the rear.', [note(71, 78, .15, .13), note(54, 60, .29, .13, .18)]],
   ['lounger', 'Jump onto a pool lounger', 'Jump over or onto one of the low pool loungers along the deck.', [note(76, 83, .16, .11), note(67, 56, .12, .12, .14)]],
 ];
 const doorOpenCue = [note(55, 70, .25, .078), note(79, 86, .16, .09, .16)];
@@ -151,7 +150,6 @@ export function createApartmentMission(playCue, signal, showNotification = () =>
           notify('The rescue helicopter is waiting on the terrace.');
         }
       }
-      if (destination === 'basement') activity('basement-return');
       if (destination === 'floor17') advance(STEP.FLOOR_17);
     },
     takeLighter() { pickUp(STEP.GAZEBO, 'Lighter acquired'); },

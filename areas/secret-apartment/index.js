@@ -118,6 +118,9 @@ function loadApartment({ THREE, scene, camera, hud, signal, onCleanup, playCue =
         zone.solids.some(solid => overlaps(solid, localX, z)) ||
         elevator.blocks(active, localX, z) || features[active].blocks(localX, z);
     },
+    getGroundVelocity(x, z, feet) {
+      return features[active].getGroundVelocity?.(x - zones[active].x, z, feet);
+    },
     getCeilingHeight(x, z) {
       const localX = x - zones[active].x;
       return Math.min(elevator.ceiling(active, localX, z), features[active].ceiling?.(localX, z) ?? Infinity);
