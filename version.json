@@ -1,5 +1,5 @@
 {
-  "version": "9f089cc70cb82bf7138215ad86dfde28780cd6588767226d8db3061898f58344",
+  "version": "35c45a02e9bc4034b29ad40e1161e20387a05554cb293260d951abdc2da012f1",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "4eff96c7c3fd0a50410d241e77d9f1afdfc2b2c002ef0a0d1d93ad90db7cdfe1"
+      "revision": "0c0267c73f2773377ccf945936da3db47f82bd5a3b37aa2b15474a9d1c983a8d"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -680,16 +680,20 @@
   ],
   "onDemandFiles": [
     {
+      "path": "./areas/secret-apartment/basement-props.js",
+      "revision": "41f8918e3d718d02a0f32bff8b2752c2df21dc20c98ad7592a2710bbbaa423d3"
+    },
+    {
       "path": "./areas/secret-apartment/basement.js",
-      "revision": "342056807268d4fb22b18bb598b604f01b6b575a781da035d8a26f9cfc15b94c"
+      "revision": "b381e43deef53cf8d9db0c87b7235eb4738c4291e0d846d204a3348cc2d30ef5"
     },
     {
       "path": "./areas/secret-apartment/car-door.js",
-      "revision": "dfab0982d524e2557169b61f75af22cbdd1e6c13b210a70cdd73d1f0bca336bc"
+      "revision": "4a6cf4d800f2f13028910aa199d4a8f04b82ae211070d39b95701d67a8f01300"
     },
     {
       "path": "./areas/secret-apartment/cinematic.js",
-      "revision": "fb306ea1e97f3530df61c94da034f23e0241591fde823138b7122a6c991adccb"
+      "revision": "3cf6a9048e95e3e6f425869ef5de413d7283aea0adaec71fe4727b53d665df22"
     },
     {
       "path": "./areas/secret-apartment/corridor.js",
@@ -697,23 +701,27 @@
     },
     {
       "path": "./areas/secret-apartment/elevator.js",
-      "revision": "ead6fadfc668334071f521633e7957aeb47266bb14af37b0307a426ab8242262"
+      "revision": "e89769fe7259dda2606ab0b4593cc3d127d2978527bd242294cee431ad0db436"
     },
     {
       "path": "./areas/secret-apartment/floor17.js",
-      "revision": "8c8e9da5ff1793272507590760f46f63c81619e4de29c1f24934a116e7e1f170"
+      "revision": "1ec2fed06072e6f4d32cf67a4e926f2af467c4a96c49af51233ae31108f465c7"
     },
     {
       "path": "./areas/secret-apartment/floor8.js",
-      "revision": "f49ac0d0f595ec679d920ffa24db81078f2ff693bb6ffb61e068b03667a8d963"
+      "revision": "ad61111c634832f82d228f524c1d51d013d9a45d87d6bd6496c94b5b29521135"
     },
     {
       "path": "./areas/secret-apartment/geometry.js",
       "revision": "0578607812d5280966abfee0c09dcd75388bdb6cc5cdcc81f55eaf28c150c260"
     },
     {
+      "path": "./areas/secret-apartment/gym.js",
+      "revision": "21237a0a8d1357b786b4ba6cbefe23e0e2a629c6e2746fe852b6cd146cf97cf2"
+    },
+    {
       "path": "./areas/secret-apartment/index.js",
-      "revision": "e511c6308b1861cf7606a0ea7f6e936e0e7ba0a24c9200c352e602496cd8bd64"
+      "revision": "970c560761fd2ebcd29b0254f41fac8ebb2b98f1a5a4f6fca5425f2daa8b12cf"
     },
     {
       "path": "./areas/secret-apartment/metadata.js",
@@ -721,19 +729,27 @@
     },
     {
       "path": "./areas/secret-apartment/missions.js",
-      "revision": "ebadac6632ee490831b97cc01a80357247be3bac20d83e08e5979c95b56ae541"
+      "revision": "07e8ef8d02871bbfa9d5ecd5c117fdda496c3b753811ae2585fef854f3991274"
     },
     {
       "path": "./areas/secret-apartment/music.js",
-      "revision": "9c6feaa5768b99c4931a1093e7b011c32f74586207ffd4d1b8cb496f4b421150"
+      "revision": "9c2f79dbdd26098b3d711db67df0a1b658cc3d083f8b26a85512ab57f6be8c96"
     },
     {
       "path": "./areas/secret-apartment/pool.js",
-      "revision": "04ee18e74453be76539b3aeda6a3e5cf28b368f83ace235f8bbbead1c8319235"
+      "revision": "6b4eab7ebcb6b3e6b20f945d6d1ede239e84bd0f83114daf12d1e46f936f8f62"
+    },
+    {
+      "path": "./areas/secret-apartment/terrace-doors.js",
+      "revision": "e52aadf9b0ce73ad0fdb2c924c086c0b2c3dd3c7078296481da62f24bbedb061"
+    },
+    {
+      "path": "./areas/secret-apartment/terrace-props.js",
+      "revision": "77f60cb09b94f8e6563e8c46cfbb81c7705ee9971981665dbf17919f241d2c4c"
     },
     {
       "path": "./areas/secret-apartment/unit17e.js",
-      "revision": "41c0400c669413d4e52e5eb3c404ae1b7e66d5c262e4a8c2324522a7ce5b1062"
+      "revision": "c5f56317b7c6259ed3e199ab1d34fe5c43a06ee71effe11b1027bb606b09c016"
     }
   ]
 }

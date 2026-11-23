@@ -81,7 +81,7 @@ function buildCabin(THREE, architecture, zone, doorMaterial, lampMaterial) {
 }
 
 export function createElevator(THREE, architecture, zones, {
-  onArrival, reducedMotion, accessMessage, notify, onDepart, enabled,
+  onArrival, reducedMotion, accessMessage, notify, onCall, onDenied, onDepart, enabled,
 }) {
   const doorMaterial = new THREE.MeshStandardMaterial({ color: 0x979d9e, metalness: 0.31, roughness: 0.42 });
   const lampMaterial = new THREE.MeshBasicMaterial({ color: 0xffae47 });
@@ -104,13 +104,17 @@ export function createElevator(THREE, architecture, zones, {
     const cabin = cabins[id];
     return [{
       x: zone.x + cabin.call.x, z: cabin.call.z, anchorY: cabin.call.y, radius: 2.25,
-      label: 'Call elevator',
+      label: 'Call elevator', silent: true,
       reachable: position => position.z > zone.doorZ + 0.16,
       get active() { return enabled() && stop === id && state === 'closed'; },
-      act() { if (this.active) begin('opening'); },
+      act() {
+        if (!this.active) return;
+        begin('opening');
+        onCall();
+      },
     }, ...cabin.buttons.map(destination => ({
       x: zone.x + destination.x, z: destination.z, anchorY: BUTTON_Y, radius: 2.5, aimRadius: 0.35,
-      label: 'Go to ' + destination.label,
+      label: 'Go to ' + destination.label, silent: true,
       reachable: cabin.inCabin,
       get active() {
         return enabled() && stop === id && state === 'open' && destination.id !== id;
@@ -120,6 +124,7 @@ export function createElevator(THREE, architecture, zones, {
         const denial = accessMessage(destination.id);
         if (denial) {
           notify(denial);
+          onDenied();
           return;
         }
         pending = { id: destination.id, label: destination.label, relocate };

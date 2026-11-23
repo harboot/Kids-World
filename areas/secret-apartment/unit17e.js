@@ -325,6 +325,12 @@ export function buildUnit17E(THREE, architecture, { root, solids }, { entryX, en
     [oven.position.x - surface, 0.442, oven.position.z, 0.60, 0.33, -Math.PI / 2],
     [2.10, 0.82 + surface, 1.51, 0.91, 0.25, 0, -Math.PI / 2],
     [2.02, 0.58 + surface, 0.08, 0.90, 0.70, 0, -Math.PI / 2],
+    [9.22, surface + .006, 1.4, 2.50, 2.38, 0, -Math.PI / 2, -.26],
+    [8.96, surface + .010, -.55, 1.82, 1.62, 0, -Math.PI / 2, .4],
+    [5.11, surface + .009, 1.96, 2.01, 1.51, 0, -Math.PI / 2, .41],
+    [2.65, surface + .009, 1.94, 1.59, 1.71, 0, -Math.PI / 2],
+    [8.81, 1.41, BACK - .143, 2.48, 2.65, Math.PI],
+    [6.65, 1.9, .61, 2.31, 1.82, Math.PI / 2],
   ]);
   const readyLight = architecture.group(control, 'Prop ready indicator');
   const readyParts = architecture.builder(readyLight);

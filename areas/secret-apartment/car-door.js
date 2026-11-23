@@ -61,12 +61,13 @@ export function buildCarDoor(THREE, architecture, body, paint, glass, offset, mi
   return {
     interactions: [{
       x: offset + carX + HINGE, z: carZ + 1.02, anchorY: 0.87, radius: 2.1,
-      label: 'Open Car Door',
+      label: 'Open Car Door', silent: true,
       reachable: ({ z }) => z > carZ + 1.2,
       get active() { return mission.ready(STEP.CAR); },
       act() {
         if (!this.active) return;
         if (sweep(playerPosition.x - offset, playerPosition.z)) {
+          mission.denyCue();
           mission.notify('Step back to give the door room.');
           return;
         }

@@ -39,7 +39,7 @@ function loadApartment({ THREE, scene, camera, hud, signal, onCleanup, playCue =
     const root = architecture.group(scene, id, placement.x);
     const solids = [];
     const b = architecture.builder(root, solids);
-    return [id, { ...placement, root, b, solids }];
+    return [id, { ...placement, root, b, solids, walkables: [] }];
   }));
   const mission = createApartmentMission(playCue, signal, notify);
   const basement = buildBasement(THREE, architecture, zones.basement, mission, reducedMotion, camera.position);
@@ -75,6 +75,10 @@ function loadApartment({ THREE, scene, camera, hud, signal, onCleanup, playCue =
     reducedMotion,
     accessMessage: mission.accessMessage,
     notify: mission.notify,
+    onCall() {
+      if (!mission.activity('lift')) mission.doorCue(true);
+    },
+    onDenied: mission.denyCue,
     onDepart(destination) {
       playCue(travelCue);
       mission.notify(`Elevator in transit to ${destination}.`);
@@ -92,7 +96,7 @@ function loadApartment({ THREE, scene, camera, hud, signal, onCleanup, playCue =
     },
   };
   return {
-    obstacles: [],
+    get obstacles() { return zones[active].walkables; },
     interactions: [...elevator.interactions, ...basement.interactions, ...floor8.interactions, ...floor17.interactions],
     get missionStatus() { return missionStatus; },
     get droneView() {
@@ -130,8 +134,8 @@ function loadApartment({ THREE, scene, camera, hud, signal, onCleanup, playCue =
       const animationDt = Math.min(elapsed ?? dt, 0.25);
       mission.update(animationDt);
       elevator.update(animationDt);
-      features[active].update(animationDt);
-      cinematic.render(active === 'floor17' && floor17.unit.contains(position.x - zones.floor17.x, position.z));
+      features[active].update(animationDt, position);
+      cinematic.render(active === 'floor17' && floor17.unit.contains(position.x - zones.floor17.x, position.z), animationDt);
     },
     unload: onCleanup ? undefined : cinematic.unload,
   };
