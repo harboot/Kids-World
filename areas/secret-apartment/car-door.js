@@ -6,7 +6,7 @@ const HINGE = -1.13;
 const WIDTH = 1.12;
 const FINAL_ANGLE = -1.31;
 
-function sideGlass(THREE, parent, material, x, points) {
+export function sideGlass(THREE, parent, material, x, points) {
   const outline = new THREE.Shape();
   points.forEach(([z, y], i) => i ? outline.lineTo(z, y) : outline.moveTo(z, y));
   outline.closePath();
@@ -16,10 +16,10 @@ function sideGlass(THREE, parent, material, x, points) {
   parent.add(pane);
 }
 
-function windshield(THREE, parent, material, bottom, top) {
+export function windshield(THREE, parent, material, bottom, top, roof = 1.376) {
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute([
-    -0.793, 0.871, bottom, 0.793, 0.871, bottom, 0.793, 1.376, top, -0.793, 1.376, top,
+    -0.793, 0.871, bottom, 0.793, 0.871, bottom, 0.793, roof, top, -0.793, roof, top,
   ], 3));
   geometry.setIndex([0, 1, 2, 0, 2, 3]);
   geometry.computeVertexNormals();
@@ -36,7 +36,11 @@ export function buildCarDoor(THREE, architecture, body, paint, glass, offset, mi
   const hinge = architecture.group(body, 'Driver door', EDGE, 0, HINGE);
   const door = architecture.builder(hinge);
   door.part(paint, 0.023, 0.638, WIDTH / 2, 0.10, 0.442, WIDTH);
-  door.part(0x6f5036, 0.081, 0.678, WIDTH / 2, 0.034, 0.33, WIDTH - 0.04);
+  door.part(0x6f5036, .081, .678, WIDTH / 2, .034, .33, WIDTH - .04);
+  door.part(0xa37552, .104, .738, .63, .043, .073, .51);
+  door.part(0x302b26, .129, .794, .685, .020, .025, .21);
+  door.part(0xc3b09b, .137, .797, .643, .023, .027, .077);
+  door.part(0x3f3833, .105, .580, .253, .028, .125, .205, { shape: 'oval' });
   door.part(0xb8babe, -0.042, 0.762, 0.88, 0.042, 0.042, 0.19);
   door.part(0x554637, 0.135, 0.879, WIDTH / 2, 0.049, 0.038, WIDTH - 0.015);
   door.part(0x554637, 0.144, 1.112, WIDTH - 0.016, 0.041, 0.49, 0.036);
@@ -46,9 +50,12 @@ export function buildCarDoor(THREE, architecture, body, paint, glass, offset, mi
 
   const card = architecture.group(body, 'Access card', -0.50, 0.971, -0.42, 0.28);
   const cover = architecture.builder(card);
-  cover.part(0x2baea5, 0, 0, 0, 0.16, 0.026, 0.104);
-  cover.part(0xf1ffe9, 0.037, 0.015, 0, 0.045, 0.008, 0.068, { glow: true });
-  cover.part(0x176760, -0.027, 0.017, 0, 0.044, 0.006, 0.02);
+  cover.part(0xe9dec0, 0, 0, 0, .177, .021, .113);
+  cover.part(0x2baea5, 0, .0115, 0, .159, .004, .098);
+  cover.part(0xffead1, .038, .016, 0, .048, .005, .068);
+  cover.part(0x98704b, .037, .020, .006, .023, .006, .027);
+  cover.part(0xc5e7de, -.031, .016, -.015, .044, .006, .016, { glow: true });
+  cover.part(0x176760, -.031, .016, .016, .041, .006, .011);
   cover.finish();
 
   // This sedan faces the driving aisle with its driver's side toward the next bay.

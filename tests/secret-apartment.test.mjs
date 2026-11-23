@@ -339,6 +339,11 @@ test('only the illuminated car offers a safe one-way door and a single access ca
   const card = car.getObjectByName('Access card');
   assert.ok(car.children.some(child => child.isPointLight && child.intensity > 0));
   assert.equal(card.visible, false);
+  assert.ok(car.getObjectByName('Warm leather cabin and dashboard'));
+  assert.ok(car.getObjectByName('Touring sedan body trim and wheels'));
+  const fastback = scene.getObjectByName('Silver fastback with passengers');
+  assert.ok(fastback.getObjectByName('Cloth seats and dashboard'));
+  assert.equal(fastback.getObjectsByProperty('name', 'Inclined face').length, 2);
   assert.equal(area.missionStatus.hint, 'Find the car with the cabin light on.');
   move(-93.3, 5.32);
   assert.notEqual(prompt('Open Car Door')?.label, 'Open Car Door');
@@ -542,6 +547,64 @@ test('garage activities, automatic gym access, fountain and jumpable loungers ha
   }
   assert.ok(position.z > 15.1, 'the player can jump across the lounger');
   assert.ok(completed('lounger'));
+});
+
+test('the treadmill supports jumps and pushes grounded players backward only while running', async t => {
+  const game = await fixture(true);
+  const { area, worlds, scene, player, position, act, update } = game;
+  t.after(worlds.unload);
+  game.takeCard();
+  game.enterElevator();
+  act('Go to Floor 8');
+  update(2);
+  const idle = new THREE.Vector2();
+  const forward = new THREE.Vector2(0, -1);
+  function tick(movement = idle) {
+    player.move(.025, movement, worlds.active);
+    worlds.update(.025, position);
+  }
+
+  player.reset({ x: 12.38, z: -.20 }, area);
+  assert.equal(walkElevation(area, position, 12.38, -.77, 0, true), null);
+  assert.ok(player.jump());
+  for (let i = 0; i < 42; i++) {
+    if (position.z > -1.55) tick(forward);
+    else {
+      player.stop();
+      tick();
+    }
+  }
+  assert.ok(player.grounded);
+  assert.ok(Math.abs(position.y - 2.19) < .001, `standing on treadmill at eye height ${position.y}`);
+  const onBelt = position.z;
+  for (let i = 0; i < 12; i++) tick();
+  assert.equal(position.z, onBelt);
+  assert.equal(scene.getObjectByName('Treadmill moving belt').visible, true);
+  act('Start gym treadmill');
+  for (let i = 0; i < 12; i++) tick();
+  assert.ok(position.z > onBelt + .30, 'the belt carries the player rearward');
+  assert.ok(Math.abs(position.y - 2.19) < .001);
+
+  const beforeJump = position.z;
+  assert.ok(player.jump());
+  for (let i = 0; i < 12; i++) tick();
+  assert.equal(position.z, beforeJump, 'an airborne player is not carried');
+  assert.ok(position.y > 2.19);
+  for (let i = 0; i < 110; i++) tick();
+  assert.equal(position.y, 1.68, 'the belt carries the player off its rear edge');
+  const offBelt = position.z;
+  for (let i = 0; i < 12; i++) tick();
+  assert.equal(position.z, offBelt);
+  assert.equal(area.missionStatus.missions.find(item => item.id === 'lounger').complete, false);
+  player.reset({ x: 14.41, z: -1.86 }, area, .51);
+  for (let i = 0; i < 12; i++) tick();
+  assert.equal(position.z, -1.86, 'other treadmills remain stationary');
+
+  assert.ok(!area.missionStatus.missions.some(item => item.id === 'basement-return'));
+  player.reset({ x: 0, z: -12.275 }, area);
+  act('Go to Basement');
+  update(2);
+  assert.ok(scene.getObjectByName('basement').visible);
 });
 
 test('restart cancels transit and countdown and restores both items, doors and access rules', async () => {

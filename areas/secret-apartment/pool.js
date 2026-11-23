@@ -404,7 +404,9 @@ export function buildPool(THREE, architecture, { b, walkables }) {
   const basins = buildBasins(THREE, architecture, b);
   podiumAndGardens(b);
   landscaping(architecture, b);
-  loungeChairs(architecture, b, walkables);
+  const loungers = [];
+  loungeChairs(architecture, b, loungers);
+  walkables.push(...loungers);
   const gazeboTable = gazebo(architecture, b);
   for (const towerInfo of [
     { x: -16.5, z: 40.2, facing: Math.PI, width: 15.7, floors: 14, variant: 0 },
@@ -433,7 +435,7 @@ export function buildPool(THREE, architecture, { b, walkables }) {
   architecture.sign(b.root, ['POOL TERRACE', 'MAIN POOL    ·    SHALLOW POOL'], 2.94, 1.36, -0.27, 2.46, 0.75, { yaw: Math.PI });
   b.block(0x82694b, 2.94, 0.83, -0.20, 2.48, 1.66, 0.10);
   return {
-    ...basins, gazeboTable,
+    ...basins, gazeboTable, loungers,
     insideGazebo: (x, z) => Math.abs(x - GAZEBO.x) < 1.86 && Math.abs(z - GAZEBO.z) < 1.87,
     ceiling(x, z) {
       const underGazebo = Math.abs(x - GAZEBO.x) < 2.4 && Math.abs(z - GAZEBO.z) < 2.38;

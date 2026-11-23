@@ -38,6 +38,7 @@ export function buildFloor8(THREE, architecture, zone, reducedMotion, mission) {
       },
     }],
     blocks: (x, z) => doors.blocks(x, z) || gym.blocks(x, z) || pool.blocks(x, z) || helicopter.blocks(x, z),
+    getGroundVelocity: gym.getGroundVelocity,
     ceiling(x, z) {
       if (Math.abs(x) < GLASS_WIDTH / 2 + 0.16 && Math.abs(z - HALL.south) < 0.3) return 2.50;
       return Math.min(pool.ceiling(x, z), gym.ceiling(x, z));
@@ -58,7 +59,7 @@ export function buildFloor8(THREE, architecture, zone, reducedMotion, mission) {
       pool.update(dt, still);
       fountain.update(dt, still);
       helicopter.update(dt, still, mission.hasActivity('rescue'));
-      if (position.y - EYE_HEIGHT > .42 && zone.walkables.some(item => overlaps(item, x, position.z))) {
+      if (position.y - EYE_HEIGHT > .42 && pool.loungers.some(item => overlaps(item, x, position.z))) {
         mission.activity('lounger');
       }
     },

@@ -112,10 +112,11 @@ export function createPlayer(THREE, camera) {
     const startZ = position.z;
     const traction = grounded ? area.getGroundTraction?.(position.x, position.z) ?? 1 : 1;
     speed.lerp(motion, 1 - Math.exp(-15 * traction * dt));
+    const surface = grounded ? area.getGroundVelocity?.(position.x, position.z, elevation) : undefined;
     const xLimit = definition.width / 2 - PLAYER_RADIUS;
     const zLimit = definition.depth / 2 - PLAYER_RADIUS;
-    const x = clamp(position.x + speed.x * dt, -xLimit, xLimit);
-    const z = clamp(position.z + speed.y * dt, -zLimit, zLimit);
+    const x = clamp(position.x + (speed.x + (surface?.x ?? 0)) * dt, -xLimit, xLimit);
+    const z = clamp(position.z + (speed.y + (surface?.z ?? 0)) * dt, -zLimit, zLimit);
     walkTo(area, position, x, position.z);
     walkTo(area, position, position.x, z);
 
@@ -132,6 +133,7 @@ export function createPlayer(THREE, camera) {
     verticalSpeed = falling.speed;
     position.y = EYE_HEIGHT + elevation;
     camera.updateMatrixWorld();
+    if (surface && speed.lengthSq() < 1e-5) return 0;
     return wasGrounded && grounded ? Math.hypot(position.x - startX, position.z - startZ) : 0;
   }
 

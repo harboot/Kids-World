@@ -100,7 +100,7 @@ export const areaMetadata = {
       "17E"
     ],
     "description": "Explore the underground parking, the pool terrace on Floor 8, and Unit 17E.",
-    "missionCount": 13,
+    "missionCount": 12,
     "canvasLabel": "3D apartment building with underground parking, pool terrace and Unit 17E",
     "themeColor": "#e5dac6",
     "width": 220,

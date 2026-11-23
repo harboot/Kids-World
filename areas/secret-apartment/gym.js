@@ -1,9 +1,16 @@
+import { rectangleBounds } from '../../core/geometry.js';
+import { overlaps } from '../../core/movement.js';
 import { COLORS, ceilingLight, tileFloor, wallX, wallZ } from './geometry.js';
 import { automaticGlassDoors } from './terrace-doors.js';
 
 const ROOM = { left: 10.3, right: 22.35, front: -5.17, back: 2.30, height: 3.52, entrance: 15.65 };
+const TREADMILL = { x: 12.38, z: -1.97, height: .51 };
+const BELT_VELOCITY = { z: 1.30 };
+const BELT_FRONT = -2.56;
+const BELT_LENGTH = 1.62;
 
-export function buildGym(THREE, architecture, { b, x: offset }, reducedMotion, mission) {
+
+export function buildGym(THREE, architecture, { b, walkables, x: offset }, reducedMotion, mission) {
   const { left, right, front, back, height, entrance } = ROOM;
   const width = right - left;
   const depth = back - front;
@@ -34,15 +41,21 @@ export function buildGym(THREE, architecture, { b, x: offset }, reducedMotion, m
   });
 
   const belts = [];
-  for (const [i, x] of [12.38, 14.41, 16.43].entries()) {
-    const z = -1.97;
-    b.block(COLORS.ink, x, .27, z, 1.17, .37, 2.43);
+  const decks = [TREADMILL.x, 14.41, 16.43].map(x => ({
+    ...rectangleBounds(x, TREADMILL.z, 1.17, 2.43),
+    height: TREADMILL.height,
+  }));
+  walkables.push(...decks);
+  for (const [i, x] of [TREADMILL.x, 14.41, 16.43].entries()) {
+    const z = TREADMILL.z;
+    b.part(COLORS.ink, x, .245, z, 1.17, .49, 2.43);
     b.part(0x455b60, x, .475, z + .15, .89, .069, 1.94);
     for (const side of [-1, 1]) {
       b.part(COLORS.steel, x + side * .49, .86, z - .72, .079, .99, .10, { pitch: -.14 });
       b.part(COLORS.ink, x + side * .48, 1.29, z - .41, .092, .112, .77);
     }
     b.part(0x354750, x, 1.41, z - .80, .79, .15, .37, { pitch: .25 });
+    b.solid(x, z - .92, .96, .24);
     b.part(i === 0 ? 0xbdd76d : 0x93bdb9, x, 1.49, z - .79, .57, .029, .21, { pitch: .25, glow: true });
     if (i === 0) {
       for (let line = 0; line < 7; line++) {
@@ -71,19 +84,23 @@ export function buildGym(THREE, architecture, { b, x: offset }, reducedMotion, m
   let time = 0;
   return {
     interaction: {
-      x: offset + 12.38, z: -.80, anchorY: .74, radius: 2.12, label: 'Start gym treadmill',
+      x: offset + TREADMILL.x, z: -.80, anchorY: .74, radius: 2.12, label: 'Start gym treadmill',
       silent: true, requiresView: true,
       reachable: p => p.z < back - .22 && p.x - offset > left && p.x - offset < right,
       get active() { return !mission.hasActivity('treadmill'); },
       act() { mission.activity('treadmill'); },
     },
     blocks: doors.blocks,
+    getGroundVelocity(x, z, feet) {
+      if (mission.hasActivity('treadmill') && Math.abs(feet - decks[0].height) < .01 &&
+          overlaps(decks[0], x, z)) return BELT_VELOCITY;
+    },
     ceiling(x, z) { return x > left && x < right && z > front && z < back ? height : Infinity; },
     reset() { doors.reset(); time = 0; },
     update(dt, x, z, still) {
       doors.update(dt, x, z);
-      if (!still && mission.hasActivity('treadmill')) time = (time + dt * .95) % 1.62;
-      belts.forEach((belt, i) => { belt.position.z = -2.56 + (time + i * 1.62 / belts.length) % 1.62; });
+      if (!still && mission.hasActivity('treadmill')) time = (time + dt * BELT_VELOCITY.z) % BELT_LENGTH;
+      belts.forEach((belt, i) => { belt.position.z = BELT_FRONT + (time + i * BELT_LENGTH / belts.length) % BELT_LENGTH; });
     },
   };
 }

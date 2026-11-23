@@ -1,5 +1,6 @@
 import { addAdultCouple, buildGarageProps } from './basement-props.js';
-import { buildCarDoor } from './car-door.js';
+import { buildCarDoor, sideGlass, windshield } from './car-door.js';
+import { addSedanInterior, addSedanTrim } from './sedan-details.js';
 import { SURFACE_GAP } from '../../core/geometry.js';
 import { COLORS, ceilingLight, pointLight, wallX, wallZ } from './geometry.js';
 
@@ -9,7 +10,7 @@ const BACK = 13;
 const HEIGHT = 3.85;
 
 function sedan(THREE, architecture, b, x, z, yaw, paint, { special, occupied = false, offset, mission, playerPosition }) {
-  const body = architecture.group(b.root, special ? 'Sedan with illuminated cabin' : 'Parked sedan', x, 0, z, yaw);
+  const body = architecture.group(b.root, special ? 'Sedan with illuminated cabin' : occupied ? 'Silver fastback with passengers' : 'Parked sedan', x, 0, z, yaw);
   const p = architecture.builder(body);
   const glass = special ? 0xd9a46c : occupied ? 0x8ea8ae : 0x354852;
   const chrome = 0xb8babe;
@@ -28,6 +29,20 @@ function sedan(THREE, architecture, b, x, z, yaw, paint, { special, occupied = f
     p.part(paint, -0.847, 0.615, 1.113, 0.154, 0.485, 2.244);
     p.part(dark, -0.845, 0.381, -0.57, 0.15, 0.12, 1.10);
     p.part(0x9c7753, -0.50, 0.899, -0.4, 0.47, 0.11, 0.49);
+  } else if (occupied) {
+    const roofY = 1.51;
+    for (const side of [-1, 1]) {
+      const edge = side * .795;
+      sideGlass(THREE, body, glazing, edge, [[-1.43, .872], [.025, .872], [.025, roofY], [-.86, roofY]]);
+      sideGlass(THREE, body, glazing, edge, [[.111, .872], [1.12, .872], [.78, roofY], [.111, roofY]]);
+      p.part(0x465056, edge, 1.185, -.01, .068, .65, .076);
+      p.part(paint, edge, 1.189, -1.139, .087, .853, .073, { pitch: .73 });
+      p.part(paint, edge, 1.189, .958, .087, .716, .073, { pitch: -.49 });
+    }
+    windshield(THREE, body, glazing, -1.43, -.86, roofY);
+    windshield(THREE, body, glazing, 1.12, .78, roofY);
+    p.part(paint, 0, .615, 0, 1.86, .485, 4.47);
+    addAdultCouple(architecture, body);
   } else {
     const profile = new THREE.Shape();
     profile.moveTo(-1.43, 0);
@@ -39,23 +54,22 @@ function sedan(THREE, architecture, b, x, z, yaw, paint, { special, occupied = f
     cabin.rotation.y = -Math.PI / 2;
     cabin.position.set(0.795, 0.87, 0);
     body.add(cabin);
-    if (occupied) addAdultCouple(architecture, body);
     p.part(paint, 0, 0.615, 0, 1.86, 0.485, 4.47);
   }
   p.part(dark, 0, 0.31, 0, 1.7, 0.23, 4.37);
   p.part(paint, 0, 0.855, -1.72, 1.77, 0.18, 1.04, { pitch: -0.09 });
   p.part(paint, 0, 0.839, 1.72, 1.75, 0.15, 0.98, { pitch: 0.08 });
-  p.part(paint, 0, 1.383, -0.06, 1.61, 0.085, 1.62);
+  p.part(paint, 0, occupied ? 1.515 : 1.383, occupied ? -.038 : -.06, 1.61, .085, occupied ? 1.64 : 1.62);
   p.part(dark, 0, 0.46, -2.247, 1.74, 0.15, 0.07);
   p.part(dark, 0, 0.47, 2.249, 1.73, 0.13, 0.07);
   p.part(0x1d2428, 0, 0.679, -2.247, 0.85, 0.18, 0.055);
   for (let i = 0; i < 3; i++) p.part(chrome, 0, 0.616 + i * 0.056, -2.279, 0.75, 0.015, 0.017);
   p.part(COLORS.ivory, 0, 0.635, 2.275, 0.41, 0.135, 0.035);
-  architecture.sign(body, [special ? '17E' : 'P1'], 0, 0.635, 2.297, 0.35, 0.11);
+  architecture.sign(body, [special ? '17E' : occupied ? 'B-07' : 'P1'], 0, 0.635, 2.297, 0.35, 0.11);
 
   for (const side of [-1, 1]) {
     const edge = side * 0.934;
-    p.part(0x45444a, side * 0.802, 1.115, 0.08, 0.045, 0.48, 0.08);
+    if (!occupied) p.part(0x45444a, side * 0.802, 1.115, 0.08, 0.045, 0.48, 0.08);
     const driverSide = special && side < 0;
     p.part(chrome, side * 0.812, 0.906, driverSide ? 0.56 : -0.14, 0.045, 0.032, driverSide ? 1.11 : 2.43);
     p.part(paint, side * 0.998, 0.99, -0.94, 0.24, 0.124, 0.21, { shape: 'oval' });
@@ -73,16 +87,11 @@ function sedan(THREE, architecture, b, x, z, yaw, paint, { special, occupied = f
       p.part(dark, side * 1.024, 0.347, end * 1.39, 0.115, 0.03, 0.115, wheel);
     }
   }
-  if (special) {
-    p.part(0xffd491, 0, 1.30, 0.06, 0.52, 0.048, 0.26, { glow: true });
-    p.part(0x574337, 0, 0.965, -0.86, 1.49, 0.19, 0.21);
-    p.part(0x72533d, 0, 0.986, 0.71, 1.43, 0.21, 0.29);
-    for (const side of [-1, 1]) {
-      p.part(0x836247, side * 0.44, 1.036, -0.04, 0.46, 0.32, 0.14, { pitch: -0.16 });
-      p.part(0x775641, side * 0.44, 1.211, -0.013, 0.255, 0.15, 0.12, { shape: 'oval' });
-    }
-    pointLight(THREE, body, 0, 1.24, 0.15, 0xffb067, 5, 3.15);
+  if (special || occupied) {
+    addSedanInterior(architecture, body, special);
+    addSedanTrim(architecture, body, occupied);
   }
+  if (special) pointLight(THREE, body, 0, 1.24, .15, 0xffb067, 5, 3.15);
   p.finish();
   b.solid(x, z, 4.58, 2.07);
   return driverDoor;

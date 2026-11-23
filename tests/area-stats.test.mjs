@@ -247,7 +247,7 @@ test('the dashboard renders the last update, grouped metrics, and links to image
   missionSort.dispatchEvent(new Event('click'));
   missionSort.dispatchEvent(new Event('click'));
   assert.equal(missionSort.parentElement.attributes.get('aria-sort'), 'descending');
-  assert.equal(titleFor(rows()[0]), 'Secret Apartment — 17E');
+  assert.deepEqual(rows().slice(0, 2).map(titleFor), ['Flower Garden', 'Secret Apartment — 17E']);
 });
 
 
