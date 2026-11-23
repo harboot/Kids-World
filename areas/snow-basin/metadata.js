@@ -4,6 +4,7 @@ export const metadata = {
   heading: ['Snow', 'Basin'],
   description: 'Chop the pine, hit the snowmen, ride the Ice Mountain slide, and meet Olaf by the frozen lake.',
   completionRevision: 3,
+  missionCount: 4,
   canvasLabel: '3D snow basin',
   themeColor: '#e2f0f5',
   width: 64,

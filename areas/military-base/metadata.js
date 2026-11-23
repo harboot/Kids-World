@@ -3,6 +3,7 @@ export const metadata = {
   title: 'Military Base',
   heading: ['Military', 'Base'],
   description: 'Complete five missions at a snowy mountain base and take a helicopter sightseeing tour.',
+  missionCount: 5,
   canvasLabel: '3D military base with an open gate, headquarters, tank yard, and helipad',
   themeColor: '#dae6ef',
   width: 154,

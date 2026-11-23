@@ -6,26 +6,27 @@ export const SIDE = 8.65;
 export const BACK = -5.4;
 export const FRONT = 5.7;
 
-const STAIR_X = 7.22;
-const STAIR_WIDTH = 1.88;
-const STAIR_START = -3.92;
-const STAIR_END = 2.08;
-const SHAFT_LEFT = STAIR_X - STAIR_WIDTH / 2;
-const SHAFT_RIGHT = STAIR_X + STAIR_WIDTH / 2;
+export const STAIR_Z = 4.15;
+export const STAIR_START = 6.30;
+export const STAIR_END = .30;
+const STAIR_WIDTH = 2.04;
+const STAIR_LENGTH = STAIR_START - STAIR_END;
+const SHAFT_FRONT = STAIR_Z - STAIR_WIDTH / 2;
+const SHAFT_BACK = STAIR_Z + STAIR_WIDTH / 2;
 const WALL = 0.18;
 const layers = [0xc2926a, 0xd0a078, 0xdbac85, 0xc99971];
 
 function onStairs(x, z) {
-  return x >= SHAFT_LEFT && x <= SHAFT_RIGHT && z >= STAIR_START && z < STAIR_END;
+  return x > STAIR_END && x <= STAIR_START && z >= SHAFT_FRONT && z <= SHAFT_BACK;
 }
 
 export function buildUpperFloor({ group, part, solid }) {
   const root = group('Second floor and staircase', 0, 0, 0);
   const panels = [
-    [-SIDE, SHAFT_LEFT, BACK, FRONT],
-    [SHAFT_RIGHT, SIDE, BACK, FRONT],
-    [SHAFT_LEFT, SHAFT_RIGHT, BACK, STAIR_START],
-    [SHAFT_LEFT, SHAFT_RIGHT, STAIR_END, FRONT],
+    [-SIDE, SIDE, BACK, SHAFT_FRONT],
+    [-SIDE, SIDE, SHAFT_BACK, FRONT],
+    [-SIDE, STAIR_END, SHAFT_FRONT, SHAFT_BACK],
+    [STAIR_START, SIDE, SHAFT_FRONT, SHAFT_BACK],
   ];
   // Leave a continuous opening through the floor above the stairs.
   for (const [left, right, front, back] of panels) {
@@ -40,21 +41,23 @@ export function buildUpperFloor({ group, part, solid }) {
   }
 
   const count = 18;
-  const tread = (STAIR_END - STAIR_START) / count;
+  const tread = STAIR_LENGTH / count;
   const rise = UPSTAIRS / count;
+  const middle = (STAIR_START + STAIR_END) / 2;
   for (let i = 0; i < count; i++) {
     const height = (i + .5) * rise;
-    const z = STAIR_START + (i + .5) * tread;
-    part(root, layers[i % layers.length], STAIR_X, height / 2, z, STAIR_WIDTH, height, tread);
+    const x = STAIR_START - (i + .5) * tread;
+    part(root, layers[i % layers.length], x, height / 2, STAIR_Z, tread, height, STAIR_WIDTH);
   }
-  for (const x of [SHAFT_LEFT - .06, SHAFT_RIGHT + .06]) {
+  for (const z of [SHAFT_FRONT - .06, SHAFT_BACK + .06]) {
     for (let i = 0; i <= 6; i++) {
-      const z = STAIR_START + i;
+      const x = STAIR_START - i * STAIR_LENGTH / 6;
       const base = i * UPSTAIRS / 6;
       part(root, 0x855b40, x, base + .43, z, .12, .86, .12);
     }
-    part(root, 0x855b40, x, UPSTAIRS / 2 + .89, (STAIR_START + STAIR_END) / 2, .13, .12,
-      Math.hypot(6, UPSTAIRS)).rotation.x = -Math.atan2(UPSTAIRS, 6);
+    part(root, 0x855b40, middle, UPSTAIRS / 2 + .89, z, Math.hypot(STAIR_LENGTH, UPSTAIRS), .12, .13)
+      .rotation.z = -Math.atan2(UPSTAIRS, STAIR_LENGTH);
+    solid(middle, z, STAIR_LENGTH, .14, UPSTAIRS + 1.5, 'stairs');
   }
 
   function wall(x, z, width, depth, tint) {
@@ -77,9 +80,9 @@ export function buildUpperFloor({ group, part, solid }) {
   }
 
   for (const [x, z, width, depth] of [
-    [SHAFT_LEFT - .08, .7, .13, 2.8],
-    [SHAFT_RIGHT + .08, (STAIR_START + STAIR_END) / 2, .12, STAIR_END - STAIR_START],
-    [STAIR_X, STAIR_START - .10, STAIR_WIDTH, .12],
+    [middle, SHAFT_FRONT - .08, STAIR_LENGTH, .13],
+    [middle, SHAFT_BACK + .08, STAIR_LENGTH, .13],
+    [STAIR_START + .08, STAIR_Z, .12, STAIR_WIDTH],
   ]) {
     part(root, 0x855b40, x, UPSTAIRS + .92, z, width, .125, depth);
     for (const offset of [-.35, 0, .35]) {
@@ -88,19 +91,16 @@ export function buildUpperFloor({ group, part, solid }) {
     }
     solid(x, z, width, depth, UPSTAIRS + 1.56, UPSTAIRS);
   }
-  solid(SHAFT_LEFT - .075, (STAIR_START + STAIR_END) / 2, .14, 6, UPSTAIRS + 1.5, 'stairs');
-  solid(SHAFT_RIGHT + .07, (STAIR_START + STAIR_END) / 2, .14, 6, UPSTAIRS + 1.5, 'stairs');
 }
 
 export function houseGround(x, z, feet) {
-  if (onStairs(x, z)) return (z - STAIR_START) / (STAIR_END - STAIR_START) * UPSTAIRS;
+  if (onStairs(x, z)) return (STAIR_START - x) / STAIR_LENGTH * UPSTAIRS;
   return feet >= UPSTAIRS - .14 ? UPSTAIRS : 0;
 }
 
 export function houseCeiling(x, z, feet = 0) {
   if (Math.abs(x) > SIDE || z > FRONT || z < BACK) return Infinity;
   if (feet < UPSTAIRS - .14 && !onStairs(x, z)) {
-    if (Math.abs(x) <= .96 && z >= FRONT - .115) return 2.35;
     return UPSTAIRS - .21;
   }
   return UPSTAIRS + 3.16;
@@ -114,7 +114,7 @@ export function upstairsBlockers() {
     },
     blocks(x, z, feet) {
       return blockers.some(item => {
-        const floor = item.floor === 'stairs' ? houseGround(STAIR_X, z, 0) : item.floor;
+        const floor = item.floor === 'stairs' ? houseGround(x, STAIR_Z, 0) : item.floor;
         return feet >= floor - .13 && feet < item.height && overlaps(item, x, z);
       });
     },

@@ -263,8 +263,8 @@ export async function readAreaSources(root) {
     const entry = entryPath ?? metadataPath;
     const exportName = fromCatalog ? 'metadata' : imported.name;
     const metadata = fields(definition((await readModule(metadataPath)).bindings, exportName, metadataPath), metadataPath);
-    const [title, rawWidth, rawDepth] = await Promise.all(
-      ['title', 'width', 'depth'].map(field => properties?.has(field)
+    const [title, rawWidth, rawDepth, rawMissionCount] = await Promise.all(
+      ['title', 'width', 'depth', 'missionCount'].map(field => properties?.has(field)
         ? resolveValue(properties.get(field), 'game.js', readModule)
         : resolveValue(metadata.get(field), metadataPath, readModule)),
     );
@@ -278,7 +278,8 @@ export async function readAreaSources(root) {
       if (error.code !== 'ENOENT') throw error;
     });
     const thumbnail = folder || thumbnailFile?.isFile() ? './' + thumbnailPath : null;
-    areas.push({ id, name: title, visibility, thumbnail, width, depth, mapArea, entry, directory, metadataPath });
+    const missionCount = Number.isInteger(rawMissionCount) && rawMissionCount >= 0 ? rawMissionCount : null;
+    areas.push({ id, name: title, visibility, thumbnail, width, depth, mapArea, missionCount, entry, directory, metadataPath });
   }
   return areas;
 }

@@ -1,13 +1,13 @@
 {
-  "version": "35c45a02e9bc4034b29ad40e1161e20387a05554cb293260d951abdc2da012f1",
+  "version": "54fe9261519b8127166cdead459961192b10589f65424b5591442df89fc56464",
   "files": [
     {
       "path": "./area-catalog.js",
-      "revision": "34e0d488a7799ef5146a165ee779fb389419cd0417bf7d3ba37fe17932c2736f"
+      "revision": "b35321a90716b60969dba50cbed17c55ca5e3c0092d7b3e0046a3a752539ae5b"
     },
     {
       "path": "./area-stats.json",
-      "revision": "0c0267c73f2773377ccf945936da3db47f82bd5a3b37aa2b15474a9d1c983a8d"
+      "revision": "9b43cf576a45f30d0eea4479cd07de094775d59c8f285d71190c6fe2023bfaf5"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -51,7 +51,7 @@
     },
     {
       "path": "./areas/arendelle-village/metadata.js",
-      "revision": "0aec907dcd63aea5fc3f6852894294e8597ebd201c03c22f336d63a5bc6373ee"
+      "revision": "b8ccb91ada654373da4eaa2674eeab1d91402dc933bc7f525da6fb8b41e26e02"
     },
     {
       "path": "./areas/arendelle-village/missions.js",
@@ -143,7 +143,7 @@
     },
     {
       "path": "./areas/flower-garden/metadata.js",
-      "revision": "a2222446d0f86804f66915e3744db5f65da935f748f1cc14b1993ba1b6925892"
+      "revision": "f4f37998d6bb3eef1b6b54075b6108442e33425cadf0cd4669e3ddec11e7b8be"
     },
     {
       "path": "./areas/flower-garden/music.js",
@@ -167,7 +167,7 @@
     },
     {
       "path": "./areas/frozen-castle/metadata.js",
-      "revision": "edbc245c318208a677a1e14666c06a16801a68bc15455dfb70efeb4a32a37aa0"
+      "revision": "473bf08fb0aaa53ca93793020d53837e8e11c072121a1a2faa2d8f962f649021"
     },
     {
       "path": "./areas/frozen-castle/music.js",
@@ -215,7 +215,7 @@
     },
     {
       "path": "./areas/military-base/metadata.js",
-      "revision": "daba3272f22ee8509d94daa72cceb614d18e0b8eba2b076314abfaf18be6ac89"
+      "revision": "749fa6e7dabfda24ef66159e7585ad935a135560e7f25b7d0517825064cc4bb2"
     },
     {
       "path": "./areas/military-base/military-base.jpg",
@@ -363,7 +363,7 @@
     },
     {
       "path": "./areas/princess-gallery/metadata.js",
-      "revision": "167f6c6ed05b379c8ae4b0cbfdb82075b14de0a9866a7acadbd501e2fa15077b"
+      "revision": "552d2cdc676867a7311ccca95eafbc69bb6fe0d7f5e1fde1a1dcad4f6fe7711d"
     },
     {
       "path": "./areas/princess-gallery/mulan-character.js",
@@ -443,7 +443,7 @@
     },
     {
       "path": "./areas/secret-apartment/secret-apartment.jpg",
-      "revision": "30e066e7291eda8f03ae4e9453775c7e6e18ffa5907427b6c53d19eb07f1db79"
+      "revision": "972ec4ddb3403ef55f77114dc0718cbcd114a8e2024c403e6bc6943aca1ec045"
     },
     {
       "path": "./areas/snow-basin/activity.js",
@@ -463,7 +463,7 @@
     },
     {
       "path": "./areas/snow-basin/metadata.js",
-      "revision": "3df8814b3de844cc01e1d374725381b95ce4cc077cf96ce18d08893131957910"
+      "revision": "593a0e695085ca7427f28fdd3be4f221adaa54467c3852dbf155611d2ae9c5a1"
     },
     {
       "path": "./areas/snow-basin/music.js",
@@ -499,7 +499,7 @@
     },
     {
       "path": "./areas/wooden-house/cleaning.js",
-      "revision": "e244b20764c7e5bd5c710370f999ceab01d96c8d67d655d4752d3e2687713a66"
+      "revision": "1f637ce2f99c8e21e45d1790ecd73f6bbbb84eed8b13c2a042ca74451ce821bf"
     },
     {
       "path": "./areas/wooden-house/clearance.js",
@@ -507,7 +507,7 @@
     },
     {
       "path": "./areas/wooden-house/family.js",
-      "revision": "aff9fbf3af3c5d03ce692ff3a081c956ad654f19d1f506e538b80b30f8f230f8"
+      "revision": "91a5adf0a520c444079a2c72217b26192f355529253d6976c2af635d8a292ab0"
     },
     {
       "path": "./areas/wooden-house/furniture.js",
@@ -515,23 +515,27 @@
     },
     {
       "path": "./areas/wooden-house/index.js",
-      "revision": "157aa772239a5251415b309039f00c092579b6df4fd86eb6eb678ed095569b51"
+      "revision": "4d28007182ef42330d13183a11fad26be817f3e5cc842ac9bd7287e2e867b749"
     },
     {
       "path": "./areas/wooden-house/interior.js",
-      "revision": "aab2fc85669ccee1444ac94c6c73d7c9bbf7d9e917ed9295f697853e9a58e77e"
+      "revision": "a373035d5c98f43395e3d415d24d5850b7e1ad69252a3541689cad89458a5571"
     },
     {
       "path": "./areas/wooden-house/layout.js",
-      "revision": "1d0bbfe4cbd5b071dc3a9db614ea60d5062bde067f6ed9a6db26442463b4f540"
+      "revision": "98e6c2a4003e603cec883ae0a7d4b22d47d9404d3cd200eee11db5b7058fa010"
     },
     {
       "path": "./areas/wooden-house/metadata.js",
-      "revision": "9d251c3a552fe6295d3a3deba5b51aac168e3b14fd9e0bc66ce3f0578560da69"
+      "revision": "4f56b3c3ce4debd530a9be0ecb003da7da40e10ee45b6b5ffe0c2971b7798329"
     },
     {
       "path": "./areas/wooden-house/music.js",
       "revision": "b60d4bd55d36f22b3e1afd59a99f44e2f99d04e178cbdc71edeb492470e83bc3"
+    },
+    {
+      "path": "./areas/wooden-house/upstairs-decor.js",
+      "revision": "f4a9ed2ff2633bf102cd09a34021677312a8cbcfc30e484e8566e8d74331058e"
     },
     {
       "path": "./areas/wooden-house/wooden-house.jpg",
@@ -659,7 +663,7 @@
     },
     {
       "path": "./stats.html",
-      "revision": "4a5fbd022768d5374b3e097dfe2d91631297bcedc6cad8971f28beba3c5d12ff"
+      "revision": "e5c99b9913b21decf5685ab65f6b2418e9621ce4c2591bb75cf3660df5d91bc9"
     },
     {
       "path": "./style.css",
@@ -725,7 +729,7 @@
     },
     {
       "path": "./areas/secret-apartment/metadata.js",
-      "revision": "72357204d573e64980ec00fafdb914318b2dd5a6c7206cf94302e16ec8f78982"
+      "revision": "9349de6fc1eb255c85ccb3e0633e838e986a69110d31a1505a276b48f60d5622"
     },
     {
       "path": "./areas/secret-apartment/missions.js",

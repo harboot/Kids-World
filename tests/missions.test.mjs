@@ -48,21 +48,23 @@ test('every registered area provides a fresh mission status and releases its vis
   const camera = new THREE.PerspectiveCamera();
   const worlds = createWorldManager(THREE, { areas, camera, playerRadius: PLAYER_RADIUS });
   t.after(worlds.unload);
-  for (const [id, totals] of [
+  const totalsByArea = new Map([
     ['garden', [3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]],
     ['snow', [5, 3, 1, 1]],
-    ['wooden-house', [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]],
+    ['wooden-house', [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]],
     ['frozen-castle', [4, 3, 3]],
     ['arendelle-village', [3, 1, 3]],
     ['secret-apartment', [2, 2, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]],
-  ]) {
+  ]);
+  for (const id of Object.keys(areas).sort((a, b) => Number(areas[b].show) - Number(areas[a].show))) {
     const previous = worlds.active;
     const { area, scene } = await worlds.load(id);
     assert.ok(Array.isArray(area.obstacles), id);
     assert.equal(typeof area.reset, 'function', id);
     assert.ok(Array.isArray(area.interactions) && area.interactions.every(item => typeof item.act === 'function'), id);
     const status = normalizeMissionStatus(area.missionStatus);
-    assert.deepEqual(status.missions.map(mission => mission.total), totals, id);
+    if (totalsByArea.has(id)) assert.deepEqual(status.missions.map(mission => mission.total), totalsByArea.get(id), id);
+    assert.equal(status.missions.length, areas[id].missionCount, id);
     assert.equal(status.completed, 0, id);
     assert.ok(status.missions.every(mission => mission.current === 0), id);
     assert.equal(camera.parent, scene);

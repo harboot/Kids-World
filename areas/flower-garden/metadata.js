@@ -5,6 +5,7 @@ export const metadata = {
   description: 'Help the garden animals, deliver apples, and explore by balloon or through the mountain cave.',
   completionRevision: 3,
   loadingMessage: 'Loading the garden…',
+  missionCount: 12,
   canvasLabel: '3D flower garden',
   themeColor: '#e9eedc',
   width: 45,

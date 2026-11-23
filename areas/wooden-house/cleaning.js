@@ -48,6 +48,26 @@ export function createCleaningMissions(THREE, scene, models, { playCue, reducedM
     }
   }
 
+  function reachable(model, player) {
+    const { floor = 0, clearance, approach } = model;
+    return Math.abs(player.y - EYE_HEIGHT - floor) < .75 &&
+      (!clearance || !insideClearance(clearance, player.x, player.z)) && (!approach || approach(player));
+  }
+
+  function available(task) {
+    return !signal?.aborted && !task.completed && task.elapsed === null && (!task.model.ready || task.model.ready());
+  }
+
+  function start(task) {
+    if (!available(task)) return;
+    playCue(task.model.sound ?? cues[task.model.id]);
+    if (reducedMotion()) finish(task);
+    else {
+      task.elapsed = 0;
+      task.model.render(0, true);
+    }
+  }
+
   return {
     missionStatus: {
       missions: tasks.map(task => ({
@@ -61,37 +81,29 @@ export function createCleaningMissions(THREE, scene, models, { playCue, reducedM
         return task.elapsed === null ? task.model.hint : `Watch the activity finish: ${task.model.label}.`;
       },
     },
-    interactions: tasks.map(task => {
-      const { id, x, z, label, anchorY, radius, floor = 0, clearance, approach, ready, sound } = task.model;
-      const available = () => !signal?.aborted && !task.completed && task.elapsed === null && (!ready || ready());
+    interactions: tasks.filter(({ model }) => !model.automatic).map(task => {
+      const { id, x, z, label, anchorY, radius } = task.model;
       return {
         id, x, z, radius, label, anchorY, requiresView: true, silent: true,
-        reachable: player => Math.abs(player.y - EYE_HEIGHT - floor) < .75 &&
-          (!clearance || !insideClearance(clearance, player.x, player.z)) && (!approach || approach(player)),
-        get active() { return available(); },
-        act() {
-          if (!available()) return;
-          playCue(sound ?? cues[id]);
-          if (reducedMotion()) finish(task);
-          else {
-            task.elapsed = 0;
-            task.model.render(0, true);
-          }
-        },
+        reachable: player => reachable(task.model, player),
+        get active() { return available(task); },
+        act() { start(task); },
       };
     }),
     blocksGround(x, z, feet) {
       return tasks.some(({ model, completed }) => !completed && model.clearance &&
         Math.abs(feet - (model.floor ?? 0)) < 1.4 && insideClearance(model.clearance, x, z));
     },
-    update(dt) {
+    update(dt, position) {
       if (signal?.aborted) return;
       const still = reducedMotion();
       for (const task of tasks) {
         if (task.completed) continue;
         const { model } = task;
         if (task.elapsed === null) {
-          if (!still) model.idle?.(dt);
+          if (model.automatic && position && Math.hypot(position.x - model.x, position.z - model.z) <= model.radius &&
+              reachable(model, position)) start(task);
+          else if (!still) model.idle?.(dt);
           continue;
         }
         task.elapsed += dt;
