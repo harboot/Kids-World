@@ -1,11 +1,11 @@
 {
-  "updatedAt": "2026-11-23T12:32:24.479Z",
+  "updatedAt": "2026-11-23T12:46:29.723Z",
   "summary": {
     "totalAreas": 9,
     "publicAreas": 8,
     "hiddenAreas": 1,
-    "totalFiles": 157,
-    "totalBytes": 1302449
+    "totalFiles": 159,
+    "totalBytes": 1318640
   },
   "areas": [
     {
@@ -70,16 +70,16 @@
       "name": "Kung Fu Hustle",
       "visibility": "Public",
       "thumbnail": "./areas/kung-fu-hustle/kung-fu-hustle.jpg",
-      "width": 40,
-      "depth": 34,
-      "mapArea": 1360,
+      "width": 62,
+      "depth": 36,
+      "mapArea": 2232,
       "missionCount": 0,
-      "folderBytes": 43500,
-      "totalFiles": 5,
-      "jsFiles": 4,
-      "jsBytes": 21389,
+      "folderBytes": 59691,
+      "totalFiles": 7,
+      "jsFiles": 6,
+      "jsBytes": 37764,
       "imageFiles": 1,
-      "imageBytes": 22111,
+      "imageBytes": 21927,
       "imageFormats": [
         "JPG"
       ]

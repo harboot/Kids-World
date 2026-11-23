@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import * as THREE from '../vendor/three.module.min.js';
+import { footprint, wingX } from '../areas/kung-fu-hustle/layout.js';
 import { areas } from '../game.js';
 import { createPlayer, EYE_HEIGHT } from '../core/player.js';
 import { createWorldManager, resolveArea } from '../core/world-manager.js';
@@ -51,29 +52,32 @@ test('both stairways connect all four floors, with continuous corridors between 
 
   for (const side of [-1, 1]) {
     reset();
-    const stair = side * 11.15;
-    const wing = side * 14;
-    reach(stair, 9);
+    const stairs = z => reach(wingX(side, side * 11.15, z), z);
+    const wing = z => reach(wingX(side, side * 14, z), z);
+    reach(side * 7.5, 6);
+    reach(side * 16, 8.45);
+    stairs(8.45);
     for (let level = 1; level <= 3; level++) {
-      reach(stair, 6.2);
-      reach(stair, -3.35);
-      reach(wing, -3.35);
-      reach(wing, -9);
-      reach(-wing, -9);
+      stairs(6.2);
+      stairs(-3.35);
+      wing(-3.35);
+      wing(-9);
+      reach(wingX(-side, -side * 14, -9), -9);
       assert.equal(position.y, EYE_HEIGHT + level * 3.25);
-      reach(wing, -9);
-      reach(wing, 6.2);
+      wing(-9);
+      wing(6.2);
     }
-    reach(wing, -3.35);
+    wing(-3.35);
     for (let level = 3; level >= 1; level--) {
-      reach(stair, -3.35);
-      reach(stair, 6.2);
+      stairs(-3.35);
+      stairs(6.2);
       assert.equal(position.y, EYE_HEIGHT + (level - 1) * 3.25);
       if (level > 1) {
-        reach(wing, 6.2);
-        reach(wing, -3.35);
+        wing(6.2);
+        wing(-3.35);
       }
     }
+
   }
 });
 
@@ -91,7 +95,30 @@ test('the gate, door facades, stair rails and gallery rails contain the player',
   assert.equal(walk(0, -7, 75), false);
   assert.equal(position.y, EYE_HEIGHT + 6.5);
 
-  player.reset({ x: 11.15, z: 1.4, elevation: 1.625 }, visit.area);
-  assert.equal(walk(8.5, 1.4, 75), false);
+  player.reset({ x: wingX(1, 11.15, 1.4), z: 1.4, elevation: 1.625 }, visit.area);
+  assert.equal(walk(wingX(1, 8.5, 1.4), 1.4, 75), false);
   assert.ok(Math.abs(position.y - (EYE_HEIGHT + 1.625)) < 1e-6);
+});
+
+test('shop fronts are solid and paths to the hexagonal fence corners are walkable', async t => {
+  const { visit, player, position, walk } = await start(t);
+  for (const side of [-1, 1]) {
+    assert.ok(wingX(side, side * 14, 8.5) * side > 21);
+    player.reset({ x: side * 12, z: 6.8 }, visit.area);
+    assert.equal(walk(side * 12, 10.65, 100), false);
+    assert.ok(position.z < 9);
+    assert.ok(walk(side * 17.4, 7.7));
+    assert.ok(walk(side * 20.5, 10.6));
+    assert.ok(walk(side * 21.25, 13.2));
+    assert.equal(walk(side * 21.25, 15.2, 55), false);
+    assert.ok(position.z < 14.2);
+  }
+
+  for (const [i, [x, z]] of footprint.entries()) {
+    const [nextX, nextZ] = footprint[(i + 1) % footprint.length];
+    if (z === nextZ && z > 0) continue; // The front edge is split at the gate.
+    const centerX = (x + nextX) / 2;
+    const centerZ = (z + nextZ) / 2;
+    assert.equal(visit.area.blocksGround(centerX, centerZ, .34, 0), true);
+  }
 });
