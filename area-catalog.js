@@ -67,11 +67,11 @@ export const areaMetadata = {
     "canvasLabel": "3D courtyard and walkable galleries of an old Shanghai tenement",
     "themeColor": "#d9ae88",
     "width": 62,
-    "depth": 36,
+    "depth": 44,
     "missionCount": 0,
     "spawn": {
       "x": 0,
-      "z": 12
+      "z": 18.2
     }
   },
   "military-base": {

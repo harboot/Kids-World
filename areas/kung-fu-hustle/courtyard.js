@@ -1,5 +1,8 @@
-import { footprint, gateZ } from './layout.js';
+import { footprint, gateHalfWidth, gateZ } from './layout.js';
 import { crack, exposedBrick, ink, laundry, roof } from './masonry.js';
+
+const gatePierWidth = .77;
+const gatePierX = gateHalfWidth + gatePierWidth / 2;
 
 function perimeterWall(kit, layout, random, x1, z1, x2, z2) {
   const { wall } = kit;
@@ -37,8 +40,11 @@ function pavedYard(kit, random) {
   const [rearX, rearZ] = footprint[1];
   const [shoulderX, shoulderZ] = footprint[2];
   const [frontX, frontZ] = footprint[3];
-  for (let row = 0; row < 27; row++) {
-    const z = -14.4 + row * 1.06;
+  const firstRow = rearZ + 1.2;
+  const rowSpacing = 1.06;
+  const rows = Math.floor((frontZ - .62 - firstRow) / rowSpacing) + 1;
+  for (let row = 0; row < rows; row++) {
+    const z = firstRow + row * rowSpacing;
     const edge = z < shoulderZ
       ? rearX + (shoulderX - rearX) * (z - rearZ) / (shoulderZ - rearZ)
       : shoulderX + (frontX - shoulderX) * (z - shoulderZ) / (frontZ - shoulderZ);
@@ -235,7 +241,7 @@ function courtyardProps(kit, layout, random) {
   for (const [x, z, size] of [
     [-5.8, -4.7, .85], [6.4, -6.2, 1], [-9, 7.85, .88],
     [9.65, 7.98, .77], [15.65, 11.68, .92], [-22.0, 8.15, .9],
-    [3.85, 13.47, 1.07], [-3.8, 13.39, .80],
+    [gatePierX + 1.3, gateZ - .73, 1.07], [-gatePierX - 1.25, gateZ - .81, .80],
   ]) {
     drum(0x8c614b, x, size * .29, z, size * .58, size * .58, size * .58);
     drum(0x64513c, x, size * .55, z, size * .52, size * .10, size * .52);
@@ -290,15 +296,16 @@ export function courtyard(kit, layout, random) {
   const edges = footprint.map((point, i) => [point, footprint[(i + 1) % footprint.length]]);
   for (const [[x1, z1], [x2, z2]] of edges) {
     if (z1 === gateZ && z2 === gateZ) {
-      perimeterWall(kit, layout, random, x1, z1, 2.57, gateZ);
-      perimeterWall(kit, layout, random, -2.57, gateZ, x2, z2);
+      perimeterWall(kit, layout, random, x1, z1, gatePierX, gateZ);
+      perimeterWall(kit, layout, random, -gatePierX, gateZ, x2, z2);
       continue;
     }
     perimeterWall(kit, layout, random, x1, z1, x2, z2);
   }
   for (const side of [-1, 1]) {
-    const x = side * 2.58;
-    box(ink.band, x, 1.575, gateZ, .77, 3.15, .87);
+    const x = side * gatePierX;
+    box(ink.band, x, 1.575, gateZ, gatePierWidth, 3.15, .87);
+    layout.solid(x, gateZ, gatePierWidth, .87, 3.15);
     box(ink.cream, x, 3.15, gateZ, .95, .19, 1.02);
     drum(ink.band, x, 3.44, gateZ, .35, .40, .35);
     const face = kit.wall(x, gateZ + .437, 0);
@@ -308,8 +315,9 @@ export function courtyard(kit, layout, random) {
   courtyardProps(kit, layout, random);
 
   // A wrought-iron arch with two closed gate leaves.
-  function archY(x) { return 3.10 + 1.46 * (1 - (x / 2.57) ** 2); }
-  const archPoints = Array.from({ length: 17 }, (_, i) => -2.56 + i * .32);
+  function archY(x) { return 3.10 + 1.62 * (1 - (x / gatePierX) ** 2); }
+  const archSegments = Math.ceil(2 * gatePierX / .40);
+  const archPoints = Array.from({ length: archSegments + 1 }, (_, i) => gatePierX * (2 * i / archSegments - 1));
   for (const [offset, height, depth] of [[0, .135, .151], [-.43, .083, .108]]) {
     const top = archPoints.map(x => [x, archY(x) + offset + height / 2]);
     const bottom = archPoints.map(x => [x, archY(x) + offset - height / 2]).reverse();
@@ -321,22 +329,28 @@ export function courtyard(kit, layout, random) {
     beam(ink.iron, a, archY(a) - .43, gateZ, b, archY(b), gateZ, .066);
   }
   for (const [i, letter] of Array.from('永安里').entries()) {
-    const x = (i - 1) * 1.04;
+    const x = (i - 1) * 1.16;
     const y = archY(x) - .15;
     drum(ink.wood, x, y, gateZ, 1.00, .18, 1.00, 0, Math.PI / 2);
     drum(0xb5956c, x, y, gateZ, .87, .196, .87, 0, Math.PI / 2);
     kit.gateLetter(letter, x, y, gateZ);
   }
+  const centerGap = .045;
+  const leafWidth = gateHalfWidth - centerGap;
+  const barCount = Math.ceil(leafWidth / .26);
   for (const side of [-1, 1]) {
-    box(ink.iron, side * 1.13, .34, gateZ, 2.22, .44, .13);
-    box(ink.iron, side * 1.13, 1.30, gateZ, 2.22, .08, .12);
-    for (let i = 0; i < 9; i++) {
-      const x = side * (.14 + i * .25);
-      const y = 2.42 + .22 * (1 - Math.abs(x) / 2.2);
-      box(ink.iron, x, y / 2, gateZ, .061, y, .074);
+    const leafX = side * (gateHalfWidth + centerGap) / 2;
+    box(ink.iron, leafX, .34, gateZ, leafWidth, .44, .13);
+    box(ink.iron, leafX, 1.30, gateZ, leafWidth, .08, .12);
+    beam(ink.iron, side * .128, .50, gateZ, side * (gateHalfWidth - .068), 1.96, gateZ, .102);
+    for (let i = 0; i < barCount; i++) {
+      const x = centerGap + (i + .5) * leafWidth / barCount;
+      const y = 2.42 + .22 * (1 - x / gateHalfWidth);
+      const width = i === 0 || i === barCount - 1 ? .105 : .061;
+      box(ink.iron, side * x, y / 2, gateZ, width, y, .074);
     }
   }
-  layout.solid(0, gateZ, 5.12, .22, 3.12);
+  layout.solid(0, gateZ, 2 * gateHalfWidth, .22, 3.12);
 
   // Central stone well and the structural timber frame above it.
   const wellX = -3.5;

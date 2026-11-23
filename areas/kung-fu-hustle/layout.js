@@ -5,11 +5,12 @@ export const floorRise = 3.25;
 export const stories = 4;
 export const stair = { inner: 10.8, outer: 12.4, top: -2.1, foot: 4.9, rear: -4.4, front: 7.15 };
 export const gallery = { rear: -10.5, court: -7.5, outer: 15.35, front: 8.5, slab: .24 };
-export const gateZ = 14.2;
+export const gateZ = 20.4;
+export const gateHalfWidth = 6.7;
 export const wingSlope = .48;
 export const footprint = [
   [-19.2, -15.6], [19.2, -15.6], [29.2, 9.2],
-  [25.2, gateZ], [-25.2, gateZ], [-29.2, 9.2],
+  [20.2, gateZ], [-20.2, gateZ], [-29.2, 9.2],
 ];
 
 export function wingX(side, x, z) {
