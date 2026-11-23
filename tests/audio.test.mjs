@@ -5,6 +5,7 @@ import { createAudio } from '../core/audio.js';
 import { areas } from '../game.js';
 import { music as gardenMusic } from '../areas/flower-garden/music.js';
 import { music as snowMusic } from '../areas/snow-basin/music.js';
+import { music as courtyardMusic } from '../areas/kung-fu-hustle/music.js';
 
 class SoundButton extends EventTarget {
   hidden = true;
@@ -130,11 +131,10 @@ function setup(t, { muted = false, failResume = false } = {}) {
   return { contexts, renders, started, storage, AudioContext, tick: () => t.mock.timers.tick(0) };
 }
 
-test('the eight scored areas export distinct local compositions compatible with the generic audio engine', async t => {
+test('the nine scored areas export distinct local compositions compatible with the generic audio engine', async t => {
   const folders = { garden: 'flower-garden', snow: 'snow-basin' };
-  const { 'kung-fu-hustle': courtyard, ...scoredAreas } = areas;
-  assert.equal((await courtyard.loadModule()).default.music, undefined);
-  assert.equal(Object.keys(scoredAreas).length, 8);
+  const scoredAreas = areas;
+  assert.equal(Object.keys(scoredAreas).length, 9);
   const { contexts, renders, started, tick } = setup(t);
   const audio = createAudio(new SoundButton());
   const compositions = new Set();
@@ -171,13 +171,42 @@ test('the eight scored areas export distinct local compositions compatible with 
     started.at(-1).end();
   }
 
-  assert.equal(compositions.size, 8);
-  assert.equal(audioSequences.size, 8);
-  assert.equal(renders.length, 8);
-  assert.equal(started.length, 8);
+  assert.equal(compositions.size, 9);
+  assert.equal(audioSequences.size, 9);
+  assert.equal(renders.length, 9);
+  assert.equal(started.length, 9);
   assert.equal(contexts.length, 1);
   const engine = await readFile(new URL('../core/audio.js', import.meta.url), 'utf8');
   assert.doesNotMatch(engine, /\b(garden|snow|woodenHouse|frozenCastle|arendelle|princessGallery|militaryBase|secretApartment)\b/i);
+});
+
+test('Kung Fu Hustle renders notated durations and sustained notes across bar lines', async t => {
+  const { renders, started, tick } = setup(t);
+  const audio = createAudio(new SoundButton());
+  audio.unlock();
+  audio.setPlaying(true);
+  audio.setScore(courtyardMusic);
+  tick();
+
+  const render = renders.at(-1);
+  const beat = courtyardMusic.beat;
+  const noteEvents = courtyardMusic.bars.reduce((sum, bar) => sum + bar.melody.length, 0);
+  assert.equal(render.notes.length, noteEvents * courtyardMusic.melody.length);
+  assert.equal(render.length, 50 * 24000); // 15 bars × 4 beats @ 72 BPM.
+
+  const first = render.notes[0];
+  assert.ok(Math.abs(first.stopTime - first.startTime - 0.5 * beat) < 1e-9);
+  const held = render.notes[14]; // Last note of bar 1, first timbre.
+  assert.ok(Math.abs(held.startTime - 3.5 * beat) < 1e-9);
+  assert.ok(Math.abs(held.stopTime - held.startTime - 3.5 * beat) < 1e-9);
+  assert.ok(held.stopTime > 4 * beat, 'the tied note crosses into bar 2');
+  assert.ok(held.stopTime < 8 * beat, 'the tied note ends before bar 3');
+
+  // The original area scores still use two-number note tuples.
+  assert.equal(gardenMusic.bars[0].melody[0].length, 2);
+  render.finish();
+  await render.done.promise;
+  assert.equal(started.at(-1).loop, true);
 });
 
 test('switches, pauses, and restarts with a single loop, and never plays an obsolete render', async t => {
