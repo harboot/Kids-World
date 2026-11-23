@@ -63,11 +63,11 @@ export const areaMetadata = {
       "Kung Fu",
       "Hustle"
     ],
-    "description": "Explore an old courtyard tenement with open-air stairs and corridors on four floors.",
+    "description": "Explore a weathered tenement, its courtyard shops, and open-air corridors on four floors.",
     "canvasLabel": "3D courtyard and walkable galleries of an old Shanghai tenement",
     "themeColor": "#d9ae88",
-    "width": 40,
-    "depth": 34,
+    "width": 62,
+    "depth": 36,
     "missionCount": 0,
     "spawn": {
       "x": 0,

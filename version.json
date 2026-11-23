@@ -1,13 +1,13 @@
 {
-  "version": "172912dd82c8a05c2cccd31625f7ec27985e869057a4ddffd03fa0197d2ae2a9",
+  "version": "e8d8fbc0accd4dffff4c3d995721f00d38655496b8cd070fa77af45ac879aac8",
   "files": [
     {
       "path": "./area-catalog.js",
-      "revision": "72ab30da9ef90fdaaa35f3766d1cb4ad63c1ba01c18d6b428f607fdc195d7162"
+      "revision": "c3e09868b1e42719948fe3ec0aeb97224605d64678d0dab6a7e5344c6a37557f"
     },
     {
       "path": "./area-stats.json",
-      "revision": "dcdbc6178eea4c2f1bfab431d8a92c25b202b407bff959cfb2bf69b0fbb50080"
+      "revision": "0edd5e6e3f3a1e9e9dd260219bfd3bbbb560f0b9f539bf48e4e75eba563d324d"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -186,24 +186,32 @@
       "revision": "982db5375250440292f9140a0a4f454b1d967eca825952d90107b2ab486b242f"
     },
     {
+      "path": "./areas/kung-fu-hustle/courtyard.js",
+      "revision": "f9a42cb4c974c09b271d85a6e8eeaf5048cbf063fd3434ef6feaa86ba28cddd7"
+    },
+    {
       "path": "./areas/kung-fu-hustle/index.js",
       "revision": "3b10ecf96e8e50fd274c3c491788e6e72cf82cccb1ebb901a7729fc504c04685"
     },
     {
       "path": "./areas/kung-fu-hustle/kung-fu-hustle.jpg",
-      "revision": "526dd0daee296d9cf3287839b8b2cca7bc75b29665a0e5df4cbcfa3427f21cde"
+      "revision": "d30e1ac591a1ade38f68b79c1706f2e4d7ab52e6ef9b7843562824581f75affa"
     },
     {
       "path": "./areas/kung-fu-hustle/layout.js",
-      "revision": "aace71b28714a700012ce53605d223ba074f569c376d48f58cf3772f2866b04c"
+      "revision": "21b1443558a578bc45bc2fd3be5bfd9106e644f5413c26b6c919173259562ace"
+    },
+    {
+      "path": "./areas/kung-fu-hustle/masonry.js",
+      "revision": "37dafed0a2bca1bf4a087232943ecf95a6f232de5fbc01eb318f483ab2dd9c4d"
     },
     {
       "path": "./areas/kung-fu-hustle/metadata.js",
-      "revision": "ce9e4a436bae7215d650ed26a0144b23136900ee9dfc11660dbf7dcc744c3bb5"
+      "revision": "139a7bb828ca07d827fd213c33f6c30afe310fd237133c6ef4fd14dab5174c87"
     },
     {
       "path": "./areas/kung-fu-hustle/scene.js",
-      "revision": "8a2bbbf787a48e4f42d3aaebf46c8afabc43e0c64dc0f6af7871d13d1475ee30"
+      "revision": "e570bf7b0c5280edaeea5c9e7c71d1a4f3de6b288be4156d3e4a43ec87c51146"
     },
     {
       "path": "./areas/military-base/buildings.js",
