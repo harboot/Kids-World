@@ -1,5 +1,5 @@
 {
-  "version": "0839a5e5d62961d210c415724aa0cd3913a328aae7bddb341385d2be9d5d3cf1",
+  "version": "90e7ecbb094d85409fb8beee9d44c7dbb02b6822439a4e7c11c5d71b8c75f41f",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "bf2c99ba8ef1e1f36714eef1440fee813fb57cb1ba947c33806e888638d66fca"
+      "revision": "159b2abc6c26f74c5824466a2729a218e009b330420f40fadbeb9897636c7e07"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -191,7 +191,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/damage.js",
-      "revision": "9f49be17b2b54cc70fcddb3d9ed108db7582140c63ad9d232b1a947b4f3b25b3"
+      "revision": "f66e008a56fe49e0d01ef8b08456d3e065ce5015ee76a09f5be7a782c96f94c2"
     },
     {
       "path": "./areas/kung-fu-hustle/index.js",
@@ -199,7 +199,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/kung-fu-hustle.jpg",
-      "revision": "351209781cdf59d2f1c485de259b993745be794dc0df6ce194a240b99c1825bc"
+      "revision": "471dd272b08c8b93dbd0b7c402380b1ebef8c0910a86fb01a70677a6f19fcadb"
     },
     {
       "path": "./areas/kung-fu-hustle/layout.js",
@@ -211,7 +211,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/masonry.js",
-      "revision": "98ceea74d3a2daacac1415cff15799def42391c3deed74a74f95416816036978"
+      "revision": "e5d348c0133c032a95f87beb34844cef0fe4590586e9bc2b9d540839ffce0e10"
     },
     {
       "path": "./areas/kung-fu-hustle/metadata.js",
@@ -223,11 +223,11 @@
     },
     {
       "path": "./areas/kung-fu-hustle/resident.js",
-      "revision": "bd69957e5b70e5c8d971f3524fd5a9dd1ba8e9f6e98cc18c6dcbef0a5496d6d1"
+      "revision": "5b84ccf71e4e4706066a9e58e69c9f3e7ac75b20ca99fedff64e5810fe93c5d4"
     },
     {
       "path": "./areas/kung-fu-hustle/scene.js",
-      "revision": "caec9c899c4ed3f18c67b743d6d92cea6d8e3c1f16b71a11254aff717f286e1e"
+      "revision": "d8f0916a47c6429c777cdef97e958bf190eb429dfd8e4199be415b24342fe258"
     },
     {
       "path": "./areas/military-base/buildings.js",

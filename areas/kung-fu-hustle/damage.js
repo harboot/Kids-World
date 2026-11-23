@@ -1,6 +1,5 @@
 import { floorRise, gallery } from './layout.js';
 import { crack, ink } from './masonry.js';
-import { residentWindow } from './resident.js';
 
 const rearZ = -14.8;
 const opening = [
@@ -26,7 +25,7 @@ function insideOpening(x, y) {
 export function damagedRearWall(kit, layout, height, random) {
   kit.extrude('Hand-shaped breach', ink.plaster,
     [[-18.75, floorRise], [18.75, floorRise], [18.75, height], [-18.75, height]],
-    gallery.rear - rearZ, 0, 0, rearZ, 0, [opening, residentWindow.aperture]);
+    gallery.rear - rearZ, 0, 0, rearZ, 0, [opening]);
   layout.addBarrier((x, z, radius, feet) => {
     if (Math.abs(x) > 18.75 + radius || z < rearZ - radius || z > gallery.rear + radius || feet < floorRise || feet >= height) return false;
     if (x < 6 || x > 12.5 || feet < 5.55) return true;
