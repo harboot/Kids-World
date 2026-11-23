@@ -7,7 +7,7 @@ import { createGame } from '../core/game.js';
 test('the central registry explicitly declares visibility and identifies all public areas', async () => {
   validateAreaRegistry(areas);
   assert.deepEqual(Object.keys(areas).filter(id => isPublicArea(areas, id)), [
-    'garden', 'snow', 'wooden-house', 'frozen-castle', 'arendelle-village', 'princess-gallery', 'military-base',
+    'garden', 'snow', 'wooden-house', 'frozen-castle', 'arendelle-village', 'princess-gallery', 'military-base', 'kung-fu-hustle',
   ]);
   assert.equal(areas['secret-apartment'].show, false);
   assert.equal(hasArea(areas, 'secret-apartment'), true);
