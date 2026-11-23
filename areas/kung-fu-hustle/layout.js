@@ -3,7 +3,7 @@ import { rectangleBounds } from '../../core/geometry.js';
 
 export const floorRise = 3.25;
 export const stories = 4;
-export const stair = { inner: 9.9, outer: 12.4, top: -2.1, foot: 4.9, rear: -4.4, front: 7.15 };
+export const stair = { inner: 10.8, outer: 12.4, top: -2.1, foot: 4.9, rear: -4.4, front: 7.15 };
 export const gallery = { rear: -10.5, court: -7.5, outer: 15.35, front: 8.5, slab: .24 };
 export const gateZ = 14.2;
 export const wingSlope = .48;
@@ -36,49 +36,99 @@ export function courtyardLayout() {
   const guards = [];
   const edges = [];
   const obstacles = [];
+  const barriers = [];
   const { inner, outer, top, foot, rear, front } = stair;
 
-  function surface(left, right, near, far, low, high = low, side = 0) {
+  function surface(left, right, near, far, low, high = low, side = 0, axis = 'z') {
     const x = (side || 1) * (left + right) / 2;
     const z = (near + far) / 2;
     const bounds = rectangleBounds(x, z, right - left, far - near);
-    const heightAt = low === high ? () => low : z => low + (high - low) * (far - z) / (far - near);
-    const patch = { ...bounds, x, z, width: right - left, depth: far - near, low, high, heightAt, side };
+    const start = axis === 'x' ? right : far;
+    const run = axis === 'x' ? right - left : far - near;
+    const heightAt = (x, z) => low + (high - low) * Math.min(1, Math.max(0, (start - (axis === 'x' ? x : z)) / run));
+    const patch = { ...bounds, x, z, width: right - left, depth: far - near, low, high, heightAt, side, axis };
     surfaces.push(patch);
     return patch;
   }
 
-  function guard(x1, z1, x2, z2, low, high = low, side = 0) {
+  function guard(x1, z1, x2, z2, low, high = low, side = 0, repaired = false) {
     x1 = wingX(side, x1, z1);
     x2 = wingX(side, x2, z2);
     const length = Math.hypot(x2 - x1, z2 - z1);
-    guards.push({ x1, z1, x2, z2, low, high, length });
+    guards.push({ x1, z1, x2, z2, low, high, length, repaired });
   }
 
+  // The ground floor uses a wide L stair. The upper flight climbs across the rear gallery.
+  const halfway = floorRise / 2;
+  surface(2, 8.55, -1.9, 1.1, 0, halfway, 0, 'x');
+  surface(-1, 2, -1.9, 1.1, halfway);
+  surface(-1, 2, gallery.court, -1.9, halfway, floorRise);
+  for (const z of [-1.9, 1.1]) guard(8.55, z, 2, z, 0, halfway);
+  guard(-1, 1.1, 2, 1.1, halfway);
+  guard(-1, 1.1, -1, -1.9, halfway);
+  guard(-1, -1.9, -1, gallery.court, halfway, floorRise);
+  guard(2, -1.9, 2, gallery.court, halfway, floorRise);
+
+  const upperLow = floorRise * 2;
+  const upperHigh = floorRise * 3;
+  surface(-3.75, 4.05, -5.5, -3.5, upperLow, upperHigh, 0, 'x');
+  for (const z of [-5.5, -3.5]) guard(4.05, z, -3.75, z, upperLow, upperHigh);
+  for (const [left, right, y, end] of [[4.05, 6.25, upperLow, 6.25], [-5.95, -3.75, upperHigh, -5.95]]) {
+    surface(left, right, gallery.court, -3.5, y);
+    guard(left, -3.5, right, -3.5, y);
+    guard(end, -3.5, end, gallery.court, y);
+    const stairEnd = end === left ? right : left;
+    guard(stairEnd, -5.5, stairEnd, gallery.court, y);
+  }
+
+  const galleryOpenings = [[-1, 2], [4.05, 6.25], [-5.95, -3.75]];
   for (let level = 0; level < stories; level++) {
     const y = level * floorRise;
-    surface(-gallery.outer, gallery.outer, gallery.rear, gallery.court, y);
-    if (level > 0) guard(-outer, gallery.court, outer, gallery.court, y);
+    if (level >= 2) {
+      const [left, right, brokenEdge] = [5.72, 12.72, -8.98];
+      surface(-gallery.outer, left, gallery.rear, gallery.court, y);
+      surface(left, right, brokenEdge, gallery.court, y);
+      surface(right, gallery.outer, gallery.rear, gallery.court, y);
+      guard(left, gallery.rear, left, brokenEdge, y, y, 0, true);
+      guard(left, brokenEdge, right, brokenEdge, y, y, 0, true);
+      guard(right, brokenEdge, right, gallery.rear, y, y, 0, true);
+    } else {
+      surface(-gallery.outer, gallery.outer, gallery.rear, gallery.court, y);
+    }
+    if (level > 0) {
+      const [left, right] = galleryOpenings[level - 1];
+      guard(-outer, gallery.court, left, gallery.court, y);
+      if (level >= 2) {
+        const repairedFrom = Math.max(right, 6.25);
+        if (right < repairedFrom) guard(right, gallery.court, repairedFrom, gallery.court, y);
+        guard(repairedFrom, gallery.court, outer, gallery.court, y, y, 0, true);
+      } else {
+        guard(right, gallery.court, outer, gallery.court, y);
+      }
+    }
     for (const side of [-1, 1]) {
-      surface(outer, gallery.outer, gallery.court, gallery.front, y, y, side);
-      if (level > 0) {
-        guard(side * outer, gallery.court, side * outer, rear, y, y, side);
-        guard(side * outer, rear, side * inner, rear, y, y, side);
-        surface(inner, outer, rear, top, y, y, side);
-        guard(side * inner, rear, side * inner, top, y, y, side);
-        guard(side * outer, top, side * outer, level === stories - 1 ? gallery.front : foot, y, y, side);
-        guard(side * outer, gallery.front, side * gallery.outer, gallery.front, y, y, side);
-      }
-      if (level > 0 && level < stories - 1) {
-        surface(inner, outer, foot, front, y, y, side);
-        guard(side * inner, foot, side * inner, front, y, y, side);
-        guard(side * inner, front, side * outer, front, y, y, side);
-        guard(side * outer, front, side * outer, gallery.front, y, y, side);
-      }
-      if (level < stories - 1) {
-        surface(inner, outer, top, foot, y, y + floorRise, side);
-        guard(side * inner, foot, side * inner, top, y, y + floorRise, side);
-        guard(side * outer, foot, side * outer, top, y, y + floorRise, side);
+      const rail = (x1, z1, x2, z2, low = y, high = low) => guard(side * x1, z1, side * x2, z2, low, high, side);
+      const deck = (x1, x2, z1, z2, low = y, high = low) => surface(x1, x2, z1, z2, low, high, side);
+      deck(outer, gallery.outer, gallery.court, gallery.front);
+      if (!level) continue;
+      rail(outer, gallery.front, gallery.outer, gallery.front);
+      if (level === 1) {
+        deck(inner, outer, foot, front);
+        rail(outer, gallery.court, outer, foot);
+        rail(outer, front, outer, gallery.front);
+        rail(inner, front, outer, front);
+        rail(inner, front, inner, foot);
+        deck(inner, outer, top, foot, y, y + floorRise);
+        rail(inner, foot, inner, top, y, y + floorRise);
+        rail(outer, foot, outer, top, y, y + floorRise);
+      } else if (level === 2) {
+        deck(inner, outer, rear, top);
+        rail(outer, gallery.court, outer, rear);
+        rail(outer, top, outer, gallery.front);
+        rail(inner, rear, outer, rear);
+        rail(inner, rear, inner, top);
+      } else {
+        rail(outer, gallery.court, outer, gallery.front);
       }
     }
   }
@@ -109,13 +159,14 @@ export function courtyardLayout() {
   }
 
   return {
-    surfaces, guards, obstacles, solid, perimeter,
+    surfaces, guards, obstacles, solid, perimeter, addBarrier: barrier => barriers.push(barrier),
     getGroundHeight(x, z, feet = 0) {
       let ground = 0;
       // Keep the player on the current story while allowing a walking step uphill.
       for (const patch of surfaces) {
-        if (!inside(patch, wingX(-patch.side, x, z), z)) continue;
-        const height = patch.heightAt(z);
+        const localX = wingX(-patch.side, x, z);
+        if (!inside(patch, localX, z)) continue;
+        const height = patch.heightAt(localX, z);
         if (height <= feet + .22) ground = Math.max(ground, height);
       }
       return ground;
@@ -123,13 +174,15 @@ export function courtyardLayout() {
     getCeilingHeight(x, z, feet = 0) {
       let ceiling = Infinity;
       for (const patch of surfaces) {
-        if (!inside(patch, wingX(-patch.side, x, z), z)) continue;
-        const underside = patch.heightAt(z) - gallery.slab;
+        const localX = wingX(-patch.side, x, z);
+        if (!inside(patch, localX, z)) continue;
+        const underside = patch.heightAt(localX, z) - gallery.slab;
         if (feet < underside) ceiling = Math.min(ceiling, underside);
       }
       return ceiling;
     },
     blocksGround(x, z, radius, feet) {
+      if (barriers.some(blocks => blocks(x, z, radius, feet))) return true;
       for (const { x1, z1, x2, z2 } of edges) {
         if (segmentDistanceSquared(x1, z1, x2, z2, x, z) < (radius + .27) ** 2) return true;
       }

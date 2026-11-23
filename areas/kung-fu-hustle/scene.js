@@ -1,4 +1,5 @@
 import { seededRandom } from '../../core/random.js';
+import { damagedRearWall } from './damage.js';
 import { courtyard } from './courtyard.js';
 import { floorRise, gallery, stair, stories } from './layout.js';
 import { crack, exposedBrick, ink, laundry, masonryKit, roof } from './masonry.js';
@@ -30,14 +31,18 @@ function doorsAndWindows(face, x, y, hasAwning) {
   }
 }
 
-function apartmentFacade(draw, span, bays, random) {
+function apartmentFacade(draw, span, bays, random, damaged = false) {
   const spacing = span / bays;
   for (let level = 0; level < stories; level++) {
     const y = level * floorRise;
-    draw(ink.band, 0, y + .12, .026, span, .24, .052);
-    draw(ink.shade, 0, y + floorRise - .30, .037, span, .29, .09);
+    const strips = damaged && level > 0 ? [[-span / 2, 5.8], [12.65, span / 2]] : [[-span / 2, span / 2]];
+    for (const [left, right] of strips) {
+      draw(ink.band, (left + right) / 2, y + .12, .026, right - left, .24, .052);
+      draw(ink.shade, (left + right) / 2, y + floorRise - .30, .037, right - left, .29, .09);
+    }
     for (let bay = 0; bay < bays; bay++) {
       const center = -span / 2 + (bay + .5) * spacing;
+      if (damaged && level > 0 && center > 4.1) continue;
       draw.chip(bay % 2 ? 0x9d826c : 0xab8c72, center + .29, y + 1.03, .012, spacing * .86, 2.08, .11);
       if ((bay + level) % 3 !== 1) {
         exposedBrick(draw, center + (bay % 2 ? 1.55 : -.40), y + .78 + random() * .32,
@@ -57,18 +62,16 @@ function apartmentFacade(draw, span, bays, random) {
 function tenement(kit, layout, random) {
   const { box, wall } = kit;
   const height = stories * floorRise;
-  const backZ = -12.65;
   const sideX = 17.05;
   const wingsZ = -1;
-  box(ink.plaster, 0, height / 2, backZ, 37.5, height, 4.3);
-  layout.solid(0, backZ, 37.5, 4.3, height);
-  apartmentFacade(wall(0, gallery.rear, 0), gallery.outer * 2, 7, random);
-  for (const x of [-11.95, -8, 0, 8, 11.95]) {
-    const postHeight = x === 0 ? height : floorRise * 3;
+  damagedRearWall(kit, layout, height, random);
+  apartmentFacade(wall(0, gallery.rear, 0), gallery.outer * 2, 7, random, true);
+  for (const x of [-11.95, -8, -1.23, 8, 11.95]) {
+    const postHeight = x === -1.23 ? height : floorRise * (x === 8 ? 2 : 3);
     box(ink.band, x, postHeight / 2, -7.59, .28, postHeight, .30);
     layout.solid(x, -7.59, .28, .30, postHeight);
   }
-  for (const [x, y, stub] of [[-4, 0, .83], [4, floorRise, .55], [-4, floorRise * 2, .64], [8, floorRise * 3, .61]]) {
+  for (const [x, y, stub] of [[-4, 0, .83], [4, floorRise, .55], [-4, floorRise * 2, .64], [11.92, floorRise * 3, .61]]) {
     box(ink.band, x, y + stub / 2, -7.56, .33, stub, .31, 0, 0, .045);
     box(0x6e6157, x + .014, y + stub + .012, -7.55, .29, .065, .27, 0, 0, -.19);
     if (y === 0) layout.solid(x, -7.56, .33, .31, stub);
@@ -78,6 +81,7 @@ function tenement(kit, layout, random) {
   const rear = wall(0, -14.80, Math.PI);
   for (let i = 0; i < 9; i++) {
     const x = (i - 4) * 3.9;
+    if (x < -4.6 && x > -13.9) continue;
     exposedBrick(rear, x, 1.4 + random() * 7.7, 2.7, 2.0, random);
     crack(rear, x + .6, 2 + random() * 7.5, 1.8);
   }
@@ -162,34 +166,42 @@ function tenement(kit, layout, random) {
 
 function walkways(kit, layout) {
   const { box, beam } = kit;
-  for (const { x, z, width, depth, low, high, front, back, side } of layout.surfaces) {
+  for (const patch of layout.surfaces) {
+    const { x, z, width, depth, low, high, left, right, back, side, axis } = patch;
     kit.wing(side, () => {
       if (low === high) {
-        if (low === 0) return;
-        box(ink.stone, x, low - gallery.slab / 2, z, width, gallery.slab, depth);
+        if (low > 0) box(ink.stone, x, low - gallery.slab / 2, z, width, gallery.slab, depth);
         return;
       }
 
-      const count = 19;
-      const tread = depth / count;
+      const alongX = axis === 'x';
+      const span = alongX ? width : depth;
       const rise = high - low;
-      const angle = Math.atan2(rise, depth);
-      box(ink.band, x, (low + high) / 2 - .16, z, width, .19, Math.hypot(rise, depth), 0, angle);
-      for (let i = 0; i < count; i++) {
-        const y = low + (i + 1) * rise / count;
-        box(i % 4 === 0 ? ink.cream : ink.stone, x, y - .14, back - (i + .5) * tread, width, .28, tread);
+      const steps = Math.ceil(rise / .18);
+      const profile = [[0, -gallery.slab]];
+      for (let i = 0; i < steps; i++) {
+        const y = (i + 1) * rise / steps;
+        profile.push([i * span / steps, y], [(i + 1) * span / steps, y]);
       }
-      for (const side of [-1, 1]) {
-        beam(ink.band, x + side * (width / 2 - .05), low, back, x + side * (width / 2 - .05), high, front, .16);
-      }
+      profile.push([span, rise - gallery.slab]);
+
+      // Each flight is one stepped shell. Its underside and treads share edges.
+      kit.extrude('Stair flight', ink.stone, profile, alongX ? depth : width,
+        alongX ? right : left, low, back, alongX ? Math.PI : Math.PI / 2);
     });
   }
 
   const posts = new Set();
-  for (const { x1, z1, x2, z2, low, high, length } of layout.guards) {
-    const count = Math.ceil(length / .47);
-    beam(ink.wood, x1, low + 1.12, z1, x2, high + 1.12, z2, .15);
-    beam(ink.band, x1, low + .22, z1, x2, high + .22, z2, .14);
+  for (const { x1, z1, x2, z2, low, high, length, repaired } of layout.guards) {
+    const count = Math.ceil(length / (repaired ? 1.36 : .47));
+    const inset = .10 / length;
+    const rails = repaired ? [[ink.iron, 1.02, .067], [ink.wood, .51, .069]]
+      : [[ink.wood, 1.12, .15], [ink.band, .32, .13]];
+    for (const [paint, offset, width] of rails) {
+      beam(paint,
+        x1 + (x2 - x1) * inset, low + offset + (high - low) * inset, z1 + (z2 - z1) * inset,
+        x2 - (x2 - x1) * inset, high + offset - (high - low) * inset, z2 - (z2 - z1) * inset, width);
+    }
     for (let i = 0; i <= count; i++) {
       const t = i / count;
       const x = x1 + (x2 - x1) * t;
@@ -199,6 +211,10 @@ function walkways(kit, layout) {
       if (posts.has(key)) continue;
       posts.add(key);
       const major = i === 0 || i === count;
+      if (repaired) {
+        box(ink.iron, x, y + .53, z, .092, 1.07, .092);
+        continue;
+      }
       const width = major ? .24 : .13;
       const broken = !major && (i + Math.round(low / floorRise) * 3) % 11 === 4;
       if (broken) {
@@ -222,8 +238,8 @@ export function buildCourtyard(THREE, scene, layout, touch) {
   const shadow = sun.shadow;
   shadow.mapSize.set(touch ? 1024 : 2048, touch ? 1024 : 2048);
   Object.assign(shadow.camera, { left: -36, right: 36, bottom: -26, top: 26, near: 8, far: 88 });
-  shadow.normalBias = .038;
-  shadow.bias = -.0002;
+  shadow.normalBias = touch ? .14 : .06;
+  shadow.bias = touch ? -.00065 : -.00038;
   scene.add(sun);
 
   tenement(kit, layout, random);
