@@ -5,6 +5,11 @@ export const floorRise = 3.25;
 export const stories = 4;
 export const stair = { inner: 10.8, outer: 12.4, top: -2.1, foot: 4.9, rear: -4.4, front: 7.15 };
 export const gallery = { rear: -10.5, court: -7.5, outer: 15.35, front: 8.5, slab: .24 };
+export const perimeterCap = { height: 1.92, width: .67 };
+export const guardCaps = {
+  wood: { offset: 1.12, width: .172 },
+  iron: { offset: 1.02, width: .067 },
+};
 export const gateZ = 20.4;
 export const gateHalfWidth = 6.7;
 export const wingSlope = .48;
@@ -12,6 +17,10 @@ export const footprint = [
   [-19.2, -15.6], [19.2, -15.6], [29.2, 9.2],
   [20.2, gateZ], [-20.2, gateZ], [-29.2, 9.2],
 ];
+const boundary = footprint.map(([x, z], i) => {
+  const [nextX, nextZ] = footprint[(i + 1) % footprint.length];
+  return { x, z, dx: nextX - x, dz: nextZ - z };
+});
 
 export function wingX(side, x, z) {
   return x + side * wingSlope * (z - gallery.court);
@@ -36,6 +45,7 @@ export function courtyardLayout() {
   const surfaces = [];
   const guards = [];
   const edges = [];
+  const ledges = [];
   const obstacles = [];
   const barriers = [];
   const ceilings = [];
@@ -57,7 +67,12 @@ export function courtyardLayout() {
     x1 = wingX(side, x1, z1);
     x2 = wingX(side, x2, z2);
     const length = Math.hypot(x2 - x1, z2 - z1);
-    guards.push({ x1, z1, x2, z2, low, high, length, repaired });
+    const cap = repaired ? guardCaps.iron : guardCaps.wood;
+    const halfWidth = cap.width / 2;
+    const offset = cap.offset + halfWidth * Math.hypot(length, high - low) / length;
+    const ledge = { x1, z1, x2, z2, low, high, halfWidth, offset };
+    ledges.push(ledge);
+    guards.push({ ...ledge, length, repaired });
   }
 
   // The ground floor uses a wide L stair. The upper flight climbs across the rear gallery.
@@ -157,7 +172,19 @@ export function courtyardLayout() {
   }
 
   function perimeter(x1, z1, x2, z2) {
-    edges.push({ x1, z1, x2, z2 });
+    const ledge = { x1, z1, x2, z2, low: 0, high: 0, halfWidth: perimeterCap.width / 2, offset: perimeterCap.height };
+    edges.push(ledge);
+    ledges.push(ledge);
+  }
+
+  function ledgeHeight({ x1, z1, x2, z2, low, high, offset, halfWidth }, x, z, radius = PLAYER_RADIUS) {
+    const t = nearestFraction(x1, z1, x2, z2, x, z);
+    if (segmentDistanceSquared(x1, z1, x2, z2, x, z, t) >= (halfWidth + radius) ** 2) return -Infinity;
+    return low + (high - low) * t + offset;
+  }
+
+  function standsOnLedge(ledge, x, z, feet) {
+    return Math.abs(ledgeHeight(ledge, x, z) - feet) <= .014;
   }
 
   return {
@@ -172,6 +199,11 @@ export function courtyardLayout() {
         const localX = wingX(-patch.side, x, z);
         if (!inside(patch, localX, z)) continue;
         const height = patch.heightAt(localX, z);
+        if (height <= feet + .22) ground = Math.max(ground, height);
+      }
+      for (const ledge of ledges) {
+        if (ledge.low + ledge.offset > feet + .22) continue;
+        const height = ledgeHeight(ledge, x, z);
         if (height <= feet + .22) ground = Math.max(ground, height);
       }
       return ground;
@@ -189,17 +221,22 @@ export function courtyardLayout() {
       }
       return ceiling;
     },
-    blocksGround(x, z, radius, feet) {
+    canDropFrom(x, z, feet) {
+      return ledges.some(ledge => standsOnLedge(ledge, x, z, feet));
+    },
+    blocksGround(x, z, radius, feet, from) {
+      // The raised outer wall can support the player within the compound outline.
+      if (boundary.some(edge => edge.dx * (z - edge.z) - edge.dz * (x - edge.x) < -1e-6)) return true;
       if (barriers.some(blocks => blocks(x, z, radius, feet))) return true;
-      for (const { x1, z1, x2, z2 } of edges) {
-        if (segmentDistanceSquared(x1, z1, x2, z2, x, z) < (radius + .27) ** 2) return true;
+      for (const ledge of edges) {
+        if (feet + .002 < ledgeHeight(ledge, x, z, radius)) return true;
       }
-      for (const { x1, z1, x2, z2, low, high, repaired } of guards) {
-        if (feet < low - .36 || feet >= high + 1.23) continue;
-        const t = nearestFraction(x1, z1, x2, z2, x, z);
-        if (segmentDistanceSquared(x1, z1, x2, z2, x, z, t) >= (radius + .09) ** 2) continue;
-        const height = low + (high - low) * t;
-        if (feet >= height - .36 && feet < height + (repaired ? 1.10 : 1.23)) return true;
+      for (const ledge of guards) {
+        if (feet < ledge.low - .36 || feet >= ledge.high + ledge.offset) continue;
+        const height = ledgeHeight(ledge, x, z, radius);
+        if (feet < height - ledge.offset - .36 || feet + .002 >= height) continue;
+        if (from && standsOnLedge(ledge, from.x, from.z, feet)) continue;
+        return true;
       }
       return false;
     },

@@ -1,5 +1,5 @@
 {
-  "version": "ed5b130a7f88fbdaa719a73479d0e919b98feaab06c535b2282dbff027b578f7",
+  "version": "903c6097e3ae94e7a895d5cb1df1538e0bc4ce7340fc0e98d8bf4c072ec1c7ed",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "6b3d1a424e07ba18bfd79b7f347116f64603e395b5107c3c41fdf8b8d0f6bb5a"
+      "revision": "5792994004a3b83524ac7f56532815d64d8264556533377d3b6ef06b520928a9"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -187,7 +187,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/courtyard.js",
-      "revision": "0facfb41fb9059bc526bd22a8be7b2abde89fc7ecff36dbf553b6f319c474815"
+      "revision": "9375e2bde842d622429cab4e96bf756caa9d98e4ed318e5ca18d17f3c1127b12"
     },
     {
       "path": "./areas/kung-fu-hustle/damage.js",
@@ -195,7 +195,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/index.js",
-      "revision": "fc6c22acddfa4f29441b2a0dee7007c5946cf6221b81fada4ce0df85e636220f"
+      "revision": "bb1578f7b9bfdfdef1f0026abba2e66c3cd31276113bf11e959aba5a3dffd7d4"
     },
     {
       "path": "./areas/kung-fu-hustle/kung-fu-hustle.jpg",
@@ -203,7 +203,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/layout.js",
-      "revision": "8586b24dba22aa08662c1c743de34152c079773e7a4048ca42fcf1332e5d9860"
+      "revision": "b2a84a0115eab5d5c9bb1042be31dce8b2309951666a57d9c04754a2e79e538b"
     },
     {
       "path": "./areas/kung-fu-hustle/market.js",
@@ -227,7 +227,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/scene.js",
-      "revision": "d8f0916a47c6429c777cdef97e958bf190eb429dfd8e4199be415b24342fe258"
+      "revision": "9b11818ef6f6452110129d3067dc55f3126f2e167637cc9eb32206fc1e2a16ab"
     },
     {
       "path": "./areas/military-base/buildings.js",
@@ -607,7 +607,7 @@
     },
     {
       "path": "./core/controls.js",
-      "revision": "42cdb5e94fd66007f0acb849710cf9dec9a87ca4ee34664c2325ac8f60b5a32a"
+      "revision": "20457dc15b8d469842437d4e4d2f4cadd2f4eda52e6454906c6ba5854e7a78bf"
     },
     {
       "path": "./core/coordinate-picker.js",
@@ -623,7 +623,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "bb1c9fa8e8ea31973cd3c82e65afd66045d42b90477401b29953b4cbeff2183d"
+      "revision": "060d376978a094867915f7685e7941dc1738968d06924af79087489eb9ccb24d"
     },
     {
       "path": "./core/geometry.js",
@@ -647,7 +647,7 @@
     },
     {
       "path": "./core/movement.js",
-      "revision": "93c151132023317409ff447a1b90d0bb32b3cf7236f32517c3a3b5f75b63ef30"
+      "revision": "415ceed9b1b764b8b5ae008c08044c482b7277b24120f27e24361f8dc9fc4c87"
     },
     {
       "path": "./core/player.js",
@@ -675,7 +675,7 @@
     },
     {
       "path": "./index.html",
-      "revision": "5c2d715abf5e90be3658a92d1f37eafb2058bc5f2a233a47033c700a7d33ffb8"
+      "revision": "af762d9a381b0c987c2a2971d2d7a217d2f25692d67ec24977fa450ea8c3002d"
     },
     {
       "path": "./manifest.webmanifest",
@@ -711,7 +711,7 @@
     },
     {
       "path": "./style.css",
-      "revision": "ce4b4665b979252d573d001a19164856c96087461763a2112747b239827336df"
+      "revision": "4f3d13e71265ef91ff4e5f146a086ec1e6e076ea959b3462e9a4633c34168c5b"
     },
     {
       "path": "./vendor/three.LICENSE",

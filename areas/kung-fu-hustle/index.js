@@ -17,6 +17,7 @@ export default {
       getGroundHeight: layout.getGroundHeight,
       getCeilingHeight: layout.getCeilingHeight,
       blocksGround: layout.blocksGround,
+      canDropFrom: layout.canDropFrom,
       missionStatus: { missions: [] },
     };
   },

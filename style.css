@@ -284,8 +284,8 @@ kbd {
 }
 .touch-guide, [data-input="touch"] .desktop-guide { display: none; }
 [data-input="touch"] .touch-guide { display: flex; }
-[data-controls="two-finger"] .touch-guide .stick-steering,
-#game:not([data-controls="two-finger"]) .touch-guide .stick-strafing { display: none; }
+[data-controls="two-finger"] .guide .stick-steering,
+#game:not([data-controls="two-finger"]) .guide .stick-strafing { display: none; }
 
 .fps-meter {
   position: absolute;

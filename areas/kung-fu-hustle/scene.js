@@ -3,7 +3,7 @@ import { damagedRearWall } from './damage.js';
 import { courtyard } from './courtyard.js';
 import { marketRow } from './market.js';
 import { buildResident, buildResidentWindow, residentWindow } from './resident.js';
-import { floorRise, gallery, stair, stories, wingX } from './layout.js';
+import { floorRise, gallery, guardCaps, stair, stories, wingX } from './layout.js';
 import { crack, exposedBrick, ink, laundry, masonryKit, roof } from './masonry.js';
 
 function doorsAndWindows(face, x, y, hasAwning, hasDoor) {
@@ -215,8 +215,9 @@ function walkways(kit, layout) {
   for (const { x1, z1, x2, z2, low, high, length, repaired } of layout.guards) {
     const count = Math.ceil(length / (repaired ? 1.36 : .47));
     const inset = .10 / length;
-    const rails = repaired ? [[ink.iron, 1.02, .067], [ink.wood, .51, .069]]
-      : [[ink.wood, 1.12, .172], [ink.band, .32, .097]];
+    const cap = repaired ? guardCaps.iron : guardCaps.wood;
+    const rails = [[repaired ? ink.iron : ink.wood, cap.offset, cap.width],
+      repaired ? [ink.wood, .51, .069] : [ink.band, .32, .097]];
     for (const [paint, offset, width] of rails) {
       beam(paint,
         x1 + (x2 - x1) * inset, low + offset + (high - low) * inset, z1 + (z2 - z1) * inset,

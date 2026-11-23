@@ -268,3 +268,50 @@ test('a side stair can be vaulted toward the yard while walking still collides w
   for (let i = 0; i < 60 && !player.grounded; i++) player.move(1 / 60, stop, visit);
   assert.equal(position.y, EYE_HEIGHT);
 });
+
+test('the player can walk the perimeter cap, step back into the courtyard, and stay inside the boundary', async t => {
+  const { visit, player, position, walk } = await start(t);
+  const capY = 1.92;
+  player.reset({ x: 11, z: gateZ, elevation: capY }, visit.area);
+  assert.equal(position.y, EYE_HEIGHT + capY);
+  assert.ok(walk(15, gateZ));
+  assert.equal(position.y, EYE_HEIGHT + capY);
+  assert.equal(walk(15, gateZ + .7, 40), false);
+  assert.ok(position.z <= gateZ + 1e-6);
+  assert.ok(walk(15, gateZ - 3));
+  assert.equal(position.y, EYE_HEIGHT);
+});
+
+test('flat and sloped rail tops support walking and let the player step off', async t => {
+  const { visit, player, position, walk } = await start(t);
+  const { area } = visit;
+  const idle = new THREE.Vector2();
+  function settle() {
+    player.stop();
+    for (let i = 0; i < 35 && !player.grounded; i++) player.move(1 / 60, idle, visit);
+    assert.ok(player.grounded);
+  }
+
+  player.reset({ x: -7.8, z: -8.25, elevation: 9.75 }, area);
+  assert.ok(player.jump(area));
+  assert.ok(walk(-7.8, -7.5));
+  settle();
+  const upperRailY = position.y;
+  assert.ok(upperRailY > EYE_HEIGHT + 10.9);
+  assert.ok(walk(-6.7, -7.5));
+  assert.equal(position.y, upperRailY);
+  assert.ok(walk(-6.7, -8.55));
+  settle();
+  assert.equal(position.y, EYE_HEIGHT + 9.75);
+
+  player.reset({ x: 5.7, z: 1.1, elevation: 3 }, area);
+  const lowRailY = position.y;
+  assert.ok(lowRailY > EYE_HEIGHT + 1.8);
+  assert.ok(walk(4.2, 1.1));
+  assert.ok(position.y > lowRailY + .25);
+  assert.ok(walk(5, 1.1));
+  assert.ok(position.y < lowRailY + .25);
+  assert.ok(walk(5, 3.2));
+  settle();
+  assert.equal(position.y, EYE_HEIGHT);
+});
