@@ -1,9 +1,11 @@
 import { metadata } from './metadata.js';
+import { music } from './music.js';
 import { courtyardLayout } from './layout.js';
 import { buildCourtyard } from './scene.js';
 
 export default {
   ...metadata,
+  music,
   load({ THREE, scene, touch }) {
     const layout = courtyardLayout();
     buildCourtyard(THREE, scene, layout, touch);
