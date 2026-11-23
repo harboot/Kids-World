@@ -1,5 +1,6 @@
 import { SURFACE_GAP } from '../../core/geometry.js';
 import { colors, rug } from './interior.js';
+import { SIDE, UPSTAIRS } from './layout.js';
 
 const { cream, linen, honey, walnut, oak, gold, rose, brick, mint, sage, teal, blue, plum, ink, leaf } = colors;
 // Keep indoor jumps in the aisles so the camera stays below the ceiling.
@@ -52,8 +53,8 @@ export function buildFurniture(THREE, scene, builder) {
   function bedroom() {
     const x = -4.55;
     const z = -3.45;
-    const bed = group('Bed frame', x, 0, z);
-    rug(builder, -4.22, -2.91, 3.03, 3.38, brick, 0xe2a693);
+    const bed = group('Bed frame', x, UPSTAIRS, z);
+    rug(builder, -4.22, -2.91, 3.03, 3.38, teal, 0x9fbcd0, UPSTAIRS);
     legs(bed, 0.82, 1.16, 0.31);
     part(bed, honey, 0, 0.37, 0, 1.86, 0.25, 2.6);
     const mattressY = 0.565;
@@ -62,9 +63,9 @@ export function buildFurniture(THREE, scene, builder) {
     part(bed, oak, 0, 0.77, -1.26, 1.91, 1.35, 0.13);
     part(bed, honey, 0, 1.445, -1.26, 2.01, 0.105, 0.18);
     part(bed, honey, 0, 0.34, 1.26, 1.91, 0.49, 0.14);
-    solid(x, z, 1.92, 2.67, FURNITURE_HEIGHT);
+    solid(x, z, 1.92, 2.67, UPSTAIRS + FURNITURE_HEIGHT, UPSTAIRS);
 
-    const nightstand = group('Bedside table', -2.96, 0, -4.54);
+    const nightstand = group('Bedside table', -2.96, UPSTAIRS, -4.54);
     legs(nightstand, 0.28, 0.26, 0.28);
     part(nightstand, oak, 0, 0.46, 0, 0.73, 0.43, 0.68);
     part(nightstand, honey, 0, 0.47, 0.347, 0.64, 0.26, 0.026);
@@ -73,9 +74,9 @@ export function buildFurniture(THREE, scene, builder) {
     part(nightstand, gold, -0.08, 0.901, -0.047, 0.053, 0.37, 0.053, 'round');
     part(nightstand, rose, -0.08, 1.092, -0.047, 0.415, 0.29, 0.415, 'taper').rotation.z = Math.PI;
     part(nightstand, linen, 0.204, 0.711, 0.1, 0.169, 0.065, 0.24);
-    solid(-2.96, -4.54, 0.73, 0.68, FURNITURE_HEIGHT);
+    solid(-2.96, -4.54, 0.73, 0.68, UPSTAIRS + FURNITURE_HEIGHT, UPSTAIRS);
 
-    const textiles = group('Bedding', x, 0, z, scene);
+    const textiles = group('Bedding', x, UPSTAIRS, z, scene);
     const pillows = [0, 1].map(i => {
       const pillow = group(`Pillow ${i + 1}`, 0, 0, 0, textiles);
       part(pillow, i ? linen : 0xffdfaf, 0, 0, 0, 0.76, 0.22, 0.5, 'ball');
@@ -103,7 +104,9 @@ export function buildFurniture(THREE, scene, builder) {
     const messyQuilt = [-0.33, 0.775, 0.48, -0.265];
     const tidyQuilt = [0, mattressY + (mattressThickness + quiltThickness) / 2, 0.347];
     return {
-      id: 'bed', label: 'Make bed', x, z, anchorY: 0.85, radius: 3, duration: 0.75,
+      id: 'bed', label: 'Make bed', x, z, floor: UPSTAIRS, anchorY: UPSTAIRS + .85, radius: 3, duration: .75,
+      hint: 'Make the bed in the blue bedroom after the boy gets up.',
+      approach: player => player.x < 0 && player.z < -.8,
       clearance: { x: -4.35, z: -3.45, width: 2.7, depth: 2.83 },
       render(t) {
         pillows.forEach((pillow, i) => move(pillow, messyPillows[i], tidyPillows[i], t, 0.13));
@@ -163,14 +166,14 @@ export function buildFurniture(THREE, scene, builder) {
     }
     solid(x + 2.18, z, 1.12, 0.985, FURNITURE_HEIGHT);
 
-    const fridge = group('Fridge', 5.58, 0, -4.61);
+    const fridge = group('Fridge', -.18, 0, -4.61);
     part(fridge, plum, 0, 1.03, 0, 1.04, 2.06, 1.09);
     part(fridge, 0xd8a6a2, 0, 0.67, 0.566, 1, 1.21, 0.09);
     part(fridge, 0xe0b1ae, 0, 1.668, 0.566, 1, 0.746, 0.09);
     for (const y of [1.04, 1.54]) part(fridge, linen, -0.349, y, 0.63, 0.065, 0.256, 0.08);
     part(fridge, cream, 0.185, 1.688, 0.617, 0.23, 0.26, 0.025).rotation.z = -0.17;
     part(fridge, teal, 0.16, 1.797, 0.64, 0.083, 0.066, 0.029, 'ball');
-    solid(5.58, -4.61, 1.04, 1.22, 2.06);
+    solid(-.18, -4.61, 1.04, 1.22, 2.06);
 
     for (const cx of [-1.33, 1.4, 2.43]) {
       part(kitchen, oak, cx, 2.41, -0.493, 0.99, 0.68, 0.43);
@@ -218,7 +221,7 @@ export function buildFurniture(THREE, scene, builder) {
       part(kitchenware, 0xdaf4f1, 0, 1, 0, 0.08, 0.08, 0.08, 'ball', false));
 
     return {
-      id: 'dishes', label: 'Wash dishes', x: x + 0.15, z: z + 0.2, anchorY: 1.12, radius: 3, duration: 1.2,
+      id: 'dishes', label: 'Wash dishes', hint: 'Stand in front of the downstairs kitchen sink and look at the dishes.', x: x + 0.15, z: z + 0.2, anchorY: 1.12, radius: 3, duration: 1.2,
       approach: player => player.z > z + 0.8,
       clearance: { x: 2.2, z: -4.24, width: 2.88, depth: 1.98 },
       render(t, moving) {
@@ -244,7 +247,7 @@ export function buildFurniture(THREE, scene, builder) {
   }
 
   function painting() {
-    const x = -6.195;
+    const x = -SIDE + .205;
     const z = -0.89;
     const hook = group('Painting mount', x, 1.84, z, scene);
     hook.rotation.y = Math.PI / 2;
@@ -259,17 +262,17 @@ export function buildFurniture(THREE, scene, builder) {
     part(frame, 0x618773, 0, -0.3, 0.139, 1.15, 0.168, 0.019, 'box', false);
     part(frame, 0xbad7c4, 0.135, -0.295, 0.159, 0.45, 0.027, 0.016).rotation.z = 0.06;
     return {
-      id: 'painting', label: 'Straighten painting', x: x + 0.08, z, anchorY: 1.84, radius: 3, duration: 0.52,
+      id: 'painting', label: 'Straighten painting', hint: 'Look at the crooked landscape painting on the living room wall.', x: x + 0.08, z, anchorY: 1.84, radius: 3, duration: 0.52,
       approach: player => player.x > x + 0.95,
-      clearance: { x: -5.61, z: -0.89, width: 1.38, depth: 1.38 },
+      clearance: { x: x + .585, z: -.89, width: 1.38, depth: 1.38 },
       render(t) { frame.rotation.z = 0.27 * (1 - smooth(t)); },
     };
   }
 
   function livingRoom() {
-    const x = -5.86;
+    const x = -SIDE + .54;
     const z = 1.49;
-    rug(builder, -3.91, 1.77, 4.57, 3.42, teal, 0x93b6b3);
+    rug(builder, -5.20, 1.77, 6.05, 3.42, teal, 0x93b6b3);
     const tvStand = group('TV cabinet', x, 0, z);
     tvStand.rotation.y = Math.PI / 2;
     legs(tvStand, 0.88, 0.24, 0.2);
@@ -340,9 +343,9 @@ export function buildFurniture(THREE, scene, builder) {
 
     let time = 0;
     return {
-      id: 'tv', label: 'Turn off TV', x: x + 0.12, z, anchorY: 1.2, radius: 3, duration: 0.52,
+      id: 'tv', label: 'Turn off TV', hint: 'Find the TV beside the living room rug and look at its screen.', x: x + 0.12, z, anchorY: 1.2, radius: 3, duration: 0.52,
       approach: player => player.x > x + 0.95,
-      clearance: { x: -5.57, z: 1.49, width: 1.66, depth: 2.36 },
+      clearance: { x: x + .29, z: 1.49, width: 1.66, depth: 2.36 },
       render(t) {
         darkPanel.material.opacity = smooth(t);
         darkPanel.visible = t > 0;
@@ -359,8 +362,11 @@ export function buildFurniture(THREE, scene, builder) {
   }
 
   function playCorner() {
-    rug(builder, 3.83, 2.18, 3.88, 3.21, brick, 0xe4b187);
-    const shelf = group('Bookshelf', 5.9, 0, -1.05);
+    const dx = -6.1;
+    const dz = -4.25;
+    rug(builder, 3.83 + dx, 2.18 + dz, 3.88, 2.66, blue, 0xa9c9cb, UPSTAIRS);
+    const looseToys = group('Scattered toys in the blue bedroom', dx, UPSTAIRS, dz, scene);
+    const shelf = group('Bookshelf', -.40, UPSTAIRS, -4.22);
     shelf.rotation.y = -Math.PI / 2;
     part(shelf, honey, 0, 0.835, -0.209, 1.48, 1.67, 0.1);
     for (const side of [-1, 1]) part(shelf, oak, side * 0.744, 0.84, 0, 0.11, 1.68, 0.48);
@@ -369,11 +375,11 @@ export function buildFurniture(THREE, scene, builder) {
     books(shelf, -0.49, 0.63, 0.039, [rose, teal, blue, gold, cream]);
     books(shelf, -0.635, 1.148, 0.039, [plum, sage, cream, teal]);
     plant(shelf, 0.42, 1.723, 0.049, 0.9);
-    solid(5.9, -1.05, 0.496, 1.59, 1.7);
+    solid(-.40, -4.22, .496, 1.59, UPSTAIRS + 1.7, UPSTAIRS);
 
     const x = 4.86;
     const z = 3.09;
-    const chest = group('Toy box', x, 0, z);
+    const chest = group('Toy box', x + dx, UPSTAIRS, z + dz);
     part(chest, walnut, 0, 0.076, 0, 1.32, 0.149, 0.79);
     const sideX = 0.666;
     const sideWidth = 0.106;
@@ -383,8 +389,8 @@ export function buildFurniture(THREE, scene, builder) {
     }
     part(chest, gold, 0, 0.354, -0.442, 0.224, 0.235, 0.061).rotation.z = Math.PI / 4;
     part(chest, cream, 0, 0.354, -0.479, 0.1, 0.1, 0.034, 'ball');
-    solid(x, z, 1.438, 0.857, FURNITURE_HEIGHT);
-    const lid = group('Toy box lid', x, 0.63, z + 0.4, scene);
+    solid(x + dx, z + dz, 1.438, .857, UPSTAIRS + FURNITURE_HEIGHT, UPSTAIRS);
+    const lid = group('Toy box lid', x, 0.63, z + .4, looseToys);
     part(lid, mint, 0, 0.013, -0.407, 1.426, 0.116, 0.89);
     part(lid, oak, 0, 0.013, -0.803, 1.426 + 2 * SURFACE_GAP.detail, 0.116 + 2 * SURFACE_GAP.detail, 0.088);
     part(lid, walnut, 0, 0.005, -0.881, 0.328, 0.061, 0.075);
@@ -394,13 +400,13 @@ export function buildFurniture(THREE, scene, builder) {
       [4.41, 0.128, 1.63, 0.28, gold], [2.55, 0.126, 2.37, 0.53, sage],
     ];
     const toys = scattered.map(([tx, ty, tz, angle, tint], i) => {
-      const toy = group(`Toy block ${i + 1}`, 0, 0, 0, scene);
+      const toy = group(`Toy block ${i + 1}`, 0, 0, 0, looseToys);
       part(toy, tint, 0, 0, 0, 0.262, 0.249, 0.251);
       part(toy, linen, 0, 0.127, 0, 0.111, 0.013, 0.114).rotation.y = Math.PI / 4;
       part(toy, walnut, 0, 0, 0.128, 0.103, 0.103, 0.009, 'ball');
       return { toy, from: [tx, ty, tz, angle] };
     });
-    const teddy = group('Teddy bear', 0, 0, 0, scene);
+    const teddy = group('Teddy bear', 0, 0, 0, looseToys);
     part(teddy, honey, 0, 0.239, 0, 0.3, 0.39, 0.263, 'ball');
     part(teddy, honey, 0, 0.5, 0.033, 0.343, 0.319, 0.326, 'ball');
     part(teddy, cream, 0, 0.46, 0.161, 0.204, 0.14, 0.115, 'ball');
@@ -415,7 +421,7 @@ export function buildFurniture(THREE, scene, builder) {
     part(teddy, teal, 0, 0.353, 0.127, 0.175, 0.082, 0.051, 'ball');
     toys.push({ toy: teddy, from: [4.13, 0, 2.51, 2.3] });
 
-    const car = group('Toy car', 0, 0, 0, scene);
+    const car = group('Toy car', 0, 0, 0, looseToys);
     part(car, rose, 0, 0.158, 0, 0.449, 0.145, 0.248);
     part(car, brick, -0.034, 0.247, 0, 0.235, 0.115, 0.219);
     part(car, blue, 0.088, 0.247, 0, 0.02, 0.078, 0.178);
@@ -428,8 +434,10 @@ export function buildFurniture(THREE, scene, builder) {
 
     const destinations = toys.map((_, i) => [x + (i % 3 - 1) * 0.28, i === 4 ? 0.15 : 0.26, z + (i < 3 ? -0.18 : 0.14), 0]);
     return {
-      id: 'toys', label: 'Put away toys', x: 3.81, z: 2.42, anchorY: 0.61, radius: 3.75, duration: 1.03,
-      clearance: { x: 3.83, z: 2.18, width: 3.88, depth: 3.21, mark: false },
+      id: 'toys', label: 'Put away toys', x: 3.81 + dx, z: 2.42 + dz, floor: UPSTAIRS, anchorY: UPSTAIRS + .61, radius: 3.5, duration: 1.03,
+      hint: 'Look at the scattered toys beside the toy box in the blue bedroom.',
+      approach: player => player.x < 0 && player.z < -.8,
+      clearance: { x: 3.83 + dx, z: 2.18 + dz, width: 3.85, depth: 2.66, mark: false },
       render(t) {
         toys.forEach(({ toy, from }, i) => {
           const p = clamp((t - i * 0.064) / 0.49);

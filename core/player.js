@@ -93,7 +93,7 @@ export function createPlayer(THREE, camera) {
 
   function walkTo(world, position, x, z) {
     const next = walkElevation(world, position, x, z, elevation, grounded);
-    if (next === null || next + HEAD_HEIGHT > (world.getCeilingHeight?.(x, z) ?? Infinity)) return;
+    if (next === null || next + HEAD_HEIGHT > (world.getCeilingHeight?.(x, z, next) ?? Infinity)) return;
     elevation = next;
     position.x = x;
     position.z = z;
@@ -121,7 +121,7 @@ export function createPlayer(THREE, camera) {
 
     const floor = floorHeight(area, position.x, position.z, elevation);
     advanceFall(elevation, verticalSpeed, floor, dt, falling);
-    const ceiling = (area.getCeilingHeight?.(position.x, position.z) ?? Infinity) - HEAD_HEIGHT;
+    const ceiling = (area.getCeilingHeight?.(position.x, position.z, elevation) ?? Infinity) - HEAD_HEIGHT;
     if (falling.feet > ceiling) {
       falling.feet = ceiling;
       falling.speed = 0;

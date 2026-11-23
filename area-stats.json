@@ -1,11 +1,11 @@
 {
-  "updatedAt": "2026-11-23T08:50:00.307Z",
+  "updatedAt": "2026-11-23T09:04:50.688Z",
   "summary": {
     "totalAreas": 8,
     "publicAreas": 7,
     "hiddenAreas": 1,
-    "totalFiles": 144,
-    "totalBytes": 1231434
+    "totalFiles": 146,
+    "totalBytes": 1256833
   },
   "areas": [
     {
@@ -139,13 +139,13 @@
       "name": "Wooden House",
       "visibility": "Public",
       "thumbnail": "./areas/wooden-house/wooden-house.jpg",
-      "width": 12.8,
-      "depth": 10.8,
-      "mapArea": 138.24,
-      "folderBytes": 58294,
-      "totalFiles": 8,
-      "jsFiles": 7,
-      "jsBytes": 40002,
+      "width": 20,
+      "depth": 18,
+      "mapArea": 360,
+      "folderBytes": 83693,
+      "totalFiles": 10,
+      "jsFiles": 9,
+      "jsBytes": 65401,
       "imageFiles": 1,
       "imageBytes": 18292,
       "imageFormats": [
