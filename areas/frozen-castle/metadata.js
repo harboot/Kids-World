@@ -5,6 +5,7 @@ export const metadata = {
   title: 'Frozen Castle',
   heading: ['Frozen', 'Castle'],
   description: 'Explore the palace and its mountain terrace. Activate four corner crystals, build an ice staircase and play a crystal melody.',
+  missionCount: 3,
   canvasLabel: '3D crystal palace and mountaintop terrace',
   themeColor: '#dce9fb',
   width: SUMMIT_SIZE,

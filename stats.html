@@ -134,14 +134,14 @@
       thead button { padding: .55rem .65rem; font-size: .78rem; }
       tbody tr {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         align-items: center;
         gap: .65rem .4rem;
         padding: .85rem .7rem;
         border-block-start: 1px solid var(--line);
       }
       tbody th, tbody td { padding: 0; border: 0; }
-      tbody th { grid-column: span 2; }
+      tbody th { grid-column: span 3; }
       tbody td:nth-child(2) { justify-self: end; }
       tbody .metric { align-self: start; justify-self: start; text-align: left; }
       .area-identity { gap: .55rem; }
@@ -149,6 +149,7 @@
       .metric-label { display: block; margin-bottom: .18rem; color: var(--muted); font-size: .72rem; font-weight: 750; white-space: normal; }
     }
     @media (max-width: 36rem) {
+      tbody .metric { grid-column: span 2; }
       .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .summary > div { padding-inline: .7rem; }
       .controls { width: 100%; }
@@ -193,6 +194,7 @@
             <tr role="row">
               <th role="columnheader" scope="col" aria-sort="ascending"><button type="button" data-sort="name">Area Name <span class="sort-icon" aria-hidden="true">↑</span></button></th>
               <th role="columnheader" scope="col"><button type="button" data-sort="visibility">Visibility <span class="sort-icon" aria-hidden="true">↕</span></button></th>
+              <th role="columnheader" scope="col"><button type="button" data-sort="missionCount">Missions <span class="sort-icon" aria-hidden="true">↕</span></button></th>
               <th role="columnheader" scope="col"><button type="button" data-sort="mapArea" title="Sort by map area">Map Dimensions <span class="sort-icon" aria-hidden="true">↕</span></button></th>
               <th role="columnheader" scope="col"><button type="button" data-sort="jsBytes">JS Size <span class="sort-icon" aria-hidden="true">↕</span></button></th>
               <th role="columnheader" scope="col"><button type="button" data-sort="imageBytes">Image Size <span class="sort-icon" aria-hidden="true">↕</span></button></th>
@@ -308,6 +310,7 @@
         ? unavailable : `${units(area.width)} × ${units(area.depth)} wu`;
       const files = `${number.format(area.jsFiles)} ${area.jsFiles === 1 ? 'file' : 'files'}`;
       for (const [heading, main, detail] of [
+        ['Missions', units(area.missionCount), ''],
         ['Map Dimensions', dimensions, area.mapArea === null ? '' : squareUnits(area.mapArea)],
         ['JS Size', files, size(area.jsBytes)],
         ['Image Size', size(area.imageBytes)],

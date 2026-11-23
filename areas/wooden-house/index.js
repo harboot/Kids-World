@@ -5,6 +5,7 @@ import { buildInterior, createHouseBuilder } from './interior.js';
 import { BACK, FRONT, SIDE, buildUpperFloor, houseCeiling, houseGround, upstairsBlockers } from './layout.js';
 import { metadata } from './metadata.js';
 import { music } from './music.js';
+import { decorativeDoor, furnishUpperHall } from './upstairs-decor.js';
 
 const ID = metadata.id;
 
@@ -22,12 +23,14 @@ function loadHouse({ THREE, scene, signal, playCue = () => {}, reducedMotion = (
   const builder = createHouseBuilder(THREE, scene, obstacles, upper);
   buildInterior(THREE, scene, builder);
   buildUpperFloor(builder);
+  decorativeDoor(builder, 'Wooden House front door', 0, 0, 0xb57b56, scene, 1.8);
+  furnishUpperHall(THREE, scene, builder);
   const [bed, dishes, painting, tv, toys] = buildFurniture(THREE, scene, builder);
   const family = buildFamily(scene, builder);
-  const { door, mother, table, father, bird, wake, girl } = family.tasks;
+  const { mother, table, father, bird, wake, girl } = family.tasks;
   bed.ready = () => family.awake;
-  const models = [door, mother, dishes, table, father, bird, painting, tv, wake, bed, toys, girl];
-  for (const model of models.slice(1)) {
+  const models = [mother, dishes, table, father, bird, painting, tv, wake, bed, toys, girl];
+  for (const model of models) {
     const approach = model.approach;
     model.approach = player => Math.abs(player.x) < SIDE && player.z > BACK && player.z < FRONT &&
       (!approach || approach(player));
@@ -48,7 +51,7 @@ function loadHouse({ THREE, scene, signal, playCue = () => {}, reducedMotion = (
     getGroundHeight: houseGround,
     getCeilingHeight: houseCeiling,
     blocksGround(x, z, radius = .34, feet = 0) {
-      return family.blocks(x, z, radius, feet) || upper.blocks(x, z, feet) || cleaning.blocksGround(x, z, feet);
+      return upper.blocks(x, z, feet) || cleaning.blocksGround(x, z, feet);
     },
     interactions: cleaning.interactions,
     get missionStatus() { return cleaning.missionStatus; },
@@ -57,9 +60,9 @@ function loadHouse({ THREE, scene, signal, playCue = () => {}, reducedMotion = (
       family.reset();
       sparkles.hide();
     },
-    update(dt) {
+    update(dt, position) {
       sparkles.update(dt, reducedMotion());
-      cleaning.update(dt);
+      cleaning.update(dt, position);
       family.update(dt, reducedMotion());
     },
     unload() {

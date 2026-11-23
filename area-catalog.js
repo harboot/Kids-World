@@ -8,6 +8,7 @@ export const areaMetadata = {
       "Village"
     ],
     "description": "Catch fish for the Fish Shop, bring the lost reindeer home, and find three gears to fix the Clock Tower.",
+    "missionCount": 3,
     "canvasLabel": "3D medieval harbor village with timber houses, a clock tower, and wooden piers",
     "themeColor": "#e9dabf",
     "width": 84,
@@ -25,6 +26,7 @@ export const areaMetadata = {
       "Castle"
     ],
     "description": "Explore the palace and its mountain terrace. Activate four corner crystals, build an ice staircase and play a crystal melody.",
+    "missionCount": 3,
     "canvasLabel": "3D crystal palace and mountaintop terrace",
     "themeColor": "#dce9fb",
     "width": 40,
@@ -44,6 +46,7 @@ export const areaMetadata = {
     "description": "Help the garden animals, deliver apples, and explore by balloon or through the mountain cave.",
     "completionRevision": 3,
     "loadingMessage": "Loading the garden…",
+    "missionCount": 12,
     "canvasLabel": "3D flower garden",
     "themeColor": "#e9eedc",
     "width": 45,
@@ -61,6 +64,7 @@ export const areaMetadata = {
       "Base"
     ],
     "description": "Complete five missions at a snowy mountain base and take a helicopter sightseeing tour.",
+    "missionCount": 5,
     "canvasLabel": "3D military base with an open gate, headquarters, tank yard, and helipad",
     "themeColor": "#dae6ef",
     "width": 154,
@@ -78,6 +82,7 @@ export const areaMetadata = {
       "Gallery"
     ],
     "description": "Explore the Central Atrium, then take the Glass Walkway for a view into every exhibit.",
+    "missionCount": 10,
     "canvasLabel": "3D enchanted exhibition park with Rapunzel, Snow White, Cinderella, Aurora, Ariel, Belle, Jasmine, and Mulan",
     "themeColor": "#705184",
     "width": 140,
@@ -95,6 +100,7 @@ export const areaMetadata = {
       "17E"
     ],
     "description": "Explore the underground parking, the pool terrace on Floor 8, and Unit 17E.",
+    "missionCount": 13,
     "canvasLabel": "3D apartment building with underground parking, pool terrace and Unit 17E",
     "themeColor": "#e5dac6",
     "width": 220,
@@ -114,6 +120,7 @@ export const areaMetadata = {
     ],
     "description": "Chop the pine, hit the snowmen, ride the Ice Mountain slide, and meet Olaf by the frozen lake.",
     "completionRevision": 3,
+    "missionCount": 4,
     "canvasLabel": "3D snow basin",
     "themeColor": "#e2f0f5",
     "width": 64,
@@ -130,15 +137,17 @@ export const areaMetadata = {
       "Wooden",
       "House"
     ],
-    "description": "Open the front door, meet the family, and help around their two-storey home.",
+    "description": "Meet the family and help around their two-storey home.",
+    "missionCount": 11,
     "canvasLabel": "3D wooden family house with two floors",
     "themeColor": "#f4e5cf",
     "completionRevision": 2,
     "width": 20,
     "depth": 18,
     "spawn": {
-      "x": 0,
-      "z": 7.6
+      "x": 6.84,
+      "z": 2.28,
+      "yaw": 1.13
     }
   }
 };

@@ -1,5 +1,5 @@
 import { colors, rug } from './interior.js';
-import { FRONT, UPSTAIRS } from './layout.js';
+import { UPSTAIRS } from './layout.js';
 
 const { cream, linen, oak, walnut, gold, rose, teal, blue, ink, mint, plum } = colors;
 const cue = (pitch, endPitch, duration, level, offset = 0) =>
@@ -37,16 +37,6 @@ function person({ group, part }, parent, name, { x, y = 0, z, skin, hair, shirt,
 
 export function buildFamily(scene, builder) {
   const { group, part, solid } = builder;
-  const door = group('Wooden House front door', -.94, 0, FRONT, scene);
-  for (let i = 0; i < 6; i++) {
-    part(door, i % 2 ? 0xb07e55 : 0xc79365, .155 + i * .31, 1.16, 0, .307, 2.32, .14);
-  }
-  for (const z of [-.085, .085]) {
-    for (const y of [.35, 1.92]) part(door, walnut, .93, y, z, 1.75, .115, .065);
-    part(door, gold, 1.63, 1.10, 1.23 * z, .122, .12, .095, 'ball');
-    part(door, teal, .94, 1.46, 1.56 * z, .63, .21, .052);
-  }
-
   const mother = person(builder, scene, 'Mother cooking', {
     x: 4.44, z: -3.30, skin: 0xd89b74, hair: 0x603b2c, shirt: 0xd07b65, pants: 0x5b745e, scale: .99,
   });
@@ -192,9 +182,7 @@ export function buildFamily(scene, builder) {
     ({ id, label, hint, x, z, floor, anchorY: floor + anchorY, radius, duration, sound, render });
 
   const tasks = {
-    door: task('door', 'Open front door', 'Walk up the garden path and look at the front door.', 0, FRONT, 0, 1.27, 2.6, .68,
-      [cue(54, 37, .18, .16), cue(67, 51, .11, .09, .36)], t => { door.rotation.y = 1.63 * ease(t); }),
-    mother: task('mother', 'Help Mom stir the soup', 'Find Mom at the stove beside the downstairs sink.', 4.44, -3.30, 0, 1.14, 2.35, 1.25,
+    mother: task('mother', 'Help Mom stir the soup', 'Walk up to Mom at the stove beside the downstairs sink.', 4.44, -3.30, 0, 1.14, 2.35, 1.25,
       [cue(51, 68, .12, .10), cue(54, 76, .15, .11, .26), cue(68, 79, .2, .10, .68)], (t, moving) => {
         stirring = moving ? Math.sin(t * Math.PI) : 0;
       }),
@@ -207,7 +195,7 @@ export function buildFamily(scene, builder) {
           plate.position.set(x * p, 1.01 + i * .055 * (1 - p) + Math.sin(p * Math.PI) * .17, z * p);
         });
       }),
-    father: task('father', 'Whistle with Dad', 'Find Dad beside the birdcage on the ground floor.', -4.58, -4.10, 0, 1.29, 2.15, 1.1,
+    father: task('father', 'Whistle with Dad', 'Walk up to Dad beside the birdcage on the ground floor.', -4.58, -4.10, 0, 1.29, 2.15, 1.1,
       [cue(74, 81, .15, .14), cue(79, 84, .17, .12, .18), cue(85, 93, .14, .10, .53)], (t, moving) => {
         waving = moving ? Math.sin(t * Math.PI) : 0;
         singing = waving;
@@ -217,7 +205,7 @@ export function buildFamily(scene, builder) {
         seed.visible = t > .10;
         singing = moving ? Math.sin(t * Math.PI) : 0;
       }),
-    wake: task('wake', 'Gently wake the boy', 'Climb the stairs on the right and find the boy sleeping in the blue bedroom.', -4.56, -3.38, UPSTAIRS, 1.02, 2.9, 1.10,
+    wake: task('wake', 'Gently wake the boy', 'Use the staircase by the front wall and approach the sleeping boy in the blue bedroom.', -4.56, -3.38, UPSTAIRS, 1.02, 2.9, 1.10,
       [cue(61, 67, .22, .11), cue(72, 76, .24, .10, .34), cue(76, 81, .29, .10, .64)], t => {
         awake = t >= 1;
         const p = ease(t);
@@ -225,11 +213,12 @@ export function buildFamily(scene, builder) {
         boy.root.rotation.set(-Math.PI / 2 * (1 - p), -.27 * p, 0);
         boy.eyes.forEach(eye => { eye.scale.y = .009 + p * .043; });
       }),
-    girl: task('girl', 'Play dolls with the girl', 'Upstairs, enter the rose bedroom and look at the girl beside her dollhouse.', 2.36, -3.14, UPSTAIRS, .72, 2.15, 1.5,
+    girl: task('girl', 'Play dolls with the girl', 'Upstairs, approach the girl beside her dollhouse in the rose bedroom.', 2.36, -3.14, UPSTAIRS, .72, 2.15, 1.5,
       [cue(76, 81, .16, .12), cue(81, 85, .17, .13, .22), cue(84, 91, .19, .12, .51), cue(88, 92, .23, .10, .77)], (t, moving) => {
         playing = moving ? Math.sin(t * Math.PI) : 0;
       }),
   };
+  for (const id of ['mother', 'father', 'wake', 'girl']) tasks[id].automatic = true;
   tasks.wake.approach = player => player.z < -.80 && player.x < 0;
   tasks.girl.approach = player => player.z < -.80 && player.x > 0;
 
@@ -269,18 +258,6 @@ export function buildFamily(scene, builder) {
   return {
     tasks,
     get awake() { return awake; },
-    blocks(x, z, radius, feet) {
-      if (feet >= 2.32) return false;
-      const dx = x - door.position.x;
-      const dz = z - door.position.z;
-      const cos = Math.cos(door.rotation.y);
-      const sin = Math.sin(door.rotation.y);
-      const localX = dx * cos - dz * sin;
-      const localZ = dx * sin + dz * cos;
-      const gapX = Math.max(0, -localX, localX - 1.86);
-      const gapZ = Math.max(0, Math.abs(localZ) - .09);
-      return Math.hypot(gapX, gapZ) < radius;
-    },
     update(dt, still) {
       time += dt;
       pose(still);

@@ -98,13 +98,6 @@ export function buildInterior(THREE, scene, { group, part, solid }) {
   const midpoint = (FRONT + BACK) / 2;
   part(room, 0x94a96c, 0, -.16, 0, 20, .3, 18);
   part(room, honey, 0, -.13, midpoint, HOUSE_WIDTH, .24, HOUSE_DEPTH);
-  part(room, oak, 0, -.03, 6.18, 3.15, .06, .96);
-  part(room, 0xd6c398, 0, -.009, 7.67, 1.88, .017, 2.03);
-  for (const x of [-2.5, 2.5]) {
-    part(room, walnut, x, .21, 6.33, .54, .42, .54, 'taper');
-    part(room, leaf, x, .66, 6.33, .8, .85, .79, 'facet');
-    solid(x, 6.33, .59, .59, .91);
-  }
   const rows = Math.ceil(HOUSE_DEPTH / .36);
   const spacing = HOUSE_DEPTH / rows;
   const planks = [0xc39164, 0xcb986b, 0xd39f71, 0xc08a5f, 0xd9a777];
@@ -143,9 +136,8 @@ export function buildInterior(THREE, scene, { group, part, solid }) {
   }
 
 
-  function wall(face, center, span, base = 0, height = HEIGHT) {
-    part(face, cream, center, base + height / 2, 0, span, height, .19);
-    if (base !== 0) return;
+  function wall(face, center, span) {
+    part(face, cream, center, HEIGHT / 2, 0, span, HEIGHT, .19);
     for (const floor of [0, UPSTAIRS]) {
       part(face, oak, center, floor + .51, .107, span, 1.02, .036);
       part(face, walnut, center, floor + .065, .147, span, .13, .075);
@@ -161,19 +153,16 @@ export function buildInterior(THREE, scene, { group, part, solid }) {
   const right = group('East wall', SIDE, 0, midpoint);
   right.rotation.y = -Math.PI / 2;
   wall(back, 0, HOUSE_WIDTH);
-  for (const side of [-1, 1]) wall(front, side * (SIDE + .96) / 2, SIDE - .96);
-  wall(front, 0, 1.92, 2.35, HEIGHT - 2.35);
-  for (const x of [-.99, .99]) part(front, walnut, x, 1.2, .08, .16, 2.4, .22);
-  part(front, walnut, 0, 2.4, .08, 2.14, .15, .22);
+  wall(front, 0, HOUSE_WIDTH);
   wall(left, 0, HOUSE_DEPTH);
   wall(right, 0, HOUSE_DEPTH);
   solid(0, BACK, HOUSE_WIDTH, .20, HEIGHT);
   for (const x of [-SIDE, SIDE]) solid(x, midpoint, .20, HOUSE_DEPTH, HEIGHT);
-  for (const side of [-1, 1]) solid(side * (SIDE + .96) / 2, FRONT, SIDE - .96, .22, HEIGHT);
-  solid(0, FRONT, 1.92, .22, HEIGHT, UPSTAIRS);
+  solid(0, FRONT, HOUSE_WIDTH, .22, HEIGHT);
 
   function window(parent, x, y, width, curtain) {
-    const frame = group('Window', x, y, 0.17, parent);
+    const floor = y >= UPSTAIRS ? UPSTAIRS : 0;
+    const frame = group('Window', x, Math.min(y, floor + 1.92), .17, parent);
     part(frame, walnut, 0, 0, 0, width + 0.2, 1.5, 0.135);
     part(frame, 0xb6dfe7, 0, 0, 0.074, width, 1.3, 0.026, 'box', false);
     part(frame, 0xffe5a6, width * 0.26, 0.33, 0.095, 0.26, 0.26, 0.023, 'ball', false);
@@ -208,7 +197,7 @@ export function buildInterior(THREE, scene, { group, part, solid }) {
 
   window(back, -4.3, UPSTAIRS + 2.0, 2.12, colors.blue);
   window(back, 3.2, UPSTAIRS + 2.0, 1.94, rose);
-  window(front, 0, UPSTAIRS + 1.88, 2.0, mint);
+  window(front, -6.86, UPSTAIRS + 1.88, 1.7, mint);
   window(left, -1.47, UPSTAIRS + 1.89, 1.76, colors.blue);
   const facade = group('Exterior window frames', 0, 0, FRONT);
   for (const [x, floor, tint] of [[-4.35, 0, mint], [4.35, 0, rose], [-4.35, UPSTAIRS, colors.blue], [4.35, UPSTAIRS, rose]]) {

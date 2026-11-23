@@ -7,12 +7,12 @@ import { createInteractions, nearestInteraction } from '../core/interactions.js'
 import { createLevelProgress } from '../core/level-progress.js';
 import { PLAYER_RADIUS, walkElevation } from '../core/movement.js';
 import { createPlayer, EYE_HEIGHT } from '../core/player.js';
-import { FRONT, UPSTAIRS } from '../areas/wooden-house/layout.js';
+import { FRONT, STAIR_Z, UPSTAIRS } from '../areas/wooden-house/layout.js';
 import { areaURL, createWorldManager, resolveArea } from '../core/world-manager.js';
 
 const house = 'wooden-house';
 const labels = {
-  door: 'Open front door', mother: 'Help Mom stir the soup', dishes: 'Wash dishes', table: 'Set the dining table',
+  mother: 'Help Mom stir the soup', dishes: 'Wash dishes', table: 'Set the dining table',
   father: 'Whistle with Dad', bird: 'Feed the bird', painting: 'Straighten painting', tv: 'Turn off TV',
   wake: 'Gently wake the boy', bed: 'Make bed', toys: 'Put away toys', girl: 'Play dolls with the girl',
 };
@@ -58,6 +58,17 @@ function fixture(saved = []) {
 
 function missions(area) {
   return Object.fromEntries(area.interactions.filter(item => item.id).map(item => [item.id, item]));
+}
+
+const familySpots = {
+  mother: [4.44, EYE_HEIGHT, -2.02],
+  father: [-4.58, EYE_HEIGHT, -2.70],
+  wake: [-6.52, UPSTAIRS + EYE_HEIGHT, -2.12],
+  girl: [2.06, UPSTAIRS + EYE_HEIGHT, -2.15],
+};
+
+function approachFamily(worlds, id) {
+  worlds.update(.02, new THREE.Vector3(...familySpots[id]));
 }
 
 function models(scene) {
@@ -114,18 +125,21 @@ test('the house opens by URL and the Garden cabin keeps its porch activities', a
   assert.deepEqual(completions, []);
 });
 
-test('the front entry and actual stairs connect both themed bedrooms to downstairs and back', async t => {
+test('the player starts inside and takes the front staircase to the decorated upper hall', async t => {
   const { worlds, camera } = fixture();
   t.after(worlds.unload);
   const visit = await worlds.load(house);
   const { area, definition, scene } = visit;
   const player = createPlayer(THREE, camera);
-  player.reset(definition.spawn, area);
+  player.reset({ ...definition.spawn, yaw: 0 }, area);
   const tasks = missions(area);
-  assert.equal(nearestInteraction(area.interactions, camera.position), tasks.door);
+  assert.ok(camera.position.z < FRONT - 1);
+  assert.equal(tasks.door, undefined);
   assert.equal(walkElevation(area, camera.position, 0, FRONT, 0, true), null);
-  tasks.door.act();
-  worlds.update(.7);
+  for (const name of ['Wooden House front door', 'Parents’ room decorative door', 'Study decorative door',
+    'Toilet decorative door', 'Upstairs linen console', 'Upstairs reading bench']) {
+    assert.ok(scene.getObjectByName(name), name);
+  }
   const direction = new THREE.Vector2();
   function walk(x, z) {
     for (let frame = 0; frame < 300; frame++) {
@@ -137,30 +151,48 @@ test('the front entry and actual stairs connect both themed bedrooms to downstai
       `cannot reach ${x},${z} from ${camera.position.toArray()}`);
     player.stop();
   }
-  for (const waypoint of [[0, 4.55], [5.4, 4.42], [5.4, -4.62], [7.22, -4.62], [7.22, 2.65],
-    [2.06, 2.65], [2.06, -2]]) {
-    walk(...waypoint);
-  }
+  walk(7.2, STAIR_Z);
+  walk(-.45, STAIR_Z);
   assert.ok(near(camera.position.y, UPSTAIRS + EYE_HEIGHT));
-  assert.ok(tasks.girl.reachable(camera.position));
+  walk(-.45, 1.2);
+  walk(2.06, 1.2);
+  walk(2.06, -2.15);
   assert.ok(!tasks.dishes.reachable(new THREE.Vector3(tasks.dishes.x, camera.position.y, tasks.dishes.z)));
   walk(2.06, 1.2);
   walk(-6.55, 1.2);
   walk(-6.55, -2.07);
-  assert.ok(tasks.wake.reachable(camera.position));
   assert.ok(!tasks.bed.active && !tasks.toys.reachable({ x: tasks.toys.x, y: EYE_HEIGHT, z: tasks.toys.z }));
-  for (const name of ['Mother cooking', 'Father playing with the bird', 'Boy sleeping in the blue bedroom',
-    'Girl playing with dolls', 'Moving place settings', 'Bird in the cage', 'Doll 1']) {
-    assert.ok(scene.getObjectByName(name), name);
-  }
-  walk(-6.55, 2.75);
-  walk(7.22, 2.75);
-  walk(7.22, -4.62);
+  walk(-6.55, 2.7);
+  walk(-.45, 2.7);
+  walk(-.45, STAIR_Z);
+  walk(7.2, STAIR_Z);
   assert.ok(near(camera.position.y, EYE_HEIGHT));
-  walk(5.4, -4.62);
-  walk(5.4, 4.43);
-  walk(0, 4.43);
-  walk(0, 7.6);
+  walk(definition.spawn.x, definition.spawn.z);
+});
+
+test('family missions start on approach, stay on their own floor, and use no prompts', async t => {
+  const { worlds, cues } = fixture();
+  t.after(worlds.unload);
+  const { area } = await worlds.load(house);
+  const tasks = missions(area);
+  const done = id => area.missionStatus.missions.find(mission => mission.id === id).complete;
+  for (const [id, [x, y, z]] of Object.entries(familySpots)) {
+    assert.equal(tasks[id], undefined);
+    worlds.update(.02, new THREE.Vector3(x, y > 3 ? EYE_HEIGHT : UPSTAIRS + EYE_HEIGHT, z));
+    worlds.update(2);
+    assert.equal(done(id), false);
+    worlds.reset();
+    const count = cues.length;
+    approachFamily(worlds, id);
+    assert.equal(cues.length, count + 1);
+    assert.equal(done(id), false);
+    worlds.update(1.7, new THREE.Vector3(x, y, z));
+    assert.equal(done(id), true);
+    approachFamily(worlds, id);
+    assert.equal(cues.length, count + 1);
+    if (id === 'wake') assert.equal(tasks.bed.active, true);
+    worlds.reset();
+  }
 });
 
 test('each mission makes its actual furniture tidy exactly once and only after the animation', async () => {
@@ -168,11 +200,12 @@ test('each mission makes its actual furniture tidy exactly once and only after t
   const { area, scene } = await worlds.load(house);
   const tasks = missions(area);
   const model = models(scene);
-  assert.deepEqual(Object.fromEntries(Object.values(tasks).map(task => [task.id, task.label])), labels);
+  assert.deepEqual(Object.fromEntries(Object.values(tasks).map(task => [task.id, task.label])),
+    Object.fromEntries(Object.entries(labels).filter(([id]) => !familySpots[id])));
   for (const [id, isTidy] of Object.entries(tidy)) {
     const task = tasks[id];
     worlds.reset();
-    if (id === 'bed') { tasks.wake.act(); worlds.update(1.2); }
+    if (id === 'bed') { approachFamily(worlds, 'wake'); worlds.update(1.2); }
     const before = id === 'bed' ? ['wake'] : [];
     assert.deepEqual(area.missionStatus.missions, missionProgress(before));
     for (const [key, isTidy] of Object.entries(tidy)) {
@@ -218,7 +251,7 @@ test('every mission works from different positions outside its clearance while f
     tv: { close: [-7.33, 1.14], approaches: [[-6.58, .14], [-6.6, 3.1]], floor: 0 },
     toys: { close: [-2.64, -2.17], approaches: [[-2.52, -3.65], [-3.85, -3.57]], floor: UPSTAIRS },
   };
-  tasks.wake.act();
+  approachFamily(worlds, 'wake');
   worlds.update(1.2);
   for (const [id, { close: [closeX, closeZ], approaches, floor }] of Object.entries(positions)) {
     const task = tasks[id];
@@ -259,22 +292,23 @@ test('every mission works from different positions outside its clearance while f
   worlds.unload();
 });
 
-test('all twelve tasks show one hint and can be completed in different orders', async () => {
+test('all eleven tasks show one hint and can be completed in different orders', async () => {
   const { worlds, getStorage, writes, completions, progress, cues, notifications } = fixture(['garden@3', 'snow@3']);
   for (const order of [
     Object.keys(labels),
-    ['toys', 'painting', 'tv', 'wake', 'bed', 'dishes', 'girl', 'table', 'bird', 'father', 'mother', 'door'],
+    ['toys', 'painting', 'tv', 'wake', 'bed', 'dishes', 'girl', 'table', 'bird', 'father', 'mother'],
   ]) {
     const { area, scene } = worlds.active ?? await worlds.load(house);
     const tasks = missions(area);
     const model = models(scene);
     assert.deepEqual(area.missionStatus.missions, missionProgress());
     assert.ok(!model.stars.visible);
-    assert.match(area.missionStatus.hint, /front door/);
+    assert.match(area.missionStatus.hint, /Mom at the stove/);
     order.forEach((id, i) => {
       assert.ok(area.missionStatus.hint);
       const before = cues.length;
-      tasks[id].act();
+      if (familySpots[id]) approachFamily(worlds, id);
+      else tasks[id].act();
       worlds.update(1.6);
       assert.ok(cues.length > before, id);
       assert.deepEqual(area.missionStatus.missions, missionProgress(order.slice(0, i + 1)));
@@ -300,7 +334,7 @@ test('all twelve tasks show one hint and can be completed in different orders', 
   assert.deepEqual(completions, [house, house]);
   assert.deepEqual(notifications, Array(2).fill('Great job helping the whole family!'));
   assert.equal(writes.length, 1);
-  assert.equal(cues.length, 26);
+  assert.equal(cues.length, 24);
   await worlds.load('garden');
   const revisit = await worlds.load(house);
   assert.deepEqual(revisit.area.missionStatus.missions, missionProgress());
@@ -350,6 +384,7 @@ test('reduced motion keeps the TV still and applies tidy poses without animated 
   const cloudPosition = cloud.position.clone();
   worlds.update(1);
   assert.ok(cloud.position.equals(cloudPosition));
+  for (const id of Object.keys(familySpots)) approachFamily(worlds, id);
   for (const task of Object.values(missions(area))) task.act();
   assert.ok(Object.values(tidy).every(isTidy => isTidy(model)));
   assert.deepEqual(area.missionStatus.missions, success);

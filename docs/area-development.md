@@ -5,7 +5,7 @@
 1. Create an area folder under `areas/`. Export a static `metadata` object from `metadata.js` with the stable area ID and the fields below. Keep this module free of scene, mission, and audio imports.
 2. Default-export a definition from `index.js` that spreads `metadata` and supplies `load(context)`. The engine imports the module asynchronously, then calls `load` synchronously to build the scene and return the visit.
 3. Use the metadata ID as the registry key in `game.js`. Read its metadata from `areaMetadata['<id>']` and declare `loadModule: () => import('./areas/<folder>/index.js')` with a literal path. Use `publicArea(metadata, folder, loadModule)` to register a public area and its thumbnail.
-4. For a public area, add a 16:9 JPEG named after the folder, such as `areas/princess-gallery/princess-gallery.jpg`.
+4. Save the area thumbnail as a 480 × 270 JPEG of at most 25 KB (25,000 bytes), named after its folder, such as `areas/princess-gallery/princess-gallery.jpg`. Public areas require a thumbnail.
 5. Open `?area=<id>` locally and add `&view=drone` to inspect surfaces. Add regression tests for routing, reset, and mission completion.
 6. Regenerate the area statistics and PWA manifest, then validate the release.
 
@@ -29,6 +29,7 @@ Use literal relative JavaScript imports and `new URL('./asset.ext', import.meta.
 | `title`, `description`, `canvasLabel`, `themeColor` | Nonempty strings for the wordmark, menu, accessible canvas name, and browser theme color |
 | `heading` | Two strings for the menu heading and its accent, with visible text in at least one |
 | `width`, `depth` | Positive finite dimensions of the area in world units |
+| `missionCount` | Number of mission rows shown in the area HUD and on Area Statistics |
 | `spawn` | Finite `x` and `z` coordinates, with optional finite `yaw` in radians and `elevation` for selecting an elevated surface |
 
 `loadingMessage` can override the default loading text. Set or increment the positive integer `completionRevision` when a changed mission list requires a new completion badge.

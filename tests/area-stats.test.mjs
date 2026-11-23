@@ -29,7 +29,7 @@ test('reads public and hidden definitions, owns only area files, and counts file
     'const WIDTH = 12.5;',
     'export const snow = {',
     "  title: \"Snow's Basin\",",
-    '  width: WIDTH, depth: SIZE,',
+    '  width: WIDTH, depth: SIZE, missionCount: 3,',
     '  load() { return { width: 999, depth: 888 }; },',
     '};',
   ].join('\n') + '\n';
@@ -71,11 +71,11 @@ test('reads public and hidden definitions, owns only area files, and counts file
   const winterFolder = winterBytes + 75 + Buffer.byteLength('area notes');
   const secretBytes = Buffer.byteLength(secret);
   assert.deepEqual(stats.areas, [{
-    id: 'secret-area', name: 'Secret Area', visibility: 'Hidden', thumbnail: null, width: null, depth: 4, mapArea: null,
+    id: 'secret-area', name: 'Secret Area', visibility: 'Hidden', thumbnail: null, width: null, depth: 4, mapArea: null, missionCount: null,
     folderBytes: secretBytes, totalFiles: 1, jsFiles: 1, jsBytes: secretBytes,
     imageFiles: 0, imageBytes: 0, imageFormats: [],
   }, {
-    id: 'snow', name: "Snow's Basin", visibility: 'Public', thumbnail: './areas/winter-yard/winter-yard.jpg', width: 12.5, depth: 24, mapArea: 300,
+    id: 'snow', name: "Snow's Basin", visibility: 'Public', thumbnail: './areas/winter-yard/winter-yard.jpg', width: 12.5, depth: 24, mapArea: 300, missionCount: 3,
     folderBytes: winterFolder, totalFiles: 8, jsFiles: 3, jsBytes: winterBytes,
     imageFiles: 4, imageBytes: 75, imageFormats: ['JPG', 'PNG', 'WebP'],
   }]);
@@ -157,7 +157,7 @@ test('the dashboard renders the last update, grouped metrics, and links to image
     return button;
   });
   assert.deepEqual(buttons.map(button => button.dataset.sort), [
-    'name', 'visibility', 'mapArea', 'jsBytes', 'imageBytes',
+    'name', 'visibility', 'missionCount', 'mapArea', 'jsBytes', 'imageBytes',
   ]);
   const selectors = Object.fromEntries(['tbody', '.summary', '.table-scroll'].map(name => [name, new Element()]));
   const ids = Object.fromEntries([...html.matchAll(/id="([^"]+)"/g)].map(([, id]) => [id, new Element()]));
@@ -219,7 +219,8 @@ test('the dashboard renders the last update, grouped metrics, and links to image
     }
     assert.equal(row.children[1].children[0].textContent, area.visibility);
     assert.equal(row.children.length, buttons.length);
-    const [, , map, javascript, images] = row.children;
+    const [, , missions, map, javascript, images] = row.children;
+    assert.equal(missions.children[1], String(registry[area.id].missionCount));
     assert.ok([map, javascript, images].every(cell => cell.children[1] && !/NaN|undefined/.test(cell.children[1])));
     assert.equal(map.children.length, area.mapArea === null ? 2 : 3);
     if (area.mapArea !== null) assert.equal(map.children[2].textContent, `${area.mapArea.toLocaleString('en')} wu²`);
@@ -242,4 +243,33 @@ test('the dashboard renders the last update, grouped metrics, and links to image
   mapSort.dispatchEvent(new Event('click'));
   assert.equal(mapSort.parentElement.attributes.get('aria-sort'), 'descending');
   assert.equal(titleFor(rows()[0]), areas.reduce((largest, area) => area.mapArea > largest.mapArea ? area : largest).name);
+  const missionSort = buttons.find(button => button.dataset.sort === 'missionCount');
+  missionSort.dispatchEvent(new Event('click'));
+  missionSort.dispatchEvent(new Event('click'));
+  assert.equal(missionSort.parentElement.attributes.get('aria-sort'), 'descending');
+  assert.equal(titleFor(rows()[0]), 'Secret Apartment — 17E');
+});
+
+
+test('all area thumbnails fit the 480 × 270 JPEG and 25 KB budget', async () => {
+  const { areas } = JSON.parse(await readFile(new URL('area-stats.json', root), 'utf8'));
+  for (const { thumbnail } of areas) {
+    if (!thumbnail) continue;
+    const image = await readFile(new URL(thumbnail, root));
+    assert.ok(image.length <= 25_000, thumbnail);
+    assert.equal(image.readUInt16BE(0), 0xffd8, thumbnail);
+    let offset = 2;
+    let dimensions;
+    while (offset + 8 < image.length && image[offset] === 0xff) {
+      const marker = image[offset + 1];
+      if (marker === 0xc0 || marker === 0xc2) {
+        dimensions = [image.readUInt16BE(offset + 7), image.readUInt16BE(offset + 5)];
+        break;
+      }
+      const length = image.readUInt16BE(offset + 2);
+      assert.ok(length >= 2, thumbnail);
+      offset += length + 2;
+    }
+    assert.deepEqual(dimensions, [480, 270], thumbnail);
+  }
 });
