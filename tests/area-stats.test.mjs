@@ -21,7 +21,7 @@ async function fixture(t, files) {
   return directory;
 }
 
-test('reads public and hidden definitions, owns only area files, and counts physical bytes and lines', async t => {
+test('reads public and hidden definitions, owns only area files, and counts file sizes and formats', async t => {
   const snow = [
     "import { DEPTH as SIZE } from './winter-yard/layout.js';",
     "import '../../irrelevant-runtime.js';",
@@ -72,18 +72,16 @@ test('reads public and hidden definitions, owns only area files, and counts phys
   const secretBytes = Buffer.byteLength(secret);
   assert.deepEqual(stats.areas, [{
     id: 'secret-area', name: 'Secret Area', visibility: 'Hidden', thumbnail: null, width: null, depth: 4, mapArea: null,
-    folderBytes: secretBytes, totalFiles: 1, jsFiles: 1, jsBytes: secretBytes, jsLines: 4,
+    folderBytes: secretBytes, totalFiles: 1, jsFiles: 1, jsBytes: secretBytes,
     imageFiles: 0, imageBytes: 0, imageFormats: [],
   }, {
     id: 'snow', name: "Snow's Basin", visibility: 'Public', thumbnail: './areas/winter-yard/winter-yard.jpg', width: 12.5, depth: 24, mapArea: 300,
-    folderBytes: winterFolder, totalFiles: 8, jsFiles: 3, jsBytes: winterBytes, jsLines: 12,
+    folderBytes: winterFolder, totalFiles: 8, jsFiles: 3, jsBytes: winterBytes,
     imageFiles: 4, imageBytes: 75, imageFormats: ['JPG', 'PNG', 'WebP'],
   }]);
   assert.deepEqual(stats.summary, {
     totalAreas: 2, publicAreas: 1, hiddenAreas: 1, totalFiles: 9,
-    totalBytes: winterFolder + secretBytes, totalJsLines: 16,
-    largestMap: { name: "Snow's Basin", mapArea: 300 },
-    largestFolder: { name: "Snow's Basin", folderBytes: winterFolder },
+    totalBytes: winterFolder + secretBytes,
   });
   assert.equal(JSON.stringify(stats), JSON.stringify(await generateAreaStats(directory)));
 });
@@ -132,7 +130,7 @@ class Element extends EventTarget {
   querySelector() { return this.children[0]; }
 }
 
-test('the dashboard renders the remaining columns, registered thumbnails, and hidden area links', async () => {
+test('the dashboard renders the last update, grouped metrics, and links to images and areas', async () => {
   const html = await readFile(new URL('stats.html', root), 'utf8');
   const json = await readFile(new URL('area-stats.json', root), 'utf8');
   const { areas, summary } = JSON.parse(json);
@@ -149,7 +147,7 @@ test('the dashboard renders the remaining columns, registered thumbnails, and hi
     return button;
   });
   assert.deepEqual(buttons.map(button => button.dataset.sort), [
-    'name', 'visibility', 'dimensions', 'mapArea', 'jsFiles', 'jsBytes', 'jsLines', 'imageBytes',
+    'name', 'visibility', 'mapArea', 'jsBytes', 'imageBytes',
   ]);
   const selectors = Object.fromEntries(['tbody', '.summary', '.table-scroll'].map(name => [name, new Element()]));
   const ids = Object.fromEntries([...html.matchAll(/id="([^"]+)"/g)].map(([, id]) => [id, new Element()]));
@@ -167,42 +165,55 @@ test('the dashboard renders the remaining columns, registered thumbnails, and hi
     },
     fetch(path) {
       requests.push(path);
-      return Promise.resolve(new Response(json));
+      return Promise.resolve(new Response(json, { headers: { 'Last-Modified': 'Mon, 23 Nov 2026 18:10:00 GMT' } }));
     },
   });
   assert.deepEqual(requests, ['./area-stats.json']);
-  assert.equal(ids['total-areas'].textContent, String(areas.length));
+  const [updated] = ids['last-update'].children;
+  assert.equal(updated.tagName, 'time');
+  assert.equal(updated.attributes.get('datetime'), '2026-11-23T18:10:00.000Z');
+  assert.equal(updated.textContent, '24 Nov 2026');
+  assert.equal(updated.children[0].textContent, '01:10 WIB');
   assert.equal(ids['visibility-counts'].textContent, `${summary.publicAreas} / ${summary.hiddenAreas}`);
   assert.match(ids['total-size'].textContent, /^[\d,.]+ [KM]B$/);
   assert.equal(selectors['.summary'].hidden, false);
   assert.equal(selectors['.table-scroll'].hidden, false);
   const rows = () => selectors.tbody.children;
-  const linkFor = row => row.children[0].children[0];
-  const titleFor = row => linkFor(row).children[1].textContent;
+  const identityFor = row => row.children[0].children[0];
+  const linkFor = row => identityFor(row).children.at(-1);
+  const titleFor = row => linkFor(row).textContent;
   assert.equal(rows().length, areas.length);
   for (const area of areas) {
     const row = rows().find(row => linkFor(row).href === `./?area=${encodeURIComponent(area.id)}`);
     assert.ok(row, area.id);
     assert.equal(titleFor(row), area.name);
-    const [thumbnail] = linkFor(row).children;
+    const identity = identityFor(row);
     const registeredThumbnail = registry[area.id].thumbnail;
     if (registeredThumbnail) {
       assert.equal(new URL(area.thumbnail, root).href, registeredThumbnail);
       assert.ok(precachedPaths.has(area.thumbnail));
+      const [preview] = identity.children;
+      const [thumbnail] = preview.children;
+      assert.equal(preview.tagName, 'a');
+      assert.equal(preview.href, new URL(area.thumbnail, page).href);
+      assert.equal(preview.target, '_blank');
       assert.equal(thumbnail.tagName, 'img');
       assert.equal(thumbnail.src, new URL(area.thumbnail, page).href);
       assert.equal(thumbnail.alt, '');
-      assert.equal(thumbnail.width, 64);
-      assert.equal(thumbnail.height, 36);
+      assert.equal(thumbnail.width, 160);
+      assert.equal(thumbnail.height, 90);
     } else {
       assert.equal(area.thumbnail, null);
-      assert.equal(thumbnail.tagName, 'span');
-      assert.equal(thumbnail.src, undefined);
-      assert.equal(thumbnail.attributes.get('aria-hidden'), 'true');
+      assert.deepEqual(identity.children, [linkFor(row)]);
     }
     assert.equal(row.children[1].children[0].textContent, area.visibility);
     assert.equal(row.children.length, buttons.length);
-    assert.ok(row.children.slice(2).every(cell => cell.textContent && !/NaN|undefined/.test(cell.textContent)));
+    const [, , map, javascript, images] = row.children;
+    assert.ok([map, javascript, images].every(cell => cell.children[1] && !/NaN|undefined/.test(cell.children[1])));
+    assert.equal(map.children.length, area.mapArea === null ? 2 : 3);
+    if (area.mapArea !== null) assert.equal(map.children[2].textContent, `${area.mapArea.toLocaleString('en')} wu²`);
+    assert.equal(javascript.children[1], `${area.jsFiles} ${area.jsFiles === 1 ? 'file' : 'files'}`);
+    assert.match(javascript.children[2].textContent, /^[\d,.]+ [KM]B$/);
   }
 
   ids.filter.value = 'Hidden';
@@ -219,5 +230,5 @@ test('the dashboard renders the remaining columns, registered thumbnails, and hi
   mapSort.dispatchEvent(new Event('click'));
   mapSort.dispatchEvent(new Event('click'));
   assert.equal(mapSort.parentElement.attributes.get('aria-sort'), 'descending');
-  assert.equal(titleFor(rows()[0]), summary.largestMap.name);
+  assert.equal(titleFor(rows()[0]), areas.reduce((largest, area) => area.mapArea > largest.mapArea ? area : largest).name);
 });

@@ -342,12 +342,14 @@ test('the worker shares a download and serves lazy area modules and versioned st
     addEventListener(name, listener) { events.set(name, listener); },
   };
   const requests = [];
+  const statsModified = 'Mon, 23 Nov 2026 18:10:00 GMT';
   const network = async resource => {
     const url = String(resource);
     requests.push(url);
     if (offline) throw new TypeError('Offline');
     if (url === new URL('version.json', scope).href) return Response.json(release.manifest);
-    return new Response(release.payloads.get(url));
+    const headers = url === new URL('area-stats.json', scope).href ? { 'Last-Modified': statsModified } : {};
+    return new Response(release.payloads.get(url), { headers });
   };
   for (const [name, value] of Object.entries({ self: simulatedWorker, caches: storage, fetch: network })) {
     const original = Object.getOwnPropertyDescriptor(globalThis, name);
@@ -411,7 +413,9 @@ test('the worker shares a download and serves lazy area modules and versioned st
   }
   const firstData = new URL('area-stats.json', assetBase(scope, first.tag));
   assert.equal(await (await request('stats.html')).text(), `<html data-stats-url="${firstData.pathname}">`);
-  assert.deepEqual(await (await request(firstData, 'cors')).json(), { revision: 1 });
+  const cachedStats = await request(firstData, 'cors');
+  assert.equal(cachedStats.headers.get('Last-Modified'), statsModified);
+  assert.deepEqual(await cachedStats.json(), { revision: 1 });
   assert.equal(requests.length, release.manifest.files.length + 1);
   assert.equal((await storage.keys()).length, 1);
 

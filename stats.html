@@ -22,7 +22,7 @@
     body { margin: 0; }
     a { color: #315d3c; }
     :focus-visible { outline: 2px solid #286b54; outline-offset: 3px; }
-    .wrap { width: min(100% - 2rem, 90rem); margin-inline: auto; }
+    .wrap { width: min(100% - 2rem, 64rem); margin-inline: auto; }
     .site-header { border-bottom: 1px solid var(--line); background: #f7f8ed; }
     .site-header .wrap {
       display: flex;
@@ -56,8 +56,8 @@
     }
     dt { color: var(--muted); font-size: .78rem; font-weight: 750; }
     dd { margin: 0; font-size: 1.3rem; font-weight: 800; font-variant-numeric: tabular-nums; }
-    .largest dd { font-size: .94rem; }
-    .largest small { display: block; margin-top: .24rem; color: var(--muted); font-size: .78rem; }
+    #last-update { font-size: 1.12rem; }
+    .secondary { display: block; margin-top: .22rem; color: var(--muted); font-size: .8rem; font-weight: 550; }
     .inventory { border: 1px solid var(--line); border-radius: 1rem; background: var(--surface); }
     .inventory-header {
       display: flex;
@@ -83,7 +83,6 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      white-space: nowrap;
       font-size: .86rem;
       font-variant-numeric: tabular-nums;
     }
@@ -109,18 +108,18 @@
     thead button:focus-visible { outline-offset: -3px; }
     .sort-icon { width: .8em; color: #63745d; }
     tbody tr:nth-child(even) { background: #f8f9ee; }
-    tbody a {
-      display: inline-flex;
-      align-items: center;
-      gap: .55rem;
-      text-underline-offset: .18em;
-    }
+    tbody a { text-underline-offset: .18em; }
+    .area-identity { display: flex; align-items: center; gap: .85rem; }
+    .thumbnail-link { display: block; flex: none; border-radius: .5rem; }
+    .thumbnail-link:hover { box-shadow: 0 0 0 2px #668962; }
+    .metric { white-space: nowrap; }
+    .metric-label { display: none; }
     .thumbnail {
       display: block;
-      flex: none;
-      width: 64px;
-      height: 36px;
-      border-radius: .35rem;
+      width: clamp(6rem, 16vw, 10rem);
+      height: auto;
+      aspect-ratio: 16 / 9;
+      border-radius: .5rem;
       background: #e3ecd6;
       object-fit: cover;
     }
@@ -128,10 +127,30 @@
     .public { background: #e2eedc; color: #2c542f; }
     .hidden { background: #f2e9db; color: #6c4b2b; }
     .status { margin: 0; padding: .8rem 1rem; border-block-start: 1px solid var(--line); color: var(--muted); font-size: .86rem; }
+    @media (max-width: 42rem) {
+      table, thead, tbody { display: block; }
+      thead tr { display: flex; flex-wrap: wrap; background: #eff3e5; border-block-start: 1px solid var(--line); }
+      thead th { border: 0; }
+      thead button { padding: .55rem .65rem; font-size: .78rem; }
+      tbody tr {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        align-items: center;
+        gap: .65rem .4rem;
+        padding: .85rem .7rem;
+        border-block-start: 1px solid var(--line);
+      }
+      tbody th, tbody td { padding: 0; border: 0; }
+      tbody th { grid-column: span 2; }
+      tbody td:nth-child(2) { justify-self: end; }
+      tbody .metric { align-self: start; justify-self: start; text-align: left; }
+      .area-identity { gap: .55rem; }
+      .thumbnail { width: clamp(5.6rem, 29vw, 8rem); }
+      .metric-label { display: block; margin-bottom: .18rem; color: var(--muted); font-size: .72rem; font-weight: 750; white-space: normal; }
+    }
     @media (max-width: 36rem) {
       .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .summary > div { padding-inline: .7rem; }
-      .summary > div:first-child { grid-column: 1 / -1; }
       .controls { width: 100%; }
       .search-label { flex: 1; min-width: 8rem; }
       input { width: 100%; }
@@ -147,15 +166,12 @@
   </header>
   <main class="wrap">
     <h1>Area Statistics</h1>
-    <p class="description">Figures describe repository files and declared map dimensions. Runtime benchmarks are excluded.</p>
+    <p class="description">Map dimensions and repository file sizes by area.</p>
     <dl class="summary" aria-label="Area summary" hidden>
-      <div><dt>Total Areas</dt><dd id="total-areas"></dd></div>
+      <div><dt>Last Update</dt><dd id="last-update"></dd></div>
       <div><dt>Public / Hidden Areas</dt><dd id="visibility-counts"></dd></div>
       <div><dt>Total Area Files</dt><dd id="total-files"></dd></div>
       <div><dt>Total Area Size</dt><dd id="total-size"></dd></div>
-      <div><dt>Total JavaScript LOC</dt><dd id="total-loc"></dd></div>
-      <div class="largest"><dt>Largest Map</dt><dd id="largest-map"></dd></div>
-      <div class="largest"><dt>Largest Folder</dt><dd id="largest-folder"></dd></div>
     </dl>
     <section class="inventory" aria-labelledby="area-list-heading">
       <div class="inventory-header">
@@ -172,20 +188,17 @@
         </div>
       </div>
       <div class="table-scroll" role="region" aria-label="Area statistics table" tabindex="0" hidden>
-        <table aria-labelledby="area-list-heading">
-          <thead>
-            <tr>
-              <th scope="col" aria-sort="ascending"><button type="button" data-sort="name">Area Name <span class="sort-icon" aria-hidden="true">↑</span></button></th>
-              <th scope="col"><button type="button" data-sort="visibility">Visibility <span class="sort-icon" aria-hidden="true">↕</span></button></th>
-              <th scope="col"><button type="button" data-sort="dimensions">Map Dimensions <span class="sort-icon" aria-hidden="true">↕</span></button></th>
-              <th scope="col"><button type="button" data-sort="mapArea">Map Area <span class="sort-icon" aria-hidden="true">↕</span></button></th>
-              <th scope="col"><button type="button" data-sort="jsFiles">JS Files <span class="sort-icon" aria-hidden="true">↕</span></button></th>
-              <th scope="col"><button type="button" data-sort="jsBytes">JS Size <span class="sort-icon" aria-hidden="true">↕</span></button></th>
-              <th scope="col"><button type="button" data-sort="jsLines">Lines of Code <span class="sort-icon" aria-hidden="true">↕</span></button></th>
-              <th scope="col"><button type="button" data-sort="imageBytes">Image Size <span class="sort-icon" aria-hidden="true">↕</span></button></th>
+        <table role="table" aria-labelledby="area-list-heading">
+          <thead role="rowgroup">
+            <tr role="row">
+              <th role="columnheader" scope="col" aria-sort="ascending"><button type="button" data-sort="name">Area Name <span class="sort-icon" aria-hidden="true">↑</span></button></th>
+              <th role="columnheader" scope="col"><button type="button" data-sort="visibility">Visibility <span class="sort-icon" aria-hidden="true">↕</span></button></th>
+              <th role="columnheader" scope="col"><button type="button" data-sort="mapArea" title="Sort by map area">Map Dimensions <span class="sort-icon" aria-hidden="true">↕</span></button></th>
+              <th role="columnheader" scope="col"><button type="button" data-sort="jsBytes">JS Size <span class="sort-icon" aria-hidden="true">↕</span></button></th>
+              <th role="columnheader" scope="col"><button type="button" data-sort="imageBytes">Image Size <span class="sort-icon" aria-hidden="true">↕</span></button></th>
             </tr>
           </thead>
-          <tbody></tbody>
+          <tbody role="rowgroup"></tbody>
         </table>
       </div>
       <p id="status" class="status" role="status">Loading area statistics…</p>
@@ -196,6 +209,12 @@
     const number = new Intl.NumberFormat('en', { maximumFractionDigits: 3 });
     const collator = new Intl.Collator('en', { numeric: true });
     const unavailable = '—';
+    const date = new Intl.DateTimeFormat('en-GB', {
+      day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Jakarta',
+    });
+    const time = new Intl.DateTimeFormat('en-GB', {
+      hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta',
+    });
     const size = bytes => bytes >= 1_000_000
       ? `${number.format(bytes / 1_000_000)} MB`
       : `${number.format(bytes / 1_000)} KB`;
@@ -211,79 +230,98 @@
     let sortBy = 'name';
     let ascending = true;
 
-    function showSummary(summary) {
+    function secondary(value) {
+      return Object.assign(document.createElement('span'), { className: 'secondary', textContent: value });
+    }
+
+    function showSummary(summary, lastModified) {
       const values = {
-        'total-areas': number.format(summary.totalAreas),
         'visibility-counts': `${number.format(summary.publicAreas)} / ${number.format(summary.hiddenAreas)}`,
         'total-files': number.format(summary.totalFiles),
         'total-size': size(summary.totalBytes),
-        'total-loc': number.format(summary.totalJsLines),
       };
       for (const [id, value] of Object.entries(values)) document.getElementById(id).textContent = value;
-      const map = summary.largestMap;
-      const folder = summary.largestFolder;
-      for (const [id, item, detail] of [
-        ['largest-map', map, map && squareUnits(map.mapArea)],
-        ['largest-folder', folder, folder && size(folder.folderBytes)],
-      ]) {
-        const card = document.getElementById(id);
-        card.textContent = item?.name ?? unavailable;
-        if (item) card.append(Object.assign(document.createElement('small'), { textContent: detail }));
+      const updated = document.getElementById('last-update');
+      const timestamp = lastModified ? new Date(lastModified) : null;
+      if (timestamp && Number.isFinite(timestamp.getTime())) {
+        const label = document.createElement('time');
+        label.setAttribute('datetime', timestamp.toISOString());
+        label.textContent = date.format(timestamp);
+        label.append(secondary(`${time.format(timestamp)} WIB`));
+        updated.append(label);
+      } else {
+        updated.textContent = 'Unavailable';
       }
       document.querySelector('.summary').hidden = false;
     }
 
-    function sortValue(area) {
-      if (sortBy === 'dimensions') return area.width === null || area.depth === null ? null : area.width;
-      return area[sortBy];
-    }
-
     function compareAreas(first, second) {
-      const left = sortValue(first);
-      const right = sortValue(second);
+      const left = first[sortBy];
+      const right = second[sortBy];
       if (left === null) return right === null ? 0 : 1;
       if (right === null) return -1;
-      let comparison = typeof left === 'number' ? left - right : collator.compare(left, right);
-      if (sortBy === 'dimensions' && comparison === 0) comparison = first.depth - second.depth;
+      const comparison = typeof left === 'number' ? left - right : collator.compare(left, right);
       return comparison * (ascending ? 1 : -1) || collator.compare(first.name, second.name);
     }
 
     function areaRow(area) {
       const row = document.createElement('tr');
+      row.setAttribute('role', 'row');
       const nameCell = document.createElement('th');
       nameCell.scope = 'row';
+      nameCell.setAttribute('role', 'rowheader');
       const link = document.createElement('a');
       link.href = `./?area=${encodeURIComponent(area.id)}`;
-      const thumbnail = document.createElement(area.thumbnail ? 'img' : 'span');
-      thumbnail.className = 'thumbnail';
+      const identity = document.createElement('div');
+      identity.className = 'area-identity';
       if (area.thumbnail) {
-        thumbnail.width = 64;
-        thumbnail.height = 36;
+        const preview = document.createElement('a');
+        preview.className = 'thumbnail-link';
+        // Cached statistics and their images share a versioned directory.
+        preview.href = new URL(area.thumbnail, new URL(statsPath, document.baseURI)).href;
+        preview.target = '_blank';
+        preview.rel = 'noopener';
+        preview.setAttribute('aria-label', `View ${area.name} image (opens in a new tab)`);
+        const thumbnail = document.createElement('img');
+        thumbnail.className = 'thumbnail';
+        thumbnail.width = 160;
+        thumbnail.height = 90;
         thumbnail.alt = '';
         thumbnail.decoding = 'async';
-        // Cached statistics are served from the same versioned directory as their images.
-        thumbnail.src = new URL(area.thumbnail, new URL(statsPath, document.baseURI)).href;
-      } else {
-        thumbnail.setAttribute('aria-hidden', 'true');
+        thumbnail.src = preview.href;
+        preview.append(thumbnail);
+        identity.append(preview);
       }
-      const title = document.createElement('span');
-      title.textContent = area.name;
-      link.append(thumbnail, title);
-      nameCell.append(link);
+      link.textContent = area.name;
+      identity.append(link);
+      nameCell.append(identity);
       row.append(nameCell);
 
       const badge = document.createElement('span');
       badge.classList.add('visibility', area.visibility.toLowerCase());
       badge.textContent = area.visibility;
-      row.insertCell().append(badge);
+      const visibility = row.insertCell();
+      visibility.setAttribute('role', 'cell');
+      visibility.append(badge);
 
       const dimensions = area.width === null && area.depth === null
         ? unavailable : `${units(area.width)} × ${units(area.depth)} wu`;
-      for (const value of [
-        dimensions, squareUnits(area.mapArea),
-        number.format(area.jsFiles), size(area.jsBytes), number.format(area.jsLines),
-        size(area.imageBytes),
-      ]) row.insertCell().textContent = value;
+      const files = `${number.format(area.jsFiles)} ${area.jsFiles === 1 ? 'file' : 'files'}`;
+      for (const [heading, main, detail] of [
+        ['Map Dimensions', dimensions, area.mapArea === null ? '' : squareUnits(area.mapArea)],
+        ['JS Size', files, size(area.jsBytes)],
+        ['Image Size', size(area.imageBytes)],
+      ]) {
+        const cell = row.insertCell();
+        cell.className = 'metric';
+        cell.setAttribute('role', 'cell');
+        const label = document.createElement('span');
+        label.className = 'metric-label';
+        label.textContent = heading;
+        label.setAttribute('aria-hidden', 'true');
+        cell.append(label, main);
+        if (detail) cell.append(secondary(detail));
+      }
       return row;
     }
 
@@ -308,7 +346,7 @@
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const { areas, summary } = await response.json();
       const render = () => showAreas(areas);
-      showSummary(summary);
+      showSummary(summary, response.headers.get('Last-Modified'));
       render();
       document.querySelector('.table-scroll').hidden = false;
       search.disabled = false;
