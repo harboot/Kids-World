@@ -100,7 +100,9 @@ test('the picker returns elevated terrain, bridges, stairs and the lookout in re
   const stair = stairPoint(0.55);
   near(castle(stair.x, stair.z).y, stair.y, 0.2);
   assert.ok((await open('arendelle-village'))(2.8, -9.15).y > 10);
-  near((await open('wooden-house'))(0, 1.2).y, 0);
+  const house = await open('wooden-house');
+  near(house(0, 1.2).y, 3.361, 0.013);
+  near(house(0, 8.8).y, -.01);
   const apartment = await open('secret-apartment');
   near(apartment(-88, 5).y, -0.016);
   drone.focus(areas['secret-apartment'], undefined, 1);

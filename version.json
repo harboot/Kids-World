@@ -1,13 +1,13 @@
 {
-  "version": "d00f031beb55186d670245d55082dabaf3072de4855c59165850ce0f437b1a1d",
+  "version": "9f089cc70cb82bf7138215ad86dfde28780cd6588767226d8db3061898f58344",
   "files": [
     {
       "path": "./area-catalog.js",
-      "revision": "23471dd91461d4f608dd82a01a18da2f6a96679a6eec32bc09a1e0139500a944"
+      "revision": "34e0d488a7799ef5146a165ee779fb389419cd0417bf7d3ba37fe17932c2736f"
     },
     {
       "path": "./area-stats.json",
-      "revision": "c8d666d1584ae622b0d6047dd0d0390249c08ccc125499f4a3a1b89380ac2122"
+      "revision": "4eff96c7c3fd0a50410d241e77d9f1afdfc2b2c002ef0a0d1d93ad90db7cdfe1"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -499,31 +499,39 @@
     },
     {
       "path": "./areas/wooden-house/cleaning.js",
-      "revision": "57ed66caf59286bdbb7e36e2565dd1cadcdbcab98b1768006c0253d551e295aa"
+      "revision": "e244b20764c7e5bd5c710370f999ceab01d96c8d67d655d4752d3e2687713a66"
     },
     {
       "path": "./areas/wooden-house/clearance.js",
       "revision": "9e16be8396da19d72e9dc612764e6556e80bfb420729f8983374bbaa2989618b"
     },
     {
+      "path": "./areas/wooden-house/family.js",
+      "revision": "aff9fbf3af3c5d03ce692ff3a081c956ad654f19d1f506e538b80b30f8f230f8"
+    },
+    {
       "path": "./areas/wooden-house/furniture.js",
-      "revision": "7d6bc31f110f71fe74b67e4d25e3bcd5948c3bfabd720b8307fab89d1b56b37e"
+      "revision": "faab72a9038e3c1295f07f23b11c03d0cc1230e1a6abc25068e9e7f88d8a54f0"
     },
     {
       "path": "./areas/wooden-house/index.js",
-      "revision": "15e3946bb49af2c197ab5c6671f5ac264fc1f82675f9061c6b84bf3f64ee906e"
+      "revision": "157aa772239a5251415b309039f00c092579b6df4fd86eb6eb678ed095569b51"
     },
     {
       "path": "./areas/wooden-house/interior.js",
-      "revision": "798ebacd2f1be37ccd80c808efde891cfb95f861dfe94db8c6c5c91cb6ab7762"
+      "revision": "aab2fc85669ccee1444ac94c6c73d7c9bbf7d9e917ed9295f697853e9a58e77e"
+    },
+    {
+      "path": "./areas/wooden-house/layout.js",
+      "revision": "1d0bbfe4cbd5b071dc3a9db614ea60d5062bde067f6ed9a6db26442463b4f540"
     },
     {
       "path": "./areas/wooden-house/metadata.js",
-      "revision": "84ee7360a6d3afa6bb649d541f9ed91b3096f9e670b6473b9ceed6883fa4c076"
+      "revision": "9d251c3a552fe6295d3a3deba5b51aac168e3b14fd9e0bc66ce3f0578560da69"
     },
     {
       "path": "./areas/wooden-house/music.js",
-      "revision": "f118be360793955f0a319d7e273607b5f3ecac7853d6a0df8e683547fef19d6c"
+      "revision": "b60d4bd55d36f22b3e1afd59a99f44e2f99d04e178cbdc71edeb492470e83bc3"
     },
     {
       "path": "./areas/wooden-house/wooden-house.jpg",
@@ -595,7 +603,7 @@
     },
     {
       "path": "./core/player.js",
-      "revision": "659ab13d0f13ce13126f6a78cbfff94e03bda60ba0236af4c23b8ea0b730c821"
+      "revision": "47ce9c8150df652f8bc4187662d846961bb77782109fe3676a7683ed6d4e171b"
     },
     {
       "path": "./core/random.js",

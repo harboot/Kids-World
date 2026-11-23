@@ -1,11 +1,10 @@
 import { addGroup, addMesh, rectangleBounds } from '../../core/geometry.js';
 import { PLAYER_ONLY_LAYER } from '../../core/render-layers.js';
-import { metadata } from './metadata.js';
+import { BACK, FRONT, SIDE, UPSTAIRS } from './layout.js';
 
-const { width: HOUSE_WIDTH, depth: HOUSE_DEPTH } = metadata;
-const HEIGHT = 3.8;
-const HALF_WIDTH = HOUSE_WIDTH / 2;
-const HALF_DEPTH = HOUSE_DEPTH / 2;
+const HEIGHT = UPSTAIRS + 3.16;
+const HOUSE_WIDTH = SIDE * 2;
+const HOUSE_DEPTH = FRONT - BACK;
 
 export const colors = {
   cream: 0xffebca, linen: 0xfff6df, honey: 0xba7d50, walnut: 0x79523f, oak: 0xd7a372,
@@ -13,7 +12,7 @@ export const colors = {
   teal: 0x4c7b80, blue: 0x6da9c2, plum: 0x856f80, ink: 0x34333b, leaf: 0x638c5e,
 };
 
-export function createHouseBuilder(THREE, scene, obstacles) {
+export function createHouseBuilder(THREE, scene, obstacles, upper) {
   const architecture = new THREE.Group();
   const shapes = {
     box: new THREE.BoxGeometry(1, 1, 1),
@@ -74,7 +73,11 @@ export function createHouseBuilder(THREE, scene, obstacles) {
     staticParts.length = 0;
   }
 
-  function solid(x, z, width, depth, height) {
+  function solid(x, z, width, depth, height, floor = 0) {
+    if (floor) {
+      upper.add(x, z, width, depth, height, floor);
+      return;
+    }
     obstacles.push({ ...rectangleBounds(x, z, width, depth), height });
   }
 
@@ -92,49 +95,82 @@ export function buildInterior(THREE, scene, { group, part, solid }) {
   fill.position.set(5, 4, -5);
   scene.add(sun, fill);
 
-  part(room, honey, 0, -0.13, 0, HOUSE_WIDTH, 0.22, HOUSE_DEPTH);
+  const midpoint = (FRONT + BACK) / 2;
+  part(room, 0x94a96c, 0, -.16, 0, 20, .3, 18);
+  part(room, honey, 0, -.13, midpoint, HOUSE_WIDTH, .24, HOUSE_DEPTH);
+  part(room, oak, 0, -.03, 6.18, 3.15, .06, .96);
+  part(room, 0xd6c398, 0, -.009, 7.67, 1.88, .017, 2.03);
+  for (const x of [-2.5, 2.5]) {
+    part(room, walnut, x, .21, 6.33, .54, .42, .54, 'taper');
+    part(room, leaf, x, .66, 6.33, .8, .85, .79, 'facet');
+    solid(x, 6.33, .59, .59, .91);
+  }
+  const rows = Math.ceil(HOUSE_DEPTH / .36);
+  const spacing = HOUSE_DEPTH / rows;
   const planks = [0xc39164, 0xcb986b, 0xd39f71, 0xc08a5f, 0xd9a777];
-  for (let row = 0; row < 30; row++) {
-    const z = -HALF_DEPTH + (row + 0.5) * 0.36;
-    let left = -HALF_WIDTH;
-    for (let i = 0; left < HALF_WIDTH - 0.02; i++) {
-      const span = Math.min(i ? 2.72 : 1.4 + (row % 4) * 0.37, HALF_WIDTH - left);
-      part(room, planks[(row * 7 + i * 3) % planks.length], left + span / 2, -0.018, z, span - 0.012, 0.036, 0.351);
+  for (let row = 0; row < rows; row++) {
+    const z = BACK + (row + .5) * spacing;
+    let left = -SIDE;
+    for (let i = 0; left < SIDE - .02; i++) {
+      const span = Math.min(i ? 2.72 : 1.4 + (row % 4) * .37, SIDE - left);
+      part(room, planks[(row * 7 + i * 3) % planks.length], left + span / 2, -.019, z, span - .012, .037, spacing - .011);
       left += span;
     }
   }
-  part(room, 0xe7caac, 0, HEIGHT + 0.09, 0, HOUSE_WIDTH, 0.18, HOUSE_DEPTH).layers.set(PLAYER_ONLY_LAYER);
-  for (const z of [-4.96, -2.52, 0, 2.52, 4.96]) {
-    part(room, honey, 0, HEIGHT - 0.1, z, HOUSE_WIDTH, 0.2, 0.17).layers.set(PLAYER_ONLY_LAYER);
+  part(room, 0xe7caac, 0, HEIGHT + .09, midpoint, HOUSE_WIDTH, .18, HOUSE_DEPTH).layers.set(PLAYER_ONLY_LAYER);
+  const pitch = .26;
+  for (const side of [-1, 1]) {
+    const slope = part(room, 0x975a4b, side * (SIDE + .26) / 2, HEIGHT + 1.21, midpoint,
+      (SIDE + .26) / Math.cos(pitch) + .10, .24, HOUSE_DEPTH + .58);
+    slope.rotation.z = -side * pitch;
+    slope.layers.set(PLAYER_ONLY_LAYER);
   }
-  for (const x of [-5.98, 5.98]) {
-    part(room, walnut, x, HEIGHT - 0.18, 0, 0.18, 0.19, HOUSE_DEPTH).layers.set(PLAYER_ONLY_LAYER);
+  part(room, walnut, 0, HEIGHT + 2.4, midpoint, .23, .2, HOUSE_DEPTH + .62).layers.set(PLAYER_ONLY_LAYER);
+  const gable = new THREE.Shape();
+  gable.moveTo(-SIDE, 0);
+  gable.lineTo(-SIDE, .08);
+  gable.lineTo(0, 2.39);
+  gable.lineTo(SIDE, .08);
+  gable.lineTo(SIDE, 0);
+  gable.closePath();
+  const gableGeometry = new THREE.ExtrudeGeometry(gable, { depth: .18, bevelEnabled: false });
+  const gableWood = new THREE.MeshLambertMaterial({ color: honey });
+  for (const z of [BACK - .09, FRONT - .09]) {
+    const face = new THREE.Mesh(gableGeometry, gableWood);
+    face.position.set(0, HEIGHT, z);
+    face.layers.set(PLAYER_ONLY_LAYER);
+    scene.add(face);
   }
 
-  function wall(x, z, span, angle) {
-    const face = group('Exterior wall', x, 0, z);
-    face.rotation.y = angle;
-    part(face, cream, 0, HEIGHT / 2, 0, span, HEIGHT, 0.19);
-    for (let y = 1.36; y < HEIGHT; y += 0.28) part(face, 0xe7c8a4, 0, y, 0.098, span, 0.019, 0.015);
-    part(face, oak, 0, 0.53, 0.107, span, 1.06, 0.036);
-    for (let i = 1; i < Math.round(span / 0.32); i++) {
-      const offset = span * (i / Math.round(span / 0.32) - 0.5);
-      part(face, honey, offset, 0.53, 0.13, 0.018, 1.06, 0.016);
+
+  function wall(face, center, span, base = 0, height = HEIGHT) {
+    part(face, cream, center, base + height / 2, 0, span, height, .19);
+    if (base !== 0) return;
+    for (const floor of [0, UPSTAIRS]) {
+      part(face, oak, center, floor + .51, .107, span, 1.02, .036);
+      part(face, walnut, center, floor + .065, .147, span, .13, .075);
+      part(face, honey, center, floor + 1.015, .149, span, .098, .093);
+      for (let y = 1.35; y < 3.05; y += .29) part(face, 0xe7c8a4, center, floor + y, .103, span, .018, .014);
     }
-    part(face, walnut, 0, 0.075, 0.15, span, 0.15, 0.075);
-    part(face, honey, 0, 1.06, 0.158, span, 0.105, 0.102);
-    return face;
   }
-
-  const back = wall(0, -HALF_DEPTH, HOUSE_WIDTH, 0);
-  const front = wall(0, HALF_DEPTH, HOUSE_WIDTH, Math.PI);
-  const left = wall(-HALF_WIDTH, 0, HOUSE_DEPTH, Math.PI / 2);
-  const right = wall(HALF_WIDTH, 0, HOUSE_DEPTH, -Math.PI / 2);
-  for (const z of [-HALF_DEPTH, HALF_DEPTH]) solid(0, z, HOUSE_WIDTH, 0.2, HEIGHT);
-  for (const x of [-HALF_WIDTH, HALF_WIDTH]) solid(x, 0, 0.2, HOUSE_DEPTH, HEIGHT);
-  for (const wallFace of [back, front]) {
-    for (const x of [-6.15, 6.15]) part(wallFace, honey, x, HEIGHT / 2, 0.179, 0.26, HEIGHT, 0.17);
-  }
+  const back = group('Rear wall', 0, 0, BACK);
+  const front = group('Front wall and entry', 0, 0, FRONT);
+  front.rotation.y = Math.PI;
+  const left = group('West wall', -SIDE, 0, midpoint);
+  left.rotation.y = Math.PI / 2;
+  const right = group('East wall', SIDE, 0, midpoint);
+  right.rotation.y = -Math.PI / 2;
+  wall(back, 0, HOUSE_WIDTH);
+  for (const side of [-1, 1]) wall(front, side * (SIDE + .96) / 2, SIDE - .96);
+  wall(front, 0, 1.92, 2.35, HEIGHT - 2.35);
+  for (const x of [-.99, .99]) part(front, walnut, x, 1.2, .08, .16, 2.4, .22);
+  part(front, walnut, 0, 2.4, .08, 2.14, .15, .22);
+  wall(left, 0, HOUSE_DEPTH);
+  wall(right, 0, HOUSE_DEPTH);
+  solid(0, BACK, HOUSE_WIDTH, .20, HEIGHT);
+  for (const x of [-SIDE, SIDE]) solid(x, midpoint, .20, HOUSE_DEPTH, HEIGHT);
+  for (const side of [-1, 1]) solid(side * (SIDE + .96) / 2, FRONT, SIDE - .96, .22, HEIGHT);
+  solid(0, FRONT, 1.92, .22, HEIGHT, UPSTAIRS);
 
   function window(parent, x, y, width, curtain) {
     const frame = group('Window', x, y, 0.17, parent);
@@ -170,12 +206,24 @@ export function buildInterior(THREE, scene, { group, part, solid }) {
   window(right, 1.68, 2.36, 1.85, mint);
   window(left, 3.93, 2.48, 1.5);
 
-  window(front, 0, 2.23, 1.72);
+  window(back, -4.3, UPSTAIRS + 2.0, 2.12, colors.blue);
+  window(back, 3.2, UPSTAIRS + 2.0, 1.94, rose);
+  window(front, 0, UPSTAIRS + 1.88, 2.0, mint);
+  window(left, -1.47, UPSTAIRS + 1.89, 1.76, colors.blue);
+  const facade = group('Exterior window frames', 0, 0, FRONT);
+  for (const [x, floor, tint] of [[-4.35, 0, mint], [4.35, 0, rose], [-4.35, UPSTAIRS, colors.blue], [4.35, UPSTAIRS, rose]]) {
+    window(facade, x, floor + 2.03, 1.72);
+    for (const side of [-1, 1]) {
+      part(facade, tint, x + side * 1.19, floor + 2.03, .23, .43, 1.38, .13);
+    }
+  }
 
-  for (const [x, z] of [[-2.8, -1.75], [2.8, 0.15]]) {
-    part(room, walnut, x, 3.5, z, 0.055, 0.55, 0.055, 'round');
-    part(room, gold, x, 3.21, z, 0.62, 0.29, 0.62, 'taper').rotation.z = Math.PI;
-    part(room, 0xffe7b4, x, 3.06, z, 0.43, 0.09, 0.43, 'ball', false);
+
+  for (const [x, z, y] of [[-2.8, -1.75, UPSTAIRS - .21], [2.8, .15, UPSTAIRS - .21],
+    [-3.4, -2.4, HEIGHT], [3.1, -2.2, HEIGHT], [.65, 3.55, HEIGHT]]) {
+    part(room, walnut, x, y - .19, z, .05, .39, .05, 'round');
+    part(room, gold, x, y - .39, z, .62, .24, .62, 'taper').rotation.z = Math.PI;
+    part(room, 0xffe7b4, x, y - .51, z, .43, .085, .43, 'ball', false);
   }
 
   const clock = group('Wall clock', 0.04, 2.67, 0.15, back);
@@ -189,8 +237,8 @@ export function buildInterior(THREE, scene, { group, part, solid }) {
   }
 }
 
-export function rug({ group, part }, x, z, width, depth, edge, field) {
-  const mat = group('Woven rug', x, 0.012, z);
+export function rug({ group, part }, x, z, width, depth, edge, field, floor = 0) {
+  const mat = group('Woven rug', x, floor + .012, z);
   part(mat, edge, 0, 0, 0, width, 0.025, depth);
   part(mat, field, 0, 0.015, 0, width - 0.13, 0.009, depth - 0.14);
   for (const side of [-1, 1]) {

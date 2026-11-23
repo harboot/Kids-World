@@ -1,3 +1,4 @@
+import { EYE_HEIGHT } from '../../core/player.js';
 import { addClearanceOutline, clearanceMaterial, insideClearance } from './clearance.js';
 
 const cues = {
@@ -32,7 +33,7 @@ export function createCleaningMissions(THREE, scene, models, { playCue, reducedM
   const outlineMaterial = clearanceMaterial(THREE);
   const tasks = models.map(model => ({
     model, completed: false, elapsed: null,
-    outline: addClearanceOutline(THREE, scene, model.label, model.clearance, outlineMaterial, 0.036),
+    outline: model.clearance && addClearanceOutline(THREE, scene, model.label, model.clearance, outlineMaterial, (model.floor ?? 0) + .036),
   }));
   const allClean = () => tasks.every(task => task.completed);
 
@@ -54,18 +55,23 @@ export function createCleaningMissions(THREE, scene, models, { playCue, reducedM
         get current() { return Number(task.completed); },
         get complete() { return task.completed; },
       })),
-      hint: '',
+      get hint() {
+        const task = tasks.find(task => !task.completed);
+        if (!task) return '';
+        return task.elapsed === null ? task.model.hint : `Watch the activity finish: ${task.model.label}.`;
+      },
     },
     interactions: tasks.map(task => {
-      const { id, x, z, label, anchorY, radius, clearance, approach } = task.model;
-      const available = () => !signal.aborted && !task.completed && task.elapsed === null;
+      const { id, x, z, label, anchorY, radius, floor = 0, clearance, approach, ready, sound } = task.model;
+      const available = () => !signal?.aborted && !task.completed && task.elapsed === null && (!ready || ready());
       return {
         id, x, z, radius, label, anchorY, requiresView: true, silent: true,
-        reachable: player => !insideClearance(clearance, player.x, player.z) && (!approach || approach(player)),
+        reachable: player => Math.abs(player.y - EYE_HEIGHT - floor) < .75 &&
+          (!clearance || !insideClearance(clearance, player.x, player.z)) && (!approach || approach(player)),
         get active() { return available(); },
         act() {
           if (!available()) return;
-          playCue(cues[id]);
+          playCue(sound ?? cues[id]);
           if (reducedMotion()) finish(task);
           else {
             task.elapsed = 0;
@@ -74,11 +80,12 @@ export function createCleaningMissions(THREE, scene, models, { playCue, reducedM
         },
       };
     }),
-    blocksGround(x, z) {
-      return tasks.some(task => !task.completed && insideClearance(task.model.clearance, x, z));
+    blocksGround(x, z, feet) {
+      return tasks.some(({ model, completed }) => !completed && model.clearance &&
+        Math.abs(feet - (model.floor ?? 0)) < 1.4 && insideClearance(model.clearance, x, z));
     },
     update(dt) {
-      if (signal.aborted) return;
+      if (signal?.aborted) return;
       const still = reducedMotion();
       for (const task of tasks) {
         if (task.completed) continue;
