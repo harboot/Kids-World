@@ -1,13 +1,13 @@
 {
-  "version": "9a24099830d42e3ed8dc3699b7ee2cbfb506dfbea385ae8458ae080a5d9cf815",
+  "version": "67c3ca74cd1484a9f240433a96351cbcb8ff03888ebdafb0c7299cc5fd589521",
   "files": [
     {
       "path": "./area-catalog.js",
-      "revision": "b7b409307f9814144214d34491107e7b4c6fbc8c7682719e6f7725f2f88eab42"
+      "revision": "23471dd91461d4f608dd82a01a18da2f6a96679a6eec32bc09a1e0139500a944"
     },
     {
       "path": "./area-stats.json",
-      "revision": "6c0a3526a8b1fe76350097c88ebc0751d5ee348ce5eb0e3e495730631dd8387d"
+      "revision": "6f4fd5ea2d43a583b5ecdf0801bc3ed0042ed091c8f2529ed553df47e2280ff7"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -87,11 +87,11 @@
     },
     {
       "path": "./areas/flower-garden/garden-animals.js",
-      "revision": "2c1f16855258c3d9bcf4821254521ed499dae62371634eb5e97778b724328fa1"
+      "revision": "c4bc29040468d812835c4f2c51fb7dfd82c081c4970d8672d9528e33ed73d3d9"
     },
     {
       "path": "./areas/flower-garden/garden-balloon.js",
-      "revision": "d9d20c31a3fef0ce479c22b1c35e07b916e6246b549213a1dc5fce7fa41745c6"
+      "revision": "02ff1f218e2fdf9787be896b511fddb630615117c471f4ee1222d9550fb5d410"
     },
     {
       "path": "./areas/flower-garden/garden-batches.js",
@@ -99,15 +99,19 @@
     },
     {
       "path": "./areas/flower-garden/garden-cabin.js",
-      "revision": "5a932061e40f7168376b79ff6737f42a64b9b35ce8bbc9682bad35229b4adc11"
+      "revision": "719cd3f59a8c1f79314f2d887f8ecea793b3293e2e647bbd8fda996ff373950d"
     },
     {
       "path": "./areas/flower-garden/garden-cave.js",
-      "revision": "b906b2978bc225cabb2c32d0592687670b1c364007f32bed193e1f23cbc0234a"
+      "revision": "73ab1a04ce6d6626af8e75aec54ea11a967f51eb994abadd40497755661e4ce4"
+    },
+    {
+      "path": "./areas/flower-garden/garden-monkey.js",
+      "revision": "4307ba3f2060e5b15ad6e79cb6d2a16063ad0b02ea40ea0bd7a944a59c2f004b"
     },
     {
       "path": "./areas/flower-garden/garden-orchard.js",
-      "revision": "3b84ba4e8143d9d8d8efe7f84d112243a928821e0fb455c1b6c92de18ec87710"
+      "revision": "6b4528644e48ff96dfec13eef6237358aa81814849d941ffce616f5cb6773720"
     },
     {
       "path": "./areas/flower-garden/garden-panorama.js",
@@ -127,19 +131,19 @@
     },
     {
       "path": "./areas/flower-garden/garden-terrain.js",
-      "revision": "ecc187ac91536c7f7b994d79cf2ec5e67342fad2e8d0a1d8930d5a06c8a69fe5"
+      "revision": "ed0302f016400290e046490325465c6de1dad77a42a2e9666f9dabc5dd4ad8ff"
     },
     {
       "path": "./areas/flower-garden/index.js",
-      "revision": "6b45d455f4915ca86c636a5a7f2f22654ae42e19846ab1fbafe3bddf64edce52"
+      "revision": "3b6366f2c1bae53c74eaf5f59ac7eb585fddb707201b5d64565bab3ac9542556"
     },
     {
       "path": "./areas/flower-garden/metadata.js",
-      "revision": "2856fabeaed0ce8dc6982fd52f1ba32fca8abc41aed18b4c0a7ef429bd235d4a"
+      "revision": "a2222446d0f86804f66915e3744db5f65da935f748f1cc14b1993ba1b6925892"
     },
     {
       "path": "./areas/flower-garden/music.js",
-      "revision": "9f863d3ee2e901e813c81ab3cf7a295ef8541f1b86aa69a3c79328a54ca369d8"
+      "revision": "2169d1b662c5163c0ab58c04977f59fc1f2e9753917cc7a470c4b13a7aaf3777"
     },
     {
       "path": "./areas/frozen-castle/activities.js",
@@ -535,11 +539,11 @@
     },
     {
       "path": "./core/audio.js",
-      "revision": "208ac18f8605e122032ebd3ebfbb4938fef5054902029687b0493a88e6dce402"
+      "revision": "79c46459d878292bd394db3fb762450c92b00ae5a5ebef2a22f9171348c6a407"
     },
     {
       "path": "./core/controls.js",
-      "revision": "98d933fb8a279f385465c365ac7da8ca90eaacbc35abfe306271271deea5c486"
+      "revision": "42cdb5e94fd66007f0acb849710cf9dec9a87ca4ee34664c2325ac8f60b5a32a"
     },
     {
       "path": "./core/coordinate-picker.js",
@@ -555,7 +559,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "a8621bc119858344c75ce2d6e91f027f4fc670b23541758deec012d4fd34eacf"
+      "revision": "f278e7104716078075fc2ab4caa5459738f9096f879314c3f99c57c074e237eb"
     },
     {
       "path": "./core/geometry.js",
@@ -567,7 +571,7 @@
     },
     {
       "path": "./core/interactions.js",
-      "revision": "5fa62097e8e2e49a65e3d25c164b74d94f91e28f6473be18178350a330f2e856"
+      "revision": "dc422683a7774bfef8665528ddf9ef0b5e50a043b2df7e73580034f37425d08e"
     },
     {
       "path": "./core/level-progress.js",
@@ -583,7 +587,7 @@
     },
     {
       "path": "./core/player.js",
-      "revision": "815ad7219a99014b0de62c5693aef329bf979ed29855d1c8cb29fea6bfb578b9"
+      "revision": "659ab13d0f13ce13126f6a78cbfff94e03bda60ba0236af4c23b8ea0b730c821"
     },
     {
       "path": "./core/random.js",
@@ -607,7 +611,7 @@
     },
     {
       "path": "./index.html",
-      "revision": "1c838a99be2a991dbacf234551f08d486167f92264a88095a03726a9c97e5bf2"
+      "revision": "69c02e945e6a3b3ed3b6d6daf7d3d818531fc867e0b8594d6186e7847e625bd9"
     },
     {
       "path": "./manifest.webmanifest",
@@ -643,7 +647,7 @@
     },
     {
       "path": "./style.css",
-      "revision": "c4753d4f138d91bf82abfc385cfa4a094d15442100eb98d3467325733f994faf"
+      "revision": "85a0f25de5231ccb72d1759daf17df2a76da8f496457ac1c9533812552ed6ec0"
     },
     {
       "path": "./vendor/three.LICENSE",

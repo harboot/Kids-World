@@ -15,7 +15,7 @@ export function nearestInteraction(items, position, inView) {
   return nearest;
 }
 
-export function createInteractions(THREE, { button, glyph, label, camera, playing, touchMode, runAction }) {
+export function createInteractions(THREE, { button, glyph, label, camera, playing, allowNearby = () => true, touchMode, runAction }) {
   const point = new THREE.Vector3();
   const { clamp } = THREE.MathUtils;
   let items = [];
@@ -29,14 +29,16 @@ export function createInteractions(THREE, { button, glyph, label, camera, playin
   }
 
   function nearby() {
-    return playing() ? pinned ?? nearestInteraction(items, camera.position, project) : null;
+    if (!playing()) return null;
+    if (pinned) return pinned.active === false ? null : pinned;
+    return allowNearby() ? nearestInteraction(items, camera.position, project) : null;
   }
 
   function update() {
     const item = nearby();
     button.hidden = !item;
     if (!item) return;
-    const key = touchMode() ? '↗' : 'M';
+    const key = touchMode() ? '↗' : 'Space';
     if (glyph.textContent !== key) glyph.textContent = key;
     if (label.textContent !== item.label) label.textContent = item.label;
     let left = 50;
@@ -51,9 +53,10 @@ export function createInteractions(THREE, { button, glyph, label, camera, playin
 
   function interact() {
     const item = nearby();
-    if (!item) return;
+    if (!item) return false;
     runAction(item);
     update();
+    return true;
   }
 
   button.addEventListener('click', interact);

@@ -42,7 +42,7 @@ export const areaMetadata = {
       "Garden"
     ],
     "description": "Help the garden animals, deliver apples, and explore by balloon or through the mountain cave.",
-    "completionRevision": 2,
+    "completionRevision": 3,
     "loadingMessage": "Loading the garden…",
     "canvasLabel": "3D flower garden",
     "themeColor": "#e9eedc",

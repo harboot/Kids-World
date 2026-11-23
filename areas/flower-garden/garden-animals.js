@@ -1,4 +1,16 @@
-export function createAnimals(THREE, scene, playerRadius, finishMission) {
+import { EYE_HEIGHT } from '../../core/player.js';
+
+const moo = [
+  [48, { endPitch: 41, duration: .46, level: .24, wave: 'triangle' }],
+  [60, { endPitch: 52, duration: .34, level: .08, wave: 'triangle' }, .05],
+];
+const cluck = [
+  [69, { endPitch: 59, duration: .088, level: .18, wave: 'triangle' }],
+  [70, { endPitch: 61, duration: .077, level: .15, wave: 'triangle' }, .105],
+  [75, { endPitch: 62, duration: .13, level: .19, wave: 'triangle' }, .2],
+];
+
+export function createAnimals(THREE, scene, playerRadius, finishMission, playCue) {
   const block = new THREE.BoxGeometry(1, 1, 1);
   const shadowShape = new THREE.CircleGeometry(1, 14).rotateX(-Math.PI / 2);
   const shadowMaterial = new THREE.MeshBasicMaterial({
@@ -140,7 +152,7 @@ export function createAnimals(THREE, scene, playerRadius, finishMission) {
     const cow = build(body, legs);
     root.add(body, shadow);
     scene.add(root);
-    return { root, body, cow, legs, x, z, rx, rz, pace, offset, width, depth, height, front, time: 0, reaction: 0 };
+    return { root, body, cow, legs, x, z, rx, rz, pace, offset, width, depth, height, front, time: 0, reaction: 0, greeted: false };
   }
 
   // Each route keeps the animal inside its own pen, even while the gate is open.
@@ -197,29 +209,27 @@ export function createAnimals(THREE, scene, playerRadius, finishMission) {
   }
 
   return {
-    interactions: animals.map(animal => ({
-      get x() { return animal.root.position.x; },
-      get z() { return animal.root.position.z; },
-      get active() { return animal.reaction === 0; },
-      label: animal.cow ? 'Greet cow' : 'Make chicken jump',
-      anchorY: animal.cow ? 1.7 : 0.7,
-      radius: animal.cow ? 1.85 : 1.3,
-      act() {
-        if (animal.reaction) return;
-        animal.reaction = animal.cow ? 1.25 : 0.92;
-        for (const { joint } of animal.legs) joint.rotation.x = 0;
-        finishMission(animal.cow ? 'cow' : 'chicken');
-      },
-    })),
     reset() {
       for (const animal of animals) {
         animal.reaction = 0;
+        animal.greeted = false;
         animal.cow?.reset();
         place(animal, 0);
       }
     },
     update(dt, player) {
       for (const animal of animals) {
+        const distance = player ? Math.hypot(player.x - animal.root.position.x, player.z - animal.root.position.z) : Infinity;
+        const greetingRadius = animal.cow ? 1.85 : 1.3;
+        if (distance > greetingRadius + .55) animal.greeted = false;
+        if (!animal.reaction && !animal.greeted && distance <= greetingRadius &&
+            Math.abs(player.y - EYE_HEIGHT) < .85) {
+          animal.greeted = true;
+          animal.reaction = animal.cow ? 1.25 : .92;
+          for (const { joint } of animal.legs) joint.rotation.x = 0;
+          playCue?.(animal.cow ? moo : cluck);
+          finishMission(animal.cow ? 'cow' : 'chicken');
+        }
         if (!animal.reaction) {
           const speed = place(animal, animal.time + dt, player);
           animal.cow?.update(dt, speed);

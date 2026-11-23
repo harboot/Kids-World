@@ -240,7 +240,7 @@ test('every mission works from different positions outside its clearance while f
 });
 
 test('all five tasks can finish in different orders, record once per visit and remain replayable', async () => {
-  const { worlds, getStorage, writes, completions, progress, cues, notifications } = fixture(['garden@2', 'snow@3']);
+  const { worlds, getStorage, writes, completions, progress, cues, notifications } = fixture(['garden@3', 'snow@3']);
   for (const order of [
     ['toys', 'painting', 'tv', 'bed', 'dishes'],
     ['dishes', 'bed', 'toys', 'tv', 'painting'],

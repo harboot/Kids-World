@@ -28,6 +28,12 @@ const interactCue = [
   [79, { duration: 0.135, level: 0.15 }, 0.035],
 ];
 
+const stepCue = [
+  [46, { endPitch: 29, duration: 0.065, level: 0.042, attack: 0.006, wave: 'triangle' }],
+  [66, { endPitch: 41, duration: 0.035, level: 0.012, attack: 0.005, wave: 'triangle' }],
+];
+const effects = { jump: jumpCue, interact: interactCue, step: stepCue };
+
 function renderLoop(OfflineContext, { beat, beatsPerBar = 4, bars, accompaniment = [], melody = [], rhythm = [] }) {
   const barDuration = beatsPerBar * beat;
   const context = new OfflineContext(1, Math.round(barDuration * bars.length * sampleRate), sampleRate);
@@ -207,7 +213,7 @@ export function createAudio(button) {
   }
 
   function effect(name) {
-    return playCue(name === 'jump' ? jumpCue : interactCue);
+    return playCue(effects[name] ?? interactCue);
   }
 
   if (AudioContext) {

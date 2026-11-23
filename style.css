@@ -326,6 +326,7 @@ kbd {
   font-size: 20px;
   font-weight: 850;
 }
+#game[data-input="mouse"] .interaction-circle { font-size: 13px; }
 .interaction:hover .interaction-circle, .interaction:focus-visible .interaction-circle { background: var(--accent-strong); }
 .interaction-label {
   border-radius: 30px;

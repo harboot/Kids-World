@@ -80,11 +80,10 @@ export function createControls(THREE, { game, canvas, joystick, thumb, playing, 
       return;
     }
     if (!playing()) return;
-    if (event.code === 'KeyM' || event.code === 'Space') {
+    if (event.code === 'Space') {
       event.preventDefault();
       if (!event.repeat) {
-        if (event.code === 'KeyM') interact();
-        else jump();
+        if (touchMode() || !interact()) jump();
       }
       return;
     }

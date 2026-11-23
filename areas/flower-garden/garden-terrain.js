@@ -1,4 +1,5 @@
 export const HILL = { x: 16.6, z: 13.7, radiusX: 6.2, radiusZ: 8.8, height: 2.55 };
+export const BACK_HILL = { x: 11.25, z: 23.45, radiusX: 11.15, radiusZ: 5.55, height: 5.15 };
 export const POND = { x: -14, z: 13.5, radiusX: 5.65, radiusZ: 6.65, waterY: -0.14 };
 
 export function shoreRadius(angle) {
@@ -17,12 +18,12 @@ function smooth(value) {
 }
 
 function naturalHeight(x, z) {
-  const hillRadius = Math.hypot((x - HILL.x) / HILL.radiusX, (z - HILL.z) / HILL.radiusZ);
-  const hill = HILL.height * (1 - smooth(hillRadius));
+  const rise = hill => hill.height *
+    (1 - smooth(Math.hypot((x - hill.x) / hill.radiusX, (z - hill.z) / hill.radiusZ)));
   const shore = pondDistance(x, z);
   const basin = -0.42 * (1 - smooth((shore - 0.76) / 0.395));
   const deepBed = -0.14 * (1 - smooth((shore - 0.82) / 0.16));
-  return hill + basin + deepBed;
+  return Math.max(rise(HILL), rise(BACK_HILL)) + basin + deepBed;
 }
 
 // Sample the same triangles that the renderer draws.
@@ -78,7 +79,7 @@ export function drawTerrain(THREE, scene, terrain) {
       const y = heights[row * stride + col];
       positions.push(x, y, z);
       const shade = 0.29 + 0.12 * Math.sin(x * 0.37 + z * 0.29) + 0.13 * Math.max(0, y);
-      color.copy(low).lerp(high, shade);
+      color.copy(low).lerp(high, Math.min(1, shade));
       if (y < -0.025) color.lerp(bank, Math.min(1, -y * 4));
       if (y < POND.waterY) color.lerp(pondBed, smooth((POND.waterY - y) / 0.24));
       colors.push(color.r, color.g, color.b);

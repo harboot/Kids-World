@@ -1,3 +1,5 @@
+import { EYE_HEIGHT } from '../../core/player.js';
+
 const APPLES_TO_DELIVER = 3;
 
 export function nextBasketState(state, action) {
@@ -7,7 +9,7 @@ export function nextBasketState(state, action) {
   return state;
 }
 
-export function addOrchard(THREE, { scene, viewmodel, mesh, box, facet, matte, obstacles, collision, getTerrainHeight, table, deliver }) {
+export function addOrchard(THREE, { scene, viewmodel, mesh, box, facet, matte, obstacles, collision, getTerrainHeight, table, deliver, playCue }) {
   const treeX = 11.2;
   const treeZ = 8.25;
   const basketX = 8.7;
@@ -20,12 +22,16 @@ export function addOrchard(THREE, { scene, viewmodel, mesh, box, facet, matte, o
   const gold = matte(0xeeac4a);
   const wicker = matte(0xb77738);
   const rim = matte(0xd4a364);
+  const tree = new THREE.Group();
+  tree.name = 'Apple tree';
+  tree.position.set(treeX, treeGround, treeZ);
+  scene.add(tree);
   const canopy = new THREE.Group();
   canopy.name = 'Apple tree canopy';
-  canopy.position.set(treeX, treeGround + 2.2, treeZ);
-  scene.add(canopy);
+  canopy.position.y = 2.2;
+  tree.add(canopy);
   const trunk = new THREE.CylinderGeometry(0.31, 0.49, 1, 7);
-  mesh(trunk, bark, treeX, treeGround + 1.45, treeZ, 1, 2.9, 1, scene, true);
+  mesh(trunk, bark, 0, 1.45, 0, 1, 2.9, 1, tree, true).name = 'Apple tree trunk';
   obstacles.push(collision(treeX, treeZ, 0.86, 0.86, treeGround + 2.8));
   mesh(box, bark, -0.54, 0.7, 0, 0.29, 1.72, 0.29, canopy).rotation.z = 0.63;
   mesh(box, bark, 0.62, 0.63, 0.2, 0.27, 1.58, 0.27, canopy).rotation.z = -0.66;
@@ -52,7 +58,12 @@ export function addOrchard(THREE, { scene, viewmodel, mesh, box, facet, matte, o
     [1.74, 1.38, 0.73], [1.46, 0.86, -0.54], [0.27, 1.18, -1.69],
     [-1.45, 1.05, -0.96], [-1.87, 1.44, -0.14],
   ];
-  branches.forEach(([x, y, z], index) => makeApple(canopy, index).position.set(x, y, z));
+  const branchApples = branches.map(([x, y, z], index) => {
+    const apple = makeApple(canopy, index);
+    apple.position.set(x, y, z);
+    return apple;
+  });
+  const fallingBranches = [0, 2, 4];
 
   const basket = new THREE.Group();
   basket.name = 'Apple basket';
@@ -65,15 +76,15 @@ export function addOrchard(THREE, { scene, viewmodel, mesh, box, facet, matte, o
   }
   const handle = new THREE.TorusGeometry(0.27, 0.029, 6, 12, Math.PI);
   mesh(handle, rim, 0, 0.23, 0, 1, 1, 1, basket);
-  const basketApples = [[-0.12, -0.09], [0.11, -0.09], [-0.11, 0.11], [0.1, 0.12], [0, 0.01]]
+  const basketApples = [[-0.12, -0.09], [0.11, -0.09], [0, 0.12]]
     .map(([x, z], index) => {
       const fruit = makeApple(basket, index);
       fruit.name = 'Basket apple';
-      fruit.position.set(x, index === 4 ? 0.31 : 0.267, z);
+      fruit.position.set(x, 0.267, z);
       fruit.scale.setScalar(0.78);
       return fruit;
     });
-  const drops = Array.from({ length: 6 }, (_, index) => {
+  const drops = Array.from({ length: APPLES_TO_DELIVER }, (_, index) => {
     const mesh = makeApple(scene, index);
     mesh.name = 'Fallen apple';
     return { mesh, velocity: 0, ready: false, floor: 0 };
@@ -81,20 +92,27 @@ export function addOrchard(THREE, { scene, viewmodel, mesh, box, facet, matte, o
   let basketState = 'ground';
   let appleCount = 0;
   let shakeTime = 0;
-  let branchIndex = 0;
+  let shaken = false;
 
   function shake() {
+    if (shaken) return;
+    shaken = true;
     shakeTime = 0.9;
-    for (const fruit of drops.filter(fruit => !fruit.mesh.visible).slice(0, 3)) {
-      const [x, y, z] = branches[branchIndex];
-      branchIndex = (branchIndex + 1) % branches.length;
-      fruit.mesh.position.set(treeX + x, canopy.position.y + y, treeZ + z);
+    playCue?.([
+      [48, { endPitch: 36, duration: .14, level: .16, wave: 'triangle' }],
+      [55, { endPitch: 47, duration: .15, level: .09, wave: 'triangle' }, .11],
+      [48, { endPitch: 38, duration: .17, level: .12, wave: 'triangle' }, .23],
+    ]);
+    drops.forEach((fruit, index) => {
+      const branchApple = branchApples[fallingBranches[index]];
+      branchApple.visible = false;
+      branchApple.getWorldPosition(fruit.mesh.position);
       fruit.floor = getTerrainHeight(fruit.mesh.position.x, fruit.mesh.position.z) + 0.115;
       fruit.mesh.rotation.set(0, 0, 0);
       fruit.mesh.visible = true;
       fruit.ready = false;
       fruit.velocity = 0;
-    }
+    });
   }
 
   function moveBasket(action) {
@@ -123,7 +141,8 @@ export function addOrchard(THREE, { scene, viewmodel, mesh, box, facet, matte, o
 
   const interactions = [
     { x: treeX, z: treeZ, radius: 2.4, anchorY: treeGround + 2.05,
-      get active() { return shakeTime === 0 && drops.some(fruit => !fruit.mesh.visible); },
+      get active() { return !shaken; },
+      reachable: p => Math.abs(p.y - EYE_HEIGHT - treeGround) < 1.35, silent: true,
       label: 'Shake tree', act: shake },
     { x: basketX, z: basketZ, radius: 1.4, anchorY: basketGround + 0.58,
       get active() { return basketState === 'ground'; },
@@ -153,31 +172,41 @@ export function addOrchard(THREE, { scene, viewmodel, mesh, box, facet, matte, o
     get collectedApples() { return Math.min(appleCount, APPLES_TO_DELIVER); },
     get deliveryHint() {
       if (basketState !== 'carried') {
-        return basketState === 'ground' ? 'Pick up the basket by the apple tree' : 'Pick up your basket for more apples';
+        return basketState === 'ground' ? 'Pick up the basket by the apple tree at the small hill.' : 'Pick the basket back up from the house table.';
       }
-      if (appleCount >= APPLES_TO_DELIVER) return 'Place the basket on the cabin table';
-      return 'Shake the apple tree';
+      if (appleCount >= APPLES_TO_DELIVER) return 'Carry the three apples up the porch steps and place the basket on the house table.';
+      return shaken ? 'Collect all three fallen apples around the tree.' : 'Approach the apple tree and use Shake tree.';
+    },
+    blocks(x, z, radius, from) {
+      const clearance = 1.1 + radius;
+      const distance = Math.hypot(x - treeX, z - treeZ);
+      return !shaken && distance < clearance &&
+        (!from || distance < Math.hypot(from.x - treeX, from.z - treeZ));
     },
     update(dt) {
       shakeTime = Math.max(0, shakeTime - dt);
-      canopy.rotation.z = Math.sin(shakeTime * 32) * shakeTime * 0.13;
-      canopy.rotation.x = Math.cos(shakeTime * 29) * shakeTime * 0.09;
+      tree.rotation.z = Math.sin(shakeTime * 32) * shakeTime * 0.075;
+      tree.rotation.x = Math.cos(shakeTime * 29) * shakeTime * 0.047;
       for (const fruit of drops) {
         if (!fruit.mesh.visible || fruit.ready) continue;
         fruit.velocity -= 10.6 * dt;
         fruit.mesh.position.y = Math.max(fruit.floor, fruit.mesh.position.y + fruit.velocity * dt);
         fruit.mesh.rotation.z += 2.5 * dt;
         if (fruit.mesh.position.y !== fruit.floor) continue;
-        if (fruit.velocity < -2) fruit.velocity = -fruit.velocity * 0.24;
+        if (fruit.velocity < -2) {
+          fruit.velocity = -fruit.velocity * 0.24;
+          playCue?.([[42, { endPitch: 31, duration: .07, level: .08, wave: 'triangle' }]]);
+        }
         else fruit.ready = true;
       }
     },
     reset() {
       moveBasket('reset');
       shakeTime = 0;
-      branchIndex = 0;
+      shaken = false;
       appleCount = 0;
-      canopy.rotation.set(0, 0, 0);
+      tree.rotation.set(0, 0, 0);
+      for (const apple of branchApples) apple.visible = true;
       for (const apple of basketApples) apple.visible = false;
       for (const fruit of drops) {
         fruit.mesh.visible = false;

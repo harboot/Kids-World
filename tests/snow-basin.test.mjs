@@ -752,7 +752,7 @@ test('completes exactly once in any mission order and preserves other area badge
     return steps.join(' ');
   }))) {
     await t.test(order, async sub => {
-      const game = await buildWorld({ saved: ['snow@2', 'garden@2', 'frozen-castle'] });
+      const game = await buildWorld({ saved: ['snow@2', 'garden@3', 'frozen-castle'] });
       const { worlds, visit, progress, completions } = game;
       sub.after(worlds.unload);
       assert.equal(progress.has('snow'), false);
@@ -779,7 +779,7 @@ test('completes exactly once in any mission order and preserves other area badge
         assert.deepEqual(completions, missions.size === 4 ? ['snow'] : []);
       }
       assert.ok(progress.has('snow'));
-      assert.deepEqual(new Set(game.records()), new Set(['snow@3', 'garden@2', 'frozen-castle']));
+      assert.deepEqual(new Set(game.records()), new Set(['snow@3', 'garden@3', 'frozen-castle']));
       assert.equal(game.missionHud.toast.textContent, 'Snow Basin complete!');
       assert.equal(visit.area.missionStatus.hint, 'Snow Basin complete!');
       startRide(game);
