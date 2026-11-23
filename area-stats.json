@@ -1,10 +1,11 @@
 {
+  "updatedAt": "2026-11-23T08:50:00.307Z",
   "summary": {
     "totalAreas": 8,
     "publicAreas": 7,
     "hiddenAreas": 1,
-    "totalFiles": 143,
-    "totalBytes": 1176916
+    "totalFiles": 144,
+    "totalBytes": 1231434
   },
   "areas": [
     {
@@ -101,17 +102,19 @@
       "id": "secret-apartment",
       "name": "Secret Apartment — 17E",
       "visibility": "Hidden",
-      "thumbnail": null,
+      "thumbnail": "./areas/secret-apartment/secret-apartment.jpg",
       "width": 220,
       "depth": 84,
       "mapArea": 18480,
-      "folderBytes": 90823,
-      "totalFiles": 14,
+      "folderBytes": 145341,
+      "totalFiles": 15,
       "jsFiles": 14,
       "jsBytes": 90823,
-      "imageFiles": 0,
-      "imageBytes": 0,
-      "imageFormats": []
+      "imageFiles": 1,
+      "imageBytes": 54518,
+      "imageFormats": [
+        "JPG"
+      ]
     },
     {
       "id": "snow",

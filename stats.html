@@ -234,7 +234,7 @@
       return Object.assign(document.createElement('span'), { className: 'secondary', textContent: value });
     }
 
-    function showSummary(summary, lastModified) {
+    function showSummary(summary, updatedAt) {
       const values = {
         'visibility-counts': `${number.format(summary.publicAreas)} / ${number.format(summary.hiddenAreas)}`,
         'total-files': number.format(summary.totalFiles),
@@ -242,7 +242,7 @@
       };
       for (const [id, value] of Object.entries(values)) document.getElementById(id).textContent = value;
       const updated = document.getElementById('last-update');
-      const timestamp = lastModified ? new Date(lastModified) : null;
+      const timestamp = updatedAt ? new Date(updatedAt) : null;
       if (timestamp && Number.isFinite(timestamp.getTime())) {
         const label = document.createElement('time');
         label.setAttribute('datetime', timestamp.toISOString());
@@ -344,9 +344,9 @@
     try {
       const response = await fetch(statsPath, { cache: 'no-cache' });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const { areas, summary } = await response.json();
+      const { areas, summary, updatedAt } = await response.json();
       const render = () => showAreas(areas);
-      showSummary(summary, response.headers.get('Last-Modified'));
+      showSummary(summary, updatedAt);
       render();
       document.querySelector('.table-scroll').hidden = false;
       search.disabled = false;

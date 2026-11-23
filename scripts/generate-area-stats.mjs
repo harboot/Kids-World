@@ -1,5 +1,6 @@
 import { lstat, readFile, readdir, writeFile } from 'node:fs/promises';
 import { dirname, extname, join, posix, resolve } from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 
 const identifier = /^[A-Za-z_$][\w$]*$/;
 const decimal = /^(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i;
@@ -272,7 +273,11 @@ export async function readAreaSources(root) {
     const depth = Number.isFinite(rawDepth) && rawDepth > 0 ? rawDepth : null;
     const mapArea = width !== null && depth !== null && Number.isFinite(width * depth) ? width * depth : null;
     const directory = folder ?? (posix.dirname(entry) === 'areas' ? entry.slice(0, -extname(entry).length) : posix.dirname(entry));
-    const thumbnail = folder ? './' + posix.join(folder, posix.basename(folder) + '.jpg') : null;
+    const thumbnailPath = posix.join(directory, posix.basename(directory) + '.jpg');
+    const thumbnailFile = folder ? null : await lstat(join(root, thumbnailPath)).catch(error => {
+      if (error.code !== 'ENOENT') throw error;
+    });
+    const thumbnail = folder || thumbnailFile?.isFile() ? './' + thumbnailPath : null;
     areas.push({ id, name: title, visibility, thumbnail, width, depth, mapArea, entry, directory, metadataPath });
   }
   return areas;
@@ -300,12 +305,23 @@ export async function generateAreaStats(root) {
 if (process.argv[1] && resolve(process.argv[1]) === import.meta.filename) {
   const target = new URL('../area-stats.json', import.meta.url);
   const stats = await generateAreaStats(dirname(dirname(import.meta.filename)));
-  const content = JSON.stringify(stats, null, 2) + '\n';
-  if (process.argv.includes('--check')) {
-    if (await readFile(target, 'utf8') !== content) {
+  const previous = await readFile(target, 'utf8').catch(error => {
+    if (error.code !== 'ENOENT') throw error;
+  });
+  let saved;
+  try {
+    saved = JSON.parse(previous ?? 'null');
+  } catch (error) {
+    if (!(error instanceof SyntaxError)) throw error;
+  }
+  const savedDate = new Date(saved?.updatedAt);
+  const sameData = isDeepStrictEqual(saved?.summary, stats.summary) && isDeepStrictEqual(saved?.areas, stats.areas);
+  const updatedAt = sameData && Number.isFinite(savedDate.getTime()) ? savedDate.toISOString() : new Date().toISOString();
+  const content = JSON.stringify({ updatedAt, ...stats }, null, 2) + '\n';
+  if (previous !== content) {
+    if (process.argv.includes('--check')) {
       throw new Error('area-stats.json is out of date. Run node scripts/generate-area-stats.mjs');
     }
-  } else {
     await writeFile(target, content);
   }
   console.log(`Area statistics for ${stats.areas.length} Kids World areas`);

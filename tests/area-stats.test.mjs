@@ -86,7 +86,7 @@ test('reads public and hidden definitions, owns only area files, and counts file
   assert.equal(JSON.stringify(stats), JSON.stringify(await generateAreaStats(directory)));
 });
 
-test('emits the same JSON bytes each time and rejects stale data in check mode', async t => {
+test('preserves the timestamp until the statistics change and rejects stale data in check mode', async t => {
   const script = 'scripts/generate-area-stats.mjs';
   const directory = await fixture(t, {
     [script]: await readFile(new URL(script, root)),
@@ -106,6 +106,16 @@ test('emits the same JSON bytes each time and rejects stale data in check mode',
   assert.equal(JSON.parse(first).areas[0].totalFiles, 2);
   generate();
   assert.equal(await readFile(join(directory, 'area-stats.json'), 'utf8'), first);
+  assert.doesNotThrow(() => generate('--check'));
+
+  await writeFile(join(directory, 'areas/example/metadata.js'),
+    'export const metadata = { title: "Example", width: 9, depth: 5 };\n');
+  assert.throws(() => generate('--check'), /area-stats\.json is out of date/);
+  assert.equal(await readFile(join(directory, 'area-stats.json'), 'utf8'), first);
+  generate();
+  const changed = JSON.parse(await readFile(join(directory, 'area-stats.json'), 'utf8'));
+  assert.equal(changed.areas[0].mapArea, 45);
+  assert.ok(Date.parse(changed.updatedAt) > Date.parse(JSON.parse(first).updatedAt));
   assert.doesNotThrow(() => generate('--check'));
 });
 
@@ -165,7 +175,7 @@ test('the dashboard renders the last update, grouped metrics, and links to image
     },
     fetch(path) {
       requests.push(path);
-      return Promise.resolve(new Response(json, { headers: { 'Last-Modified': 'Mon, 23 Nov 2026 18:10:00 GMT' } }));
+      return Promise.resolve(Response.json({ areas, summary, updatedAt: '2026-11-23T18:10:00.000Z' }));
     },
   });
   assert.deepEqual(requests, ['./area-stats.json']);
@@ -189,8 +199,9 @@ test('the dashboard renders the last update, grouped metrics, and links to image
     assert.equal(titleFor(row), area.name);
     const identity = identityFor(row);
     const registeredThumbnail = registry[area.id].thumbnail;
-    if (registeredThumbnail) {
-      assert.equal(new URL(area.thumbnail, root).href, registeredThumbnail);
+    if (registeredThumbnail || area.id === 'secret-apartment') {
+      const expected = registeredThumbnail ?? new URL('areas/secret-apartment/secret-apartment.jpg', root).href;
+      assert.equal(new URL(area.thumbnail, root).href, expected);
       assert.ok(precachedPaths.has(area.thumbnail));
       const [preview] = identity.children;
       const [thumbnail] = preview.children;

@@ -14,6 +14,7 @@ const root = new URL('../', import.meta.url);
 const snowEntry = './areas/snow-basin/index.js';
 const previousSnowEntry = './areas/snow-basin.js';
 const hiddenEntry = './areas/secret-apartment/index.js';
+const hiddenThumbnail = './areas/secret-apartment/secret-apartment.jpg';
 
 class MemoryStorage {
   caches = new Map();
@@ -62,7 +63,8 @@ test('checked-in release matches every runtime file and the worker version chang
   }
   assert.ok(!paths.includes(previousSnowEntry));
   assert.ok(paths.every(path => !path.startsWith('./tests/')));
-  assert.ok(paths.every(path => !path.startsWith('./areas/secret-apartment/')));
+  assert.deepEqual(paths.filter(path => path.startsWith('./areas/secret-apartment/')),
+    [hiddenThumbnail]);
   for (const file of ['metadata.js', 'index.js', 'music.js']) {
     assert.ok(manifest.onDemandFiles.some(({ path }) => path === './areas/secret-apartment/' + file));
   }
@@ -288,7 +290,7 @@ test('optional files are allowlisted, verified again on reuse, and isolated by r
   const progress = [];
   const installed = await cache.install(original.manifest, null, status => progress.push(status));
   assert.equal(requests.length, manifest.files.length);
-  assert.ok(requests.every(url => !url.includes('/secret-apartment/')));
+  assert.deepEqual(requests.filter(url => url.includes('/secret-apartment/')), [new URL(hiddenThumbnail, scope).href]);
   assert.equal(progress.at(-1).total, manifest.files.length);
   assert.equal(progress.at(-1).downloaded, manifest.files.length);
 
@@ -331,7 +333,8 @@ test('the worker shares a download and serves lazy area modules and versioned st
   const stats = '<html data-stats-url="./area-stats.json">';
   const source = await readFile(new URL('game.js', root), 'utf8');
   const files = { './index.html': shell, './stats.html': stats, './game.js': source };
-  let release = await fixture({ ...files, './area-stats.json': '{"revision":1}' });
+  const firstStats = { revision: 1, updatedAt: '2026-11-23T18:10:00.000Z' };
+  let release = await fixture({ ...files, './area-stats.json': JSON.stringify(firstStats) });
   const storage = new MemoryStorage();
   const events = new Map();
   const client = { id: 'test-client', url: scope.href };
@@ -342,14 +345,12 @@ test('the worker shares a download and serves lazy area modules and versioned st
     addEventListener(name, listener) { events.set(name, listener); },
   };
   const requests = [];
-  const statsModified = 'Mon, 23 Nov 2026 18:10:00 GMT';
   const network = async resource => {
     const url = String(resource);
     requests.push(url);
     if (offline) throw new TypeError('Offline');
     if (url === new URL('version.json', scope).href) return Response.json(release.manifest);
-    const headers = url === new URL('area-stats.json', scope).href ? { 'Last-Modified': statsModified } : {};
-    return new Response(release.payloads.get(url), { headers });
+    return new Response(release.payloads.get(url));
   };
   for (const [name, value] of Object.entries({ self: simulatedWorker, caches: storage, fetch: network })) {
     const original = Object.getOwnPropertyDescriptor(globalThis, name);
@@ -413,9 +414,9 @@ test('the worker shares a download and serves lazy area modules and versioned st
   }
   const firstData = new URL('area-stats.json', assetBase(scope, first.tag));
   assert.equal(await (await request('stats.html')).text(), `<html data-stats-url="${firstData.pathname}">`);
-  const cachedStats = await request(firstData, 'cors');
-  assert.equal(cachedStats.headers.get('Last-Modified'), statsModified);
-  assert.deepEqual(await cachedStats.json(), { revision: 1 });
+  assert.deepEqual(await (await request(firstData, 'cors')).json(), firstStats);
+  const thumbnail = await request(new URL(hiddenThumbnail, firstData), 'cors');
+  assert.equal(thumbnail.status, 200);
   assert.equal(requests.length, release.manifest.files.length + 1);
   assert.equal((await storage.keys()).length, 1);
 
@@ -448,7 +449,7 @@ test('the worker shares a download and serves lazy area modules and versioned st
   const newData = newPage.match(/data-stats-url="([^"]+)"/)[1];
   assert.notEqual(newData, firstData.pathname);
   assert.deepEqual(await (await request(newData, 'cors')).json(), { revision: 2 });
-  assert.deepEqual(await (await request(firstData, 'cors')).json(), { revision: 1 });
+  assert.deepEqual(await (await request(firstData, 'cors')).json(), firstStats);
   assert.deepEqual(requests.slice(-2), [new URL('version.json', scope).href, new URL('area-stats.json', scope).href]);
 });
 

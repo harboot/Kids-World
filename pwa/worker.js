@@ -125,10 +125,9 @@ async function releasedAsset(relative, search) {
   // Use the versioned request URL as the base for relative module imports.
   const contentType = /\.[cm]?js$/i.test(file) ? 'text/javascript; charset=utf-8'
     : response.headers.get('Content-Type') ?? 'application/octet-stream';
-  const headers = new Headers({ 'Content-Type': contentType });
-  const lastModified = response.headers.get('Last-Modified');
-  if (lastModified) headers.set('Last-Modified', lastModified);
-  return new Response(response.body, { headers });
+  return new Response(response.body, {
+    headers: { 'Content-Type': contentType },
+  });
 }
 
 function retryPage(message) {
