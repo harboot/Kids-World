@@ -48,8 +48,11 @@ function renderLoop(OfflineContext, { beat, beatsPerBar = 4, bars, accompaniment
     for (const part of accompaniment) {
       part.voices.forEach((voice, index) => play(index * (part.spread ?? 0), bar.chord[voice], part));
     }
-    for (const [offset, pitch] of bar.melody ?? []) {
-      for (const part of melody) play(offset, pitch, part);
+    for (const [offset, pitch, noteDuration] of bar.melody ?? []) {
+      // Older scores use [offset, pitch]; new scores may also provide duration.
+      for (const part of melody) {
+        play(offset, pitch, { ...part, duration: noteDuration ?? part.duration });
+      }
     }
     for (const part of rhythm) {
       for (const [offset, pitch] of part.notes) play(offset, pitch, part);
