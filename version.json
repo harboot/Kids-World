@@ -1,5 +1,5 @@
 {
-  "version": "547cdd6c46c334659d188d7b68e35a95706f94e2e24a9ca2ad945367465633cf",
+  "version": "5fa4c04a7bb84b0b0a2e9edf1af1b082303311415dc92f4bbd41e7997e660585",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -195,7 +195,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/index.js",
-      "revision": "3b10ecf96e8e50fd274c3c491788e6e72cf82cccb1ebb901a7729fc504c04685"
+      "revision": "1feaee30f4264d94c18fb77d02138b86e93a617b394418db489d0161f1076be6"
     },
     {
       "path": "./areas/kung-fu-hustle/kung-fu-hustle.jpg",
@@ -212,6 +212,10 @@
     {
       "path": "./areas/kung-fu-hustle/metadata.js",
       "revision": "210f9b954b1b96552a95c9e60826d8f9e74622ca9a2b1663a1d19ff1594f871d"
+    },
+    {
+      "path": "./areas/kung-fu-hustle/music.js",
+      "revision": "dd6a0dd5b40f802bf7c64b31679760c6af5d7e8e2600af1c7a8559057dbe8872"
     },
     {
       "path": "./areas/kung-fu-hustle/scene.js",
@@ -591,7 +595,7 @@
     },
     {
       "path": "./core/audio.js",
-      "revision": "79c46459d878292bd394db3fb762450c92b00ae5a5ebef2a22f9171348c6a407"
+      "revision": "acd279cb0566a3e818f831330640018271a6dc596632d8e8a38c9a180c6d101c"
     },
     {
       "path": "./core/controls.js",
