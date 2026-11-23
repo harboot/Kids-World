@@ -1,5 +1,5 @@
 {
-  "version": "67c3ca74cd1484a9f240433a96351cbcb8ff03888ebdafb0c7299cc5fd589521",
+  "version": "3b63313432c9e4a2ca7f62397c6aabde1ac81984942b3a40be83b1692b25db96",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "6f4fd5ea2d43a583b5ecdf0801bc3ed0042ed091c8f2529ed553df47e2280ff7"
+      "revision": "d5a7f91ecc6b51001dc5878f1733a17bfa99a7343e01c0ff82e8832d89b21edb"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -107,7 +107,7 @@
     },
     {
       "path": "./areas/flower-garden/garden-monkey.js",
-      "revision": "4307ba3f2060e5b15ad6e79cb6d2a16063ad0b02ea40ea0bd7a944a59c2f004b"
+      "revision": "7514a775c4e409c1ffd7df1928e09c2c3a86b4456d6e6020dcd9cea895ad0eea"
     },
     {
       "path": "./areas/flower-garden/garden-orchard.js",

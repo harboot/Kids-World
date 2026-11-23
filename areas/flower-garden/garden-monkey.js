@@ -64,7 +64,7 @@ export function addMonkey(THREE, { scene, mesh, facet, matte, batchParts, reduce
   return {
     update(dt, player) {
       time += dt;
-      const distance = player ? Math.hypot(player.x - x, player.z - z) : Infinity;
+      const distance = player ? Math.hypot(player.x - perch.position.x, player.z - perch.position.z) : Infinity;
       const approaching = distance < (near ? 3.35 : 2.65) && Math.abs(player.y - EYE_HEIGHT) < 1.5;
       if (approaching && !near) {
         playCue?.([
