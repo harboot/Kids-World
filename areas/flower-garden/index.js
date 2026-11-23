@@ -1,10 +1,12 @@
 import { addMesh, rectangleBounds } from '../../core/geometry.js';
+import { EYE_HEIGHT } from '../../core/player.js';
 import { seededRandom } from '../../core/random.js';
 import { createAnimals } from './garden-animals.js';
 import { addBalloon } from './garden-balloon.js';
 import { createGardenBatcher } from './garden-batches.js';
 import { addCabin } from './garden-cabin.js';
 import { addCave, CAVE_MOUTHS } from './garden-cave.js';
+import { addMonkey, MONKEY_TREE } from './garden-monkey.js';
 import { addOrchard } from './garden-orchard.js';
 import { addPanorama } from './garden-panorama.js';
 import { addPond, blocksPondTravel, bridgeDeckHeight } from './garden-pond.js';
@@ -22,11 +24,13 @@ export const flowerGarden = {
 
 export default flowerGarden;
 
-function loadGarden({ THREE, scene, viewmodel, touch, playerRadius = .34, completeLevel, playCue, notify,
-  carryPlayer, reducedMotion, signal }) {
+function loadGarden({ THREE, scene, viewmodel, camera, touch, playerRadius = .34, completeLevel, playCue, notify,
+  reducedMotion, signal }) {
   const { width, depth } = flowerGarden;
   const obstacles = [];
   const gates = [];
+  const gateWidth = 1.64;
+  const gateHeight = 1.2;
   const terrain = createTerrain(width, depth);
   const { getTerrainHeight } = terrain;
   const box = new THREE.BoxGeometry(1, 1, 1);
@@ -101,25 +105,21 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius = .34, comple
   }
 
   function gate(center, z, kind) {
-    const span = 2.6;
+    const span = gateWidth;
     const leaf = new THREE.Group();
     leaf.name = kind === 'cow' ? 'Cow pen gate' : 'Chicken pen gate';
     leaf.position.set(center - span / 2, 0, z);
     scene.add(leaf);
     for (const y of railHeights) {
-      mesh(box, caps, span / 2, y, 0, span - 0.09, 0.17, 0.11, leaf);
+      mesh(box, caps, span / 2, y - .16, 0, span - .09, .17, .11, leaf);
     }
-    for (const offset of [0.09, span - 0.09]) {
-      mesh(box, wood, offset, 0.71, 0, 0.14, 1.37, 0.16, leaf);
+    for (const offset of [.09, span - .09]) {
+      mesh(box, wood, offset, gateHeight / 2, 0, .14, gateHeight, .16, leaf);
     }
-    mesh(box, caps, 1.29, 0.75, 0.12, 0.14, 1.84, 0.09, leaf).rotation.z = -0.96;
-    mesh(box, roofBlue, span - 0.25, 1.12, 0.115, 0.22, 0.14, 0.12, leaf);
+    mesh(box, caps, span / 2, .69, .12, .12, 1.27, .09, leaf).rotation.z = -.95;
+    mesh(box, roofBlue, span - .25, .96, .115, .22, .14, .12, leaf);
+    let open = false;
 
-    const door = {
-      x: center, z, open: false,
-      get label() { return this.open ? 'Close' : 'Open'; },
-      act() { this.open = !this.open; },
-    };
     function touches(x, z, angle) {
       const dx = x - leaf.position.x;
       const dz = z - leaf.position.z;
@@ -131,16 +131,24 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius = .34, comple
       const edgeZ = Math.max(0, Math.abs(localZ) - 0.085);
       return edgeX * edgeX + edgeZ * edgeZ < playerRadius * playerRadius;
     }
-    obstacles.push({ height: fenceHeight, touches: (x, z) => touches(x, z, leaf.rotation.y) });
+    obstacles.push({ height: gateHeight, touches: (x, z) => touches(x, z, leaf.rotation.y) });
     gates.push({
-      door,
       update(dt, player) {
-        const target = door.open ? -Math.PI / 2 : 0;
-        const nextAngle = leaf.rotation.y + THREE.MathUtils.clamp(target - leaf.rotation.y, -2.7 * dt, 2.7 * dt);
-        if (!player || !touches(player.x, player.z, nextAngle)) leaf.rotation.y = nextAngle;
+        const near = player && Math.abs(player.y - EYE_HEIGHT) < 1.1 &&
+          Math.hypot(player.x - center, player.z - z) < (open ? 3.05 : 2.48);
+        const target = near ? Math.PI / 2 : 0;
+        const maxStep = reducedMotion?.() ? Math.PI / 2 : 3.4 * dt;
+        const nextAngle = leaf.rotation.y + THREE.MathUtils.clamp(target - leaf.rotation.y, -maxStep, maxStep);
+        if (player && touches(player.x, player.z, nextAngle) && !touches(player.x, player.z, leaf.rotation.y)) return;
+        if (Boolean(near) !== open) {
+          open = Boolean(near);
+          playCue?.([[open ? 59 : 52, { endPitch: open ? 44 : 37, duration: .12, level: .13, wave: 'triangle' }]]);
+        }
+        leaf.rotation.y = nextAngle;
+        if (open && nextAngle === target) finishMission(kind === 'cow' ? 'cow-gate' : 'chicken-gate');
       },
       reset() {
-        door.open = false;
+        open = false;
         leaf.rotation.y = 0;
       },
     });
@@ -148,7 +156,7 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius = .34, comple
 
   function pen(left, right, front, back, kind, roof) {
     const center = (left + right) / 2;
-    const wing = ((right - left) - 2.6) / 2;
+    const wing = ((right - left) - gateWidth) / 2;
     fence(left, (front + back) / 2, back - front, false);
     fence(right, (front + back) / 2, back - front, false);
     fence(center, front, right - left, true);
@@ -183,7 +191,7 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius = .34, comple
 
   const trees = [
     [-10.7, 4.95, 1.1], [13.7, 3.6, 1], [-15.8, -3.2, 1.1], [14.6, -6.8, 1.15],
-    [-12.4, -13, 0.94], [14.1, -13, 0.92], [-11.8, -18.7, 1.14], [10.6, -13.7, 1.02],
+    MONKEY_TREE, [-12.4, -13, 0.94], [14.1, -13, 0.92], [-11.8, -18.7, 1.14], [10.6, -13.7, 1.02],
     [-6, -18, 0.84], [5.8, -13.65, 0.9], [-20.2, 4.4, 1.2], [20.5, 16.4, 1.1],
   ];
   const greens = [0x6d984e, 0x82a751, 0x578342].map(color => new THREE.Color(color));
@@ -248,106 +256,99 @@ function loadGarden({ THREE, scene, viewmodel, touch, playerRadius = .34, comple
     obstacles.push(collision(x, z, sx * 1.42, sz * 1.48, y + sy * 1.22));
   }
 
-  const visualKit = { scene, mesh, box, facet, matte, instances, batchParts, reducedMotion, signal };
-  addPanorama(THREE, visualKit);
-  const cave = addCave(THREE, visualKit);
-  const balloon = addBalloon(THREE, { ...visualKit, carryPlayer });
-
-  const cabin = addCabin(THREE, { scene, mesh, box, matte, obstacles, collision });
-  const missions = { apples: false, fish: false, cow: false, rabbits: false, chicken: false };
+  const completed = new Set();
   function finishMission(id) {
-    if (missions[id]) return;
-    missions[id] = true;
-    if (!Object.values(missions).every(Boolean)) return;
+    if (completed.has(id)) return;
+    completed.add(id);
+    if (!objectives.every(({ id }) => completed.has(id))) return;
     completeLevel?.('garden');
     notify?.('Flower Garden complete!');
   }
 
-  const animals = createAnimals(THREE, scene, playerRadius, finishMission);
+  const visualKit = { scene, mesh, box, facet, matte, instances, batchParts, reducedMotion, signal, playCue, finishMission };
+  addPanorama(THREE, visualKit);
+  const cave = addCave(THREE, visualKit);
+  const balloon = addBalloon(THREE, { ...visualKit, camera });
+  const monkey = addMonkey(THREE, visualKit);
+  const cabin = addCabin(THREE, { ...visualKit, obstacles, collision });
+  const animals = createAnimals(THREE, scene, playerRadius, finishMission, playCue);
   const rabbits = addRabbits(THREE, {
     ...visualKit, obstacles, collision, getTerrainHeight, playerRadius,
     feedRabbits: () => finishMission('rabbits'),
   });
   const orchard = addOrchard(THREE, {
-    scene, viewmodel, mesh, box, facet, matte, obstacles, collision, getTerrainHeight, table: cabin.table,
+    ...visualKit, viewmodel, obstacles, collision, getTerrainHeight, table: cabin.table,
     deliver: () => finishMission('apples'),
   });
   const pond = addPond(THREE, {
-    scene, mesh, box, facet, matte, obstacles, instances, getTerrainHeight, playerRadius, playCue,
+    ...visualKit, obstacles, getTerrainHeight, playerRadius,
     feedFish: () => finishMission('fish'),
   });
-  const missionStatus = {
-    missions: [
-      {
-        id: 'apples', title: 'Collect and deliver apples', total: orchard.appleTarget,
-        get current() { return orchard.collectedApples; },
-        get complete() { return missions.apples; },
-      },
-      {
-        id: 'fish', title: 'Feed the pond fish', total: 1,
-        get current() { return Number(missions.fish); },
-        get complete() { return missions.fish; },
-      },
-      {
-        id: 'cow', title: 'Greet a cow', total: 1,
-        get current() { return Number(missions.cow); },
-        get complete() { return missions.cow; },
-      },
-      {
-        id: 'rabbits', title: 'Feed the rabbits', total: 1,
-        get current() { return Number(missions.rabbits); },
-        get complete() { return missions.rabbits; },
-      },
-      {
-        id: 'chicken', title: 'Make a chicken jump', total: 1,
-        get current() { return Number(missions.chicken); },
-        get complete() { return missions.chicken; },
-      },
-    ],
-    get inventory() { return rabbits.hasCarrots ? ['Carrots'] : []; },
-    get hint() {
-      if (!missions.apples) return orchard.deliveryHint;
-      if (!missions.fish) return 'Feed the fish from the pond shore.';
-      if (!missions.cow) return 'Find a cow and greet it.';
-      if (!missions.rabbits) {
+
+  const objectives = [
+    { id: 'apples', title: 'Collect and deliver apples', total: orchard.appleTarget,
+      get current() { return orchard.collectedApples; },
+      get hint() { return orchard.deliveryHint; } },
+    { id: 'fish', title: 'Feed the pond fish', hint: 'Find the fish feeder on the pond shore by the bridge.' },
+    { id: 'cow-gate', title: 'Open the cow pen gate', hint: 'Walk up to the cow pen gate to open it.' },
+    { id: 'cow', title: 'Greet a cow', hint: 'Walk inside the cow pen and approach a cow.' },
+    { id: 'rabbits', title: 'Feed the rabbits',
+      get hint() {
         if (rabbits.feeding) return 'Watch the rabbits gather at the feeding tray.';
-        return rabbits.hasCarrots ? 'Take the carrots to the feeding tray beneath the hill.' : 'Pick carrots from the patch at the foot of the hill.';
-      }
-      if (!missions.chicken) return 'Open the chicken pen and make a chicken jump.';
-      return '';
-    },
+        return rabbits.hasCarrots ? 'Take the carrots to the feeding tray beneath the hill.' :
+          'Pick carrots from the patch at the foot of the small hill.';
+      } },
+    { id: 'chicken-gate', title: 'Open the chicken pen gate', hint: 'Walk up to the chicken pen gate to open it.' },
+    { id: 'chicken', title: 'Make a chicken jump', hint: 'Walk inside the chicken pen and approach a chicken.' },
+    { id: 'monkey', title: 'Meet the hanging monkey', hint: 'Walk toward the tree with a swaying tail in front of the wooden house.' },
+    { id: 'house', title: 'Open the wooden house door', hint: 'Climb the porch steps and open the wooden house door.' },
+    { id: 'bench', title: 'Sit on the porch bench', hint: 'Take a seat on the bench beside the house door.' },
+    { id: 'cave', title: 'Discover the cave bats', hint: 'Approach either entrance to the rock cave behind the animal pens.' },
+    { id: 'balloon', title: 'Take a balloon ride', get hint() { return balloon.flightHint; } },
+  ];
+  const missionStatus = {
+    missions: objectives.map(objective => ({
+      id: objective.id, title: objective.title, total: objective.total ?? 1,
+      get current() { return objective.current ?? Number(this.complete); },
+      get complete() { return completed.has(objective.id); },
+    })),
+    get inventory() { return rabbits.hasCarrots ? ['Carrots'] : []; },
+    get hint() { return objectives.find(({ id }) => !completed.has(id))?.hint ?? ''; },
   };
   return {
     obstacles,
     get missionStatus() { return missionStatus; },
-    getGroundHeight(x, z, feet) {
-      return Math.max(getTerrainHeight(x, z), bridgeDeckHeight(x, z), balloon.surface(x, z, feet));
+    getGroundHeight(x, z) {
+      return Math.max(getTerrainHeight(x, z), bridgeDeckHeight(x, z));
     },
     blocksGround(x, z, radius, feet, from) {
       return blocksPondTravel(x, z, radius) || cave.blocks(x, z, radius) ||
-        balloon.blocks(x, z, radius, feet, from) || rabbits.blocks(x, z, feet);
+        balloon.blocks(x, z, radius, feet) || orchard.blocks(x, z, radius, from) || rabbits.blocks(x, z, feet);
     },
     getCeilingHeight: cave.ceiling,
     animals,
-    interactions: [...gates.map(gate => gate.door), ...animals.interactions, ...orchard.interactions,
-      ...rabbits.interactions, pond.feedingSpot, cabin.bench, balloon.ride],
+    interactions: [...orchard.interactions, ...rabbits.interactions, pond.feedingSpot, cabin.door, cabin.bench, balloon.ride],
     update(dt, player) {
       animals.update(dt, player);
       orchard.update(dt);
       pond.update(dt);
       rabbits.update(dt, player);
-      balloon.update(dt, player);
+      balloon.update(dt);
+      cabin.update(dt, player);
+      monkey.update(dt, player);
       cave.update(dt, player);
       for (const gate of gates) gate.update(dt, player);
     },
     reset() {
-      for (const id of Object.keys(missions)) missions[id] = false;
+      completed.clear();
       animals.reset();
       orchard.reset();
       pond.reset();
       rabbits.reset();
       balloon.reset();
       cave.reset();
+      cabin.reset();
+      monkey.reset();
       for (const gate of gates) gate.reset();
     },
     unload() {

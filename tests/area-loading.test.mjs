@@ -339,7 +339,7 @@ test('travel clears camera guidance and pointer lock before the next area receiv
   f.document.pointerLockElement = canvas;
   f.document.exitPointerLock = () => { f.document.pointerLockElement = null; };
   send(f.document, 'pointerlockchange');
-  send(f.window, 'keydown', { code: 'KeyM' });
+  send(f.window, 'keydown', { code: 'Space' });
   assert.equal(f.game.dataset.seated, 'true');
   assert.equal(typeof finishRide, 'function');
 

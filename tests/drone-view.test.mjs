@@ -238,12 +238,13 @@ test('normal keyboard, mouse, and touch controls resume after drone input releas
   let touch = false;
   let pauses = 0;
   let interactions = 0;
+  let canInteract = true;
   let requests = 0;
   canvas.requestPointerLock = () => { requests++; };
   document.exitPointerLock = () => { document.pointerLockElement = null; };
   const controls = createControls(THREE, {
     game, canvas, joystick, thumb, playing: () => enabled, seated: () => false, touchMode: () => touch,
-    look: player.look, jump: player.jump, interact() { interactions++; }, pause() { pauses++; },
+    look: player.look, jump: player.jump, interact() { if (!canInteract) return false; interactions++; return true; }, pause() { pauses++; },
   });
   function send(target, type, fields = {}) {
     target.dispatchEvent(Object.assign(new Event(type, { cancelable: true }), fields));
@@ -270,9 +271,16 @@ test('normal keyboard, mouse, and touch controls resume after drone input releas
   send(document, 'pointerlockchange'); // A queued unlock notification can arrive after mode changes.
   assert.equal(pauses, 0);
   send(browser, 'keydown', { code: 'KeyM' });
+  assert.equal(interactions, 0);
+  send(browser, 'keydown', { code: 'Space' });
+  send(browser, 'keydown', { code: 'Space', repeat: true });
+  player.move(.05, controls.sample(.05), visit);
+  assert.equal(interactions, 1);
+  assert.equal(camera.position.y, 1.68, 'an interaction consumes the jump key');
+  canInteract = false;
   send(browser, 'keydown', { code: 'Space' });
   send(browser, 'keydown', { code: 'KeyW' });
-  player.move(0.05, controls.sample(0.05), visit);
+  player.move(.05, controls.sample(.05), visit);
   assert.equal(interactions, 1);
   assert.ok(camera.position.y > 1.68 && camera.position.z < 0);
   document.pointerLockElement = canvas;

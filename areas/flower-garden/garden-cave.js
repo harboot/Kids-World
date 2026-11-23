@@ -38,7 +38,7 @@ function caveWidth(x) {
   return a + (sections[index + 1].width - a) * (at - index);
 }
 
-export function addCave(THREE, { scene, mesh, box, facet, matte, instances, batchParts, reducedMotion, signal }) {
+export function addCave(THREE, { scene, mesh, box, facet, matte, instances, batchParts, reducedMotion, signal, playCue, finishMission }) {
   const positions = [];
   const colors = [];
   const random = seededRandom(7041);
@@ -201,7 +201,14 @@ export function addCave(THREE, { scene, mesh, box, facet, matte, instances, batc
         if (distance > 4.1) armed[i] = true;
         if (!armed[i] || distance > 2.65 || Math.abs(player.y - EYE_HEIGHT) > .88) return;
         armed[i] = false;
-        if (launch || still) return;
+        if (launch) return;
+        playCue?.([
+          [82, { endPitch: 91, duration: .095, level: .12, wave: 'triangle' }],
+          [89, { endPitch: 80, duration: .135, level: .12 }, .11],
+          [86, { endPitch: 94, duration: .12, level: .08 }, .25],
+        ]);
+        finishMission('cave');
+        if (still) return;
         launch = mouth;
         elapsed = 0;
       });

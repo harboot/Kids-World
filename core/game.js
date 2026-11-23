@@ -85,6 +85,8 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   let frameId = null;
   let previousFrame = null;
   let interactionRevision = 0;
+  let guidedCamera;
+  let stepDistance = 0;
   let finishStartup;
   const ready = new Promise(resolve => { finishStartup = resolve; });
   const playing = () => !terminal && !suspended && !document.hidden && game.dataset.state === 'playing';
@@ -177,7 +179,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     button: game.querySelector('#interaction'),
     glyph: game.querySelector('#interaction-glyph'),
     label: game.querySelector('#interaction-label'),
-    camera, playing: () => playerInput() && !player.guided, touchMode,
+    camera, playing: playerInput, allowNearby: () => !player.guided, touchMode,
     runAction(item) {
       const visit = worlds.active;
       const revision = interactionRevision;
@@ -186,7 +188,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
         if (!item.silent) audio.effect('interact');
         item.act({
           sit: (...args) => { if (current()) sit(...args); },
-          guideCamera: look => current() ? guideCamera(look, current) : () => {},
+          guideCamera: (look, options) => current() ? guideCamera(look, current, options) : undefined,
           relocate: spawn => { if (current()) relocate(spawn); },
         });
       } catch (error) {
@@ -260,6 +262,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
 
   function relocate(spawn) {
     controls.clear();
+    stepDistance = 0;
     player.reset(spawn, worlds.active.area);
   }
 
@@ -285,6 +288,8 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
 
   function clearVisitPresentation() {
     interactionRevision++;
+    guidedCamera = undefined;
+    stepDistance = 0;
     if (levelPicker.open) levelPicker.close();
     if (settings.open) settings.close();
     missionHud.reset();
@@ -436,15 +441,20 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     levelPicker.showModal();
   });
 
-  function guideCamera(look, current) {
+  function guideCamera(look, current, { camera: rideCamera, prompt } = {}) {
     const stop = player.guide(look);
+    guidedCamera = rideCamera;
+    if (prompt) interactions.pin(prompt);
     game.dataset.seated = 'true';
     controls.clear();
     interactions.hide();
     return spawn => {
       if (!current() || !stop()) return;
       delete game.dataset.seated;
-      relocate(spawn);
+      guidedCamera = undefined;
+      if (prompt) interactions.pin(null);
+      controls.clear();
+      if (spawn) relocate(spawn);
     };
   }
 
@@ -576,14 +586,23 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
         const elapsed = previousFrame === null ? 0 : Math.min(0.25, Math.max(0, (stamp - previousFrame) / 1000));
         const dt = Math.min(elapsed, 0.05);
         previousFrame = stamp;
-        player.move(dt, controls.sample(dt), visit);
+        stepDistance += player.move(dt, controls.sample(dt), visit);
+        if (stepDistance >= 1.55) {
+          audio.effect('step');
+          stepDistance -= 1.55;
+        }
         worlds.update(dt, camera.position, elapsed);
         if (worlds.active !== visit || terminal) return;
         missionHud.update(visit.area.missionStatus);
         interactions.update();
       }
       drone?.update();
-      const rendered = view.render(visit.scene, activePlayer, drone?.camera);
+      if (guidedCamera && (guidedCamera.aspect !== camera.aspect || guidedCamera.fov !== camera.fov)) {
+        guidedCamera.aspect = camera.aspect;
+        guidedCamera.fov = camera.fov;
+        guidedCamera.updateProjectionMatrix();
+      }
+      const rendered = view.render(visit.scene, activePlayer, drone?.camera ?? guidedCamera);
       if (rendered && route?.fps) frameMeter.sample(stamp);
       if (playerInput()) scheduleFrame();
     } catch (error) {

@@ -100,13 +100,16 @@ export function createPlayer(THREE, camera) {
   }
 
   function move(dt, movement, { area, definition }) {
-    if (seated || guidedView) return;
+    if (seated || guidedView) return 0;
+    const wasGrounded = grounded;
     const cos = Math.cos(yaw);
     const sin = Math.sin(yaw);
     const xMotion = cos * movement.x + sin * movement.y;
     const zMotion = -sin * movement.x + cos * movement.y;
     motion.set(WALK_SPEED * xMotion, WALK_SPEED * zMotion);
     const { position } = camera;
+    const startX = position.x;
+    const startZ = position.z;
     const traction = grounded ? area.getGroundTraction?.(position.x, position.z) ?? 1 : 1;
     speed.lerp(motion, 1 - Math.exp(-15 * traction * dt));
     const xLimit = definition.width / 2 - PLAYER_RADIUS;
@@ -129,6 +132,7 @@ export function createPlayer(THREE, camera) {
     verticalSpeed = falling.speed;
     position.y = EYE_HEIGHT + elevation;
     camera.updateMatrixWorld();
+    return wasGrounded && grounded ? Math.hypot(position.x - startX, position.z - startZ) : 0;
   }
 
   return {
