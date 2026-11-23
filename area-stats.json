@@ -4,16 +4,7 @@
     "publicAreas": 7,
     "hiddenAreas": 1,
     "totalFiles": 143,
-    "totalBytes": 1176916,
-    "totalJsLines": 23272,
-    "largestMap": {
-      "name": "Military Base",
-      "mapArea": 23100
-    },
-    "largestFolder": {
-      "name": "Princess Gallery",
-      "folderBytes": 445839
-    }
+    "totalBytes": 1176916
   },
   "areas": [
     {
@@ -28,7 +19,6 @@
       "totalFiles": 18,
       "jsFiles": 17,
       "jsBytes": 105046,
-      "jsLines": 2424,
       "imageFiles": 1,
       "imageBytes": 19781,
       "imageFormats": [
@@ -47,7 +37,6 @@
       "totalFiles": 9,
       "jsFiles": 8,
       "jsBytes": 48671,
-      "jsLines": 1158,
       "imageFiles": 1,
       "imageBytes": 18560,
       "imageFormats": [
@@ -66,7 +55,6 @@
       "totalFiles": 17,
       "jsFiles": 16,
       "jsBytes": 113598,
-      "jsLines": 2630,
       "imageFiles": 1,
       "imageBytes": 13560,
       "imageFormats": [
@@ -85,7 +73,6 @@
       "totalFiles": 18,
       "jsFiles": 17,
       "jsBytes": 139212,
-      "jsLines": 3001,
       "imageFiles": 1,
       "imageBytes": 24019,
       "imageFormats": [
@@ -104,7 +91,6 @@
       "totalFiles": 46,
       "jsFiles": 45,
       "jsBytes": 422621,
-      "jsLines": 8980,
       "imageFiles": 1,
       "imageBytes": 23218,
       "imageFormats": [
@@ -123,7 +109,6 @@
       "totalFiles": 14,
       "jsFiles": 14,
       "jsBytes": 90823,
-      "jsLines": 2094,
       "imageFiles": 0,
       "imageBytes": 0,
       "imageFormats": []
@@ -140,7 +125,6 @@
       "totalFiles": 13,
       "jsFiles": 12,
       "jsBytes": 86956,
-      "jsLines": 2073,
       "imageFiles": 1,
       "imageBytes": 12557,
       "imageFormats": [
@@ -159,7 +143,6 @@
       "totalFiles": 8,
       "jsFiles": 7,
       "jsBytes": 40002,
-      "jsLines": 912,
       "imageFiles": 1,
       "imageBytes": 18292,
       "imageFormats": [

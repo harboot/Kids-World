@@ -214,14 +214,8 @@ async function folderFiles(root, directory) {
   return paths.flat();
 }
 
-function countLines(source) {
-  if (!source) return 0;
-  const lines = source.split(/\r\n|[\n\r\u2028\u2029]/);
-  return lines.at(-1) === '' ? lines.length - 1 : lines.length;
-}
-
 async function fileStats(root, paths) {
-  const stats = { folderBytes: 0, totalFiles: paths.size, jsFiles: 0, jsBytes: 0, jsLines: 0, imageFiles: 0, imageBytes: 0 };
+  const stats = { folderBytes: 0, totalFiles: paths.size, jsFiles: 0, jsBytes: 0, imageFiles: 0, imageBytes: 0 };
   const formats = new Set();
   for (const path of paths) {
     const file = join(root, path);
@@ -230,7 +224,6 @@ async function fileStats(root, paths) {
     if (jsFile.test(path)) {
       stats.jsFiles++;
       stats.jsBytes += size;
-      stats.jsLines += countLines(await readFile(file, 'utf8'));
     }
     const format = imageFormats.get(extname(path).slice(1).toLowerCase());
     if (format) {
@@ -293,20 +286,13 @@ export async function generateAreaStats(root) {
   }
   const summary = {
     totalAreas: areas.length, publicAreas: 0, hiddenAreas: 0, totalFiles: 0,
-    totalBytes: 0, totalJsLines: 0, largestMap: null, largestFolder: null,
+    totalBytes: 0,
   };
   for (const area of areas) {
     if (area.visibility === 'Public') summary.publicAreas++;
     else summary.hiddenAreas++;
     summary.totalFiles += area.totalFiles;
     summary.totalBytes += area.folderBytes;
-    summary.totalJsLines += area.jsLines;
-    if (area.mapArea !== null && (!summary.largestMap || area.mapArea > summary.largestMap.mapArea)) {
-      summary.largestMap = { name: area.name, mapArea: area.mapArea };
-    }
-    if (!summary.largestFolder || area.folderBytes > summary.largestFolder.folderBytes) {
-      summary.largestFolder = { name: area.name, folderBytes: area.folderBytes };
-    }
   }
   return { summary, areas };
 }

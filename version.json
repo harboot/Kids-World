@@ -1,5 +1,5 @@
 {
-  "version": "0164ea2d7d688635d0598190c8496984c83edb5c9847d981982f464d20cf1c53",
+  "version": "d00e5b8cb72c2597a2625866e90010a3f7883f0e7dc0c7e4a3b44212d1dbfbd9",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "ae00a2892de96f0a934dedff8432813809acec59bf09883862a0b380b13617cd"
+      "revision": "eb0bd77efe0ecc27ae17c73617de45235ac57cce021ad117d7f5acd92816146b"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -639,7 +639,7 @@
     },
     {
       "path": "./pwa/worker.js",
-      "revision": "1399d48705b8fce6217f9cf85a4673de05ab14a87e15abbd6ea92fc096e1b41e"
+      "revision": "d06e359cefe939c38eed344ef9a9b055586cafc95f1b6b920dff00439ed2808d"
     },
     {
       "path": "./snow.html",
@@ -647,7 +647,7 @@
     },
     {
       "path": "./stats.html",
-      "revision": "26f4cb6b57d36ac7149dc60248671effd9e01be407d62ec8083ce31913f0b638"
+      "revision": "ad6f1aab47d50d90d5ada282e154c8dcfe805dd56e162b66460c8bb234d633c2"
     },
     {
       "path": "./style.css",
