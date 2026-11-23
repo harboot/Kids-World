@@ -65,6 +65,14 @@ export function masonryKit(THREE, scene) {
 
   return {
     box, drum, ring, wall,
+    extrude(name, paint, points, depth, x, y, z, yaw = 0, holes = []) {
+      const vectors = polygon => polygon.map(([u, v]) => new THREE.Vector2(u, v));
+      const shape = new THREE.Shape(vectors(points));
+      shape.holes = holes.map(polygon => new THREE.Path(vectors(polygon)));
+      const geometry = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: false });
+      geometry.name = name;
+      place(geometry, paint, x, y, z, 1, 1, 1, yaw);
+    },
     leaf(...args) { place(leafGeometry, ...args); },
     gateLetter(letter, x, y, z) {
       const texture = paintCanvasTexture(THREE, globalThis.document, 64, 64, ctx => {
@@ -106,6 +114,7 @@ export function masonryKit(THREE, scene) {
     finish() {
       for (const { geometry, shadow, instances } of parts.values()) {
         const mesh = new THREE.InstancedMesh(geometry, material, instances.length);
+        mesh.name = geometry.name;
         mesh.castShadow = shadow;
         mesh.receiveShadow = true;
         instances.forEach((part, i) => {

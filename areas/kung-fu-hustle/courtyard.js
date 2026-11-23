@@ -64,6 +64,92 @@ function pavedYard(kit, random) {
   }
 }
 
+function openShop(kit, layout, x, z, width, depth, height, plaster, produce) {
+  const { box, drum, leaf } = kit;
+  const wall = .24;
+  const openHeight = 2.24;
+  for (const side of [-1, 1]) {
+    const edge = x + side * (width - wall) / 2;
+    box(plaster, edge, height / 2, z, wall, height, depth);
+    layout.solid(edge, z, wall, depth, height);
+  }
+  box(plaster, x, height / 2, z + (depth - wall) / 2, width - 2 * wall, height, wall);
+  layout.solid(x, z + (depth - wall) / 2, width, wall, height);
+  box(ink.wood, x, (height + openHeight) / 2, z - (depth - wall) / 2,
+    width - 2 * wall, height - openHeight, wall);
+  box(0x8d7561, x, height - .116, z, width - 2 * wall, .22, depth - 2 * wall);
+  box(0x927b67, x, .023, z, width - 2 * wall, .048, depth - wall);
+
+  const shelfZ = z + depth / 2 - .49;
+  const shelfWidth = width - .86;
+  for (const dy of [.63, 1.16, 1.72]) {
+    box(0x816549, x, dy, shelfZ, shelfWidth, .105, .52);
+    for (let i = 0; i < 6; i++) {
+      const u = x + (i - 2.5) * shelfWidth / 7;
+      const tall = (i % 3 + 2) * .07;
+      const paint = [0xa37f51, 0x715e4d, 0xb19471, 0x728078][(i + (produce ? 0 : 2)) % 4];
+      drum(paint, u, dy + .053 + tall / 2, shelfZ, .24, tall, .24);
+      drum(ink.band, u, dy + .064 + tall, shelfZ, .19, .045, .19);
+    }
+  }
+  for (const side of [-1, 1]) {
+    box(ink.wood, x + side * shelfWidth / 2, .98, shelfZ, .095, 1.97, .49);
+  }
+  layout.solid(x, shelfZ, shelfWidth, .52, 2);
+
+  const counterX = x + (produce ? .96 : -.99);
+  const counterZ = z - .42;
+  box(0x715440, counterX, .40, counterZ, 1.20, .8, 1.23);
+  box(0xa68962, counterX, .835, counterZ, 1.30, .12, 1.32);
+  layout.solid(counterX, counterZ, 1.30, 1.32, .92);
+  for (const dz of [-.34, .16]) {
+    box(0x826344, counterX, .923, counterZ + dz, 1.09, .095, .37);
+    for (let j = 0; j < 5; j++) {
+      const u = counterX + (j - 2) * .174;
+      if (produce) {
+        leaf(dz < 0 ? 0xb87c39 : 0x81884a, u, 1.031, counterZ + dz, .155, .14, .17);
+      } else {
+        drum(j % 2 ? 0xa4866c : 0x7f6956, u, 1.066, counterZ + dz, .13, .19 + j % 2 * .04, .13);
+      }
+    }
+  }
+}
+
+function ruinedShop(kit, layout, x, z, width, depth, height, plaster, random) {
+  const { box, beam, wall } = kit;
+  const left = x - width / 2;
+  const back = z + depth / 2 - .16;
+  function section(cx, cz, w, d, h) {
+    box(plaster, cx, h / 2, cz, w, h, d);
+    layout.solid(cx, cz, w, d, h);
+  }
+
+  section(left + .16, z, .32, depth, height);
+  section(left + .32 + 1.02, back, 2.04, .31, height);
+  section(x + width / 2 - .64, back, 1.28, .31, 1.06);
+  section(x + width / 2 - .16, z - .16, .30, depth - .67, .76);
+
+  const facade = wall(x, back + .158, 0);
+  exposedBrick(facade, -.83, 1.72, 1.3, 2.13, random);
+  crack(facade, -.53, 1.12, 1.91);
+  const roofZ = z - .42;
+  for (let i = 0; i < 7; i++) {
+    box(i % 2 ? ink.roof : ink.ridge, left + (i + .5) * .29, height + .12, z,
+      .283, .14, depth + .39, 0, .16, .022 * (i % 3));
+  }
+  for (let i = 0; i < 3; i++) {
+    const u = z + (i - 1) * .96;
+    beam(ink.wood, x - .85, height - .18, u, x + .57 + i * .23, height - .37 - i * .29, u + .15, .16);
+  }
+  beam(ink.wood, left + .47, .07, roofZ, x + .92, 1.43, z + .72, .18);
+  for (let i = 0; i < 22; i++) {
+    const u = left + .45 + random() * (width - .80);
+    const v = z - depth / 2 + .37 + random() * (depth - .49);
+    const size = .16 + random() * .34;
+    box(i % 3 ? ink.brick : ink.stone, u, size * .24, v, size, size * .48, size * .76, random() * 4, .17, .25);
+  }
+}
+
 function shops(kit, layout, random) {
   const { box, wall, drum } = kit;
   const buildings = [
@@ -75,13 +161,21 @@ function shops(kit, layout, random) {
     { x: 22.80, z: .6, width: 3, depth: 4.0, height: 4.75, awning: 0x875a49, plaster: 0xaa886f, faceY: 0 },
   ];
   for (const [i, { x, z, width, depth, height, awning, plaster, faceY }] of buildings.entries()) {
-    box(plaster, x, height / 2, z, width, height, depth);
-    layout.solid(x, z, width, depth, height);
+    if (i === 3) {
+      ruinedShop(kit, layout, x, z, width, depth, height, plaster, random);
+      continue;
+    }
+    const opened = i < 2;
+    if (opened) openShop(kit, layout, x, z, width, depth, height, plaster, i === 0);
+    else {
+      box(plaster, x, height / 2, z, width, height, depth);
+      layout.solid(x, z, width, depth, height);
+    }
     const direction = Math.cos(faceY);
     const facade = wall(x, z + direction * depth / 2, faceY);
     const back = wall(x, z - direction * depth / 2, faceY + Math.PI);
     const flank = wall(x + width / 2, z, Math.PI / 2);
-    for (const draw of [facade, back, flank]) {
+    for (const draw of opened ? [back, flank] : [facade, back, flank]) {
       draw(ink.band, 0, .19, .025, draw === flank ? depth : width, .38, .075);
       draw.chip(0x917760, -.64, 1.33, .012, 1.93, 2.73);
       exposedBrick(draw, -.86, .99, 1.25, 1.51, random);
@@ -94,12 +188,14 @@ function shops(kit, layout, random) {
     for (let stripe = -3; stripe <= 3; stripe++) {
       back(stripe % 2 ? ink.linen : awning, .55 + stripe * .22, 2.12, .34, .214, .05, .67, .25);
     }
-    facade(ink.dark, .06, 1.10, .057, width * .65, 2.19, .13);
-    for (let plank = 0; plank < 9; plank++) {
-      const u = .06 + (plank - 4) * width * .067;
-      facade([ink.wood, 0x85664d, 0x765442][(i + plank) % 3], u, 1.04, .139, width * .061, 1.95, .085);
+    if (!opened) {
+      facade(ink.dark, .06, 1.10, .057, width * .65, 2.19, .13);
+      for (let plank = 0; plank < 9; plank++) {
+        const u = .06 + (plank - 4) * width * .067;
+        facade([ink.wood, 0x85664d, 0x765442][(i + plank) % 3], u, 1.04, .139, width * .061, 1.95, .085);
+      }
+      facade(ink.band, .06, 1.75, .185, width * .63, .096, .06, 0, .042);
     }
-    facade(ink.band, .06, 1.75, .185, width * .63, .096, .06, 0, .042);
     facade(0x493e36, .06, 2.31, .124, width * .56, .35, .10);
     facade(awning, .06, 2.32, .194, width * .51, .25, .052, 0, -.029);
     if (height > 3.4) {
@@ -119,7 +215,7 @@ function shops(kit, layout, random) {
     drum(ink.band, lanternX, 2.20, lanternZ, .16, .064, .16);
     box(ink.brass, lanternX, 1.79, lanternZ, .038, .12, .038);
 
-    if (i === 3 || i === 5) {
+    if (i === 5) {
       const roofFace = wall(x, z, 0);
       for (let j = -7; j <= 7; j++) {
         roofFace(j % 3 === 0 ? 0x7c6553 : 0x67574d, j * (width + .54) / 15,
@@ -165,14 +261,24 @@ function courtyardProps(kit, layout, random) {
     layout.solid(x, z, .72, .67, .73);
   }
 
-  // A rack in the yard and a low wooden bench under the rear galleries.
-  for (const x of [5.0, 8.12]) {
-    box(0x977757, x, .96, .16, .11, 1.92, .12, 0, 0, .035);
-    beam(ink.wood, x, 0, -.37, x, .96, .16, .082);
-    beam(ink.wood, x, 0, .70, x, .96, .16, .082);
-    layout.solid(x, .16, .11, .12, 1.92);
+  for (const [x, z, spread] of [[-9.1, -6.48, 1.5], [9.3, -6.45, 1.4], [-12.5, 8.14, .92], [13.28, 8.01, .88]]) {
+    for (let i = 0; i < 6; i++) {
+      const px = x + (random() - .5) * spread;
+      const pz = z + (random() - .5) * .8;
+      const yaw = random() * Math.PI;
+      if (i % 2) box(0xb4a48a, px, .022 + i * .004, pz, .14 + random() * .12, .009, .13, yaw, .06, 0, false);
+      else kit.pavement(0x8a7560, px, pz, .42, .31, yaw);
+    }
   }
-  laundry(kit.wall(6.56, .16, 0), 0, 1.81, 0, 3);
+
+  // A rack in the yard and a low wooden bench under the rear galleries.
+  for (const x of [9.0, 12.12]) {
+    box(0x977757, x, .96, 3.22, .11, 1.92, .12, 0, 0, .035);
+    beam(ink.wood, x, 0, 2.69, x, .96, 3.22, .082);
+    beam(ink.wood, x, 0, 3.76, x, .96, 3.22, .082);
+    layout.solid(x, 3.22, .11, .12, 1.92);
+  }
+  laundry(kit.wall(10.56, 3.22, 0), 0, 1.81, 0, 3);
   box(ink.wood, -5.78, .47, -8.71, 1.80, .13, .43);
   for (const x of [-6.44, -5.13]) box(ink.band, x, .21, -8.71, .15, .42, .32);
   layout.solid(-5.78, -8.71, 1.8, .43, .54);
