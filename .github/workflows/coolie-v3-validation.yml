@@ -43,9 +43,17 @@ jobs:
           HTML
           python3 -m http.server 8765 >/tmp/preview-server.log 2>&1 &
           google-chrome --headless --no-sandbox --disable-dev-shm-usage --use-gl=angle --use-angle=swiftshader --enable-unsafe-swiftshader --hide-scrollbars --window-size=720,540 --virtual-time-budget=5000 --screenshot=/tmp/coolie.png http://127.0.0.1:8765/coolie-preview-temp.html
-          python3 -c "from PIL import Image; im=Image.open('/tmp/coolie.png').convert('RGB'); im.thumbnail((600,450)); im.save('/tmp/coolie.jpg',quality=65)"
+          if command -v convert >/dev/null; then
+            convert /tmp/coolie.png -resize 600x450 -quality 72 /tmp/coolie.jpg
+            preview=/tmp/coolie.jpg
+          elif command -v ffmpeg >/dev/null; then
+            ffmpeg -loglevel error -y -i /tmp/coolie.png -vf scale=600:-1 -q:v 5 /tmp/coolie.jpg
+            preview=/tmp/coolie.jpg
+          else
+            preview=/tmp/coolie.png
+          fi
           echo PREVIEW_BASE64_START
-          base64 -w0 /tmp/coolie.jpg; echo
+          base64 -w 120 "$preview"
           echo PREVIEW_BASE64_END
           rm coolie-preview-temp.html
       - name: Commit generated release
