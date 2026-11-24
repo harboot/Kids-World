@@ -1,5 +1,5 @@
 {
-  "version": "903c6097e3ae94e7a895d5cb1df1538e0bc4ce7340fc0e98d8bf4c072ec1c7ed",
+  "version": "b976a5de25482bc0af3a8157cf3aa0654e632bf839bed40d7e3c4ea7425624e5",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -666,12 +666,16 @@
       "revision": "1fa28c44c95dd123d817d30b080387bce67ca5145dfc972c4b7dc91300f469ea"
     },
     {
+      "path": "./core/scene-exporter.js",
+      "revision": "ca487db9f3f74f7f1379030dcadc8636400a8873342f3ff1693d1677e74aac85"
+    },
+    {
       "path": "./core/world-manager.js",
       "revision": "4ed90d5c99ed365eeade5cfd0d5aad58940e8bba638f58110a68d324a25a1890"
     },
     {
       "path": "./game.js",
-      "revision": "d26493decce8f8c8b2f657c111e1c8dc7250a40127272f4754e0f0fc35f2388c"
+      "revision": "a220ba27b2fef2e5e709baba373d06c89e0a1204a83dc2b88989a871506b4d30"
     },
     {
       "path": "./index.html",
@@ -707,7 +711,7 @@
     },
     {
       "path": "./stats.html",
-      "revision": "e5c99b9913b21decf5685ab65f6b2418e9621ce4c2591bb75cf3660df5d91bc9"
+      "revision": "5239259ee79344a9646c09eea0b693691ea001d118710130a1d33c99e2a0b59d"
     },
     {
       "path": "./style.css",

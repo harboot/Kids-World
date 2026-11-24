@@ -416,6 +416,11 @@ test('the worker shares a download and serves lazy area modules and versioned st
   const firstData = new URL('area-stats.json', assetBase(scope, first.tag));
   assert.equal(await (await request('stats.html')).text(), `<html data-stats-url="${firstData.pathname}">`);
   assert.deepEqual(await (await request(firstData, 'cors')).json(), firstStats);
+  const [, exporterPath] = game.match(/import\('(\.\/core\/scene-exporter\.js)'\)/) ?? [];
+  assert.ok(exporterPath);
+  const exporter = await request(new URL(exporterPath, gameURL), 'cors');
+  assert.equal(exporter.status, 200);
+  assert.match(exporter.headers.get('Content-Type'), /javascript/);
   const thumbnail = await request(new URL(hiddenThumbnail, firstData), 'cors');
   assert.equal(thumbnail.status, 200);
   assert.equal(requests.length, release.manifest.files.length + 1);
