@@ -1,0 +1,57 @@
+name: Temporary Coolie V3 validation
+on:
+  push:
+    branches: [feature/coolie-v3]
+permissions:
+  contents: write
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: node scripts/generate-area-stats.mjs
+      - run: node scripts/generate-pwa-manifest.mjs
+      - run: node --test
+      - run: node scripts/generate-pwa-manifest.mjs --check
+      - run: node scripts/generate-area-stats.mjs --check
+      - name: Measure model
+        run: |
+          node --input-type=module -e "import * as T from './vendor/three.module.min.js'; import {coolieGeometry,sackGeometry,carriedSackGeometry} from './areas/kung-fu-hustle/coolie.js'; let b=coolieGeometry(T),s=sackGeometry(T),c=carriedSackGeometry(T); console.log(JSON.stringify({body:b.attributes.position.count/3,groundSack:s.attributes.position.count/3,carriedSack:c.attributes.position.count/3,total:(b.attributes.position.count+17*s.attributes.position.count+5*c.attributes.position.count)/3,uniqueBufferBytes:[b,s,c].flatMap(g=>Object.values(g.attributes)).reduce((n,a)=>n+a.array.byteLength,0)}))"
+      - name: Render actual mesh front and side
+        run: |
+          cat > coolie-preview-temp.html <<'HTML'
+          <!doctype html><html><head><style>body{margin:0;background:#ddd2bd}canvas{display:block}</style></head><body><script type="module">
+          import * as T from './vendor/three.module.min.js';
+          import {buildCoolie,cooliePosition} from './areas/kung-fu-hustle/coolie.js';
+          const s=new T.Scene();s.background=new T.Color(0xcbbda5);
+          buildCoolie(T,s,{solid(){}});
+          const root=s.getObjectByName('Coolie — porter');
+          root.position.set(0,.0,0);root.rotation.y=0;
+          s.remove(s.getObjectByName('Coolie ground sacks'));
+          const ground=new T.Mesh(new T.PlaneGeometry(20,20),new T.MeshStandardMaterial({color:0xb5a18a}));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;s.add(ground);
+          s.add(new T.HemisphereLight(0xffeee0,0x867866,1.55));
+          const light=new T.DirectionalLight(0xffe2bd,2.4);light.position.set(-3,5,4);light.castShadow=true;light.shadow.mapSize.set(1024,1024);light.shadow.camera.left=-3;light.shadow.camera.right=3;light.shadow.camera.top=3;light.shadow.camera.bottom=-3;s.add(light);
+          const r=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});r.setSize(720,540);r.shadowMap.enabled=true;r.setScissorTest(true);document.body.appendChild(r.domElement);
+          const cam=new T.PerspectiveCamera(34,360/540,.1,50);
+          for(const [i,x,z] of [[0,1.2,5.5],[1,5.2,1.5]]){cam.position.set(x,2.05,z);cam.lookAt(0,1.42,0);r.setViewport(i*360,0,360,540);r.setScissor(i*360,0,360,540);r.render(s,cam);}
+          document.title='rendered';
+          </script></body></html>
+          HTML
+          python3 -m http.server 8765 >/tmp/preview-server.log 2>&1 &
+          google-chrome --headless --no-sandbox --disable-dev-shm-usage --use-gl=angle --use-angle=swiftshader --enable-unsafe-swiftshader --hide-scrollbars --window-size=720,540 --virtual-time-budget=5000 --screenshot=/tmp/coolie.png http://127.0.0.1:8765/coolie-preview-temp.html
+          python3 -c "from PIL import Image; im=Image.open('/tmp/coolie.png').convert('RGB'); im.thumbnail((600,450)); im.save('/tmp/coolie.jpg',quality=65)"
+          echo PREVIEW_BASE64_START
+          base64 -w0 /tmp/coolie.jpg; echo
+          echo PREVIEW_BASE64_END
+          rm coolie-preview-temp.html
+      - name: Commit generated release
+        run: |
+          git add -- area-catalog.js area-stats.json version.json sw.js
+          if ! git diff --cached --quiet; then
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Generate Coolie V3 release'
+            git push origin HEAD:feature/coolie-v3
+          fi
