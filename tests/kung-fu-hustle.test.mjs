@@ -373,7 +373,7 @@ test('three new wall kiosks have usable entrances and the well is relocated',asy
   const {visit,player,walk}=await start(t);
   const {area}=visit;
   for(const x of [-17.80,-13.85,-9.90]){
-    const aisle=x-.60;
+    const aisle=x+(x===-9.90?.65:-.65);
     player.reset({x:aisle,z:15.2},area);
     assert.ok(walk(aisle,17.55));
     assert.equal(walk(aisle,20.0,90),false);
