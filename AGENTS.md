@@ -2,9 +2,7 @@
 
 ## Procedural 3D models
 
-Follow [the geometry guidelines](docs/geometry-guidelines.md). Use a mobile-first, colorful low-poly style with clear silhouettes, simple shapes, solid colors, and simple shading. Use curved primitives where the shape calls for them and choose segment counts based on size, visibility, and purpose. Add detail for a clear visual or gameplay benefit.
-
-Use [faceted low-poly](docs/geometry-guidelines.md#humanoid-characters) for new and remodeled humanoids, with the Kung Fu Hustle window resident as the visual reference.
+Follow [the geometry guidelines](docs/geometry-guidelines.md). Use [faceted low-poly](docs/geometry-guidelines.md#faceted-low-poly) for all new and remodeled 3D models, including characters, animals, props, vehicles, vegetation, buildings, and terrain. Aim for clear silhouettes, solid colors, and flat shading. Choose curved primitives and segment counts based on shape, visibility, and purpose. Add detail for a clear visual or gameplay benefit.
 
 Minimize triangles and draw calls. Reuse geometry and materials, preserve batching, and use instancing where it helps. Keep geometry and material creation out of the frame loop. Limit transparency and real-time shadows, follow the existing z-fighting rules, and use the existing Three.js renderer. Do not add rendering libraries or post-processing.
 
