@@ -4,7 +4,7 @@ import { courtyard } from './courtyard.js';
 import { buildCoolie } from './coolie.js';
 import { marketRow } from './market.js';
 import { buildResident, buildResidentWindow, residentWindow } from './resident.js';
-import { floorRise, gallery, guardCaps, stair, stories, wingX } from './layout.js';
+import { floorRise, gallery, galleryBreaches, guardCaps, stair, stories, wingX } from './layout.js';
 import { crack, exposedBrick, ink, laundry, masonryKit, roof } from './masonry.js';
 
 function doorsAndWindows(face, x, y, hasAwning, hasDoor) {
@@ -212,6 +212,19 @@ function walkways(kit, layout) {
     });
   }
 
+  // Jagged broken slab edges, confined to intact floor so no decorative bridge
+  // or collision surface projects into the missing corridor.
+  for (const { y, left, right } of galleryBreaches) {
+    for (const [edge, direction] of [[left,-1],[right,1]]) {
+      for (let i=0;i<7;i++){
+        const z=gallery.rear+.20+i*.42;
+        const size=.13+(i%3)*.065;
+        box(i%3===0?ink.brick:ink.stone,edge+direction*(size*.52+.024),
+          y-.11,z,size,.20,.32,0,.09*(i%2),direction*.16);
+        if(i%2===0) box(ink.iron,edge+direction*.08,y-.12,z,.15,.035,.045,0,0,direction*.28);
+      }
+    }
+  }
   const posts = new Set();
   for (const { x1, z1, x2, z2, low, high, length, repaired } of layout.guards) {
     const count = Math.ceil(length / (repaired ? 1.36 : .47));

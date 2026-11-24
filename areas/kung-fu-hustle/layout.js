@@ -11,6 +11,8 @@ export const guardCaps = {
   iron: { offset: 1.02, width: .067 },
 };
 export const gateZ = 20.4;
+// Full-width collapse aligned with the palm opening, on the third and fourth floors.
+export const galleryBreaches = [{ y: 6.5, left: 6.25, right: 12.72 }, { y: 9.75, left: 5.72, right: 12.72 }];
 export const gateHalfWidth = 6.7;
 export const wingSlope = .48;
 export const footprint = [
@@ -102,13 +104,10 @@ export function courtyardLayout() {
   for (let level = 0; level < stories; level++) {
     const y = level * floorRise;
     if (level >= 2) {
-      const [left, right, brokenEdge] = [5.72, 12.72, -8.98];
+      const { left, right } = galleryBreaches[level - 2];
       surface(-gallery.outer, left, gallery.rear, gallery.court, y);
-      surface(left, right, brokenEdge, gallery.court, y);
       surface(right, gallery.outer, gallery.rear, gallery.court, y);
-      guard(left, gallery.rear, left, brokenEdge, y, y, 0, true);
-      guard(left, brokenEdge, right, brokenEdge, y, y, 0, true);
-      guard(right, brokenEdge, right, gallery.rear, y, y, 0, true);
+      // No floor, ceiling or railing spans the opening. Both ends are exposed.
     } else {
       surface(-gallery.outer, gallery.outer, gallery.rear, gallery.court, y);
     }
@@ -116,9 +115,9 @@ export function courtyardLayout() {
       const [left, right] = galleryOpenings[level - 1];
       guard(-outer, gallery.court, left, gallery.court, y);
       if (level >= 2) {
-        const repairedFrom = Math.max(right, 6.25);
-        if (right < repairedFrom) guard(right, gallery.court, repairedFrom, gallery.court, y);
-        guard(repairedFrom, gallery.court, outer, gallery.court, y, y, 0, true);
+        const breach = galleryBreaches[level - 2];
+        if (right < breach.left) guard(right, gallery.court, breach.left, gallery.court, y);
+        if (breach.right < outer) guard(breach.right, gallery.court, outer, gallery.court, y);
       } else {
         guard(right, gallery.court, outer, gallery.court, y);
       }
@@ -222,7 +221,10 @@ export function courtyardLayout() {
       return ceiling;
     },
     canDropFrom(x, z, feet) {
-      return ledges.some(ledge => standsOnLedge(ledge, x, z, feet));
+      return ledges.some(ledge => standsOnLedge(ledge, x, z, feet)) ||
+        galleryBreaches.some(({ y, left, right }) => Math.abs(feet - y) < .014 &&
+          z >= gallery.rear && z <= gallery.court &&
+          (Math.abs(x - left) < .16 || Math.abs(x - right) < .16));
     },
     blocksGround(x, z, radius, feet, from) {
       // The raised outer wall can support the player within the compound outline.
