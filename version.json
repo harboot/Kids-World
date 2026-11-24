@@ -1,5 +1,5 @@
 {
-  "version": "5e06af07e6ae4a00c574fc52fce4dc7c6fcc4ea16405aeaeb4b43ce0d7592476",
+  "version": "8bc9a51bde5cb064b670adf9afb9b55ee25aaa50641cbdbf3cb2b2795e29bad1",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "2d03afea0b7f9765090385d9bd70d81df4fdf2195ea540774a0078a6b853280a"
+      "revision": "a2c6861eebccbc541114cc829d70f7bb9d264dafb10d10a3091a9f9199b86a9c"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -191,7 +191,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/courtyard.js",
-      "revision": "9375e2bde842d622429cab4e96bf756caa9d98e4ed318e5ca18d17f3c1127b12"
+      "revision": "6ecbe3256ac51b4b831d4f1b226ae26d6bee137db2b8b658094fcc91d7cc0749"
     },
     {
       "path": "./areas/kung-fu-hustle/damage.js",
@@ -207,7 +207,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/layout.js",
-      "revision": "b2a84a0115eab5d5c9bb1042be31dce8b2309951666a57d9c04754a2e79e538b"
+      "revision": "db171d0380e8b89395b71f1e726689fb8d58071932ea5a18c3564b8e0ce286aa"
     },
     {
       "path": "./areas/kung-fu-hustle/market.js",
@@ -235,7 +235,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/scene.js",
-      "revision": "17743795d9047ac0970099f2b0bb733bc6d4627e1e91dfd73a0cc2390131261a"
+      "revision": "36ad6afe5e5dea161a3cc765e93e58c6248281e040e56fd11b4b43045e1b8aba"
     },
     {
       "path": "./areas/military-base/buildings.js",
