@@ -106,6 +106,7 @@
     thead th:nth-child(-n+2) button { justify-content: start; }
     thead button:hover, thead th[aria-sort] { background: #e3ecd6; }
     thead button:focus-visible { outline-offset: -3px; }
+    .json-heading { padding: .77rem .55rem; }
     .sort-icon { width: .8em; color: #63745d; }
     tbody tr:nth-child(even) { background: #f8f9ee; }
     tbody a { text-underline-offset: .18em; }
@@ -126,12 +127,27 @@
     .visibility { display: inline-block; padding: .18rem .52rem; border-radius: 1rem; font-weight: 700; }
     .public { background: #e2eedc; color: #2c542f; }
     .hidden { background: #f2e9db; color: #6c4b2b; }
+    .export-button {
+      min-width: 7rem;
+      min-height: 2.5rem;
+      padding: .35rem .5rem;
+      border: 1px solid #a6b39c;
+      border-radius: .45rem;
+      background: #eff3e5;
+      color: var(--ink);
+      font: 750 .75rem system-ui, sans-serif;
+      cursor: pointer;
+    }
+    .export-button:hover:not(:disabled) { background: #e3ecd6; }
+    .export-button:disabled { color: var(--muted); cursor: wait; }
     .status { margin: 0; padding: .8rem 1rem; border-block-start: 1px solid var(--line); color: var(--muted); font-size: .86rem; }
+    #export-error { color: #8b3029; }
     @media (max-width: 42rem) {
       table, thead, tbody { display: block; }
       thead tr { display: flex; flex-wrap: wrap; background: #eff3e5; border-block-start: 1px solid var(--line); }
       thead th { border: 0; }
       thead button { padding: .55rem .65rem; font-size: .78rem; }
+      .json-heading { padding: .55rem .65rem; font-size: .78rem; }
       tbody tr {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -144,6 +160,7 @@
       tbody th { grid-column: span 3; }
       tbody td:nth-child(2) { justify-self: end; }
       tbody .metric { align-self: start; justify-self: start; text-align: left; }
+      tbody .export-cell { grid-column: span 2; justify-self: end; }
       .area-identity { gap: .55rem; }
       .thumbnail { width: clamp(5.6rem, 29vw, 8rem); }
       .metric-label { display: block; margin-bottom: .18rem; color: var(--muted); font-size: .72rem; font-weight: 750; white-space: normal; }
@@ -188,6 +205,7 @@
           </label>
         </div>
       </div>
+      <p id="export-error" class="status" role="alert" hidden></p>
       <div class="table-scroll" role="region" aria-label="Area statistics table" tabindex="0" hidden>
         <table role="table" aria-labelledby="area-list-heading">
           <thead role="rowgroup">
@@ -198,6 +216,7 @@
               <th role="columnheader" scope="col"><button type="button" data-sort="mapArea" title="Sort by map area">Map Dimensions <span class="sort-icon" aria-hidden="true">↕</span></button></th>
               <th role="columnheader" scope="col"><button type="button" data-sort="jsBytes">JS Size <span class="sort-icon" aria-hidden="true">↕</span></button></th>
               <th role="columnheader" scope="col"><button type="button" data-sort="imageBytes">Image Size <span class="sort-icon" aria-hidden="true">↕</span></button></th>
+              <th role="columnheader" scope="col" class="json-heading">JSON</th>
             </tr>
           </thead>
           <tbody role="rowgroup"></tbody>
@@ -226,11 +245,41 @@
     const search = document.getElementById('search');
     const filter = document.getElementById('filter');
     const status = document.getElementById('status');
+    const exportError = document.getElementById('export-error');
     const sortButtons = document.querySelectorAll('button[data-sort]');
     const body = document.querySelector('tbody');
     const statsPath = document.documentElement.dataset.statsUrl;
     let sortBy = 'name';
     let ascending = true;
+    let exportingArea = null;
+
+    function updateExportButton(button) {
+      const processing = exportingArea === button.dataset.area;
+      button.disabled = exportingArea !== null;
+      button.textContent = processing ? 'EXPORTING...' : 'EXPORT';
+      button.setAttribute('aria-label',
+        processing ? `Exporting ${button.dataset.name} JSON` : `Export ${button.dataset.name} JSON`);
+    }
+
+    async function downloadScene(area) {
+      if (exportingArea !== null) return;
+      exportingArea = area.id;
+      exportError.hidden = true;
+      const updateButtons = () => body.querySelectorAll('.export-button').forEach(updateExportButton);
+      updateButtons();
+      try {
+        // Cached statistics and their game modules share the same versioned directory.
+        const { exportArea } = await import(new URL('game.js', new URL(statsPath, document.baseURI)).href);
+        await exportArea(area.id);
+      } catch (error) {
+        console.error('Kids World could not export the area scene.', error);
+        exportError.hidden = false;
+        exportError.textContent = `Could not export ${area.name}. ${error.message}`;
+      } finally {
+        exportingArea = null;
+        updateButtons();
+      }
+    }
 
     function secondary(value) {
       return Object.assign(document.createElement('span'), { className: 'secondary', textContent: value });
@@ -325,6 +374,17 @@
         cell.append(label, main);
         if (detail) cell.append(secondary(detail));
       }
+      const exportCell = row.insertCell();
+      exportCell.className = 'export-cell';
+      exportCell.setAttribute('role', 'cell');
+      const exportButton = document.createElement('button');
+      exportButton.className = 'export-button';
+      exportButton.type = 'button';
+      exportButton.dataset.area = area.id;
+      exportButton.dataset.name = area.name;
+      updateExportButton(exportButton);
+      exportButton.addEventListener('click', () => downloadScene(area));
+      exportCell.append(exportButton);
       return row;
     }
 

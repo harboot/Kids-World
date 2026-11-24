@@ -3,6 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
+import { setImmediate } from 'node:timers/promises';
 import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
 import { areas as registry } from '../game.js';
@@ -123,6 +124,7 @@ class Element extends EventTarget {
   children = [];
   attributes = new Map();
   classList = { add() {} };
+  dataset = {};
   value = '';
   disabled = true;
   hidden = true;
@@ -138,6 +140,11 @@ class Element extends EventTarget {
   setAttribute(name, value) { this.attributes.set(name, value); }
   removeAttribute(name) { this.attributes.delete(name); }
   querySelector() { return this.children[0]; }
+  querySelectorAll(selector) {
+    return this.children.flatMap(child => child instanceof Element
+      ? [child, ...child.querySelectorAll(selector)].filter(element => '.' + element.className === selector)
+      : []);
+  }
 }
 
 test('the dashboard renders the last update, grouped metrics, and links to images and areas', async () => {
@@ -147,8 +154,9 @@ test('the dashboard renders the last update, grouped metrics, and links to image
   const manifest = JSON.parse(await readFile(new URL('version.json', root), 'utf8'));
   const precachedPaths = new Set(manifest.files.map(file => file.path));
   const page = new URL('https://example.test/Kids-World/stats.html');
-  const script = html.match(/<script type="module">([\s\S]+)<\/script>/)[1];
+  const script = html.match(/<script type="module">([\s\S]+)<\/script>/)[1].replace('await import(', 'await importGame(');
   const dataPath = html.match(/data-stats-url="([^"]+)"/)[1];
+  assert.match(html, /scope="col" class="json-heading">JSON<\/th>\s*<\/tr>/);
   const buttons = [...html.matchAll(/data-sort="([^"]+)"/g)].map(([, property]) => {
     const button = new Element();
     button.dataset = { sort: property };
@@ -162,12 +170,20 @@ test('the dashboard renders the last update, grouped metrics, and links to image
   const selectors = Object.fromEntries(['tbody', '.summary', '.table-scroll'].map(name => [name, new Element()]));
   const ids = Object.fromEntries([...html.matchAll(/id="([^"]+)"/g)].map(([, id]) => [id, new Element()]));
   const requests = [];
+  const imports = [];
+  const exports = [];
+  let download;
+  const pinnedStatsPath = new URL('__kids-world__/release/area-stats.json', page).pathname;
   await runInNewContext(`(async () => {${script}\n})()`, {
-    console,
+    console: { error() {} },
     URL,
+    async importGame(url) {
+      imports.push(url);
+      return { exportArea(id) { exports.push(id); return download.promise; } };
+    },
     document: {
       baseURI: page.href,
-      documentElement: { dataset: { statsUrl: dataPath } },
+      documentElement: { dataset: { statsUrl: pinnedStatsPath } },
       createElement: tagName => Object.assign(new Element(), { tagName }),
       getElementById: id => ids[id],
       querySelector: selector => selectors[selector],
@@ -178,7 +194,9 @@ test('the dashboard renders the last update, grouped metrics, and links to image
       return Promise.resolve(Response.json({ areas, summary, updatedAt: '2026-11-23T18:10:00.000Z' }));
     },
   });
-  assert.deepEqual(requests, ['./area-stats.json']);
+  assert.equal(dataPath, './area-stats.json');
+  assert.deepEqual(requests, [pinnedStatsPath]);
+  assert.deepEqual(imports, []);
   const [updated] = ids['last-update'].children;
   assert.equal(updated.tagName, 'time');
   assert.equal(updated.attributes.get('datetime'), '2026-11-23T18:10:00.000Z');
@@ -206,10 +224,10 @@ test('the dashboard renders the last update, grouped metrics, and links to image
       const [preview] = identity.children;
       const [thumbnail] = preview.children;
       assert.equal(preview.tagName, 'a');
-      assert.equal(preview.href, new URL(area.thumbnail, page).href);
+      assert.equal(preview.href, new URL(area.thumbnail, new URL(pinnedStatsPath, page)).href);
       assert.equal(preview.target, '_blank');
       assert.equal(thumbnail.tagName, 'img');
-      assert.equal(thumbnail.src, new URL(area.thumbnail, page).href);
+      assert.equal(thumbnail.src, preview.href);
       assert.equal(thumbnail.alt, '');
       assert.equal(thumbnail.width, 160);
       assert.equal(thumbnail.height, 90);
@@ -218,8 +236,12 @@ test('the dashboard renders the last update, grouped metrics, and links to image
       assert.deepEqual(identity.children, [linkFor(row)]);
     }
     assert.equal(row.children[1].children[0].textContent, area.visibility);
-    assert.equal(row.children.length, buttons.length);
-    const [, , missions, map, javascript, images] = row.children;
+    assert.equal(row.children.length, buttons.length + 1);
+    const [, , missions, map, javascript, images, jsonCell] = row.children;
+    const [exportButton] = jsonCell.children;
+    assert.equal(exportButton.tagName, 'button');
+    assert.equal(exportButton.textContent, 'EXPORT');
+    assert.equal(exportButton.disabled, false);
     assert.equal(missions.children[1], String(registry[area.id].missionCount));
     assert.ok([map, javascript, images].every(cell => cell.children[1] && !/NaN|undefined/.test(cell.children[1])));
     assert.equal(map.children.length, area.mapArea === null ? 2 : 3);
@@ -231,6 +253,30 @@ test('the dashboard renders the last update, grouped metrics, and links to image
   ids.filter.value = 'Hidden';
   ids.filter.dispatchEvent(new Event('change'));
   assert.equal(rows().length, summary.hiddenAreas);
+  const exportButtons = () => selectors.tbody.querySelectorAll('.export-button');
+  download = Promise.withResolvers();
+  exportButtons()[0].dispatchEvent(new Event('click'));
+  assert.equal(exportButtons()[0].textContent, 'EXPORTING...');
+  ids.filter.value = '';
+  ids.filter.dispatchEvent(new Event('change'));
+  assert.ok(exportButtons().every(button => button.disabled));
+  exportButtons().find(button => button.dataset.area === 'snow').dispatchEvent(new Event('click'));
+  await setImmediate();
+  assert.deepEqual(imports, [new URL('game.js', new URL(pinnedStatsPath, page)).href]);
+  assert.deepEqual(exports, ['secret-apartment']);
+  download.reject(new Error('Could not serialize the scene.'));
+  await setImmediate();
+  assert.equal(ids['export-error'].hidden, false);
+  assert.match(ids['export-error'].textContent, /Secret Apartment.*Could not serialize the scene/);
+  assert.ok(exportButtons().every(button => !button.disabled && button.textContent === 'EXPORT'));
+  download = Promise.withResolvers();
+  exportButtons().find(button => button.dataset.area === 'snow').dispatchEvent(new Event('click'));
+  download.resolve();
+  await setImmediate();
+  assert.equal(ids['export-error'].hidden, true);
+  assert.deepEqual(exports, ['secret-apartment', 'snow']);
+  assert.ok(exportButtons().every(button => !button.disabled && button.textContent === 'EXPORT'));
+
   ids.search.value = 'missing area name';
   ids.search.dispatchEvent(new Event('input'));
   assert.equal(rows().length, 0);

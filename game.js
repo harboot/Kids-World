@@ -2,8 +2,10 @@ import { areaMetadata } from './area-catalog.js';
 import { createGame } from './core/game.js';
 
 function publicArea(metadata, folder, loadModule) {
-  return { ...metadata, show: true, thumbnail: new URL(`./areas/${folder}/${folder}.jpg`, import.meta.url).href, loadModule };
+  return { ...metadata, show: true, slug: folder, thumbnail: new URL(`./areas/${folder}/${folder}.jpg`, import.meta.url).href, loadModule };
 }
+
+const loadThree = () => import('./vendor/three.module.min.js');
 
 export const areas = {
   garden: publicArea(areaMetadata['garden'], 'flower-garden', () => import('./areas/flower-garden/index.js')),
@@ -22,8 +24,13 @@ export const areas = {
 export function startGame(game) {
   return createGame({
     game,
-    loadThree: () => import('./vendor/three.module.min.js'),
+    loadThree,
     areas,
     defaultArea: 'garden',
   });
+}
+
+export async function exportArea(id) {
+  const { downloadAreaScene } = await import('./core/scene-exporter.js');
+  return downloadAreaScene(id, { areas, loadThree, document });
 }

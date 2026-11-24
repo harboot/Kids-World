@@ -19,10 +19,11 @@ test('the central registry explicitly declares visibility and identifies all pub
     assert.equal(entry.load, undefined);
     assert.equal(entry.music, undefined);
     const definition = await loadAreaDefinition(id, entry);
-    const { loadModule, show, thumbnail, ...metadata } = entry;
+    const { loadModule, show, thumbnail, slug, ...metadata } = entry;
     for (const [name, value] of Object.entries(metadata)) assert.deepEqual(definition[name], value, `${id} ${name}`);
     assert.equal(typeof definition.load, 'function');
     assert.equal(Boolean(thumbnail), show);
+    if (show) assert.ok(thumbnail.endsWith(`/${slug}/${slug}.jpg`));
   }
 });
 
