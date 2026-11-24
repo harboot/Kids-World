@@ -12,15 +12,6 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: '22'
-      - run: npm ci
-      - run: node scripts/generate-area-stats.mjs
-      - run: node scripts/generate-pwa-manifest.mjs
-      - run: node --test
-      - run: node scripts/generate-pwa-manifest.mjs --check
-      - run: node scripts/generate-area-stats.mjs --check
-      - name: Measure model
-        run: |
-          node --input-type=module -e "import * as T from './vendor/three.module.min.js'; import {coolieGeometry,sackGeometry,carriedSackGeometry} from './areas/kung-fu-hustle/coolie.js'; let b=coolieGeometry(T),s=sackGeometry(T),c=carriedSackGeometry(T); console.log(JSON.stringify({body:b.attributes.position.count/3,groundSack:s.attributes.position.count/3,carriedSack:c.attributes.position.count/3,total:(b.attributes.position.count+17*s.attributes.position.count+5*c.attributes.position.count)/3,uniqueBufferBytes:[b,s,c].flatMap(g=>Object.values(g.attributes)).reduce((n,a)=>n+a.array.byteLength,0)}))"
       - name: Render actual mesh front and side
         run: |
           cat > coolie-preview-temp.html <<'HTML'
@@ -38,28 +29,29 @@ jobs:
           const r=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});r.setSize(720,540);r.shadowMap.enabled=true;r.setScissorTest(true);document.body.appendChild(r.domElement);
           const cam=new T.PerspectiveCamera(34,360/540,.1,50);
           for(const [i,x,z] of [[0,1.2,5.5],[1,5.2,1.5]]){cam.position.set(x,2.05,z);cam.lookAt(0,1.42,0);r.setViewport(i*360,0,360,540);r.setScissor(i*360,0,360,540);r.render(s,cam);}
-          document.title='rendered';
+          document.title='rendered'; window.previewReady=true;
           </script></body></html>
           HTML
           python3 -m http.server 8765 >/tmp/preview-server.log 2>&1 &
-          google-chrome --headless --no-sandbox --disable-dev-shm-usage --use-gl=angle --use-angle=swiftshader --enable-unsafe-swiftshader --hide-scrollbars --window-size=720,540 --virtual-time-budget=5000 --screenshot=/tmp/coolie.png http://127.0.0.1:8765/coolie-preview-temp.html
-          if command -v convert >/dev/null; then
-            convert /tmp/coolie.png -resize 600x450 -quality 72 /tmp/coolie.jpg
-            preview=/tmp/coolie.jpg
-          elif command -v ffmpeg >/dev/null; then
-            ffmpeg -loglevel error -y -i /tmp/coolie.png -vf scale=600:-1 -q:v 5 /tmp/coolie.jpg
-            preview=/tmp/coolie.jpg
-          else
-            preview=/tmp/coolie.png
-          fi
-          echo PREVIEW_BASE64_START
-          base64 -w 120 "$preview"
-          echo PREVIEW_BASE64_END
+          google-chrome --headless --no-sandbox --disable-dev-shm-usage --use-gl=angle --use-angle=swiftshader --enable-unsafe-swiftshader --hide-scrollbars --window-size=720,540 --remote-debugging-port=9222 --user-data-dir=/tmp/coolie-chrome about:blank >/tmp/chrome.log 2>&1 &
+          node --input-type=module <<'JS'
+          const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+          let page;
+          for(let i=0;i<30;i++){try{page=(await (await fetch('http://127.0.0.1:9222/json/list')).json()).find(x=>x.type==='page');if(page)break}catch{}await sleep(500)}
+          if(!page)throw Error('Chrome unavailable');
+          const socket=new WebSocket(page.webSocketDebuggerUrl);
+          await new Promise((resolve,reject)=>{socket.onopen=resolve;socket.onerror=reject});
+          let id=0;const pending=new Map();
+          socket.onmessage=e=>{const m=JSON.parse(e.data);if(m.id){const p=pending.get(m.id);pending.delete(m.id);if(m.error)p.reject(Error(JSON.stringify(m.error)));else p.resolve(m.result)}else if(m.method==='Runtime.exceptionThrown')console.log('PAGE_EXCEPTION',JSON.stringify(m.params.exceptionDetails));else if(m.method==='Log.entryAdded')console.log('PAGE_LOG',JSON.stringify(m.params.entry));};
+          const call=(method,params={})=>new Promise((resolve,reject)=>{const key=++id;pending.set(key,{resolve,reject});socket.send(JSON.stringify({id:key,method,params}));});
+          await call('Runtime.enable');await call('Log.enable');await call('Page.enable');
+          await call('Emulation.setDeviceMetricsOverride',{width:720,height:540,deviceScaleFactor:1,mobile:false});
+          await call('Page.navigate',{url:'http://127.0.0.1:8765/coolie-preview-temp.html'});
+          let ready=false;
+          for(let i=0;i<40;i++){await sleep(500);const r=await call('Runtime.evaluate',{expression:'Boolean(window.previewReady)',returnByValue:true});if(r.result.value){ready=true;break}}
+          if(!ready){console.log(await call('Runtime.evaluate',{expression:'document.body.innerHTML.slice(0,250)',returnByValue:true}));throw Error('Preview did not render')}
+          await sleep(1000);
+          const {data}=await call('Page.captureScreenshot',{format:'jpeg',quality:70,fromSurface:true});
+          console.log('PREVIEW_BASE64_START');for(let i=0;i<data.length;i+=120)console.log(data.slice(i,i+120));console.log('PREVIEW_BASE64_END');socket.close();
+          JS
           rm coolie-preview-temp.html
-      - name: Commit generated release
-        run: |
-          git add -- area-catalog.js area-stats.json version.json sw.js
-          if ! git diff --cached --quiet; then
-            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Generate Coolie V3 release'
-            git push origin HEAD:feature/coolie-v3
-          fi
