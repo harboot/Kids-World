@@ -1,5 +1,6 @@
 import { floorRise, gallery, stories, wingSlope, wingX } from './layout.js';
 import { ink } from './masonry.js';
+import { facetedResidentGeometry } from './resident-model.js';
 
 const roofPoint = { x: -19.98, y: 13.51, z: 5.76 };
 const wallX = -gallery.outer;
@@ -49,13 +50,13 @@ function robeGeometry(THREE) {
     [.14, -.38, .321, .236], [.31, -.22, .325, .252], [.49, -.011, .361, .251],
     [.63, .09, .317, .214], [.71, .13, .162, .138],
   ];
-  const segments = 16;
+  const segments = 10;
   const vertices = [];
   const faces = [];
   for (const [i, [y, z, width, depth]] of rings.entries()) {
     for (let j = 0; j < segments; j++) {
       const a = j * Math.PI * 2 / segments;
-      const pleat = 1 + .038 * Math.cos(5 * a) * (1 - i / rings.length);
+      const pleat = 1 + .105 * Math.cos(5 * a) * (1 - i / rings.length);
       vertices.push(Math.cos(a) * width * pleat, y, z + Math.sin(a) * depth * pleat);
       if (i === 0) continue;
       const prev = (i - 1) * segments + j;
@@ -70,8 +71,9 @@ function modelGeometry(THREE, vertices, faces) {
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
   geometry.setIndex(faces);
-  geometry.computeVertexNormals();
-  return geometry;
+  const faceted = geometry.toNonIndexed();
+  faceted.computeVertexNormals();
+  return faceted;
 }
 
 function buildBra(THREE, kit, hands) {
@@ -80,7 +82,7 @@ function buildBra(THREE, kit, hands) {
   const { beam, oval } = kit;
   const vertices = [];
   const faces = [];
-  const segments = 14;
+  const segments = 10;
   const bust = .83;
 
   for (const [side, hand] of hands) {
@@ -120,70 +122,25 @@ function buildBra(THREE, kit, hands) {
 }
 
 export function buildResident(THREE, kit) {
-  const { box, oval, beam, drum } = kit;
-  const robe = 0xd3adba;
-  const cuff = 0xe3c7ca;
-  const skin = 0xc39173;
-  const hair = 0x31252b;
+  const { oval, beam } = kit;
+  const robe = 0xbc848c;
+  const trim = 0xe4c6c4;
   const yaw = Math.atan2(1, wingSlope);
   const hands = [[-1, [-.91, .46, .754]], [1, [.91, .69, .76]]];
 
   kit.frame(wingX(-1, wallX, z), sill, z, yaw, () => {
     kit.mesh('Resident full-length robe', robe, robeGeometry(THREE));
-    for (const side of [-1, 1]) {
-      const px = side * .16;
-      oval(skin, px, -.670, -.52, .15, .22, .18);
-      oval(0x674c48, px, -.747, -.47, .18, .10, .31);
-    }
-
+    kit.mesh('Faceted resident', 0xffffff, facetedResidentGeometry(THREE, robe, hands));
     for (const [a, b] of [
-      [[-.225, .628, .255], [0, .537, .235]],
-      [[0, .537, .235], [.192, .669, .255]],
-      [[0, .537, .235], [.017, .443, .246]],
-    ]) beam(cuff, ...a, ...b, .035);
-    for (const [i, y] of [.455, .370, .291].entries()) {
-      oval(cuff, .016, y, .239 - i * .082, .036, .036, .033);
+      [[-.224, .649, .257], [-.120, .606, .294]],
+      [[-.120, .606, .294], [0, .548, .285]],
+      [[0, .548, .285], [.109, .606, .295]],
+      [[.109, .606, .295], [.189, .652, .282]],
+      [[0, .548, .285], [.018, .468, .232]],
+    ]) beam(trim, ...a, ...b, .025);
+    for (const [x, y, depth] of [[.015, .447, .201], [.023, .374, .123], [.030, .306, .042]]) {
+      oval(trim, x, y, depth, .031, .031, .022);
     }
-    oval(skin, .024, .767, .207, .213, .27, .225);
-
-    function arm(paint, a, b, width) {
-      const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2];
-      const run = Math.hypot(dx, dz);
-      oval(paint, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2,
-        Math.hypot(run, dy) + .132, width, width, Math.atan2(-dz, dx), 0, Math.atan2(dy, run));
-    }
-
-    for (const [side, hand] of hands) {
-      const elbow = [side * .592, hand[1] + .042, .404];
-      arm(robe, [side * .267, .615, .142], elbow, .225);
-      arm(skin, elbow, hand, .126);
-      oval(cuff, ...elbow, .145, .178, .151);
-      oval(skin, ...hand, .148, .107, .13, 0, 0, side * .22);
-      oval(0xba8666, hand[0] - side * .040, hand[1] - .018, hand[2] + .053, .071, .052, .061);
-    }
-
-    oval(hair, .018, 1.187, .199, .659, .668, .561);
-    oval(skin, .027, 1.115, .315, .445, .518, .37);
-    for (const side of [-1, 1]) {
-      oval(skin, side * .220, 1.096, .344, .091, .144, .112);
-      oval(0xcaa368, side * .233, 1.042, .402, .041, .045, .028);
-      const eyeX = .026 + side * .091;
-      oval(0x816154, eyeX, 1.161, .480, .084, .040, .045, 0, 0, side * -.09);
-      oval(0xe5c4aa, eyeX, 1.158, .498, .067, .027, .023);
-      oval(0x352725, eyeX - .007, 1.154, .508, .030, .026, .013);
-      oval(hair, eyeX + .004, 1.216, .476, .095, .018, .029, 0, 0, side * -.22);
-    }
-    oval(0xbd8266, .031, 1.108, .486, .088, .110, .093);
-    oval(0x88535a, .025, 1.025, .491, .116, .029, .037, 0, 0, -.122);
-    beam(0xe8dcbd, -.020, 1.026, .508, -.205, .990, .582, .031);
-    beam(0x6f655f, -.205, .990, .582, -.238, .984, .595, .028);
-    for (const [i, [x, y]] of [[-.28, 1.12], [-.29, 1.30], [-.22, 1.44], [-.055, 1.48],
-      [.117, 1.47], [.25, 1.37], [.30, 1.21]].entries()) {
-      const paint = [0x993c4e, 0xb5914d, 0x8c596e][i % 3];
-      drum(paint, x, y, .365, .142, .104, .142, i % 2 ? .22 : -.22, Math.PI / 2);
-      drum(hair, x, y, .419, .069, .022, .069, i % 2 ? .22 : -.22, Math.PI / 2);
-    }
-
     buildBra(THREE, kit, hands);
   });
 }
