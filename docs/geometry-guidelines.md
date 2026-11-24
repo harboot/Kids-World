@@ -2,16 +2,19 @@
 
 ## Procedural model design
 
-- Use colorful, geometric low-poly shapes across areas. Build distinct silhouettes from the simplest shapes that fit the subject. Use solid colors and flat or simple shading.
-- Choose spheres, cylinders, and other curved primitives for rounded forms. Olaf’s snowball body and eyes can share a low-segment sphere. Choose the lowest useful segment count for the object's size, visibility, and role. Prefer faceted curves when they suit the model. Add subdivisions only when they provide a clear visual or gameplay benefit.
+- Use colorful, geometric shapes across areas. Add subdivisions only when they provide a clear visual or gameplay benefit.
 - Budget triangles and draw calls for mobile first. Share geometry and materials, preserve existing batching, and use `InstancedMesh` for repeated parts when it measurably helps. Limit transparency and real-time shadows. Reuse existing resources during updates and keep geometry and material allocation out of the frame loop. Use the existing Three.js renderer without new rendering libraries or post-processing.
 - Organize models by area and responsibility. Small props can share a module, and animals with shared movement, interaction, and collision logic can live together. Use dedicated modules for complex models with independent behavior. Keep area gameplay in its area and put genuinely reusable engine logic in shared modules.
 
-## Humanoid characters
+## Faceted low-poly
 
-- Use the [Kung Fu Hustle window resident](../areas/kung-fu-hustle/resident-model.js) as the visual reference for new and remodeled humanoids. Build the face from distinct planes for the jaw, cheeks, and nose. Give the hair a readable outline and shape limbs and clothing with tapered forms and a few visible folds.
-- Use flat normals and solid colors to keep those planes readable. Reserve low-segment curved primitives for details that look better rounded, such as eyes or hair rollers. Check the silhouette, expression, and hands at the in-game camera distance and on a mobile-sized viewport.
-- Keep the model organized around the joints that need to move and batch static details when possible. Reuse vertices on planar faces with matching normals and colors. When comparing revisions, count triangles including instances, count draw calls in the same area and camera view, and check the size of unique vertex and index buffers. Each metric captures a different cost.
+Use this style for all new and remodeled 3D models. Start with a clear silhouette and a few distinct planes with flat normals and solid colors. For rounded forms, choose the lowest useful segment count for the object's size and visibility. Eyes, wheels, trunks, and snowballs can use simple curved primitives with readable facets.
+
+- **Humanoids** use distinct planes for the jaw, cheeks, and nose, with a readable hair outline and a few visible folds in clothing. Use the [Kung Fu Hustle window resident](../areas/kung-fu-hustle/resident-model.js) as the reference for faces and limbs.
+- **Animals** use distinct shapes for the muzzle, head, body, legs, wings, and tail as the species calls for them. Use a few larger planes to suggest fur, feathers, or scales in the silhouette.
+- **Props, vehicles, and environment** use the main planes and edges to show what each object is made of. Shape furniture, buildings, plants, rocks, and terrain with details sized for their in-game camera distance.
+
+Check each model in the game view and at mobile size. Organize moving parts around their joints or pivots, batch static details where practical, and reuse vertices on planar faces with matching normals and colors. When comparing revisions, count triangles including instances, count draw calls from the same area and camera view, and check the size of unique vertex and index buffers.
 
 ## Surface placement and z-fighting
 
