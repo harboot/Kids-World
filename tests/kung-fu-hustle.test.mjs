@@ -340,4 +340,5 @@ test('Coolie carries five sacks at the selected position and nearby stock is bat
   const bounds = new THREE.Box3().setFromObject(root);
   assert.ok(bounds.max.y > 2.7 && bounds.max.y < 3.1);
   assert.ok(bounds.min.y >= 0 && bounds.min.y < .02);
+  assert.ok(visit.area.obstacles.some(o => o.left <= 13.11 && o.right >= 13.11 && o.front <= 14.27 && o.back >= 14.27));
 });
