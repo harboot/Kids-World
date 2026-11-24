@@ -1,6 +1,7 @@
 import { seededRandom } from '../../core/random.js';
 import { damagedRearWall } from './damage.js';
 import { courtyard } from './courtyard.js';
+import { buildCoolie } from './coolie.js';
 import { marketRow } from './market.js';
 import { buildResident, buildResidentWindow, residentWindow } from './resident.js';
 import { floorRise, gallery, guardCaps, stair, stories, wingX } from './layout.js';
@@ -267,6 +268,7 @@ export function buildCourtyard(THREE, scene, layout, touch) {
   buildResident(THREE, kit);
   walkways(kit, layout);
   courtyard(kit, layout, random);
+  buildCoolie(THREE, scene, layout);
 
   // A muted skyline sits outside the playable compound.
   kit.box(0xbfa28f, 0, -.42, 0, 160, .42, 160, 0, 0, 0, false);

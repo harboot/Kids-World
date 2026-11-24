@@ -315,3 +315,29 @@ test('flat and sloped rail tops support walking and let the player step off', as
   settle();
   assert.equal(position.y, EYE_HEIGHT);
 });
+
+test('Coolie carries five sacks at the selected position and nearby stock is batched', async t => {
+  const { visit } = await start(t);
+  const root = visit.scene.getObjectByName('Coolie — porter');
+  assert.ok(root);
+  assert.deepEqual(root.position.toArray(), [13.11, -.04, 14.27]);
+  const body = root.getObjectByName('Coolie faceted body');
+  const carried = root.getObjectByName('Coolie carried sacks');
+  const ground = visit.scene.getObjectByName('Coolie ground sacks');
+  assert.ok(body.geometry.attributes.color);
+  assert.equal(carried.count, 5);
+  assert.equal(ground.count, 17);
+  assert.equal(carried.geometry, ground.geometry);
+  assert.equal(carried.material, body.material);
+  const triangles = body.geometry.attributes.position.count / 3 +
+    carried.geometry.attributes.position.count / 3 * (carried.count + ground.count);
+  assert.ok(triangles < 6000, 'porter and sack triangle budget');
+  for (const mesh of [body, carried, ground]) {
+    assert.ok(mesh.geometry.attributes.position.array.every(Number.isFinite));
+    assert.ok(mesh.geometry.attributes.normal.array.every(Number.isFinite));
+  }
+  visit.scene.updateMatrixWorld(true);
+  const bounds = new THREE.Box3().setFromObject(root);
+  assert.ok(bounds.max.y > 2.7 && bounds.max.y < 3.1);
+  assert.ok(bounds.min.y >= 0 && bounds.min.y < .02);
+});
