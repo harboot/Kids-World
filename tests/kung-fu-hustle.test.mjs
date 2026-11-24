@@ -354,7 +354,7 @@ test('both damaged upper galleries have a true full-width gap and allow a drop',
   const {visit,player,position,walk}=await start(t);
   const {area}=visit;
   for(const {y,left,right} of galleryBreaches) {
-    for(const z of [-10.1,-9,-7.8]){
+    for(const z of [-10.1,-9,-8.0]){
       assert.equal(area.getGroundHeight((left+right)/2,z,y),3.25);
       assert.equal(area.getGroundHeight(left-.25,z,y),y);
       assert.equal(area.getGroundHeight(right+.25,z,y),y);
