@@ -1,5 +1,5 @@
 {
-  "version": "8bc9a51bde5cb064b670adf9afb9b55ee25aaa50641cbdbf3cb2b2795e29bad1",
+  "version": "42773801236096f29f43c1d6e9244c2bffcdf2ffc7c9e03b63a268b5b4447467",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "a2c6861eebccbc541114cc829d70f7bb9d264dafb10d10a3091a9f9199b86a9c"
+      "revision": "68db37b585da54e6632b455389801d624a3a9363df153e908e5f01c07ff572ac"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -187,7 +187,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/coolie.js",
-      "revision": "c228c418987ce55ea561de33d4b8dbb924c8ae36706d38afac54485d2c38b55b"
+      "revision": "4a284474e3f9acbab7b501aafce20c4cc9d58ae8e8f23eb368531d1700489fb6"
     },
     {
       "path": "./areas/kung-fu-hustle/courtyard.js",
