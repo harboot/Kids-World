@@ -7,6 +7,12 @@
 - Budget triangles and draw calls for mobile first. Share geometry and materials, preserve existing batching, and use `InstancedMesh` for repeated parts when it measurably helps. Limit transparency and real-time shadows. Reuse existing resources during updates and keep geometry and material allocation out of the frame loop. Use the existing Three.js renderer without new rendering libraries or post-processing.
 - Organize models by area and responsibility. Small props can share a module, and animals with shared movement, interaction, and collision logic can live together. Use dedicated modules for complex models with independent behavior. Keep area gameplay in its area and put genuinely reusable engine logic in shared modules.
 
+## Humanoid characters
+
+- Use the [Kung Fu Hustle window resident](../areas/kung-fu-hustle/resident-model.js) as the visual reference for new and remodeled humanoids. Build the face from distinct planes for the jaw, cheeks, and nose. Give the hair a readable outline and shape limbs and clothing with tapered forms and a few visible folds.
+- Use flat normals and solid colors to keep those planes readable. Reserve low-segment curved primitives for details that look better rounded, such as eyes or hair rollers. Check the silhouette, expression, and hands at the in-game camera distance and on a mobile-sized viewport.
+- Keep the model organized around the joints that need to move and batch static details when possible. Reuse vertices on planar faces with matching normals and colors. When comparing revisions, count triangles including instances, count draw calls in the same area and camera view, and check the size of unique vertex and index buffers. Each metric captures a different cost.
+
 ## Surface placement and z-fighting
 
 - Give each visible surface its own plane wherever materials, colors, or decorative roles overlap. Adjacent faces may share an edge. For an inset on a level floor, fit the border around it and stop the supporting slab below both. Use one post where two railing spans share a corner.
