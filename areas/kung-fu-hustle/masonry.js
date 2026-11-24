@@ -34,6 +34,7 @@ export function masonryKit(THREE, scene) {
   const ground = new THREE.Shape(footprint.map(([x, z]) => new THREE.Vector2(x, z)));
   const groundGeometry = new THREE.ExtrudeGeometry(ground, { depth: .32, bevelEnabled: false });
   const material = new THREE.MeshStandardMaterial({ roughness: .96, side: THREE.DoubleSide });
+  const vertexMaterial = new THREE.MeshStandardMaterial({ roughness: .96, side: THREE.DoubleSide, vertexColors: true });
   const color = new THREE.Color();
   const transform = new THREE.Object3D();
   const projection = new THREE.Matrix4();
@@ -142,7 +143,8 @@ export function masonryKit(THREE, scene) {
     },
     finish() {
       for (const { geometry, shadow, instances } of parts.values()) {
-        const mesh = new THREE.InstancedMesh(geometry, labelMaterials.get(geometry) ?? material, instances.length);
+        const surface = labelMaterials.get(geometry) ?? (geometry.hasAttribute('color') ? vertexMaterial : material);
+        const mesh = new THREE.InstancedMesh(geometry, surface, instances.length);
         mesh.name = geometry.name;
         mesh.castShadow = shadow;
         mesh.receiveShadow = true;
