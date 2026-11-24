@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import * as THREE from '../vendor/three.module.min.js';
-import { footprint, gateHalfWidth, gateZ, wingX } from '../areas/kung-fu-hustle/layout.js';
+import { footprint, galleryBreaches, gateHalfWidth, gateZ, wingX } from '../areas/kung-fu-hustle/layout.js';
 import { areas } from '../game.js';
 import { createPlayer, EYE_HEIGHT } from '../core/player.js';
 import { createWorldManager, resolveArea } from '../core/world-manager.js';
@@ -72,13 +72,18 @@ test('a wide central L, both narrow side flights, and the upper central stair co
     wing(-8.24);
     at(2);
 
+    if (side === 1) {
+      // The east wing is now isolated from the upper central staircase at level 3.
+      assert.equal(position.y, EYE_HEIGHT + 6.5);
+      continue;
+    }
     reach(5.13, -8.24);
     reach(5.13, -4.5);
     reach(-4.85, -4.5);
     reach(-4.85, -9);
     at(3);
     reach(-4.85, -8.24);
-    reach(wingX(-side, -side * 14, -8.24), -8.24);
+    reach(wingX(-1, -14, -8.24), -8.24);
     at(3);
     reach(-4.85, -8.24);
 
@@ -127,9 +132,11 @@ test('stocked shops can be entered and paths to the hexagonal fence corners are 
     player.reset({ x: side * 12, z: 6.8 }, visit.area);
     const aisle = side < 0 ? -12.50 : 13.40;
     assert.ok(walk(aisle, 8.2));
-    assert.ok(walk(aisle, 10.9));
-    assert.equal(walk(aisle, 12.1, 65), false);
-    assert.ok(walk(aisle, 8.2));
+    if (side > 0) {
+      assert.ok(walk(aisle, 10.9));
+      assert.equal(walk(aisle, 12.1, 65), false);
+      assert.ok(walk(aisle, 8.2));
+    }
     assert.ok(walk(side * 17.4, 7.7));
     assert.ok(walk(side * 20.5, 10.6));
     assert.ok(walk(side * 21.25, 13.2));
@@ -341,4 +348,37 @@ test('Coolie carries five sacks at the selected position and nearby stock is bat
   assert.ok(bounds.max.y > 2.7 && bounds.max.y < 3.1);
   assert.ok(bounds.min.y >= 0 && bounds.min.y < .02);
   assert.ok(visit.area.obstacles.some(o => o.left <= 13.11 && o.right >= 13.11 && o.front <= 14.27 && o.back >= 14.27));
+});
+
+test('both damaged upper galleries have a true full-width gap and allow a drop', async t => {
+  const {visit,player,position,walk}=await start(t);
+  const {area}=visit;
+  for(const {y,left,right} of galleryBreaches) {
+    for(const z of [-10.1,-9,-8.0]){
+      assert.equal(area.getGroundHeight((left+right)/2,z,y),3.25);
+      assert.equal(area.getGroundHeight(left-.25,z,y),y);
+      assert.equal(area.getGroundHeight(right+.25,z,y),y);
+    }
+    assert.equal(area.canDropFrom(left-.03,-9,y),true);
+    assert.equal(area.canDropFrom(right+.03,-9,y),true);
+  }
+  player.reset({x:5.3,z:-9,elevation:9.75},area);
+  assert.ok(walk(8,-9));
+  const idle=new THREE.Vector2();
+  for(let i=0;i<120&&!player.grounded;i++) player.move(1/60,idle,visit);
+  assert.ok(position.y<EYE_HEIGHT+9.75);
+});
+
+test('three new wall kiosks have usable entrances and the well is relocated',async t=>{
+  const {visit,player,walk}=await start(t);
+  const {area}=visit;
+  for(const x of [-17.80,-13.85,-9.90]){
+    const aisle=x+(x===-9.90?.65:-.65);
+    player.reset({x:aisle,z:15.2},area);
+    assert.ok(walk(aisle,17.55));
+    assert.equal(walk(aisle,20.0,90),false);
+    assert.ok(walk(aisle,15.2));
+  }
+  assert.ok(area.obstacles.some(o=>o.left<=-11.12&&o.right>=-11.12&&o.front<=5.14&&o.back>=5.14));
+  assert.ok(!area.obstacles.some(o=>o.left<=-3.5&&o.right>=-3.5&&o.front<=-.8&&o.back>=-.8));
 });

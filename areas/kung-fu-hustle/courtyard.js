@@ -70,7 +70,7 @@ function pavedYard(kit, random) {
   }
 }
 
-function openShop(kit, layout, x, z, width, depth, height, plaster, produce) {
+function openShop(kit, layout, x, z, width, depth, height, plaster, produce, barber = false) {
   const { box, drum, leaf } = kit;
   const wall = .24;
   const openHeight = 2.24;
@@ -86,6 +86,36 @@ function openShop(kit, layout, x, z, width, depth, height, plaster, produce) {
   box(0x8d7561, x, height - .116, z, width - 2 * wall, .22, depth - 2 * wall);
   box(0x927b67, x, .023, z, width - 2 * wall, .048, depth - wall);
 
+  layout.addCeiling(x, z, width - 2 * wall, depth - 2 * wall, height - .226, 0);
+  if (barber) {
+    // One old-fashioned barber chair, mirror, counter and striped barber pole.
+    const chairX = x + .62, chairZ = z + .12;
+    drum(0x4b4945, chairX, .07, chairZ, .69, .14, .69);
+    drum(0x766f62, chairX, .34, chairZ, .24, .45, .24);
+    box(0x4d3b32, chairX, .59, chairZ, .65, .15, .62);
+    box(0x803e35, chairX, .69, chairZ, .59, .14, .57);
+    box(0x803e35, chairX, 1.03, chairZ + .26, .59, .65, .15, 0, -.14);
+    box(0x57382e, chairX, 1.39, chairZ + .30, .30, .16, .13);
+    for (const s of [-1, 1]) {
+      box(0x655b4d, chairX + s*.30, .81, chairZ, .07, .28, .075);
+      box(ink.wood, chairX + s*.30, .95, chairZ, .11, .09, .53);
+    }
+    box(0x615a50, chairX, .37, chairZ - .49, .52, .07, .34);
+    box(0x615a50, chairX, .49, chairZ - .32, .08, .30, .09, 0, -.25);
+    layout.solid(chairX, chairZ - .12, .76, 1.12, 1.48);
+    const rear = z + depth/2 - wall;
+    box(ink.wood, chairX, 1.64, rear - .038, .94, 1.05, .076);
+    box(0x9aa6a2, chairX, 1.64, rear - .085, .79, .90, .024);
+    box(0xb7c3be, chairX - .23, 1.78, rear - .105, .06, .48, .012, 0, 0, -.34);
+    box(ink.wood, chairX, 1.02, rear - .25, 1.30, .11, .49);
+    layout.solid(chairX, rear - .25, 1.30, .49, 1.08);
+    for (let j=0;j<3;j++) drum([0x77684d,0xd2bd93,0x526a5d][j], chairX-.31+j*.19, 1.16, rear-.27, .095,.16,.095);
+    const poleX=x-width/2+.31, poleZ=z-depth/2-.08;
+    for (let j=0;j<8;j++) drum([0xa94d44,0xe2d4b6,0x526c78,0xe2d4b6][j%4],
+      poleX, .94+j*.14,poleZ,.16,.14,.16);
+    for(const y of [.83,2.04]) drum(ink.iron,poleX,y,poleZ,.22,.10,.22);
+    return;
+  }
   const shelfZ = z + depth / 2 - .49;
   const shelfWidth = width - .86;
   for (const dy of [.63, 1.16, 1.72]) {
@@ -167,6 +197,7 @@ function shops(kit, layout, random) {
     { x: 22.80, z: .6, width: 3, depth: 4.0, height: 4.75, awning: 0x875a49, plaster: 0xaa886f, faceY: 0 },
   ];
   for (const [i, { x, z, width, depth, height, awning, plaster, faceY }] of buildings.entries()) {
+    if (i === 0 || i === 2) continue; // Replaced by the three wall-side kiosks below.
     if (i === 3) {
       ruinedShop(kit, layout, x, z, width, depth, height, plaster, random);
       continue;
@@ -233,6 +264,33 @@ function shops(kit, layout, random) {
         kit.gable(plaster, x + end * width / 2, height, z, depth, Math.tan(.29) * depth / 2, .15, -end * Math.PI / 2);
       }
     }
+  }
+}
+
+function wallKiosks(kit, layout, random) {
+  const depth = 3.30, width = 3.65, z = gateZ - .33 - depth/2;
+  // Front-west perimeter: backs touch the inside face of the existing wall.
+  // The three entrances all face the courtyard (negative Z).
+  const kiosks = [
+    { x: -17.80, height: 3.15, paint: 0xb89a76, awning: 0x9b5149, kind: 'produce' },
+    { x: -13.85, height: 3.05, paint: 0xb7a486, awning: 0x64786c, kind: 'barber' },
+    { x: -9.90, height: 3.22, paint: 0xa98468, awning: 0xa36d51, kind: 'dry-goods' },
+  ];
+  for (const {x,height,paint,awning,kind} of kiosks) {
+    openShop(kit,layout,x,z,width,depth,height,paint,kind==='produce',kind==='barber');
+    const facade=kit.wall(x,z-depth/2,Math.PI);
+    facade(ink.band,0,2.56,.036,width,.14,.12);
+    facade(ink.wood,0,2.39,.135,2.15,.28,.10);
+    facade(awning,0,2.39,.196,2.02,.19,.025);
+    for(let j=-5;j<=5;j++){
+      facade(j%2?ink.linen:awning,j*.30,2.22,.43,.295,.06,.85,.25);
+      facade(j%2?ink.linen:awning,j*.30,2.08,.84,.295,.14,.05);
+    }
+    facade(ink.band,-width/2+.13,1.14,.055,.16,2.18,.12);
+    facade(ink.band,width/2-.13,1.14,.055,.16,2.18,.12);
+    exposedBrick(kit.wall(x+width/2,z,Math.PI/2),-.35,1.24,.82,.94,random);
+    roof(kit.wall(x,z,0),width+.24,depth+.24,height,random);
+    for(const end of [-1,1]) kit.gable(paint,x+end*width/2,height,z,depth,Math.tan(.29)*depth/2,.13,-end*Math.PI/2);
   }
 }
 
@@ -312,6 +370,7 @@ export function courtyard(kit, layout, random) {
     exposedBrick(face, 0, 1.14, .74, 1.68, random);
   }
   shops(kit, layout, random);
+  wallKiosks(kit, layout, random);
   courtyardProps(kit, layout, random);
 
   // A wrought-iron arch with two closed gate leaves.
@@ -352,23 +411,26 @@ export function courtyard(kit, layout, random) {
   }
   layout.solid(0, gateZ, 2 * gateHalfWidth, .22, 3.12);
 
-  // Central stone well and the structural timber frame above it.
-  const wellX = -3.5;
-  const wellZ = -.8;
-  drum(ink.dark, wellX, .08, wellZ, 1.73, .16, 1.73);
-  ring(ink.band, wellX, .45, wellZ, 2.03, .90, 2.03);
-  ring(ink.shade, wellX, .45, wellZ, 1.53, .90, 1.53);
+  // Stone well and timber frame relocated beside the west courtyard.
+  const wellX = -11.12;
+  const wellZ = 5.14;
+  const wellY = -.04;
+  kit.frame(wellX, wellY, wellZ, 0, () => {
+  drum(ink.dark, 0, .08, 0, 1.73, .16, 1.73);
+  ring(ink.band, 0, .45, 0, 2.03, .90, 2.03);
+  ring(ink.shade, 0, .45, 0, 1.53, .90, 1.53);
   for (let row = 0; row < 3; row++) {
     for (let i = 0; i < 14; i++) {
       const angle = (i + (row % 2) / 2) * Math.PI * 2 / 14;
       const radius = row === 2 ? .895 : .90;
-      box(i % 3 === 0 ? ink.cream : ink.stone, wellX + Math.sin(angle) * radius, .15 + row * .29,
-        wellZ + Math.cos(angle) * radius, .385, .275, row === 2 ? .39 : .26, angle);
+      box(i % 3 === 0 ? ink.cream : ink.stone, 0 + Math.sin(angle) * radius, .15 + row * .29,
+        0 + Math.cos(angle) * radius, .385, .275, row === 2 ? .39 : .26, angle);
     }
   }
-  layout.solid(wellX, wellZ, 2.13, 2.13, .89);
-  for (const side of [-1, 1]) box(ink.wood, wellX + side * 1.14, 1.31, wellZ, .16, 2.63, .17);
-  for (const side of [-1, 1]) layout.solid(wellX + side * 1.14, wellZ, .16, .17, 2.63);
-  box(ink.wood, wellX, 2.63, wellZ, 2.72, .19, .18);
-  box(ink.brass, wellX, 2.12, wellZ, .044, .86, .044);
+  layout.solid(wellX, wellZ, 2.13, 2.13, .89 + wellY);
+  for (const side of [-1, 1]) box(ink.wood, 0 + side * 1.14, 1.31, 0, .16, 2.63, .17);
+  for (const side of [-1, 1]) layout.solid(wellX + side * 1.14, wellZ, .16, .17, 2.63 + wellY);
+  box(ink.wood, 0, 2.63, 0, 2.72, .19, .18);
+  box(ink.brass, 0, 2.12, 0, .044, .86, .044);
+  });
 }
