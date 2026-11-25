@@ -2,6 +2,7 @@ import { seededRandom } from '../../core/random.js';
 import { damagedRearWall } from './damage.js';
 import { courtyard } from './courtyard.js';
 import { buildCoolie } from './coolie.js';
+import { craterPolygon, craterContains } from './hand-of-god.js';
 import { buildBeast } from './the-beast.js';
 import { marketRow } from './market.js';
 import { buildResident, buildResidentWindow, residentWindow } from './resident.js';
@@ -281,12 +282,22 @@ export function buildCourtyard(THREE, scene, layout, touch) {
   tenement(kit, layout, random);
   const resident = buildResident(THREE, kit, scene);
   walkways(kit, layout);
-  courtyard(kit, layout, random);
+  // Keep the removable ground cover and nearby paving separate from static batches.
+  const cover = new THREE.Group(); cover.name = 'Handprint removable ground cover'; scene.add(cover);
+  const coverKit = masonryKit(THREE, cover);
+  courtyard(kit, layout, random, coverKit, craterPolygon);
+  coverKit.finish();
+  let craterOpen=false;
+  layout.addBarrier((x,z,radius,feet)=>craterOpen&&feet<.25&&craterContains(x,z,radius));
+  function setCraterOpen(value){craterOpen=value;cover.visible=!value;}
   const coolie = buildCoolie(THREE, scene, layout);
   const beast = buildBeast(THREE, scene, layout);
 
   // A muted skyline sits outside the playable compound.
-  kit.box(0xbfa28f, 0, -.42, 0, 160, .42, 160, 0, 0, 0, false);
+  // Leave the underground impact zone clear of the skyline base slab.
+  const minX=-6,maxX=6,minZ=2,maxZ=14;
+  for(const [a,b,d,e] of [[-80,minX,-80,80],[maxX,80,-80,80],[minX,maxX,-80,minZ],[minX,maxX,maxZ,80]])
+    kit.box(0xbfa28f,(a+b)/2,-.42,(d+e)/2,b-a,.42,e-d,0,0,0,false);
   for (let i = 0; i < 24; i++) {
     const angle = i * Math.PI / 12;
     const distance = 54 + random() * 14;
@@ -299,5 +310,5 @@ export function buildCourtyard(THREE, scene, layout, touch) {
     kit.box(0x8b7c79, x, height, z, width + .34, .26, 5.24, 0, 0, 0, false);
   }
   kit.finish();
-  return { beast, update(dt, player) { coolie.update(dt, player); resident.update(dt, player); beast.update(dt, player); } };
+  return { beast, setCraterOpen, update(dt, player) { coolie.update(dt, player); resident.update(dt, player); beast.update(dt, player); } };
 }
