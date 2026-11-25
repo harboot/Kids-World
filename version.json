@@ -1,5 +1,5 @@
 {
-  "version": "a34d44f6c2239765c0f18f70915c1681cbf24a604b8e4dc554fd6fbdaa0982fa",
+  "version": "dc8f02d433e29d3f7477889a00a6b700a8cc9051010b3db253a4b2af0da2fe27",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "d072af1a69e3684e38707c85553887b878b4d838cd9fcb1004392f570068fca8"
+      "revision": "16dc9731f868da0dcf18408b72fa0b87fbb0a8f377afd068ae9667fe2fd8d24f"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -195,7 +195,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/courtyard.js",
-      "revision": "1a6234284580c773ec51e13c6d73c75d10815b3b9119571dab79e8da40c13b94"
+      "revision": "afc18cf6e1df59ed870e2b256a2cafd7000cc655a9950676013bb8f4d08e1146"
     },
     {
       "path": "./areas/kung-fu-hustle/damage.js",
@@ -204,6 +204,10 @@
     {
       "path": "./areas/kung-fu-hustle/donut.js",
       "revision": "1c98cf0b208874ce08cfeeac7209e537f3534eec26c5b33a5555ad75f71e3ef5"
+    },
+    {
+      "path": "./areas/kung-fu-hustle/fong.js",
+      "revision": "af6496f96d7d37bc2815d59e41707df5944645998f1918942c7aac95e2b28e0c"
     },
     {
       "path": "./areas/kung-fu-hustle/hand-of-god.js",
@@ -215,7 +219,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/index.js",
-      "revision": "73e7c834b68151e344e7e05b1d7362ddca274468212f408693ea527df8eb7c0b"
+      "revision": "54ef54c3e4ba961667a463eea1b250e70842109791387103ea66efaa9f5a1eba"
     },
     {
       "path": "./areas/kung-fu-hustle/kung-fu-hustle.jpg",
@@ -255,7 +259,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/scene.js",
-      "revision": "de3935a4fef83698b0b7a126ff20546b0c545117d6f7cb978eefd8e88f1ce557"
+      "revision": "452c08ae65e864f2e0c1e077c16a1377bf0ca65e0c4e020b34021e3dbe731c2e"
     },
     {
       "path": "./areas/kung-fu-hustle/tailor.js",

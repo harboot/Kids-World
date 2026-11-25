@@ -73,7 +73,7 @@ function pavedYard(kit, random, coverKit, craterPolygon, craterContains) {
   }
 }
 
-function openShop(kit, layout, x, z, width, depth, height, plaster, produce, barber = false) {
+function openShop(kit, layout, x, z, width, depth, height, plaster, produce, barber = false, candy = false) {
   const { box, drum, leaf } = kit;
   const wall = .24;
   const openHeight = 2.24;
@@ -117,6 +117,22 @@ function openShop(kit, layout, x, z, width, depth, height, plaster, produce, bar
     for (let j=0;j<8;j++) drum([0xa94d44,0xe2d4b6,0x526c78,0xe2d4b6][j%4],
       poleX, .94+j*.14,poleZ,.16,.14,.16);
     for(const y of [.83,2.04]) drum(ink.iron,poleX,y,poleZ,.22,.10,.22);
+    return;
+  }
+  if (candy) {
+    const shelfZ=z+depth/2-.49;
+    for(const y of [.60,1.12,1.68]){
+      box(0x9e6951,x,y,shelfZ,width-.88,.09,.46);
+      for(let j=0;j<7;j++){
+        const u=x+(j-3)*.43;
+        drum(0xe5c7a1,u,y+.19,shelfZ,.28,.29,.28);
+        for(let k=0;k<3;k++)drum([0xe14d48,0xe8bc48,0x68a66e,0x4a83bc][(j+k)%4],u+(k-1)*.07,y+.34+k*.025,shelfZ,.072,.09,.072);
+      }
+    }
+    layout.solid(x,shelfZ,width-.88,.46,2.0);
+    box(0xa96855,x-.97,.43,z-.33,1.20,.86,.82);
+    box(0xe2bd86,x-.97,.90,z-.33,1.30,.08,.94);
+    layout.solid(x-.97,z-.33,1.30,.94,.94);
     return;
   }
   const shelfZ = z + depth / 2 - .49;
@@ -193,7 +209,7 @@ function shops(kit, layout, random) {
   const { box, wall, drum } = kit;
   const buildings = [
     { x: -11.8, z: 10.65, width: 4.45, depth: 3.3, height: 2.95, awning: 0x9b5149, plaster: 0xb89674, faceY: Math.PI },
-    { x: 12.65, z: 10.65, width: 4.9, depth: 3.15, height: 3.18, awning: 0x64786c, plaster: 0xbdb08f, faceY: Math.PI },
+    { x: 12.65, z: 10.65, width: 4.9, depth: 3.15, height: 3.18, awning: 0xc65b68, plaster: 0xd1b19a, faceY: Math.PI },
     { x: -23.85, z: 10.85, width: 3.75, depth: 3.45, height: 4.12, awning: 0xa36d51, plaster: 0xa98468, faceY: Math.PI },
     { x: 23.80, z: 10.85, width: 3.9, depth: 3.40, height: 3.66, awning: 0x956462, plaster: 0xb59b85, faceY: Math.PI },
     { x: -20.75, z: -4.35, width: 2.95, depth: 4.35, height: 3.85, awning: 0x7a6e55, plaster: 0xab8e75, faceY: Math.PI },
@@ -206,7 +222,7 @@ function shops(kit, layout, random) {
       continue;
     }
     const opened = i < 2;
-    if (opened) openShop(kit, layout, x, z, width, depth, height, plaster, i === 0);
+    if (opened) openShop(kit, layout, x, z, width, depth, height, plaster, i === 0, false, i === 1);
     else {
       box(plaster, x, height / 2, z, width, height, depth);
       layout.solid(x, z, width, depth, height);
@@ -238,6 +254,7 @@ function shops(kit, layout, random) {
     }
     facade(0x493e36, .06, 2.31, .124, width * .56, .35, .10);
     facade(awning, .06, 2.32, .194, width * .51, .25, .052, 0, -.029);
+    if (i === 1) facade.label('糖果店', .06, 2.32, .239, 1.22, .19);
     if (height > 3.4) {
       facade(ink.shade, .35, height - .67, .033, 1.12, .83, .08);
       for (let j = -1; j <= 1; j++) facade(0x7c8881, .35 + j * .28, height - .67, .091, .25, .68, .04);
