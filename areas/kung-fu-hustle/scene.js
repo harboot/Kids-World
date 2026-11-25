@@ -6,6 +6,7 @@ import { buildTailor } from './tailor.js';
 import { buildSauce } from './sauce.js';
 import { buildDonut } from './donut.js';
 import { buildAxeGang } from './axe-gang.js';
+import { buildHarpists } from './harpists.js';
 import { craterPolygon, craterContains } from './hand-of-god.js';
 import { buildBeast } from './the-beast.js';
 import { marketRow } from './market.js';
@@ -54,6 +55,7 @@ function apartmentFacade(draw, span, bays, random, { damaged = false, occupiedWi
     for (let bay = 0; bay < bays; bay++) {
       const center = -span / 2 + (bay + .5) * spacing;
       if (damaged && center > 4.1) continue;
+      if (damaged && level === 2 && bay === 2) continue; // Harpists room aperture
       if (occupiedWindow && level === stories - 1 && bay === 0) continue;
       draw.chip(bay % 2 ? 0x9d826c : 0xab8c72, center + .29, y + 1.03, .012, spacing * .86, 2.08, .11);
       if ((bay + level) % 3 !== 1) {
@@ -267,7 +269,7 @@ function walkways(kit, layout) {
   }
 }
 
-export function buildCourtyard(THREE, scene, layout, touch, viewmodel, camera) {
+export function buildCourtyard(THREE, scene, layout, touch, viewmodel, camera, playCue) {
   const random = seededRandom(1748);
   const kit = masonryKit(THREE, scene);
   scene.background = new THREE.Color(0xd4c1ae);
@@ -300,6 +302,7 @@ export function buildCourtyard(THREE, scene, layout, touch, viewmodel, camera) {
   const sauce = buildSauce(THREE, scene, layout);
   const donut = buildDonut(THREE, scene, layout, viewmodel, camera);
   const axeGang = buildAxeGang(THREE, scene, layout);
+  const harpists = buildHarpists(THREE, scene, playCue);
 
   // A muted skyline sits outside the playable compound.
   // Leave the underground impact zone clear of the skyline base slab.
@@ -318,5 +321,5 @@ export function buildCourtyard(THREE, scene, layout, touch, viewmodel, camera) {
     kit.box(0x8b7c79, x, height, z, width + .34, .26, 5.24, 0, 0, 0, false);
   }
   kit.finish();
-  return { beast, sauce, donut, axeGang, setCraterOpen, update(dt, player) { coolie.update(dt, player); resident.update(dt, player); beast.update(dt, player); tailor.update(dt, player); sauce.update(dt); donut.update(dt, player); axeGang.update(dt); } };
+  return { beast, sauce, donut, axeGang, harpists, setCraterOpen, update(dt, player) { coolie.update(dt, player); resident.update(dt, player); beast.update(dt, player); tailor.update(dt, player); sauce.update(dt); donut.update(dt, player); axeGang.update(dt); harpists.update(dt); } };
 }

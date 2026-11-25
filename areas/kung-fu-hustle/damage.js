@@ -1,5 +1,6 @@
 import { floorRise, gallery } from './layout.js';
 import { crack, ink } from './masonry.js';
+import { harpistOpening, harpistRoom } from './harpists.js';
 
 const rearZ = -14.8;
 const opening = [
@@ -25,7 +26,7 @@ function insideOpening(x, y) {
 export function damagedRearWall(kit, layout, height, random) {
   kit.extrude('Hand-shaped breach', ink.plaster,
     [[-18.75, floorRise], [18.75, floorRise], [18.75, height], [-18.75, height]],
-    gallery.rear - rearZ, 0, 0, rearZ, 0, [opening]);
+    gallery.rear - rearZ, 0, 0, rearZ, 0, [opening, harpistOpening]);
   layout.addBarrier((x, z, radius, feet) => {
     if (Math.abs(x) > 18.75 + radius || z < rearZ - radius || z > gallery.rear + radius || feet < floorRise || feet >= height) return false;
     if (x < 6 || x > 12.5 || feet < 5.55) return true;
@@ -37,7 +38,14 @@ export function damagedRearWall(kit, layout, height, random) {
     return false;
   });
 
+  // Recess behind the new aperture: a visible room with a back wall, not a tunnel.
+  const r=harpistRoom;
+  kit.box(0x51483e,r.x,r.y+1.48,r.z-2.15,r.halfWidth*2,2.96,.18);
+  kit.box(0x81705c,r.x,r.y-.035,r.z-1.03,r.halfWidth*2,.07,2.06);
   const face = kit.wall(0, gallery.rear, 0);
+  face(ink.wood,r.x,r.sill-.04,.07,r.halfWidth*2+.12,.08,.22);
+  face(ink.wood,r.x,r.lintel+.045,.07,r.halfWidth*2+.12,.09,.22);
+  for(const side of [-1,1])face(ink.wood,r.x+side*(r.halfWidth+.035),(r.sill+r.lintel)/2,.07,.07,r.lintel-r.sill,.19);
   for (const [i, [x, y]] of opening.entries()) {
     const [nextX, nextY] = opening[(i + 1) % opening.length];
     const dx = nextX - x;
