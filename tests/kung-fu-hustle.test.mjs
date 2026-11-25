@@ -503,3 +503,32 @@ test('Hand of God manually activated at book height and completes reusable cinem
   assert.deepEqual(position.toArray(),[5,EYE_HEIGHT,14]);
   assert.equal(released,1);
 });
+
+test('Tailor stands at east fabric shop, holds a Hung Gar guard nearby and relaxes on departure',async t=>{
+  const {visit}=await start(t);
+  const root=visit.scene.getObjectByName('Tailor — Hung Gar master');
+  assert.ok(root);
+  assert.ok(Math.abs(root.position.z-1.375)<1e-8);
+  assert.equal(root.position.y,0);
+  const left=root.getObjectByName('Tailor left iron rings');
+  const right=root.getObjectByName('Tailor right iron rings');
+  const torso=root.getObjectByName('Tailor torso');
+  const foot=root.getObjectByName('Tailor right shoe');
+  const forearm=root.getObjectByName('Tailor left forearm');
+  assert.ok(left&&right&&torso&&foot&&forearm);
+  const neutral=forearm.quaternion.clone();
+  const frame=(n,p)=>{for(let i=0;i<n;i++)visit.area.update(1/60,p);};
+  const near=new THREE.Vector3(root.position.x-2,EYE_HEIGHT,root.position.z);
+  frame(30,near);
+  assert.ok(torso.position.y<.82);
+  assert.ok(foot.position.x>.4);
+  assert.ok(foot.position.y===0);
+  assert.ok(forearm.quaternion.angleTo(neutral)>.5);
+  frame(90,near);
+  assert.ok(torso.position.y<.82);
+  frame(40,new THREE.Vector3(root.position.x-6,EYE_HEIGHT,root.position.z));
+  assert.ok(Math.abs(torso.position.y-.99)<1e-6);
+  assert.ok(forearm.quaternion.angleTo(neutral)<1e-5);
+  frame(40,new THREE.Vector3(near.x,EYE_HEIGHT+3.25,near.z));
+  assert.ok(Math.abs(torso.position.y-.99)<1e-6);
+});
