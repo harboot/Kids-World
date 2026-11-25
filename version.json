@@ -1,5 +1,5 @@
 {
-  "version": "5eaed2b640f86da873e28d4e86eee60be5db6d5ab6148a03dbf271557a40bfb5",
+  "version": "c021898d6b1577f4254d75f2b00676b478b0013cb7c7738597ad88697a7d5e0f",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "4fce84468296151aed08081a37a481880dbcc7a628477a2839e49cdd69c786d7"
+      "revision": "4192f0469dd32ea4dbe57d44064b576b9c186cbda8eb619c7a78af8a1ac9ac75"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -187,7 +187,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/axe-gang.js",
-      "revision": "0bbde2da0877f250f582b3cea92a0d461f037010333fa94a06c4a3f62f372495"
+      "revision": "9493c623ccc951430a2efdad639750525f82db729e993c5c4d1727fb62b37e9d"
     },
     {
       "path": "./areas/kung-fu-hustle/coolie.js",
@@ -211,15 +211,15 @@
     },
     {
       "path": "./areas/kung-fu-hustle/hand-of-god.js",
-      "revision": "e588918e1e69ac20a4407aa166be1a13f96a396fef12db1e11146f8e80ccc188"
+      "revision": "690f54dd85605db5f5e6c56855548728507c1e9972ffa9e407515cdad35110a5"
     },
     {
       "path": "./areas/kung-fu-hustle/harpists.js",
-      "revision": "9a9323e4f3b0610ae300f73a8f82f1e17c952a5fc8ca31926ddafa7f74c94cb9"
+      "revision": "a518d2559ad1394b4ad4ae605c09e829466fb41699d80ccf268be1bd6ffdedf3"
     },
     {
       "path": "./areas/kung-fu-hustle/index.js",
-      "revision": "5829d97bd42c90cd56e58b6557c46d96d491fd1096317da809e091a840d1862f"
+      "revision": "3aebfe6e13073d1331708dd66acb77037a45715382d6cff26280c7775cedbd47"
     },
     {
       "path": "./areas/kung-fu-hustle/kung-fu-hustle.jpg",
@@ -254,6 +254,10 @@
       "revision": "dd6a0dd5b40f802bf7c64b31679760c6af5d7e8e2600af1c7a8559057dbe8872"
     },
     {
+      "path": "./areas/kung-fu-hustle/performance-audio.js",
+      "revision": "c8b55e5c48fd0bee52c2cf45e62782afdf08f0c0f4775f56416502ad8c16a3bd"
+    },
+    {
       "path": "./areas/kung-fu-hustle/resident-model.js",
       "revision": "405a8695a1455b64b9a400292d4bcaaf8ede9f50e0c4fffdfbe9ecdd7aa8a61d"
     },
@@ -267,7 +271,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/scene.js",
-      "revision": "f89a064c58c23bdbd3928304b660e7b1d5c68a68320216cafd6fcd40a76a9788"
+      "revision": "8bc94ec45e8dcd015f2889d355b0dc0976e8a3cd13d5dbb13c36f20eef577a96"
     },
     {
       "path": "./areas/kung-fu-hustle/sounds.js",
@@ -655,7 +659,7 @@
     },
     {
       "path": "./core/audio.js",
-      "revision": "cfbe5b45eedddc668c5ab93994fb97a7003d2d80fa55bdad6ba9e1386f51bec6"
+      "revision": "e7ad7fb2af96b16ae9e2e92f51ad8984d4cf9959b8170a380dc681c412b37181"
     },
     {
       "path": "./core/controls.js",
@@ -675,7 +679,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "060d376978a094867915f7685e7941dc1738968d06924af79087489eb9ccb24d"
+      "revision": "b254e38a9d35da2f6b331bcfbe4a8ccedd607aa7cdb6937fd671efe07a0a7907"
     },
     {
       "path": "./core/geometry.js",
@@ -723,7 +727,7 @@
     },
     {
       "path": "./core/world-manager.js",
-      "revision": "4ed90d5c99ed365eeade5cfd0d5aad58940e8bba638f58110a68d324a25a1890"
+      "revision": "969b745a2cd6ce1ebc44b47a5b3cd4089ae06452690ff74ac509b70a2a32136a"
     },
     {
       "path": "./game.js",
@@ -731,7 +735,7 @@
     },
     {
       "path": "./index.html",
-      "revision": "af762d9a381b0c987c2a2971d2d7a217d2f25692d67ec24977fa450ea8c3002d"
+      "revision": "c4f8cf0f4cd21f2f4146adb97fde598e96376343d69bf27c6889f621fe246b0e"
     },
     {
       "path": "./manifest.webmanifest",
