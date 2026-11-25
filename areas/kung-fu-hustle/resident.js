@@ -1,5 +1,6 @@
 import { floorRise, gallery, stories, wingSlope, wingX } from './layout.js';
-import { ink } from './masonry.js';
+import { ink, masonryKit } from './masonry.js';
+import { EYE_HEIGHT } from '../../core/player.js';
 import { facetedResidentGeometry } from './resident-model.js';
 
 const roofPoint = { x: -19.98, y: 13.51, z: 5.76 };
@@ -121,7 +122,7 @@ function buildBra(THREE, kit, hands) {
   oval(binding, 0, .097, bust + .034, .154, .089, .068, 0, 0, .12);
 }
 
-export function buildResident(THREE, kit) {
+export function buildResident(THREE, kit, scene) {
   const { oval, beam } = kit;
   const robe = 0xbc848c;
   const trim = 0xe4c6c4;
@@ -130,7 +131,7 @@ export function buildResident(THREE, kit) {
 
   kit.frame(wingX(-1, wallX, z), sill, z, yaw, () => {
     kit.mesh('Resident full-length robe', robe, robeGeometry(THREE));
-    kit.mesh('Faceted resident', 0xffffff, facetedResidentGeometry(THREE, robe, hands));
+    kit.mesh('Faceted resident', 0xffffff, facetedResidentGeometry(THREE, robe, hands, 'body'));
     for (const [a, b] of [
       [[-.224, .649, .257], [-.120, .606, .294]],
       [[-.120, .606, .294], [0, .548, .285]],
@@ -141,6 +142,76 @@ export function buildResident(THREE, kit) {
     for (const [x, y, depth] of [[.015, .447, .201], [.023, .374, .123], [.030, .306, .042]]) {
       oval(trim, x, y, depth, .031, .031, .022);
     }
-    buildBra(THREE, kit, hands);
   });
+  // Only movable parts are separate from the static masonry batches.
+  const root = new THREE.Group();
+  root.name = 'Resident animation root';
+  root.position.set(wingX(-1, wallX, z), sill, z);
+  root.rotation.y = yaw;
+  scene.add(root);
+  const material = new THREE.MeshStandardMaterial({
+    vertexColors: true, flatShading: true, roughness: .96, side: THREE.DoubleSide,
+  });
+  function pivot(name, parent, x, y, depth) {
+    const group = new THREE.Group();
+    group.name = name;
+    group.position.set(x, y, depth);
+    parent.add(group);
+    return group;
+  }
+  function part(name, parent, type) {
+    const geometry = facetedResidentGeometry(THREE, robe, hands, type);
+    geometry.translate(-parent.position.x, -parent.position.y, -parent.position.z);
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.name = name;
+    mesh.castShadow = true;
+    parent.add(mesh);
+  }
+  const head = pivot('Resident head pivot', root, .015, .856, .273);
+  part('Resident animated head', head, 'head');
+  const arms = pivot('Resident laundry arms', root, 0, .613, .137);
+  part('Resident animated arms', arms, 'arms');
+  // The cloth has its own hinge along the line between both hands. Rotation
+  // preserves both grip points while the arms gently lift and shake the laundry.
+  const left = new THREE.Vector3(...hands[0][1]);
+  const right = new THREE.Vector3(...hands[1][1]);
+  const middle = left.clone().add(right).multiplyScalar(.5);
+  const axis = right.clone().sub(left).normalize();
+  const cloth = pivot('Resident laundry hinge', arms,
+    middle.x-arms.position.x, middle.y-arms.position.y, middle.z-arms.position.z);
+  const clothContents = pivot('Resident laundry geometry', cloth, -middle.x, -middle.y, -middle.z);
+  const laundryKit = masonryKit(THREE, clothContents);
+  buildBra(THREE, laundryKit, hands);
+  laundryKit.finish();
+
+  const target = new THREE.Vector3();
+  const clamp = (v, low, high) => Math.max(low, Math.min(high, v));
+  let time = 0;
+  return {
+    update(dt, player) {
+      if (!Number.isFinite(dt) || dt <= 0) return;
+      dt = Math.min(dt, .1);
+      time = (time + dt) % 40;
+      const wave = Math.sin(time * Math.PI * 2 / 2.0);
+      arms.rotation.x = .11 * wave;
+      arms.rotation.z = .035 * Math.sin(time * Math.PI * 2);
+      cloth.quaternion.setFromAxisAngle(axis, .16 * Math.sin(time * Math.PI * 2 / .5));
+      let turn = 0, tilt = 0;
+      // Only players passing the same upper gallery can attract her gaze.
+      if (player && Math.abs(player.y - EYE_HEIGHT - floorRise * (stories - 1)) < .65) {
+        target.copy(player);
+        root.worldToLocal(target);
+        target.sub(head.position);
+        const distance = Math.hypot(target.x, target.z);
+        if (distance < 5.2 && target.z > .15) {
+          turn = clamp(Math.atan2(target.x, target.z), -.85, .85);
+          tilt = clamp(-Math.atan2(target.y, distance), -.23, .23);
+        }
+      }
+      const follow = 1 - Math.exp(-7 * dt);
+      head.rotation.y += (turn - head.rotation.y) * follow;
+      head.rotation.x += (tilt - head.rotation.x) * follow;
+    },
+  };
 }
+

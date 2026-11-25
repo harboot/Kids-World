@@ -142,47 +142,53 @@ function buildHair(THREE, mesh) {
   }
 }
 
-export function facetedResidentGeometry(THREE, robe, hands) {
+export function facetedResidentGeometry(THREE, robe, hands, part = 'all') {
   const mesh = facets(THREE);
-  buildFace(mesh);
-  buildHair(THREE, mesh);
-
-  sweep(THREE, mesh, [[[.002, .616, .111], .104, .096],
-    [[.021, .793, .208], .082, .083], [[.015, .892, .273], .088, .080]], skin);
-  for (const [side, hand] of hands) {
-    const shoulder = [side * .212, .613, .137];
-    const elbow = [side * .587, hand[1] + .054, .418];
-    const wrist = [hand[0] - side * .061, hand[1] + .009, hand[2] - .048];
-    sweep(THREE, mesh, [[shoulder, .127, .133], [[side * .383, (elbow[1] + .63) / 2, .244], .139, .141],
-      [[elbow[0] - side * .038, elbow[1] + .013, elbow[2] - .036], .094, .098]], robe, 7);
-    sweep(THREE, mesh, [[[elbow[0] - side * .057, elbow[1] + .014, elbow[2] - .043], .097, .101],
-      [elbow, .092, .093]], cuff);
-    sweep(THREE, mesh, [[elbow, .078, .075],
-      [[(elbow[0] + wrist[0]) / 2, (elbow[1] + wrist[1]) / 2, (elbow[2] + wrist[2]) / 2], .066, .062],
-      [wrist, .041, .049]], skin);
-    sweep(THREE, mesh, [[wrist, .044, .048], [hand, .056, .060],
-      [[hand[0] + side * .052, hand[1] - .014, hand[2] + .029], .040, .047]], skin);
-
-    for (let finger = 0; finger < 4; finger++) {
-      const lateral = side * (finger - 1.5) * .026;
-      const x = hand[0] + lateral;
-      const y = hand[1] - Math.abs(finger - 1.3) * .006;
-      sweep(THREE, mesh, [[[x, y + .011, hand[2] + .041], .011, .015],
-        [[x + side * .009, y - .023, hand[2] + .071], .013, .012],
-        [[x + side * .003, y - .046, hand[2] + .054], .009, .009]], skin, 5);
-    }
-    sweep(THREE, mesh, [[[hand[0] - side * .055, hand[1] + .017, hand[2] + .029], .016, .017],
-      [[hand[0] - side * .027, hand[1] + .003, hand[2] + .074], .015, .014]], 0xd39271, 5);
-
-    sweep(THREE, mesh, [[[side * .16, -.711, -.51], .055, .055],
-      [[side * .16, -.575, -.52], .067, .070]], skin);
-    sweep(THREE, mesh, [[[side * .16, -.750, -.60], .070, .042],
-      [[side * .16, -.754, -.343], .077, .036]], 0x745150);
+  if (part === 'all' || part === 'head') {
+    buildFace(mesh);
+    buildHair(THREE, mesh);
+    const mouth = [-.018, 1.018, .499];
+    const tip = [-.204, .971, .569];
+    sweep(THREE, mesh, [[mouth, .012, .012], [tip, .013, .013]], 0xeadfca, 6);
+    sweep(THREE, mesh, [[tip, .012, .012], [[-.232, .964, .578], .011, .011]], 0x756a65, 6);
   }
 
-  const mouth = [-.018, 1.018, .499];
-  const tip = [-.204, .971, .569];
-  sweep(THREE, mesh, [[mouth, .012, .012], [tip, .013, .013]], 0xeadfca, 6);
-  sweep(THREE, mesh, [[tip, .012, .012], [[-.232, .964, .578], .011, .011]], 0x756a65, 6);
+  if (part === 'all' || part === 'body') sweep(THREE, mesh, [[[.002, .616, .111], .104, .096],
+    [[.021, .793, .208], .082, .083], [[.015, .892, .273], .088, .080]], skin);
+  for (const [side, hand] of hands) {
+    if (part === 'all' || part === 'arms') {
+      const shoulder = [side * .212, .613, .137];
+      const elbow = [side * .587, hand[1] + .054, .418];
+      const wrist = [hand[0] - side * .061, hand[1] + .009, hand[2] - .048];
+      sweep(THREE, mesh, [[shoulder, .127, .133], [[side * .383, (elbow[1] + .63) / 2, .244], .139, .141],
+        [[elbow[0] - side * .038, elbow[1] + .013, elbow[2] - .036], .094, .098]], robe, 7);
+      sweep(THREE, mesh, [[[elbow[0] - side * .057, elbow[1] + .014, elbow[2] - .043], .097, .101],
+        [elbow, .092, .093]], cuff);
+      sweep(THREE, mesh, [[elbow, .078, .075],
+        [[(elbow[0] + wrist[0]) / 2, (elbow[1] + wrist[1]) / 2, (elbow[2] + wrist[2]) / 2], .066, .062],
+        [wrist, .041, .049]], skin);
+      sweep(THREE, mesh, [[wrist, .044, .048], [hand, .056, .060],
+        [[hand[0] + side * .052, hand[1] - .014, hand[2] + .029], .040, .047]], skin);
+
+      for (let finger = 0; finger < 4; finger++) {
+        const lateral = side * (finger - 1.5) * .026;
+        const x = hand[0] + lateral;
+        const y = hand[1] - Math.abs(finger - 1.3) * .006;
+        sweep(THREE, mesh, [[[x, y + .011, hand[2] + .041], .011, .015],
+          [[x + side * .009, y - .023, hand[2] + .071], .013, .012],
+          [[x + side * .003, y - .046, hand[2] + .054], .009, .009]], skin, 5);
+      }
+      sweep(THREE, mesh, [[[hand[0] - side * .055, hand[1] + .017, hand[2] + .029], .016, .017],
+        [[hand[0] - side * .027, hand[1] + .003, hand[2] + .074], .015, .014]], 0xd39271, 5);
+
+    }
+    if (part === 'all' || part === 'body') {
+      sweep(THREE, mesh, [[[side * .16, -.711, -.51], .055, .055],
+        [[side * .16, -.575, -.52], .067, .070]], skin);
+      sweep(THREE, mesh, [[[side * .16, -.750, -.60], .070, .042],
+        [[side * .16, -.754, -.343], .077, .036]], 0x745150);
+    }
+  }
+
   return mesh.finish();
 }

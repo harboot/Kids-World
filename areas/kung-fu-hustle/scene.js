@@ -278,7 +278,7 @@ export function buildCourtyard(THREE, scene, layout, touch) {
   scene.add(sun);
 
   tenement(kit, layout, random);
-  buildResident(THREE, kit);
+  const resident = buildResident(THREE, kit, scene);
   walkways(kit, layout);
   courtyard(kit, layout, random);
   const coolie = buildCoolie(THREE, scene, layout);
@@ -297,5 +297,5 @@ export function buildCourtyard(THREE, scene, layout, touch) {
     kit.box(0x8b7c79, x, height, z, width + .34, .26, 5.24, 0, 0, 0, false);
   }
   kit.finish();
-  return coolie;
+  return { update(dt, player) { coolie.update(dt, player); resident.update(dt, player); } };
 }

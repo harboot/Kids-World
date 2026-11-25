@@ -254,6 +254,7 @@ test('the resident has a full robe and a real wing window below the selected roo
   const bounds = robe.geometry.boundingBox.clone().applyMatrix4(transform);
   assert.ok(bounds.min.y < 10 && bounds.max.y > 11);
   cups.getMatrixAt(0, transform);
+  transform.premultiply(cups.matrixWorld);
   assert.equal(Math.round(transform.elements[14] * 100) / 100, 5.76);
 
   ray.ray.origin.set(-19.98, 20, 5.76);
@@ -408,4 +409,26 @@ test('three new wall kiosks have usable entrances and the well is relocated',asy
   }
   assert.ok(area.obstacles.some(o=>o.left<=-11.12&&o.right>=-11.12&&o.front<=5.14&&o.back>=5.14));
   assert.ok(!area.obstacles.some(o=>o.left<=-3.5&&o.right>=-3.5&&o.front<=-.8&&o.back>=-.8));
+});
+
+test('window resident shakes laundry and tracks only players on her gallery', async t => {
+  const {visit}=await start(t);
+  const root=visit.scene.getObjectByName('Resident animation root');
+  const head=root.getObjectByName('Resident head pivot');
+  const arms=root.getObjectByName('Resident laundry arms');
+  const cloth=root.getObjectByName('Resident laundry hinge');
+  const cups=root.getObjectByName('Bra cups');
+  assert.ok(head&&arms&&cloth&&cups);
+  assert.equal(cups.parent.parent,cloth);
+  const frame=(n,p)=>{for(let i=0;i<n;i++)visit.area.update(1/60,p);};
+  const target=(x,y,z)=>root.localToWorld(new THREE.Vector3(x,y,z));
+  const left=target(-2, EYE_HEIGHT-.80,2),right=target(2,EYE_HEIGHT-.80,2);
+  frame(30,left);
+  assert.ok(Math.abs(arms.rotation.x)>.05);
+  assert.ok(head.rotation.y<-.4);
+  frame(60,right);
+  assert.ok(head.rotation.y>.4);
+  frame(60,new THREE.Vector3(right.x,EYE_HEIGHT,right.z));
+  assert.ok(Math.abs(head.rotation.y)<.01);
+  assert.ok(Number.isFinite(cloth.quaternion.w));
 });
