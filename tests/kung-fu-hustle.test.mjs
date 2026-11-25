@@ -439,3 +439,25 @@ test('window resident shakes laundry and tracks only players on her gallery', as
   assert.ok(Math.abs(head.rotation.y)<.01);
   assert.ok(Number.isFinite(cloth.quaternion.w));
 });
+
+test('Beast breathes, tracks nearby players and returns to neutral behind or upstairs', async t => {
+  const {visit}=await start(t);
+  const root=visit.scene.getObjectByName('The Beast — Fire Cloud Evil God');
+  assert.deepEqual(root.position.toArray(),[.53,.01,9.72]);
+  const head=root.getObjectByName('Beast head pivot');
+  const body=root.getObjectByName('Beast breathing body');
+  const throat=root.getObjectByName('Beast inflatable throat');
+  const frame=(n,p)=>{for(let i=0;i<n;i++)visit.area.update(1/60,p);};
+  const target=(x,z,y=EYE_HEIGHT)=>root.localToWorld(new THREE.Vector3(x,y,z));
+  frame(75,target(-2,1));
+  assert.ok(throat.scale.y>1.3);
+  assert.ok(body.position.y>.02);
+  assert.ok(head.rotation.y<-.8 && head.rotation.y>=-Math.PI/3);
+  frame(120,target(2,1));
+  assert.ok(head.rotation.y>.8 && head.rotation.y<=Math.PI/3);
+  assert.ok(throat.scale.y<1.01);
+  frame(90,target(0,-2));
+  assert.ok(Math.abs(head.rotation.y)<.01);
+  frame(90,target(2,1,EYE_HEIGHT+3.25));
+  assert.ok(Math.abs(head.rotation.y)<.01);
+});
