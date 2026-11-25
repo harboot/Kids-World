@@ -1,5 +1,5 @@
 {
-  "version": "ddace21e99707389d66385aa60a02175dfbe88c99d72dc46abf907e66d07251b",
+  "version": "d9531f564a2ae6c4763c0a84c5989451d16598f4799e6e0eba39ce21541bf790",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "b1ddacad50998de457a59d7ba9ca5beb9ea8a1784b08fa4329ec170d00208e46"
+      "revision": "fc4974bfaeb70f022c6768a41097b3f6a7bf531a014bf5d99f33328f7e94446b"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -198,12 +198,16 @@
       "revision": "f66e008a56fe49e0d01ef8b08456d3e065ce5015ee76a09f5be7a782c96f94c2"
     },
     {
+      "path": "./areas/kung-fu-hustle/donut.js",
+      "revision": "1c98cf0b208874ce08cfeeac7209e537f3534eec26c5b33a5555ad75f71e3ef5"
+    },
+    {
       "path": "./areas/kung-fu-hustle/hand-of-god.js",
-      "revision": "c90301046cd1160ca43f0dbe580aaffff3ff7c221f44bbdfa8809bcc95c7c048"
+      "revision": "e588918e1e69ac20a4407aa166be1a13f96a396fef12db1e11146f8e80ccc188"
     },
     {
       "path": "./areas/kung-fu-hustle/index.js",
-      "revision": "50ac51a9efb5b07e585e1b634a82ac308315f898ad654ffd4fd04c28253e292d"
+      "revision": "7c525304cc33649b972bda4ec741f44ed2f43ae3838ed8e4d737c09808888fc3"
     },
     {
       "path": "./areas/kung-fu-hustle/kung-fu-hustle.jpg",
@@ -215,7 +219,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/market.js",
-      "revision": "cf526bf15beb1f8212a5724a31e3bad00ae09ba85db0f9338feaa09cac4b7e55"
+      "revision": "1467967cbb378875364442ba863fccda06ed9440bedf5cf053ee72ccfffcf395"
     },
     {
       "path": "./areas/kung-fu-hustle/masonry.js",
@@ -239,11 +243,11 @@
     },
     {
       "path": "./areas/kung-fu-hustle/sauce.js",
-      "revision": "86d21794eec16f6c785dfbc843dad4c6c741948ead643846049bb381bf29e615"
+      "revision": "17b45a6d5257b6bfdc059340b42d5a36e701716759060a331939961fc605d324"
     },
     {
       "path": "./areas/kung-fu-hustle/scene.js",
-      "revision": "529ff612811bc726f8c144c034f591e82ba0644f5dbcb8e2c959f488187eee5e"
+      "revision": "8329ac7562d5bd291f12157d17db4f5421820c7422fcf6e6b2e09f0f204a080c"
     },
     {
       "path": "./areas/kung-fu-hustle/tailor.js",
