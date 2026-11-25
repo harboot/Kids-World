@@ -1,7 +1,7 @@
 import { beastPosition } from './the-beast.js';
 import { PLAYER_ONLY_LAYER } from '../../core/render-layers.js';
 import { EYE_HEIGHT } from '../../core/player.js';
-export const bookPosition=Object.freeze({x:18.75,y:11.15,z:5.83});
+export const bookPosition=Object.freeze({x:18.75,y:7.90,z:5.83});
 export const durations=Object.freeze({'book-rise':1.4,lift:5,aim:.8,dive:1.25,impact:10});
 const outline=[[-.65,-1.6],[-1.1,-1.1],[-1.35,-.4],[-2.25,.35],[-2.45,.75],[-2.24,1.02],[-1.85,.96],[-1.12,.43],[-1.16,2.35],[-1.03,2.75],[-.77,2.83],[-.55,2.6],[-.43,1.17],[-.35,3.17],[-.18,3.48],[.12,3.5],[.32,3.2],[.37,1.25],[.53,2.98],[.72,3.21],[.99,3.12],[1.08,2.82],[.94,1.02],[1.25,2.19],[1.47,2.4],[1.7,2.25],[1.73,1.95],[1.52,.1],[1.17,-.9],[.62,-1.55]];
 const smooth=t=>t*t*(3-2*t);
@@ -41,7 +41,7 @@ export function buildHandOfGod({THREE,scene,camera,viewmodel,beast}){
   const phases=Object.keys(durations);
   const trigger={x:bookPosition.x,z:bookPosition.z,anchorY:bookPosition.y,radius:1.8,automatic:true,silent:true,label:'Hand of God',
     get active(){return state==='idle'&&armed;},
-    reachable(p){return Math.abs(p.y-(9.75+EYE_HEIGHT))<.85;},
+    reachable(p){return Math.abs(p.y-(6.5+EYE_HEIGHT))<.85;},
     act({guideCamera}){
       if(!trigger.active||!camera||!guideCamera)return;
       start.copy(camera.position);startQ.copy(camera.quaternion);

@@ -469,9 +469,10 @@ test('Hand of God automatically eligible at book height and completes reusable c
   const fallen=visit.scene.getObjectByName('Beast fallen pose');
   const trigger=visit.area.interactions.find(i=>i.automatic);
   assert.ok(book&&crater&&fallen&&trigger);
-  assert.deepEqual(book.position.toArray(),[18.75,11.15,5.83]);
+  assert.deepEqual(book.position.toArray(),[18.75,7.90,5.83]);
   assert.ok(!trigger.reachable(new THREE.Vector3(18.75,EYE_HEIGHT,5.83)));
-  position.set(18.75,9.75+EYE_HEIGHT,5.83);
+  assert.ok(!trigger.reachable(new THREE.Vector3(18.75,9.75+EYE_HEIGHT,5.83)));
+  position.set(18.75,6.5+EYE_HEIGHT,5.83);
   const advance=seconds=>{for(let i=0;i<Math.round(seconds*60);i++)visit.area.update(1/60,position);};
   advance(.1);
   assert.ok(trigger.active&&trigger.reachable(position));
