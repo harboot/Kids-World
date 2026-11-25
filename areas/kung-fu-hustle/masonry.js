@@ -32,7 +32,7 @@ export function masonryKit(THREE, scene) {
   const ovalGeometry = new THREE.SphereGeometry(.5, 12, 8);
   const leafGeometry = new THREE.DodecahedronGeometry(.5);
   const ground = new THREE.Shape(footprint.map(([x, z]) => new THREE.Vector2(x, z)));
-  const groundGeometry = new THREE.ExtrudeGeometry(ground, { depth: .32, bevelEnabled: false });
+
   const material = new THREE.MeshStandardMaterial({ roughness: .96, side: THREE.DoubleSide });
   const vertexMaterial = new THREE.MeshStandardMaterial({ roughness: .96, side: THREE.DoubleSide, vertexColors: true });
   const color = new THREE.Color();
@@ -128,7 +128,16 @@ export function masonryKit(THREE, scene) {
       projection.elements[12] = -gallery.court * shear;
       try { draw(); } finally { projection.identity(); }
     },
-    ground() { place(groundGeometry, 0xa89079, 0, -.035, 0, 1, 1, 1, 0, Math.PI / 2, 0, false); },
+    ground(hole) {
+      if(hole)ground.holes=[new THREE.Path(hole.map(([x,z])=>new THREE.Vector2(x,z)))];
+      // Thin surface avoids covering the temporary crater walls.
+      const geometry=new THREE.ShapeGeometry(ground);
+      place(geometry,0xa89079,0,-.035,0,1,1,1,0,Math.PI/2,0,false);
+    },
+    groundCover(points) {
+      const geometry=new THREE.ShapeGeometry(new THREE.Shape(points.map(([x,z])=>new THREE.Vector2(x,z))));
+      place(geometry,0xa89079,0,-.035,0,1,1,1,0,Math.PI/2,0,false);
+    },
     pavement(paint, x, z, width, depth, yaw) {
       place(chipGeometry, paint, x, -.022, z, width, depth, 1, yaw, Math.PI / 2, 0, false);
     },
