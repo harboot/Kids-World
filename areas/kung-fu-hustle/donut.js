@@ -125,7 +125,7 @@ export function buildDonut(THREE,scene,layout,viewmodel,camera){
   let near=false,blend=0,elapsed=0,clock=0,active=false,cooldown=0;
   const inRange=p=>!!p&&Math.abs(p.y-EYE_HEIGHT)<.85&&Math.hypot(p.x-donutCounter.x,p.z-z)<=1.85&&p.x<donutCounter.x+.15;
   const trigger={x:donutCounter.x,z,anchorY:1.45,radius:1.85,label:'Take Steamed Bun',
-    get active(){return near&&!active&&cooldown===0;},reachable:inRange,
+    get active(){return near&&!active&&cooldown===0&&blend>.65;},reachable:inRange,
     act(){if(!trigger.active)return;active=true;elapsed=0;near=false;offered.visible=false;if(eating)eating.visible=true;renderEating();}};
   function renderEating(){
     if(!eating)return;
