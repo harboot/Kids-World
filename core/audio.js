@@ -1,3 +1,4 @@
+import { spatialMix } from './spatial-audio.js';
 const muteKey = 'kids-world-muted';
 const minVolume = 0.0001;
 const volumeKey = 'kids-world-volume';
@@ -113,6 +114,8 @@ export function createAudio(button, volumeSlider, volumeDisplay) {
   let master;
   const buffers = new WeakMap();
   const cues = new Set();
+  const spatialGroups = new Set();
+  let listener = null;
   let score;
   let track;
   let playing = false;
@@ -245,26 +248,64 @@ export function createAudio(button, volumeSlider, volumeDisplay) {
     syncMusic();
   }
 
-  function playCue(notes) {
+  // The group gain and stereo pan are shared by all notes in one effect.
+  // Existing effects without a source remain centered and unchanged.
+  function setListener(position, right) {
+    listener = position ? {x:position.x,y:position.y,z:position.z,rightX:right?.x,rightZ:right?.z} : null;
+    for (const group of spatialGroups) {
+      const mix = spatialMix(listener, group.source);
+      if(Math.abs(mix.gain-group.mix.gain)>.005 || mix.gain===0&&group.mix.gain!==0){
+        group.gain.gain.setTargetAtTime(mix.gain,context.currentTime,.04);
+        group.mix.gain=mix.gain;
+      }
+      if(group.pan&&Math.abs(mix.pan-group.mix.pan)>.01){
+        group.pan.pan.setTargetAtTime(mix.pan,context.currentTime,.04);
+        group.mix.pan=mix.pan;
+      }
+    }
+  }
+
+  function releaseSpatial(group) {
+    if(!group || group.remaining>0)return;
+    spatialGroups.delete(group);
+    group.gain.disconnect();
+    group.pan?.disconnect();
+  }
+
+  function playCue(notes, source) {
     if (muted || !master || context.state !== 'running') return false;
     const now = context.currentTime + 0.004;
+    let group, destination=master;
+    if(source){
+      const mix=spatialMix(listener,source);
+      if(mix.gain<=.001||spatialGroups.size>=24)return false;
+      const gain=context.createGain(),pan=context.createStereoPanner?.();
+      gain.gain.value=mix.gain;
+      if(pan){pan.pan.value=mix.pan;gain.connect(pan).connect(master);}
+      else gain.connect(master);
+      group={source:{...source},gain,pan,mix,remaining:0};
+      spatialGroups.add(group);destination=gain;
+    }
     let played = false;
     for (const [pitch, note, offset = 0] of notes) {
-      const cue = tone(context, master, now + offset, pitch, note);
+      const cue = tone(context, destination, now + offset, pitch, note);
       if (!cue) continue;
       played = true;
+      if(group){group.remaining++;cue.group=group;}
       cues.add(cue);
       cue.oscillator.onended = () => releaseCue(cue);
     }
+    if(group&&!played)releaseSpatial(group);
     return played;
   }
 
   function releaseCue(cue) {
-    cues.delete(cue);
+    if(!cues.delete(cue))return;
     cue.oscillator.onended = null;
     cue.oscillator.disconnect();
     cue.envelope.disconnect();
     cue.shaping?.disconnect();
+    if(cue.group){cue.group.remaining--;releaseSpatial(cue.group);}
   }
 
   function stopCues() {
@@ -302,5 +343,5 @@ export function createAudio(button, volumeSlider, volumeDisplay) {
     });
   }
 
-  return { unlock, setScore, setPlaying, effect, playCue, setVolume, setMusicDuck };
+  return { unlock, setScore, setPlaying, effect, playCue, setVolume, setMusicDuck, setListener };
 }

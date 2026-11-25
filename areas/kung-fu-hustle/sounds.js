@@ -1,6 +1,8 @@
+import { spatialMix } from '../../core/spatial-audio.js';
+import { EYE_HEIGHT } from '../../core/player.js';
 // Original procedural effects, not sampled dialogue or film audio.
-// Each event is dispatched once at an animation landmark. Phase 1 uses a
-// simple audible-radius/floor gate, not continuous spatial audio.
+// Each event is dispatched once at an animation landmark. Spatial metadata
+// lets the shared engine track the listener throughout the cue.
 const n=(pitch,endPitch,duration,level,attack=.012,q=.8,filter='bandpass')=>[pitch,{wave:'noise',endPitch,duration,level,attack,q,filter}];
 const t=(pitch,endPitch,duration,level,wave='triangle',attack=.012)=>[pitch,{wave,endPitch,duration,level,attack}];
 const at=(note,offset)=>[...note,offset];
@@ -29,10 +31,12 @@ export function createCharacterSounds(playCue=()=>{}) {
   return {
     setListener(player){listener=player&&Number.isFinite(player.x)&&Number.isFinite(player.y)&&Number.isFinite(player.z)?player:null;},
     reset(){listener=null;},
-    play(name, position, range=5, eyeY=1.68){
+    play(name, position, range=5, eyeY=EYE_HEIGHT){
       const cue=sounds[name];
-      if(!listener||!cue||!position||Math.abs(listener.y-eyeY)>1.1||Math.hypot(listener.x-position.x,listener.z-position.z)>range)return false;
-      return playCue(cue);
+      if(!listener||!cue||!position)return false;
+      const source={x:position.x,z:position.z,eyeY,range,maxFloors:0};
+      if(spatialMix(listener,source).gain<=.001)return false;
+      return playCue(cue,source);
     },
   };
 }

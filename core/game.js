@@ -184,13 +184,22 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
 
   const { camera } = view;
   const audio = createAudio(game.querySelector('#sound'), settings.querySelector('#sound-volume'), settings.querySelector('#sound-volume-value'));
+  const audioRight=new THREE.Vector3(),audioPosition=new THREE.Vector3();
+  const audioOrientation=new THREE.Quaternion();
+  function syncAudioListener(){
+    const listener=guidedCamera??camera;
+    listener.getWorldPosition(audioPosition);
+    listener.getWorldQuaternion(audioOrientation);
+    audioRight.set(1,0,0).applyQuaternion(audioOrientation);
+    audio.setListener(audioPosition,audioRight);
+  }
   const progress = createLevelProgress(areas);
   const player = createPlayer(THREE, camera);
   const worlds = createWorldManager(THREE, {
     areas, camera, touch: touchDevice, playerRadius: PLAYER_RADIUS, prepare: preparePresentation,
     services: {
       hud: game, isPlaying: playerInput,
-      playCue: notes => playing() && audio.playCue(notes),
+      playCue: (notes, source) => { if(!playing())return false; if(source)syncAudioListener(); return audio.playCue(notes,source); },
       setMusicDuck: active => audio.setMusicDuck(playing() && active),
       notify: message => { if (playing()) missionHud.notify(message); },
       reducedMotion: () => motionPreference.matches,
@@ -621,7 +630,9 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
           audio.effect('step');
           stepDistance -= 1.55;
         }
+        syncAudioListener();
         worlds.update(dt, camera.position, elapsed);
+        syncAudioListener();
         if (worlds.active !== visit || terminal) return;
         missionHud.update(visit.area.missionStatus);
         interactions.update();
