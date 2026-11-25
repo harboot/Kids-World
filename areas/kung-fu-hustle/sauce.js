@@ -52,9 +52,9 @@ export function buildSauce(THREE, scene, layout) {
       pos.push(...a,...b,...c,...a,...c,...d);
     }
     for(let j=0;j<n;j++){
-      pos.push(0,rings[0][0],rings[0][3],...v(0,j),...v(0,j+1));
+      pos.push(0,rings[0][0],rings[0][3],...v(0,j+1),...v(0,j));
       const k=rings.length-1;
-      pos.push(0,rings[k][0],rings[k][3],...v(k,j+1),...v(k,j));
+      pos.push(0,rings[k][0],rings[k][3],...v(k,j),...v(k,j+1));
     }
     const body=new THREE.BufferGeometry();
     body.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
