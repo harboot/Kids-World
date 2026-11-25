@@ -2,9 +2,9 @@
 
 ## Procedural 3D models
 
-Follow [the geometry guidelines](docs/geometry-guidelines.md). Use [faceted low-poly](docs/geometry-guidelines.md#faceted-low-poly) for all new and remodeled 3D models, including characters, animals, props, vehicles, vegetation, buildings, and terrain. Aim for clear silhouettes, solid colors, and flat shading. Choose curved primitives and segment counts based on shape, visibility, and purpose. Add detail for a clear visual or gameplay benefit.
+Follow [the geometry guidelines](docs/geometry-guidelines.md). Use [faceted low-poly](docs/geometry-guidelines.md#faceted-low-poly) for all new and remodeled 3D models, including characters, animals, props, vehicles, vegetation, buildings, and terrain. Prioritize appealing silhouettes, natural proportions, readable details, and convincing animation. Flat shading is the default; selective smooth shading, curved primitives, and additional subdivisions are allowed when they improve the form. Use the current Coolie model as a reference for animated characters, not as a triangle ceiling.
 
-Minimize triangles and draw calls. Reuse geometry and materials, preserve batching, and use instancing where it helps. Keep geometry and material creation out of the frame loop. Limit transparency and real-time shadows, follow the existing z-fighting rules, and use the existing Three.js renderer. Do not add rendering libraries or post-processing.
+Balance visual quality with reasonable mobile performance. Do not impose fixed per-model triangle, draw-call, or segment limits or sacrifice useful detail solely to lower counts. Assess performance at the area level; measure before optimizing. Reuse geometry and materials, preserve batching, and use instancing where it helps without compromising the result. Avoid unintended holes, missing faces, invalid normals, and z-fighting. Keep geometry and material creation out of the frame loop. Limit transparency and real-time shadows, follow the existing z-fighting rules, and use the existing Three.js renderer. Do not add rendering libraries or post-processing.
 
 Keep area-specific models and behavior in their area. Group simple models or animals with shared behavior in one module. Give complex models a dedicated module when their responsibilities justify it. Move logic into shared code only when multiple areas actually use it.
 
