@@ -8,12 +8,13 @@ export default {
   music,
   load({ THREE, scene, touch }) {
     const layout = courtyardLayout();
-    buildCourtyard(THREE, scene, layout, touch);
+    const coolie = buildCourtyard(THREE, scene, layout, touch);
     return {
       obstacles: layout.obstacles,
       jumpSpeed: 7.65,
       fallGravity: 36,
       interactions: [],
+      update(dt, player) { coolie.update(dt, player); },
       getGroundHeight: layout.getGroundHeight,
       getCeilingHeight: layout.getCeilingHeight,
       blocksGround: layout.blocksGround,

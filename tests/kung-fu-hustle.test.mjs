@@ -323,35 +323,58 @@ test('flat and sloped rail tops support walking and let the player step off', as
   assert.equal(position.y, EYE_HEIGHT);
 });
 
-test('Coolie carries five sacks at the selected position and nearby stock is batched', async t => {
-  const { visit } = await start(t);
-  const root = visit.scene.getObjectByName('Coolie — porter');
-  assert.ok(root);
-  assert.deepEqual(root.position.toArray(), [13.11, -.04, 14.27]);
-  const body = root.getObjectByName('Coolie faceted body');
-  const carried = root.getObjectByName('Coolie carried sacks');
-  const ground = visit.scene.getObjectByName('Coolie ground sacks');
-  assert.ok(body.geometry.attributes.color);
-  assert.equal(carried.count, 5);
-  assert.equal(ground.count, 17);
-  assert.notEqual(carried.geometry, ground.geometry, 'carried sacks have a load-shaped silhouette');
-  assert.equal(carried.material, ground.material);
-  assert.equal(carried.material, body.material);
-  const triangles = body.geometry.attributes.position.count / 3 +
-    carried.geometry.attributes.position.count / 3 * carried.count +
-    ground.geometry.attributes.position.count / 3 * ground.count;
-  assert.ok(body.geometry.attributes.position.count / 3 >= 3000);
-  assert.ok(body.geometry.attributes.position.count / 3 <= 5000);
-  assert.ok(triangles < 10000, 'porter and sack triangle budget');
-  for (const mesh of [body, carried, ground]) {
-    assert.ok(mesh.geometry.attributes.position.array.every(Number.isFinite));
-    assert.ok(mesh.geometry.attributes.normal.array.every(Number.isFinite));
+test('Coolie uses simple articulated geometry and five carried sacks', async t => {
+  const {visit}=await start(t);
+  const root=visit.scene.getObjectByName('Coolie — porter');
+  assert.deepEqual(root.position.toArray(),[13.11,-.04,14.27]);
+  const body=root.getObjectByName('Coolie faceted body');
+  const carried=root.getObjectByName('Coolie carried sacks');
+  const ground=visit.scene.getObjectByName('Coolie ground sacks');
+  assert.equal(carried.count,5);assert.equal(ground.count,17);
+  assert.equal(carried.geometry,ground.geometry);
+  assert.equal(carried.parent.name,'Coolie torso pivot');
+  const meshes=[];root.traverse(o=>{if(o.isMesh)meshes.push(o)});meshes.push(ground);
+  let total=0;
+  for(const m of meshes){
+    assert.equal(m.material,body.material);
+    for(const k of ['position','normal','color'])assert.ok(m.geometry.attributes[k].array.every(Number.isFinite));
+    total+=m.geometry.attributes.position.count/3*(m.isInstancedMesh?m.count:1);
   }
+  assert.ok(total<6500);
   visit.scene.updateMatrixWorld(true);
-  const bounds = new THREE.Box3().setFromObject(root);
-  assert.ok(bounds.max.y > 2.7 && bounds.max.y < 3.1);
-  assert.ok(bounds.min.y >= 0 && bounds.min.y < .02);
-  assert.ok(visit.area.obstacles.some(o => o.left <= 13.11 && o.right >= 13.11 && o.front <= 14.27 && o.back >= 14.27));
+  const bounds=new THREE.Box3().setFromObject(root);
+  assert.ok(bounds.max.y>2.7&&bounds.max.y<3.1);
+  assert.ok(bounds.min.y>=-.015&&bounds.min.y<.02);
+  assert.ok(visit.area.obstacles.some(o=>o.left<=13.11&&o.right>=13.11&&o.front<=14.27&&o.back>=14.27));
+});
+
+test('Coolie squats with planted feet and holds a proximity-triggered kick before resuming',async t=>{
+  const {visit}=await start(t),root=visit.scene.getObjectByName('Coolie — porter');
+  const torso=root.getObjectByName('Coolie torso pivot');
+  const knee=root.getObjectByName('Coolie left knee');
+  const ankle=root.getObjectByName('Coolie left ankle');
+  const right=root.getObjectByName('Coolie right ankle');
+  const far=new THREE.Vector3(0,1.68,0),near=new THREE.Vector3(13.11,1.68,16.5);
+  const frames=(n,p)=>{for(let i=0;i<n;i++)visit.area.update(1/60,p);};
+  const at=o=>o.getWorldPosition(new THREE.Vector3());
+  const initial=at(ankle),rightInitial=at(right),standing=torso.position.y;
+  frames(96,far);
+  assert.ok(torso.position.y<standing-.24);
+  assert.ok(at(ankle).distanceTo(initial)<1e-6);
+  assert.ok(at(right).distanceTo(rightInitial)<1e-6);
+  frames(80,near);
+  const held=at(ankle),angle=knee.rotation.x;
+  assert.ok(held.y>initial.y+.5);
+  assert.ok(angle<.2);
+  frames(24,near);
+  assert.ok(at(ankle).distanceTo(held)<1e-6);
+  assert.ok(at(right).distanceTo(rightInitial)<1e-6);
+  frames(80,near);
+  assert.ok(at(ankle).distanceTo(initial)<1e-6);
+  // No second demonstration while player stays within the radius.
+  frames(90,near);assert.ok(at(ankle).distanceTo(initial)<1e-6);
+  frames(1,far);frames(80,near);
+  assert.ok(at(right).y>rightInitial.y+.5);
 });
 
 test('both damaged upper galleries have a true full-width gap and allow a drop', async t => {
