@@ -1,5 +1,5 @@
 {
-  "version": "4290eef45f67883b1b904356bb9ca92e28068f4927732c01e99b590f336ec7f5",
+  "version": "d0a6cebaf777c98e8baa7660aec249dacb84b4c6cd587e7a8275f20307b90c31",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "9b0f0c09d8f93157c3f3b7acc1993e1f27c8b6298ff097cb3975acc47d4b5a44"
+      "revision": "3f7e60f0f7087855521fdb0e49d5f1ce2b26fdb69baf311a638e13b2fbc93d85"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -231,7 +231,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/lipstick-girl.js",
-      "revision": "720828dba4f38f5b76da9ff8369450aacfdaf85a80ea62212c407d5db239ca0b"
+      "revision": "80faa4b9c163e6d59ca360f9d44ff33c5be155de5df47156aa96c0d5af70ac97"
     },
     {
       "path": "./areas/kung-fu-hustle/market.js",

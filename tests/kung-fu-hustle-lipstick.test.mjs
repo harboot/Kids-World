@@ -21,3 +21,22 @@ test('Lipstick Girl crouches, looks up and cries only for a nearby ground-floor 
   girl.reset();assert.equal(head.rotation.x,.30);
   const {x,z}=lipstickPosition;assert.equal(walkElevation(layout,{x:x+1,z},x,z,0,true),null);
 });
+
+test('Lipstick Girl has a continuous skirt, tapered arms, fingers and raised lips',()=>{
+  const girl=buildLipstickGirl(THREE,new THREE.Scene(),courtyardLayout());
+  const skirt=girl.root.getObjectByName('Continuous crouching skirt');
+  assert.ok(skirt?.isMesh);
+  skirt.geometry.computeBoundingBox();
+  assert.ok(skirt.geometry.boundingBox.min.z>-.32);
+  for(const s of [-1,1]){
+    const arm=girl.root.getObjectByName('Crouching arm '+s),hand=arm.getObjectByName('Hand '+s);
+    assert.ok(arm.getObjectByName('Tapered arm').isMesh);
+    assert.equal(hand.children.length,6);
+  }
+  for(const name of ['Sad resting expression','Crying expression']){
+    const lips=girl.root.getObjectByName(name).getObjectByName('Full swollen red lips');
+    lips.geometry.computeBoundingBox();
+    assert.ok(lips.geometry.boundingBox.max.z-lips.geometry.boundingBox.min.z>.025);
+  }
+  girl.root.traverse(o=>{if(o.isMesh)assert.ok(o.geometry.getAttribute('position').array.every(Number.isFinite));});
+});
