@@ -281,7 +281,7 @@ export function buildCourtyard(THREE, scene, layout, touch) {
   buildResident(THREE, kit);
   walkways(kit, layout);
   courtyard(kit, layout, random);
-  buildCoolie(THREE, scene, layout);
+  const coolie = buildCoolie(THREE, scene, layout);
 
   // A muted skyline sits outside the playable compound.
   kit.box(0xbfa28f, 0, -.42, 0, 160, .42, 160, 0, 0, 0, false);
@@ -297,4 +297,5 @@ export function buildCourtyard(THREE, scene, layout, touch) {
     kit.box(0x8b7c79, x, height, z, width + .34, .26, 5.24, 0, 0, 0, false);
   }
   kit.finish();
+  return coolie;
 }
