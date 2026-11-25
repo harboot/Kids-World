@@ -66,15 +66,24 @@ function ring(y, z, w, d, nose = 0) {
 function upperGeometry(THREE) {
   const m = facets(THREE);
   const tube = (parts, paint, n) => sweep(THREE, m, parts, paint, n);
-  m.loft([ring(.76,-.04,.23,.14),ring(.95,.015,.225,.15),ring(1.19,.09,.285,.15),
-    ring(1.39,.14,.30,.145),ring(1.46,.17,.17,.11)],
-    (r,i)=>r>=3&&(i===0||i===7)?skin: i===3||i===4?0x4e533b:vest);
-  // V opening and folded vest edges sit on the front plane, not coplanar with it.
-  const face = (p,c) => m.polygon(p,c,[0,1.1,.06]);
-  face([[-.105,1.43,.29],[0,1.13,.263],[.105,1.43,.29]],skin);
-  for (const s of [-1,1]) {
-    face([[s*.115,1.43,.301],[s*.14,1.4,.301],[s*.026,1.12,.276],[s*.005,1.12,.276]],0x858366);
-    face([[s*.10,.93,.176],[s*.20,.87,.144],[s*.15,1.06,.213]],0x50563e);
+  // A continuous faceted torso with a V-neck boundary and subtle chest relief.
+  // The chest and vest share edges; no overlaid triangles can sink into the skin.
+  const chest=[
+    [.76,-.04,.23,.14,.008,.0],[.95,.015,.225,.15,.012,.0],
+    [1.12,.065,.25,.155,.025,.015],[1.25,.105,.285,.17,.071,.036],
+    [1.37,.14,.30,.16,.115,.030],[1.46,.17,.17,.11,.095,.006],
+  ].map(([y,z,w,d,v,p])=>[
+    [0,y,z+d],[v*.55,y,z+d+p],[v,y,z+d*.94],
+    [w*.73,y,z+d*.75],[w,y,z+d*.18],[w*.76,y,z-d*.82],
+    [0,y,z-d],[-w*.76,y,z-d*.82],[-w,y,z+d*.18],[-w*.73,y,z+d*.75],
+    [-v,y,z+d*.94],[-v*.55,y,z+d+p],
+  ]);
+  m.loft(chest,(r,i)=>{
+    if(r>=3&&[0,1,10,11].includes(i))return r===4?0xc18a60:skin;
+    if(i===2||i===9)return 0x858366;
+    return i===5||i===6?0x4e533b:vest;
+  });
+  for(const s of [-1,1]) {
     // Both elbows bend upward and hands grip the lower sack's corners.
     tube([[[s*.26,1.37,.15],.105,.108],[[s*.42,1.29,.19],.10,.095],
       [[s*.51,1.25,.26],.08,.08]],skin,7);
@@ -84,18 +93,41 @@ function upperGeometry(THREE) {
       [[s*.54,1.67,.08],.048,.044]],skin,6);
   }
   tube([[[0,1.40,.17],.082,.083],[[0,1.51,.23],.073,.075]],skin,7);
-  m.loft([ring(1.47,.265,.085,.078),ring(1.53,.28,.12,.105),
-    ring(1.61,.278,.137,.112,.038),ring(1.69,.26,.14,.12),ring(1.77,.235,.12,.11)],
-    (r,i)=>i===2||i===5?shade:skin);
-  // Angular nose, narrow eyes and brows: silhouette first, a few readable planes.
-  m.polygon([[-.034,1.65,.391],[.034,1.65,.391],[0,1.594,.433]],skin,[0,1.62,.28]);
-  m.polygon([[-.034,1.65,.391],[0,1.594,.433],[-.025,1.585,.392]],shade,[0,1.62,.28]);
-  for (const s of [-1,1]) {
-    m.polygon([[s*.027,1.655,.393],[s*.092,1.667,.378],[s*.086,1.647,.381],[s*.036,1.643,.398]],hair,[0,1.6,.25]);
-    m.polygon([[s*.025,1.685,.391],[s*.095,1.700,.367],[s*.092,1.685,.381],[s*.03,1.671,.397]],hair,[0,1.6,.25]);
+  // Modest jaw, cheek, and nose landmarks integrated into the closed head shell.
+  const faceRows=[
+    [1.47,.265,.074,.076,0],[1.515,.278,.108,.098,0],
+    [1.55,.28,.125,.110,.004],[1.59,.278,.137,.111,.042],
+    [1.63,.272,.139,.114,.021],[1.67,.264,.14,.112,.005],
+    [1.705,.251,.134,.119,0],[1.77,.235,.12,.11,0],
+  ];
+  const faceRings=faceRows.map(([y,z,w,d,n])=>[
+    [0,y,z+d+n],[w*.32,y,z+d*.96],[w*.74,y,z+d*.82],
+    [w,y,z+d*.18],[w*.76,y,z-d*.82],[0,y,z-d],
+    [-w*.76,y,z-d*.82],[-w,y,z+d*.18],[-w*.74,y,z+d*.82],[-w*.32,y,z+d*.96],
+  ]);
+  m.loft(faceRings,(r,i)=>i===3||i===6?0xa96f50:skin);
+  function depth(x,y){
+    let i=0;while(i<faceRows.length-2&&y>faceRows[i+1][0])i++;
+    const t=Math.max(0,Math.min(1,(y-faceRows[i][0])/(faceRows[i+1][0]-faceRows[i][0])));
+    const r=faceRings[i].slice(0,4).map((p,j)=>p.map((v,k)=>v+(faceRings[i+1][j][k]-v)*t));
+    x=Math.abs(x);
+    for(let j=1;j<r.length;j++)if(x<=r[j][0]){
+      const f=(x-r[j-1][0])/(r[j][0]-r[j-1][0]);
+      return r[j-1][2]+f*(r[j][2]-r[j-1][2]);
+    }
+    return r.at(-1)[2];
+  }
+  function detail(points,paint,gap=.012){
+    m.polygon(points.map(([x,y])=>[x,y,depth(x,y)+gap]),paint,[0,1.61,.26]);
+  }
+  for(const s of [-1,1]){
+    const mirror=p=>p.map(([x,y])=>[s*x,y]);
+    detail(mirror([[.03,1.651],[.098,1.663],[.087,1.640],[.043,1.638]]),0xe1d4b8);
+    detail(mirror([[.049,1.652],[.071,1.655],[.071,1.639],[.049,1.639]]),hair,.020);
+    detail(mirror([[.025,1.675],[.104,1.697],[.102,1.682],[.03,1.662]]),hair);
     tube([[[s*.134,1.62,.25],.032,.036],[[s*.151,1.66,.24],.032,.032]],skin,5);
   }
-  m.polygon([[-.042,1.548,.376],[.043,1.548,.376],[.023,1.537,.379],[-.022,1.537,.379]],0x693d30,[0,1.55,.25]);
+  detail([[-.034,1.535],[0,1.54],[.035,1.535],[0,1.531]],0x693d30);
   m.loft([ring(1.706,.24,.145,.125),ring(1.74,.235,.149,.129)],0xd2c4a2);
   m.loft([ring(1.742,.235,.15,.13),ring(1.81,.215,.145,.125),ring(1.855,.205,.08,.087)],hair);
   // A few irregular dark hair planes avoid a smooth helmet silhouette.
