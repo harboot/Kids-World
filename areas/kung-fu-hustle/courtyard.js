@@ -33,9 +33,10 @@ function perimeterWall(kit, layout, random, x1, z1, x2, z2) {
   }
 }
 
-function pavedYard(kit, random) {
-  const { box, beam } = kit;
-  kit.ground();
+function pavedYard(kit, random, coverKit, craterPolygon) {
+  const { beam } = kit;
+  kit.ground(craterPolygon);
+  if(coverKit)coverKit.groundCover(craterPolygon);
   const pavers = [0xa18c78, 0xb0987e, 0xaa9482, 0xb6a18a, 0x988575, 0xb7a087];
   const [rearX, rearZ] = footprint[1];
   const [shoulderX, shoulderZ] = footprint[2];
@@ -51,16 +52,18 @@ function pavedYard(kit, random) {
     for (let col = -22; col <= 22; col++) {
       const x = col * 1.28 + (row % 2) * .55;
       if (Math.abs(x) > edge - .77) continue;
+      const pavingKit=coverKit&&x>-5.5&&x<5&&z>2.1&&z<14?coverKit:kit;
+      const {box}=pavingKit;
       const path = Math.abs(x) < 2.6 || z < -6 || z > 8.3 || Math.abs(x) > 13 + (z + 7.5) * .48;
       const paint = pavers[Math.floor(random() * pavers.length)];
       if (random() < (path ? .84 : .14)) {
         if (random() < .20) {
-          kit.pavement(paint, x, z, .68 + random() * .55, .67 + random() * .35, random() * 6);
+          pavingKit.pavement(paint, x, z, .68 + random() * .55, .67 + random() * .35, random() * 6);
         } else {
           box(paint, x, -.044, z, 1.16 + random() * .07, .09 + random() * .019, .96, (random() - .5) * .048, 0, 0, false);
         }
       } else if (random() < .38) {
-        kit.pavement(paint, x, z, .75 + random() * .44, .54 + random() * .39, random() * 6);
+        pavingKit.pavement(paint, x, z, .75 + random() * .44, .54 + random() * .39, random() * 6);
       }
     }
   }
@@ -348,9 +351,9 @@ function courtyardProps(kit, layout, random) {
   layout.solid(-5.78, -8.71, 1.8, .43, .54);
 }
 
-export function courtyard(kit, layout, random) {
+export function courtyard(kit, layout, random, coverKit, craterPolygon) {
   const { box, drum, ring, beam } = kit;
-  pavedYard(kit, random);
+  pavedYard(kit, random, coverKit, craterPolygon);
   const edges = footprint.map((point, i) => [point, footprint[(i + 1) % footprint.length]]);
   for (const [[x1, z1], [x2, z2]] of edges) {
     if (z1 === gateZ && z2 === gateZ) {
