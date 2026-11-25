@@ -5,7 +5,7 @@ export const danceDuration = 16 * .56;
 const beat = .56;
 const smooth = t => { t = Math.max(0, Math.min(1, t)); return t*t*(3-2*t); };
 
-export function buildAxeGang(THREE, scene, layout) {
+export function buildAxeGang(THREE, scene, layout, sound=()=>{}) {
   const group = new THREE.Group();
   group.name = 'Axe Gang formation';
   group.position.set(brotherSumPosition.x, brotherSumPosition.y, brotherSumPosition.z);
@@ -126,9 +126,9 @@ export function buildAxeGang(THREE, scene, layout) {
     const len=delta.length(); g.position.copy(a); g.quaternion.setFromUnitVectors(down,delta.normalize()); g.scale.y=len/length;
   }
   let elapsed=0, dancing=false;
-  const trigger={x:brotherSumPosition.x,z:brotherSumPosition.z,anchorY:1.5,radius:2.2,label:'Lets Dancing',
+  const trigger={x:brotherSumPosition.x,z:brotherSumPosition.z,anchorY:1.5,radius:2.2,label:'Lets Dancing',silent:true,
     get active(){return !dancing;},reachable(p){return Math.abs(p.y-EYE_HEIGHT)<.85;},
-    act(){if(dancing)return;dancing=true;elapsed=0;pose();}};
+    act(){if(dancing)return;dancing=true;elapsed=0;sound('danceStep',brotherSumPosition,7);pose();}};
   function pose() {
     const count=elapsed/beat, angle=count*Math.PI, section=Math.min(3,Math.floor(count/4));
     const blend=dancing?smooth(count/.65)*(1-smooth((count-15.2)/.8)):0;
@@ -157,7 +157,7 @@ export function buildAxeGang(THREE, scene, layout) {
     }
   }
   function reset(){dancing=false;elapsed=0;pose();}
-  function update(dt){if(!dancing||!Number.isFinite(dt)||dt<=0)return;elapsed+=dt;if(elapsed>=danceDuration){reset();return;}pose();}
+  function update(dt){if(!dancing||!Number.isFinite(dt)||dt<=0)return;const before=elapsed;elapsed+=dt;if(Math.floor(before/beat)!==Math.floor(elapsed/beat)&&elapsed<danceDuration)sound('danceStep',brotherSumPosition,7);if(elapsed>=danceDuration){reset();return;}pose();}
   reset();
   return {group,trigger,update,reset,get dancing(){return dancing;}};
 }

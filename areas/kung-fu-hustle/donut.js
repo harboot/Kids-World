@@ -9,7 +9,7 @@ export const donutCounter=Object.freeze({x:wingX(1,15.08,z),z});
 const smooth=t=>{t=Math.max(0,Math.min(1,t));return t*t*(3-2*t);};
 const mix=(a,b,t)=>a+(b-a)*t;
 const duration=2.9;
-export function buildDonut(THREE,scene,layout,viewmodel,camera){
+export function buildDonut(THREE,scene,layout,viewmodel,camera,sound=()=>{}){
   const root=new THREE.Group();root.name='Donut — baker';
   root.position.set(donutPosition.x,0,donutPosition.z);
   root.rotation.y=-Math.PI/2;scene.add(root);
@@ -124,9 +124,9 @@ export function buildDonut(THREE,scene,layout,viewmodel,camera){
   }
   let near=false,blend=0,elapsed=0,clock=0,active=false,cooldown=0;
   const inRange=p=>!!p&&Math.abs(p.y-EYE_HEIGHT)<.85&&Math.hypot(p.x-donutCounter.x,p.z-z)<=1.85&&p.x<donutCounter.x+.15;
-  const trigger={x:donutCounter.x,z,anchorY:1.45,radius:1.85,label:'Take Steamed Bun',
+  const trigger={x:donutCounter.x,z,anchorY:1.45,radius:1.85,label:'Take Steamed Bun',silent:true,
     get active(){return near&&!active&&cooldown===0&&blend>.65;},reachable:inRange,
-    act(){if(!trigger.active)return;active=true;elapsed=0;near=false;offered.visible=false;if(eating)eating.visible=true;renderEating();}};
+    act(){if(!trigger.active)return;active=true;elapsed=0;sound('bunTake',donutCounter,5);near=false;offered.visible=false;if(eating)eating.visible=true;renderEating();}};
   function renderEating(){
     if(!eating)return;
     const rise=smooth(elapsed/.30)*(1-smooth((elapsed-2.50)/.40));
@@ -156,13 +156,16 @@ export function buildDonut(THREE,scene,layout,viewmodel,camera){
   }
   function update(dt,p){
     if(!Number.isFinite(dt)||dt<=0)return;
+    const beforeClock=clock;
     clock+=dt;cooldown=Math.max(0,cooldown-dt);
     if(active){
-      elapsed+=dt;
+      const before=elapsed;elapsed+=dt;
+      for(const mark of [.85,1.94])if(before<mark&&elapsed>=mark)sound('bite',donutCounter,5);
       if(elapsed>=duration){active=false;cooldown=.7;if(eating)eating.visible=false;}
       else renderEating();
     }
     near=inRange(p)&&!active&&cooldown===0;
+    if(!active&&!near&&Math.floor(beforeClock/1.25)!==Math.floor(clock/1.25))sound('dough',donutCounter,3.5);
     blend+=(near?1-blend:-blend)*(1-Math.exp(-dt*8));
     render();
   }

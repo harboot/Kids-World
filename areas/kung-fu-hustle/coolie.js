@@ -173,7 +173,7 @@ function legGeometry(THREE, kind) {
   return m.finish();
 }
 
-export function buildCoolie(THREE,scene,layout,onEncounter=()=>{}) {
+export function buildCoolie(THREE,scene,layout,onEncounter=()=>{}, sound=()=>{}) {
   const root=new THREE.Group();
   root.name='Coolie — porter';
   root.position.set(cooliePosition.x,cooliePosition.y,cooliePosition.z);
@@ -264,13 +264,18 @@ export function buildCoolie(THREE,scene,layout,onEncounter=()=>{}) {
       if(distance>4.2||!sameFloor)armed=true;
       if(mode==='squat'&&armed&&sameFloor&&distance<3.2){
         mode='kick';phase=0;entryDepth=depth;armed=false;
+        sound('kickReady',cooliePosition,5);
       }
       if(mode==='squat'){
+        const before=squatTime;
         squatTime=(squatTime+dt)%3.2;
+        if(before<1.6&&squatTime>=1.6)sound('squat',cooliePosition,4.5);
         depth=(1-Math.cos(squatTime/3.2*Math.PI*2))*.5;
         pose(depth);return;
       }
-      phase+=dt;
+      const before=phase;phase+=dt;
+      if(before<.83&&phase>=.83)sound('kick',cooliePosition,6);
+      if(before<2.65&&phase>=2.65)sound('kickLand',cooliePosition,5);
       // 0.45s stand, 0.38s chamber, 0.24s extension, 0.85s hold,
       // 0.28s retract, 0.45s return to stance, then resume squats.
       if(phase<.45)pose(mix(entryDepth,0,smooth(phase/.45)));

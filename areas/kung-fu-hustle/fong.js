@@ -1,3 +1,4 @@
+import { sounds } from './sounds.js';
 import { EYE_HEIGHT } from '../../core/player.js';
 import { PLAYER_ONLY_LAYER } from '../../core/render-layers.js';
 import { masonryKit } from './masonry.js';
@@ -145,7 +146,7 @@ export function buildFong(THREE,scene,layout,viewmodel,playCue=()=>{}){
   const target=new THREE.Vector3();let time=0,active=false,turn=Math.PI,lastPlayer=null;
   const trigger={x:fongPosition.x,z:fongPosition.z,anchorY:1.45,radius:1.8,label:'Buy Lollipop',silent:true,
     get active(){return !active;},reachable(p){return Math.abs(p.y-EYE_HEIGHT)<.8&&p.z<=fongPosition.z+.3;},
-    act(){if(active)return;active=true;time=0;playCue([[76,{duration:.15,level:.10,wave:'sine'}],[81,{duration:.20,level:.09,wave:'triangle'},.12]]);pose();}};
+    act(){if(active)return;active=true;time=0;playCue(sounds.kiss);pose();}};
   function pose(){
     const lean=active?smooth(time/.42)*(1-smooth((time-.68)/.55)):0;
     torso.rotation.x=.21*lean;head.rotation.z=-.15*lean;head.rotation.x=-.16*lean;

@@ -25,7 +25,7 @@ export default {
       ['fong',()=>courtyard.fong.kissing],
     ];
     function reset(){
-      cinematic.reset();courtyard.coolie.reset();courtyard.sauce.reset();courtyard.donut.reset();
+      cinematic.reset();courtyard.resetSounds();courtyard.coolie.reset();courtyard.sauce.reset();courtyard.donut.reset();
       courtyard.axeGang.reset();courtyard.harpists.reset();courtyard.fong.reset();courtyard.lipstick.reset();progress.reset();
     }
     return {
@@ -37,7 +37,7 @@ export default {
       unload: reset,
       update(dt, player) {
         const running=activities.map(([,busy])=>busy());
-        courtyard.update(dt, player);cinematic.update(dt, player);
+        courtyard.update(dt, player, cinematic.state==='idle');cinematic.update(dt, player);
         for(let i=0;i<activities.length;i++)if(running[i]&&!activities[i][1]())progress.complete(activities[i][0]);
       },
       getGroundHeight: layout.getGroundHeight,
