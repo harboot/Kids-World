@@ -80,6 +80,13 @@ function setup(t, { muted = false, failResume = false } = {}) {
       return node;
     }
 
+    createBuffer(channels,length,rate) {
+      const data=new Float32Array(length);
+      return {channels,length,sampleRate:rate,getChannelData(){return data;}};
+    }
+
+    createBiquadFilter(){return Object.assign(new AudioNode(),{frequency:parameter(),Q:parameter()});}
+
     createBufferSource() {
       return Object.assign(new AudioNode(), {
         start() { started.push(this); },
@@ -350,4 +357,23 @@ test('pending mission sounds stop and disconnect as soon as gameplay stops or th
   const [, second] = contexts[0].cues;
   audio.setScore(gardenMusic);
   assert.equal(second.disconnected, true);
+});
+
+test('filtered noise cues reuse a buffer and stop with mute or area change',async t=>{
+  const {contexts,started}=setup(t);
+  const button=new SoundButton(),audio=createAudio(button);
+  audio.unlock();audio.setPlaying(true);
+  const noise=[[80,{wave:'noise',endPitch:50,duration:.2,level:.1}]];
+  assert.equal(audio.playCue(noise),true);
+  assert.equal(audio.playCue(noise),true);
+  const [a,b]=started;
+  assert.equal(a.buffer,b.buffer);assert.ok(a.buffer.getChannelData(0).some(v=>v!==0));
+  assert.equal(a.loop,true);
+  assert.ok(a.stopTime>contexts[0].currentTime);
+  button.click();
+  assert.ok(a.disconnected&&b.disconnected);
+  assert.equal(audio.playCue(noise),false);
+  button.click();assert.equal(audio.playCue(noise),true);
+  audio.setScore(gardenMusic);
+  assert.ok(started.at(-1).disconnected);
 });

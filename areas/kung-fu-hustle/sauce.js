@@ -7,7 +7,7 @@ const clamp = v => Math.max(0, Math.min(1, v));
 const ease = v => { v = clamp(v); return v*v*(3-2*v); };
 const mix = (a,b,t) => a+(b-a)*t;
 
-export function buildSauce(THREE, scene, layout) {
+export function buildSauce(THREE, scene, layout, sound=()=>{}) {
   const root = new THREE.Group();
   root.name = 'Sauce — barber';
   root.position.set(saucePosition.x,0,saucePosition.z);
@@ -135,7 +135,7 @@ export function buildSauce(THREE, scene, layout) {
   const trigger={x:wellPosition.x,z:wellPosition.z,anchorY:1.25,radius:2.45,label:'Draw Water',silent:true,
     get active(){return state==='idle';},
     reachable(p){return Math.abs(p.y-EYE_HEIGHT)<.85;},
-    act(){if(state!=='idle')return;state='draw';time=0;render();}};
+    act(){if(state!=='idle')return;state='draw';time=0;sound('bucketDraw',wellPosition,5);render();}};
   function render(){
     const washing=state==='wash', drawing=state==='draw';
     bucket.visible=drawing||washing;rope.visible=drawing&&time<1.65;
@@ -178,9 +178,15 @@ export function buildSauce(THREE, scene, layout) {
     if(!Number.isFinite(dt)||dt<=0)return;
     idle+=dt;
     if(state!=='idle'){
+      const before=time;
       time+=dt;
-      if(state==='draw'&&time>=drawTime){time-=drawTime;state='wash';}
-      if(state==='wash'&&time>=washTime){reset();return;}
+      let washBefore=before;
+      if(state==='draw'&&time>=drawTime){time-=drawTime;state='wash';washBefore=-1;sound('bucketSet',wellPosition,5);}
+      if(state==='wash'){
+        for(const mark of [1.18,3.53])if(washBefore<mark&&time>=mark)sound('waterPour',saucePosition,5);
+        for(const mark of [.35,2.10,2.70,4.45])if(washBefore<mark&&time>=mark)sound('scrub',saucePosition,4);
+        if(time>=washTime){reset();return;}
+      }
     }
     render();
   }

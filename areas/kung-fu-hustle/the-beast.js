@@ -5,7 +5,7 @@ export function beastHeadTarget(x, z, distance, sameFloor) {
   if (!sameFloor || distance >= 4 || z <= 0) return 0;
   return Math.max(-beastYawLimit, Math.min(beastYawLimit, Math.atan2(x, z)));
 }
-export function buildBeast(THREE, scene, layout, onEncounter=()=>{}) {
+export function buildBeast(THREE, scene, layout, onEncounter=()=>{}, sound=()=>{}) {
   const root = new THREE.Group();
   root.name = 'The Beast — Fire Cloud Evil God';
   root.position.set(beastPosition.x, beastPosition.y, beastPosition.z);
@@ -120,7 +120,8 @@ export function buildBeast(THREE, scene, layout, onEncounter=()=>{}) {
   }, update(dt,player){
     if(defeated)return;
     if(!Number.isFinite(dt)||dt<=0)return;
-    dt=Math.min(dt,.1);time=(time+dt)%3.2;
+    dt=Math.min(dt,.1);const before=time;time=(time+dt)%3.2;
+    if(before<1.15&&time>=1.15)sound('croak',beastPosition,5);
     const pulse=time<1.15?smooth(time/1.15):time<1.45?1:time<2.75?1-smooth((time-1.45)/1.3):0;
     throat.scale.set(1+.30*pulse,1+.35*pulse,1+.38*pulse);
     body.position.y=.035*pulse;

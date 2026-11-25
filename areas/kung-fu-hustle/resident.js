@@ -122,7 +122,7 @@ function buildBra(THREE, kit, hands) {
   oval(binding, 0, .097, bust + .034, .154, .089, .068, 0, 0, .12);
 }
 
-export function buildResident(THREE, kit, scene, onEncounter=()=>{}) {
+export function buildResident(THREE, kit, scene, onEncounter=()=>{}, sound=()=>{}) {
   const { oval, beam } = kit;
   const robe = 0xbc848c;
   const trim = 0xe4c6c4;
@@ -186,17 +186,21 @@ export function buildResident(THREE, kit, scene, onEncounter=()=>{}) {
 
   const target = new THREE.Vector3();
   const clamp = (v, low, high) => Math.max(low, Math.min(high, v));
-  let time = 0;
+  let time = 0, greeted = false;
   return {
+    reset(){time=0;greeted=false;arms.rotation.set(0,0,0);cloth.quaternion.identity();head.rotation.set(0,0,0);},
     update(dt, player) {
       if (!Number.isFinite(dt) || dt <= 0) return;
       dt = Math.min(dt, .1);
+      const before=time;
       time = (time + dt) % 40;
+      const eyeY=EYE_HEIGHT+floorRise*(stories-1);
+      if(Math.floor(before/2)!==Math.floor(time/2))sound('laundry',root.position,4,eyeY);
       const wave = Math.sin(time * Math.PI * 2 / 2.0);
       arms.rotation.x = .11 * wave;
       arms.rotation.z = .035 * Math.sin(time * Math.PI * 2);
       cloth.quaternion.setFromAxisAngle(axis, .16 * Math.sin(time * Math.PI * 2 / .5));
-      let turn = 0, tilt = 0;
+      let turn = 0, tilt = 0, tracking=false;
       // Only players passing the same upper gallery can attract her gaze.
       if (player && Math.abs(player.y - EYE_HEIGHT - floorRise * (stories - 1)) < .65) {
         target.copy(player);
@@ -204,11 +208,14 @@ export function buildResident(THREE, kit, scene, onEncounter=()=>{}) {
         target.sub(head.position);
         const distance = Math.hypot(target.x, target.z);
         if (distance < 5.2 && target.z > .15) {
+          tracking=true;
+          if(!greeted)sound('landlady',root.position,5.5,eyeY);
           onEncounter('landlady');
           turn = clamp(Math.atan2(target.x, target.z), -.85, .85);
           tilt = clamp(-Math.atan2(target.y, distance), -.23, .23);
         }
       }
+      greeted=tracking;
       const follow = 1 - Math.exp(-7 * dt);
       head.rotation.y += (turn - head.rotation.y) * follow;
       head.rotation.x += (tilt - head.rotation.x) * follow;

@@ -1,3 +1,4 @@
+import { createCharacterSounds } from './sounds.js';
 import { seededRandom } from '../../core/random.js';
 import { damagedRearWall } from './damage.js';
 import { courtyard } from './courtyard.js';
@@ -272,6 +273,8 @@ function walkways(kit, layout) {
 }
 
 export function buildCourtyard(THREE, scene, layout, touch, viewmodel, camera, playCue, onEncounter) {
+  const audio=createCharacterSounds(playCue);
+  const sound=audio.play;
   const random = seededRandom(1748);
   const kit = masonryKit(THREE, scene);
   scene.background = new THREE.Color(0xd4c1ae);
@@ -288,7 +291,7 @@ export function buildCourtyard(THREE, scene, layout, touch, viewmodel, camera, p
   scene.add(sun);
 
   tenement(kit, layout, random);
-  const resident = buildResident(THREE, kit, scene, onEncounter);
+  const resident = buildResident(THREE, kit, scene, onEncounter, sound);
   walkways(kit, layout);
   // Keep the removable ground cover and nearby paving separate from static batches.
   const cover = new THREE.Group(); cover.name = 'Handprint removable ground cover'; scene.add(cover);
@@ -298,15 +301,15 @@ export function buildCourtyard(THREE, scene, layout, touch, viewmodel, camera, p
   let craterOpen=false;
   layout.addBarrier((x,z,radius,feet)=>craterOpen&&feet<2.5&&craterContains(x,z,radius));
   function setCraterOpen(value){craterOpen=value;cover.visible=!value;}
-  const coolie = buildCoolie(THREE, scene, layout, onEncounter);
-  const beast = buildBeast(THREE, scene, layout, onEncounter);
-  const tailor = buildTailor(THREE, scene, layout, onEncounter);
-  const sauce = buildSauce(THREE, scene, layout);
-  const donut = buildDonut(THREE, scene, layout, viewmodel, camera);
-  const axeGang = buildAxeGang(THREE, scene, layout);
+  const coolie = buildCoolie(THREE, scene, layout, onEncounter, sound);
+  const beast = buildBeast(THREE, scene, layout, onEncounter, sound);
+  const tailor = buildTailor(THREE, scene, layout, onEncounter, sound);
+  const sauce = buildSauce(THREE, scene, layout, sound);
+  const donut = buildDonut(THREE, scene, layout, viewmodel, camera, sound);
+  const axeGang = buildAxeGang(THREE, scene, layout, sound);
   const harpists = buildHarpists(THREE, scene, playCue);
   const fong = buildFong(THREE, scene, layout, viewmodel, playCue);
-  const lipstick = buildLipstickGirl(THREE, scene, layout, onEncounter);
+  const lipstick = buildLipstickGirl(THREE, scene, layout, onEncounter, sound);
 
   // A muted skyline sits outside the playable compound.
   // Leave the underground impact zone clear of the skyline base slab.
@@ -325,5 +328,5 @@ export function buildCourtyard(THREE, scene, layout, touch, viewmodel, camera, p
     kit.box(0x8b7c79, x, height, z, width + .34, .26, 5.24, 0, 0, 0, false);
   }
   kit.finish();
-  return { coolie, beast, sauce, donut, axeGang, harpists, fong, lipstick, setCraterOpen, update(dt, player) { coolie.update(dt, player); resident.update(dt, player); beast.update(dt, player); tailor.update(dt, player); sauce.update(dt); donut.update(dt, player); axeGang.update(dt); harpists.update(dt); fong.update(dt, player); lipstick.update(dt, player); } };
+  return { coolie, beast, sauce, donut, axeGang, harpists, fong, lipstick, setCraterOpen, resetSounds(){audio.reset();resident.reset();}, update(dt, player, audible=true) { audio.setListener(audible?player:null); coolie.update(dt, player); resident.update(dt, player); beast.update(dt, player); tailor.update(dt, player); sauce.update(dt); donut.update(dt, player); axeGang.update(dt); harpists.update(dt); fong.update(dt, player); lipstick.update(dt, player); } };
 }

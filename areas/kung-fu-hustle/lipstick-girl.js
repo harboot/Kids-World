@@ -2,7 +2,7 @@ import { EYE_HEIGHT } from '../../core/player.js';
 import { masonryKit } from './masonry.js';
 
 export const lipstickPosition = Object.freeze({x:-23.27,y:0,z:-1.25});
-export function buildLipstickGirl(THREE,scene,layout,onEncounter=()=>{}) {
+export function buildLipstickGirl(THREE,scene,layout,onEncounter=()=>{}, sound=()=>{}) {
   function group(parent,name,x=0,y=0,z=0){const g=new THREE.Group();g.name=name;g.position.set(x,y,z);parent.add(g);return g;}
   function batch(parent,fn){const k=masonryKit(THREE,parent);fn(k);k.finish();}
   const skin=0xc99470,blue=0x394eb0,ruffle=0x5366c6,hair=0x272324;
@@ -101,7 +101,7 @@ export function buildLipstickGirl(THREE,scene,layout,onEncounter=()=>{}) {
   function reset(){time=blend=yaw=elapsed=0;head.rotation.set(.30,0,0);upper.rotation.set(.12,0,0);calm.visible=true;cry.visible=tears.visible=false;}
   function update(dt,player){if(!Number.isFinite(dt)||dt<=0)return;dt=Math.min(dt,.1);time+=dt;
     const near=!!player&&Math.abs(player.y-EYE_HEIGHT)<.8&&Math.hypot(player.x-root.position.x,player.z-root.position.z)<3.0;
-    if(near){target.set(player.x,player.y,player.z);root.worldToLocal(target);const angle=Math.atan2(target.x,target.z);yaw+=(Math.max(-1.25,Math.min(1.25,angle))-yaw)*(1-Math.exp(-8*dt));elapsed+=dt;if(elapsed>=.65)onEncounter('lipstick');}
+    if(near){target.set(player.x,player.y,player.z);root.worldToLocal(target);const angle=Math.atan2(target.x,target.z);yaw+=(Math.max(-1.25,Math.min(1.25,angle))-yaw)*(1-Math.exp(-8*dt));const before=elapsed;elapsed+=dt;if(before<.25&&elapsed>=.25||Math.floor(before/2.4)!==Math.floor(elapsed/2.4))sound('sob',lipstickPosition,4);if(elapsed>=.65)onEncounter('lipstick');}
     else{yaw*=Math.exp(-6*dt);elapsed=0;}
     blend+=((near?1:0)-blend)*(1-Math.exp(-7*dt));
     head.rotation.set(.30-.83*blend+.035*blend*Math.sin(time*12),yaw,.045*blend*Math.sin(time*8));upper.rotation.x=.12+.035*blend*Math.sin(time*12);

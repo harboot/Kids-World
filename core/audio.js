@@ -5,21 +5,54 @@ const musicVolume = 0.55;
 const sampleRate = 24000;
 const frequency = pitch => 440 * 2 ** ((pitch - 69) / 12);
 
-function tone(context, destination, at, pitch, { endPitch = pitch, duration, level, attack = 0.012, wave = 'sine' }) {
-  const oscillator = context.createOscillator();
+// Cache one second of deterministic noise per context; short cues reuse it.
+const noiseBuffers = new WeakMap();
+function noiseSource(context) {
+  let buffer = noiseBuffers.get(context);
+  if (!buffer) {
+    const rate = context.sampleRate || sampleRate;
+    buffer = context.createBuffer(1, rate, rate);
+    const data = buffer.getChannelData(0);
+    let seed = 0x6d2b79f5;
+    for (let i = 0; i < data.length; i++) {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      data[i] = seed / 2147483648 - 1;
+    }
+    noiseBuffers.set(context, buffer);
+  }
+  const source = context.createBufferSource();
+  source.buffer = buffer;
+  source.loop = true;
+  return source;
+}
+
+function tone(context, destination, at, pitch, { endPitch = pitch, duration, level, attack = 0.012, wave = 'sine', filter = 'bandpass', q = .8 }) {
+  const noisy = wave === 'noise';
+  // Graceful fallback for limited Web Audio implementations.
+  if (noisy && (!context.createBuffer || !context.createBiquadFilter)) return null;
+  const oscillator = noisy ? noiseSource(context) : context.createOscillator();
   const envelope = context.createGain();
-  oscillator.type = wave;
-  oscillator.frequency.setValueAtTime(frequency(pitch), at);
-  if (endPitch !== pitch) {
-    oscillator.frequency.exponentialRampToValueAtTime(frequency(endPitch), at + duration * 0.8);
+  let shaping;
+  if (noisy) {
+    shaping = context.createBiquadFilter();
+    shaping.type = filter;
+    shaping.Q.value = q;
+    shaping.frequency.setValueAtTime(frequency(pitch), at);
+    if (endPitch !== pitch) shaping.frequency.exponentialRampToValueAtTime(frequency(endPitch), at + duration * .8);
+  } else {
+    oscillator.type = wave;
+    oscillator.frequency.setValueAtTime(frequency(pitch), at);
+    if (endPitch !== pitch) oscillator.frequency.exponentialRampToValueAtTime(frequency(endPitch), at + duration * .8);
   }
   envelope.gain.setValueAtTime(minVolume, at);
   envelope.gain.linearRampToValueAtTime(level, at + attack);
   envelope.gain.exponentialRampToValueAtTime(minVolume, at + duration);
-  oscillator.connect(envelope).connect(destination);
+  if (shaping) oscillator.connect(shaping).connect(envelope);
+  else oscillator.connect(envelope);
+  envelope.connect(destination);
   oscillator.start(at);
   oscillator.stop(at + duration);
-  return { oscillator, envelope };
+  return { oscillator, envelope, shaping };
 }
 
 const jumpCue = [[60, { endPitch: 77, duration: 0.17, level: 0.22, wave: 'triangle' }]];
@@ -189,12 +222,15 @@ export function createAudio(button) {
   function playCue(notes) {
     if (muted || !master || context.state !== 'running') return false;
     const now = context.currentTime + 0.004;
+    let played = false;
     for (const [pitch, note, offset = 0] of notes) {
       const cue = tone(context, master, now + offset, pitch, note);
+      if (!cue) continue;
+      played = true;
       cues.add(cue);
       cue.oscillator.onended = () => releaseCue(cue);
     }
-    return true;
+    return played;
   }
 
   function releaseCue(cue) {
@@ -202,6 +238,7 @@ export function createAudio(button) {
     cue.oscillator.onended = null;
     cue.oscillator.disconnect();
     cue.envelope.disconnect();
+    cue.shaping?.disconnect();
   }
 
   function stopCues() {
