@@ -489,6 +489,9 @@ test('Hand of God manually activated at book height and completes reusable cinem
   assert.equal(released,1);
   const cover=visit.scene.getObjectByName('Handprint removable ground cover');
   assert.equal(cover.visible,false);
+  const floor=crater.getObjectByName('Handprint recessed floor');
+  assert.ok(floor.getWorldPosition(new THREE.Vector3()).y < -1.2);
+  assert.ok(visit.area.blocksGround(.53,9.72,.34,0));
   position.set(5,EYE_HEIGHT,14);
   advance(9);
   assert.deepEqual(position.toArray(),[5,EYE_HEIGHT,14]);
@@ -496,6 +499,7 @@ test('Hand of God manually activated at book height and completes reusable cinem
   advance(1.1);
   assert.ok(book.visible&&!crater.visible&&!fallen.visible);
   assert.equal(cover.visible,true);
+  assert.equal(visit.area.blocksGround(.53,9.72,.34,0),false);
   assert.deepEqual(position.toArray(),[5,EYE_HEIGHT,14]);
   assert.equal(released,1);
 });
