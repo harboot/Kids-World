@@ -10,7 +10,7 @@ export default {
   load({ THREE, scene, touch, camera, viewmodel }) {
     const layout = courtyardLayout();
     const courtyard = buildCourtyard(THREE, scene, layout, touch);
-    const cinematic = buildHandOfGod({ THREE, scene, camera, viewmodel, beast: courtyard.beast });
+    const cinematic = buildHandOfGod({ THREE, scene, camera, viewmodel, beast: courtyard.beast, setCraterOpen: courtyard.setCraterOpen });
     return {
       obstacles: layout.obstacles,
       jumpSpeed: 7.65,
