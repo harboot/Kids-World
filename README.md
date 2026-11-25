@@ -12,60 +12,6 @@ Players explore worlds, interact with objects, and complete simple missions. Ope
 
 [Area Statistics](https://harboot.github.io/Kids-World/stats.html) lists map dimensions and repository file statistics for every registered area.
 
-## Worlds & Missions
-
-### Flower Garden — 5 Missions
-- Deliver a basket containing at least 3 apples.
-- Feed the fish in the pond.
-- Greet a cow in its pen.
-- Pick carrots at the foot of the hill and put them in the tray to feed all five rabbits.
-- Open the chicken pen and make a chicken jump.
-
-Ride the hot air balloon for a view of the lakes and forests, or walk through the mountain cave and watch for bats at either entrance.
-
-### Wooden House — 5 Missions
-- Make the bed.
-- Wash the dishes.
-- Straighten the painting.
-- Turn off the TV.
-- Put away the toys.
-
-### Snow Basin — 4 Missions
-- Chop down the pine in 5 chops.
-- Destroy 3 snowmen from the western snowball station.
-- Climb Ice Mountain and ride the ice slide.
-- Meet Olaf by the frozen lake.
-
-### Frozen Castle — 3 Missions
-- Activate 4 magical ice crystals.
-- Build the ice staircase.
-- Play the crystal melody.
-
-### Arendelle Village — 3 Missions
-- Catch three fish and sell them at the Fish Shop.
-- Find and return the lost reindeer.
-- Collect three gears and repair the Clock Tower.
-
-### Princess Gallery — 10 Exhibits to Explore
-- Glass Walkway — Take the stairs by the Grand Lobby or in the Royal Wing, or use the lift in the Adventure Wing.
-- Rapunzel — Jump onto the observation platform to make Rapunzel wave.
-- Snow White — Approach Snow White and the seven dwarfs to see them react.
-- Cinderella — Approach the glass slipper on the ballroom stairs to make it float and sparkle.
-- Aurora — Approach the enchanted rose to wake Aurora. Move away to let her sleep again.
-- Ariel — Walk up the shipwreck’s gangplank and stand on deck to see Ariel swim around the wreck. Open and close the treasure chest on the seabed.
-- Belle — Visit Belle and the Beast in the castle library and approach the tea table to see the teapot and cups dance.
-- Jasmine — Visit Agrabah Palace, fly around its golden domes on the magic carpet, and rub the lamp to meet Jin.
-- Mulan — Walk through the cherry blossom garden and strike the great gong to watch Mulan’s sword demonstration.
-- Approach the story displays for Moana and Tiana to complete their missions while their full exhibits are in development.
-
-### Military Base — 5 Missions
-
-- Security Patrol — Activate the panels at South Gate, Motor Pool, and South Lookout.
-- Repair the Tank — Collect and install three components, then stand clear while the tank parks.
-- Supply Delivery — Carry three crates from the Supply Depot to the Field Hospital, one at a time.
-- Radar Activation — Inspect the radar console and align the dish, rotating array, and west relay.
-- Helicopter Patrol — Board at the right passenger door for an automatic clockwise sightseeing flight. You can look around during the ride and board again after landing.
-
 ## Built for Expansion
 
 Kids World is designed around a reusable game engine and independent world modules.
@@ -124,7 +70,7 @@ Validate the release:
 node scripts/generate-pwa-manifest.mjs --check
 ```
 
-GitHub Actions checks release metadata and runs automated tests on pull requests.
+Run the full automated test suite locally before merging a pull request; GitHub Actions handles release metadata and deployment.
 
 Area statistics count regular files under each registered area's folder and its entry module. JavaScript LOC counts physical lines, including blank lines and comments. The generator reads declared dimensions from literals and named constants. Unresolved dimensions appear as a dash in the dashboard.
 
@@ -132,21 +78,32 @@ On pushes to `main`, the area statistics workflow regenerates the dashboard data
 
 ## Contributing
 
-**Have an idea for a new world? Build it!**
+Everyone is welcome to fork Kids World, experiment with the game, and build their own version.
 
-Contributions are welcome, including:
+Upstream contributions are limited to:
 
-- New exploration worlds.
-- Creative missions and interactive objects.
-- Animals, characters, and animations.
-- Original music and sound effects.
-- Gameplay improvements and bug fixes.
-- Mobile performance optimizations.
+- **New areas** — Submit a complete, playable area with its environment, objects, and meaningful interactions. Include missions where appropriate, rather than submitting isolated props or unfinished scenes.
+- **Existing areas** — Improve or fix an existing area's environment, objects, characters, animations, missions, or interactions.
 
-Keep additions lightweight, modular, child-friendly, and compatible with the existing engine.
-
-Open a pull request with a short description of your changes and test results.
+Keep changes area-local, modular, child-friendly, and compatible with the existing engine. Follow the [area development guide](docs/area-development.md) and [geometry guidelines](docs/geometry-guidelines.md). Open a pull request describing the area changes and include test results.
 
 ---
 
 **Kids World — Every new world brings a new adventure.**
+
+## Worlds & Missions
+
+**8 public areas · 48 total missions**
+
+| World | Missions | Highlights |
+| --- | ---: | --- |
+| [Flower Garden](https://harboot.github.io/Kids-World/?area=garden) | 12 | Deliver apples, help garden animals, explore the pond, cave and balloon. |
+| [Wooden House](https://harboot.github.io/Kids-World/?area=wooden-house) | 11 | Help the family, tidy the rooms, wash dishes and put away toys. |
+| [Snow Basin](https://harboot.github.io/Kids-World/?area=snow) | 4 | Chop a pine, hit snowmen, ride the ice slide and meet Olaf. |
+| [Frozen Castle](https://harboot.github.io/Kids-World/?area=frozen-castle) | 3 | Activate ice crystals, build an ice staircase and play a melody. |
+| [Arendelle Village](https://harboot.github.io/Kids-World/?area=arendelle-village) | 3 | Catch and sell fish, return the lost reindeer and repair the clock tower. |
+| [Princess Gallery](https://harboot.github.io/Kids-World/?area=princess-gallery) | 10 | Explore fairy-tale exhibits, meet characters and discover interactive scenes. |
+| [Military Base](https://harboot.github.io/Kids-World/?area=military-base) | 5 | Patrol, repair a tank, deliver supplies, activate radar and ride a helicopter. |
+| [Kung Fu Hustle](https://harboot.github.io/Kids-World/?area=kung-fu-hustle) | 0 | Explore the tenement, meet its residents and discover the Buddha Palm interaction. |
+
+Areas without formal missions offer free exploration and interactive activities. See [Area Statistics](https://harboot.github.io/Kids-World/stats.html) for the current area inventory.
