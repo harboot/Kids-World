@@ -109,11 +109,11 @@ function legs(THREE,m) {
   // The support foot lies below the displaced pelvis and shoulders; the lifted
   // knee travels outward and forward, with a relaxed foot following the shin.
   const data=[
-    {hip:[.19,.91,-.04],thigh:[.22,.78,-.015],hem:[.23,.66,.017],
+    {hip:[.19,.91,-.04],thigh:[.216,.78,-.015],hem:[.22,.655,.017],
       knee:[.245,.53,.046],upperCalf:[.25,.42,.006],calf:[.24,.31,-.045],
       ankle:[.225,.16,-.053],foot:[.225,.045,-.053,0,.10]},
-    {hip:[-.055,.91,-.035],thigh:[-.205,.985,.14],hem:[-.315,1.005,.27],
-      knee:[-.425,.995,.385],upperCalf:[-.475,.88,.435],calf:[-.51,.735,.46],
+    {hip:[-.055,.91,-.035],thigh:[-.205,.98,.155],hem:[-.315,1.008,.295],
+      knee:[-.419,1.01,.405],upperCalf:[-.475,.88,.435],calf:[-.51,.735,.46],
       ankle:[-.575,.545,.51],foot:[-.575,.42,.51,-.49,-.28]},
   ];
   m.loft([ring(.80,-.045,.215,.132,.07),ring(.91,-.03,.235,.155,.075),
@@ -121,48 +121,119 @@ function legs(THREE,m) {
   for(const {hip,thigh,hem,knee,upperCalf,calf,ankle,foot} of data){
     const nearHem=hem.map((v,i)=>v+(thigh[i]-v)*.20);
     const innerHem=hem.map((v,i)=>v+(knee[i]-v)*.055);
-    limb(THREE,m,[[hip,.146,.152],[thigh,.166,.164],[nearHem,.159,.147],
+    limb(THREE,m,[[hip,.146,.152],[thigh,.151,.157],[nearHem,.153,.151],
       [hem,.151,.146],[innerHem,.125,.119]],(r,i)=>{
       if(r>=4)return 0x9a783c;
       return (i+r)%5===0?0xc3a35b:i===4||i===5?0x9b7c3c:shorts;
     });
-    limb(THREE,m,[[innerHem,.116,.115],[knee,.100,.096],[upperCalf,.112,.106],
+    limb(THREE,m,[[innerHem,.116,.115],[knee,.100,.096],[upperCalf,.098,.096],
       [calf,.086,.090],[ankle,.056,.059]],(r,i)=>i===4||i===5?shade:skin);
     shoe(m,...foot);
   }
 }
-function torso(THREE,m) {
-  // Displaced pelvis, narrower waist and ribcage leaning toward the load.
-  // Chest is its own sculpted surface inside the V-neck; vest is a thicker shell.
-  const rows=[
-    [.88,.05,-.035,.208,.135,.012],[.99,.065,.015,.185,.127,.020],
-    [1.10,.075,.081,.200,.142,.045],[1.22,.08,.146,.249,.152,.090],
-    [1.34,.08,.197,.288,.155,.132],[1.43,.075,.234,.259,.137,.137],
-    [1.48,.07,.260,.113,.092,.072],
-  ].map(([y,x,z,w,d,v])=>[
-    [x,y,z+d+.012],[x+v*.56,y,z+d+.018],[x+v,y,z+d*.88],
-    [x+w*.76,y,z+d*.70],[x+w,y,z+d*.09],[x+w*.77,y,z-d*.76],
-    [x,y,z-d],[x-w*.77,y,z-d*.76],[x-w,y,z+d*.09],
-    [x-w*.76,y,z+d*.70],[x-v,y,z+d*.88],[x-v*.56,y,z+d+.018],
-  ]);
-  m.loft(rows,(r,i)=>{
-    if(r>=3&&[0,1,10,11].includes(i))return (i===0||i===11)?0xd09a73:skin;
-    return [4,5,6,7].includes(i)?0x505a35:[2,9].includes(i)?0x77834c:vest;
-  });
-  // Sculpted clavicles and pectoral planes, integrated as small relief surfaces.
-  for(const s of [-1,1]){
-    const x=.08;
-    m.polygon([[x,1.405,.369],[x+s*.112,1.42,.365],[x+s*.076,1.351,.373],
-      [x+s*.025,1.337,.375]],0xc89169,[x,1.35,.21]);
-    m.polygon([[x+s*.022,1.333,.376],[x+s*.075,1.347,.375],
-      [x+s*.048,1.285,.332],[x,1.277,.333]],0xb77f59,[x,1.32,.20]);
-    const ids=s===1?[2,3]:[10,9];
-    for(let i=3;i<rows.length;i++){
-      const a=rows[i-1][ids[0]],b=rows[i][ids[0]];
-      const inA=[a[0],a[1],a[2]+.014],inB=[b[0],b[1],b[2]+.014];
-      const outA=[a[0]+s*.041,a[1],a[2]+.008],outB=[b[0]+s*.041,b[1],b[2]+.008];
-      m.polygon([inA,outA,outB,inB],0x90965c,[.07,1.2,.04]);
+// V4: adapted from img2threejs v2.0.1 character decomposition and hair
+// construction. One continuous organic core, carved orbital cavities and
+// volumetric locks. This is a static single-view approximation, not a rig.
+const blend=(a,b,k)=>{const h=Math.max(k-Math.abs(a-b),0)/k;return Math.min(a,b)-h*h*k*.25;};
+function oval(p,c,r){
+  const q=p.map((v,i)=>(v-c[i])/r[i]),k0=Math.hypot(...q),k1=Math.hypot(...q.map((v,i)=>v/r[i]));
+  return k1>1e-9?k0*(k0-1)/k1:-Math.min(...r);
+}
+const blob=(c,r)=>p=>oval(p,c,r);
+function bone(a,b,r0,r1){
+  const d=b.map((v,i)=>v-a[i]),len=d.reduce((n,v)=>n+v*v,0);
+  return p=>{
+    const q=p.map((v,i)=>v-a[i]),t=Math.max(0,Math.min(1,q.reduce((n,v,i)=>n+v*d[i],0)/len));
+    return Math.hypot(...q.map((v,i)=>v-t*d[i]))-r0-(r1-r0)*t;
+  };
+}
+const fieldUnion=(fields,k)=>p=>fields.reduce((v,f)=>blend(v,f(p),k),100);
+
+// Surface nets: average actual zero crossings into one vertex per active cell.
+// Build once at area creation. Coarse spacing preserves visible flat facets.
+function sculptSurface(field,min,max,step,emit){
+  const [nx,ny,nz]=max.map((v,i)=>Math.ceil((v-min[i])/step)+1);
+  const key=(x,y,z)=>(z*ny+y)*nx+x;
+  const pos=(x,y,z)=>[min[0]+x*step,min[1]+y*step,min[2]+z*step];
+  const samples=new Float64Array(nx*ny*nz);
+  for(let z=0;z<nz;z++)for(let y=0;y<ny;y++)for(let x=0;x<nx;x++)samples[key(x,y,z)]=field(pos(x,y,z));
+  const offsets=Array.from({length:8},(_,i)=>[i&1,(i>>1)&1,(i>>2)&1]),edges=[];
+  for(let i=0;i<8;i++)for(const bit of [1,2,4])if(!(i&bit))edges.push([i,i|bit]);
+  const vertices=new Map();
+  for(let z=0;z<nz-1;z++)for(let y=0;y<ny-1;y++)for(let x=0;x<nx-1;x++){
+    const values=offsets.map(([u,v,w])=>samples[key(x+u,y+v,z+w)]);
+    if(values.every(v=>v>=0)||values.every(v=>v<0))continue;
+    const sum=[0,0,0];let count=0;
+    for(const [a,b] of edges){
+      if((values[a]<0)===(values[b]<0))continue;
+      const t=values[a]/(values[a]-values[b]);
+      for(let j=0;j<3;j++)sum[j]+=offsets[a][j]+(offsets[b][j]-offsets[a][j])*t;
+      count++;
     }
+    vertices.set(key(x,y,z),pos(x,y,z).map((v,i)=>v+step*sum[i]/count));
+  }
+  for(let z=1;z<nz-1;z++)for(let y=1;y<ny-1;y++)for(let x=1;x<nx-1;x++){
+    const p=[x,y,z],v=samples[key(...p)];
+    for(let a=0;a<3;a++){
+      const q=p.slice();q[a]++;
+      if((v<0)===(samples[key(...q)]<0))continue;
+      const b=(a+1)%3,c=(a+2)%3;
+      const corners=[[0,0],[-1,0],[-1,-1],[0,-1]].map(([u,w])=>{
+        const r=p.slice();r[b]+=u;r[c]+=w;return vertices.get(key(...r));
+      });
+      if(corners.some(v=>!v))continue;
+      const inside=pos(...(v<0?p:q));
+      emit([corners[0],corners[1],corners[2]],inside);
+      emit([corners[0],corners[2],corners[3]],inside);
+    }
+  }
+}
+function clip(poly,mask,threshold,above){
+  const out=[];
+  for(let i=0;i<poly.length;i++){
+    const a=poly[i],b=poly[(i+1)%poly.length],u=mask(a)-threshold,v=mask(b)-threshold;
+    const ai=above?u>=0:u<=0,bi=above?v>=0:v<=0;
+    if(ai)out.push(a);
+    if(ai!==bi)out.push(a.map((x,k)=>x+(b[k]-x)*u/(u-v)));
+  }
+  return out;
+}
+const poseArms=[
+  {s:-1,shoulder:[-.164,1.397,.204],elbow:[-.483,1.235,.275],wrist:[-.565,1.550,.302]},
+  {s:1,shoulder:[.30,1.405,.215],elbow:[.565,1.23,.259],wrist:[.594,1.573,.308]},
+];
+function organicCore(m){
+  const parts=[
+    blob([.068,.955,-.012],[.192,.155,.135]),blob([.07,1.115,.06],[.176,.24,.138]),
+    blob([.065,1.285,.15],[.245,.20,.157]),blob([.064,1.39,.205],[.224,.115,.136]),
+    blob([.063,1.448,.252],[.085,.12,.081]),
+  ];
+  for(const s of [-1,1])parts.push(blob([.065+s*.107,1.32,.246],[.118,.091,.073]));
+  for(const {shoulder,elbow,wrist} of poseArms){
+    const mid=shoulder.map((v,i)=>v+(elbow[i]-v)*.43),fore=elbow.map((v,i)=>v+(wrist[i]-v)*.40);
+    parts.push(blob(shoulder,[.111,.12,.106]),bone(shoulder,mid,.09,.104),
+      bone(mid,elbow,.104,.067),bone(elbow,fore,.067,.083),bone(fore,wrist,.083,.050));
+  }
+  const field=fieldUnion(parts,.055);
+  // Cut the vest opening and trim across faces instead of overlaying a coplanar
+  // mesh. The sculpted chest, shoulder and arm remain one continuous shell.
+  const garment=([x,y,z])=>{
+    const width=.253-.075*Math.max(0,(y-1.25)/.25);
+    const v=.025+Math.max(0,Math.min(.11,(y-1.09)*.35));
+    return Math.min(width-Math.abs(x-.064),Math.max(Math.abs(x-.065)-v,.18-z),1.445-y,y-.86);
+  };
+  sculptSurface(field,[-.77,.76,-.28],[.81,1.72,.48],.063,(tri,inside)=>{
+    const bare=clip(tri,garment,0,false),covered=clip(tri,garment,0,true);
+    const trim=clip(covered,garment,.023,false),cloth=clip(covered,garment,.023,true);
+    if(bare.length>=3)m.polygon(bare,skin,inside);
+    if(trim.length>=3)m.polygon(trim,0x89905a,inside);
+    if(cloth.length>=3)m.polygon(cloth,vest,inside);
+  });
+}
+
+function clothing(THREE,m) {
+  // Thick split cloth panels follow waist tension.
+  for(const s of [-1,1]){
     // Separate folded flaps: thickness, ridges, split hem and irregular silhouette.
     const x0=.055;
     const top=[x0+s*.019,1.015,.166],side=[x0+s*.188,1.007,.122],
@@ -190,20 +261,8 @@ function torso(THREE,m) {
     [.296,1.291,.312],[.229,1.312,.333]],0x91955b,[.08,1.25,.18]);
 }
 function arms(THREE,m) {
-  // Left and right shoulders/forearms use independently sculpted poses.
-  const arms=[
-    {s:-1,shoulder:[-.158,1.405,.227],deltoid:[-.245,1.375,.24],bicep:[-.352,1.329,.251],
-      elbow:[-.475,1.245,.275],forearm:[-.532,1.377,.282],wrist:[-.565,1.550,.302]},
-    {s:1,shoulder:[.322,1.405,.239],deltoid:[.395,1.374,.247],bicep:[.477,1.305,.254],
-      elbow:[.574,1.233,.269],forearm:[.611,1.398,.290],wrist:[.594,1.573,.308]},
-  ];
-  for(const {s,shoulder,deltoid,bicep,elbow,forearm,wrist} of arms){
-    // More sections at the shoulder and elbow, fewer through long muscle planes.
-    const before=elbow.map((v,i)=>v+(bicep[i]-v)*.20);
-    const after=elbow.map((v,i)=>v+(forearm[i]-v)*.22);
-    limb(THREE,m,[[shoulder,.100,.112],[deltoid,.132,.133],[bicep,.120,.114],
-      [before,.089,.092],[elbow,.077,.077],[after,.089,.087],
-      [forearm,.103,.086],[wrist,.052,.056]],(r,i)=>i===4||i===5?shade:skin,12);
+  // Fists attach at the wrist anchors of the continuous core.
+  for(const {s,wrist} of poseArms){
     const [x,y,z]=wrist;
     const palm=[x-s*.008,y+.061,z+.018];
     limb(THREE,m,[[wrist,.054,.049],[palm,.063,.052],
@@ -228,83 +287,58 @@ function head(THREE,m) {
     const v=y*Math.cos(pitch)-z*Math.sin(pitch),w=y*Math.sin(pitch)+z*Math.cos(pitch);
     return [.065+x*Math.cos(yaw)+w*Math.sin(yaw),1.485+v,.329-x*Math.sin(yaw)+w*Math.cos(yaw)];
   });
-  limb(THREE,m,[[[.075,1.407,.232],.088,.092],[[.065,1.48,.318],.081,.081]],skin,9);
-  // Explicit front-face landmarks. Every feature is part of the surface:
-  // chin, lower lip, mouth, upper lip, cheek, orbit, brow and forehead.
-  // Five columns across each half; the eye opening spans columns 1–3.
-  const rows=[
-    [[0,.013,.086],[.040,.014,.078],[.073,.028,.060],[.096,.052,.032],[.102,.078,-.014]],
-    [[0,.057,.120],[.040,.059,.116],[.080,.068,.090],[.112,.084,.051],[.126,.102,-.010]],
-    [[0,.090,.125],[.045,.090,.119],[.083,.102,.109],[.120,.112,.063],[.141,.126,.002]],
-    [[0,.116,.132],[.045,.115,.124],[.081,.126,.122],[.126,.137,.074],[.146,.147,.010]],
-    [[0,.151,.129],[.041,.151,.124],[.083,.156,.125],[.123,.167,.084],[.148,.171,.016]],
-    [[0,.188,.140],[.041,.185,.137],[.083,.193,.132],[.121,.205,.090],[.146,.204,.025]],
-    [[0,.225,.133],[.045,.230,.133],[.087,.234,.120],[.121,.241,.087],[.139,.241,.019]],
-    [[0,.270,.113],[.047,.270,.110],[.090,.272,.094],[.119,.270,.063],[.126,.261,.006]],
-  ];
-  const front=(pts,c)=>h.polygon(pts,c,[0,.15,-.03]);
+  // Closed sculpted skull, cheeks, jaw and nose; subtract orbital recesses.
+  const skull=fieldUnion([
+    blob([0,.185,-.021],[.131,.143,.132]),blob([0,.098,.025],[.108,.104,.098]),
+    blob([0,.038,.041],[.067,.052,.064]),
+    blob([-.078,.121,.052],[.056,.058,.067]),blob([.078,.121,.052],[.056,.058,.067]),
+    blob([-.058,.191,.067],[.063,.039,.057]),blob([.058,.191,.067],[.063,.039,.057]),
+    blob([0,.143,.110],[.025,.061,.040]),blob([0,.105,.133],[.031,.025,.039]),
+    blob([0,.066,.083],[.047,.025,.037])
+  ],.026);
+  const sockets=[-.059,.059].map(x=>blob([x,.172,.116],[.043,.028,.037]));
+  const field=p=>Math.max(skull(p),...sockets.map(f=>-f(p)));
+  sculptSurface(field,[-.18,-.045,-.19],[.18,.36,.21],.030,
+    (tri,inside)=>h.polygon(tri,skin,inside));
   for(const s of [-1,1]){
-    const p=(r,i)=>[s*rows[r][i][0],rows[r][i][1],rows[r][i][2]];
-    for(let r=0;r<rows.length-1;r++){
-      for(let i=0;i<4;i++){
-        if(r===4&&i===1)continue; // actual opening for recessed eyes
-        const a=p(r,i),b=p(r,i+1),c=p(r+1,i+1),d=p(r+1,i);
-        const paint=i===3?0xb57b56:r===2&&i===2?0xd09a70:skin;
-        front([a,b,c],paint);
-        front([a,c,d],r===1&&i===2?0xb9825b:paint);
-      }
-    }
-    // Temple, rear skull, jaw-side planes and ears.
-    for(let r=0;r<rows.length-1;r++){
-      const a=p(r,4),b=p(r+1,4);
-      const rear=q=>[s*q[0]*.68,q[1],-.103-(q[1]>.17?.019:0)];
-      front([a,rear(a),rear(b),b],shade);
-      h.polygon([rear(a),[0,a[1],rear(a)[2]-.024],[0,b[1],rear(b)[2]-.024],rear(b)],skin,[0,.15,-.01]);
-    }
-    const eye=[p(4,1),p(4,2),p(5,2),p(5,1)];
-    const inset=eye.map(([x,y,z])=>[x,y,z-.019]);
-    for(let i=0;i<4;i++)front([eye[i],eye[(i+1)%4],inset[(i+1)%4],inset[i]],0xa87152);
-    front(inset,0xddd0b5);
-    front([[s*.054,.156,.115],[s*.072,.159,.116],[s*.074,.183,.121],[s*.054,.181,.122]],0x302a26);
-    front([[s*.037,.183,.145],[s*.093,.202,.142],[s*.107,.190,.136],[s*.045,.171,.139]],hair);
-    // Outer ear has a folded rim and inset bowl.
-    const a=[s*.142,.119,.020],b=[s*.173,.135,.014],c=[s*.174,.189,.010],d=[s*.145,.213,.006],e=[s*.147,.163,.044];
-    front([a,b,e],skin);front([b,c,e],0xc08a61);front([c,d,e],0xd29a72);
-    front([e,[s*.157,.147,.034],[s*.162,.182,.031]],shade);
+    const x=s*.059;
+    h.loft([ring(.151,.098,.018,.014,x),ring(.159,.102,.035,.023,x),
+      ring(.179,.101,.035,.024,x),ring(.190,.097,.019,.015,x)],0xd9ceb5);
+    h.loft([ring(.155,.123,.008,.005,x),ring(.165,.124,.013,.007,x),
+      ring(.181,.124,.012,.006,x)],0x372f29);
+    sweep(THREE,h,[[[s*.029,.192,.119],.009,.012],[[s*.061,.205,.125],.010,.013],
+      [[s*.099,.212,.104],.007,.009]],hair,6);
+    limb(THREE,h,[[[s*.121,.11,.001],.024,.022],[[s*.148,.147,.006],.032,.023],
+      [[s*.141,.183,.004],.024,.017]],skin,7);
+    h.polygon([[s*.141,.129,.024],[s*.157,.149,.027],[s*.145,.17,.023]],shade,[0,.15,-.02]);
   }
-  // Nose: continuous projecting bridge, tip, alae and underside.
-  const bridge=[0,.198,.143],mid=[0,.148,.163],tip=[0,.113,.187],
-    left=[-.028,.105,.146],right=[.028,.105,.146],base=[0,.098,.154];
-  front([bridge,[-.033,.158,.128],mid],skin);front([bridge,mid,[.033,.158,.128]],0xc78b60);
-  front([mid,left,tip],0xd19a73);front([mid,tip,right],skin);
-  front([left,base,tip],shade);front([tip,base,right],shade);
-  front([[-.035,.076,.124],[0,.079,.139],[.035,.076,.124],[0,.069,.137]],0x704836);
-  front([[-.025,.067,.126],[0,.061,.135],[.027,.067,.126],[0,.069,.137]],0xc58c67);
+  h.polygon([[-.034,.063,.118],[0,.066,.128],[.035,.064,.117],[0,.057,.125]],0x704a38,[0,.08,.03]);
+  h.polygon([[-.022,.052,.117],[0,.048,.124],[.025,.052,.116]],0xcb9267,[0,.06,.02]);
   // Skull caps and a cloth band with an irregular edge.
   h.loft([ring(.247,-.006,.147,.133),ring(.280,-.007,.149,.135)],0xd7c8a7);
   h.loft([ring(.279,-.015,.145,.136),ring(.331,-.021,.151,.126),
     ring(.368,-.033,.111,.097),ring(.384,-.036,.042,.052)],hair);
-  // Solid angular locks (closed ridged wedges), varied lengths and directions.
-  for(const [x,y,z,w,len,dx] of [
-    [-.112,.324,.080,.045,.083,-.034],[-.062,.357,.100,.053,.102,-.060],
-    [.003,.370,.099,.056,.113,-.065],[.068,.349,.085,.052,.090,-.035],
-    [.118,.317,.061,.041,.071,-.017],[-.080,.365,.025,.056,.095,-.040],
-    [.035,.383,.011,.055,.084,-.019],[.105,.344,-.028,.049,.076,.018],
-  ]){
-    const a=[x-w,y,z-.025],b=[x+w,y-.012,z-.033],c=[x+.011,y+.032,z-.060],
-      ridge=[x-.006,y+.008,z+.050],tip=[x+dx,y-len*.72,z+.074];
-    const center=[x,y-.015,z];
-    h.polygon([a,ridge,tip],0x393739,center);h.polygon([ridge,b,tip],hair,center);
-    h.polygon([a,c,ridge],0x474347,center);h.polygon([ridge,c,b],hair,center);
-    h.polygon([a,tip,b,c],hair,center);
-  }
+  // Curved volumetric hair ribbons: embedded roots, broad midsections and
+  // deliberately unequal tapered tips, instead of V3's straight wedges.
+  const locks=[
+    [[-.10,.304,-.055],[-.13,.312,.035],[-.143,.281,.081],[-.154,.262,.087],.036],
+    [[-.07,.326,-.026],[-.091,.35,.052],[-.116,.302,.119],[-.149,.255,.133],.048],
+    [[-.025,.338,-.022],[-.044,.36,.056],[-.073,.306,.128],[-.111,.249,.148],.053],
+    [[.035,.339,-.027],[.013,.367,.053],[-.024,.314,.13],[-.063,.251,.152],.050],
+    [[.087,.324,-.037],[.069,.354,.034],[.041,.305,.119],[.012,.263,.144],.047],
+    [[.125,.303,-.042],[.121,.328,.019],[.099,.291,.081],[.070,.266,.117],.035],
+    [[-.055,.319,-.090],[-.072,.343,-.046],[-.110,.317,-.067],[-.132,.281,-.098],.043],
+    [[.042,.322,-.092],[.062,.35,-.049],[.101,.318,-.074],[.126,.284,-.094],.040],
+  ];
+  for(const [a,b,c,d,w] of locks)limb(THREE,h,[[a,w*.82,w*.45],[b,w,w*.64],
+    [c,w*.67,w*.46],[d,w*.08,w*.06]],(r,i)=>i===1||i===2?0x393638:hair,6);
   sweep(THREE,h,[[[-.12,.263,-.087],.025,.023],[[-.16,.248,-.104],.030,.024]],0xc5b694,6);
   h.polygon([[-.145,.251,-.10],[-.195,.184,-.123],[-.169,.192,-.09]],0xd7c8a7,[-.10,.22,-.08]);
 }
 
 export function coolieGeometry(THREE) {
   const m=facets(THREE);
-  legs(THREE,m);torso(THREE,m);arms(THREE,m);head(THREE,m);
+  legs(THREE,m);organicCore(m);clothing(THREE,m);arms(THREE,m);head(THREE,m);
   return m.finish();
 }
 
@@ -382,9 +416,9 @@ export function buildCoolie(THREE, scene, layout) {
   root.add(body);
   const geometry = sackGeometry(THREE);
   const carried = [
-    [.02,1.67,-.105,.03,.98,1.13,1.12],
-    [-.055,2.00,-.20,-.09,1.01,1.02,1.14],
-    [.06,2.29,-.26,.12,.97,.88,1.06],
+    [.02,1.61,-.025,.03,.98,1.16,1.12],
+    [-.055,1.95,-.13,-.09,1.01,1.05,1.14],
+    [.06,2.26,-.18,.12,.97,.90,1.06],
     [-.06,2.52,-.25,-.13,.92,.80,1.00],
     [.01,2.72,-.26,.08,.82,.68,.92],
   ];

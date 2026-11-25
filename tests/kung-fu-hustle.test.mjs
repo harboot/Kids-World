@@ -340,9 +340,9 @@ test('Coolie carries five sacks at the selected position and nearby stock is bat
   const triangles = body.geometry.attributes.position.count / 3 +
     carried.geometry.attributes.position.count / 3 * carried.count +
     ground.geometry.attributes.position.count / 3 * ground.count;
-  assert.ok(body.geometry.attributes.position.count / 3 >= 2200);
-  assert.ok(body.geometry.attributes.position.count / 3 < 4000);
-  assert.ok(triangles < 8500, 'porter and sack triangle budget');
+  assert.ok(body.geometry.attributes.position.count / 3 >= 3000);
+  assert.ok(body.geometry.attributes.position.count / 3 <= 5000);
+  assert.ok(triangles < 10000, 'porter and sack triangle budget');
   for (const mesh of [body, carried, ground]) {
     assert.ok(mesh.geometry.attributes.position.array.every(Number.isFinite));
     assert.ok(mesh.geometry.attributes.normal.array.every(Number.isFinite));
