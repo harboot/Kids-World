@@ -1,5 +1,5 @@
 {
-  "version": "dc8f02d433e29d3f7477889a00a6b700a8cc9051010b3db253a4b2af0da2fe27",
+  "version": "da351cc661b730c932bba57d6dcd3d6ff68087cef3a940acd5b0804edf964a42",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "16dc9731f868da0dcf18408b72fa0b87fbb0a8f377afd068ae9667fe2fd8d24f"
+      "revision": "5bdc1ef4ff6d60f753821c22699672a8a8b15c55e7adcffe040f46c86e9aedec"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -207,7 +207,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/fong.js",
-      "revision": "af6496f96d7d37bc2815d59e41707df5944645998f1918942c7aac95e2b28e0c"
+      "revision": "eef098896fb89345e584d13c5a61941d559b72c445c803d995c021716d094bb0"
     },
     {
       "path": "./areas/kung-fu-hustle/hand-of-god.js",
