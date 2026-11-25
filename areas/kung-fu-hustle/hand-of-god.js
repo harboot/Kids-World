@@ -56,7 +56,7 @@ export function buildHandOfGod({THREE,scene,camera,viewmodel,beast,setCraterOpen
   const matrix=new THREE.Matrix4(),up=new THREE.Vector3(0,1,0);
   let state='idle',time=0,idle=0,release=null,armed=true;
   const phases=Object.keys(durations);
-  const trigger={x:bookPosition.x,z:bookPosition.z,anchorY:bookPosition.y,radius:1.8,silent:true,label:'Buka Buku',
+  const trigger={x:bookPosition.x,z:bookPosition.z,anchorY:bookPosition.y,radius:1.8,silent:true,label:'Open Book',
     get active(){return state==='idle'&&armed;},
     reachable(p){return Math.abs(p.y-(6.5+EYE_HEIGHT))<.85;},
     act({guideCamera}){

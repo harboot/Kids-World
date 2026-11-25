@@ -467,7 +467,7 @@ test('Hand of God manually activated at book height and completes reusable cinem
   const book=visit.scene.getObjectByName('Hand of God floating book');
   const crater=visit.scene.getObjectByName('Hand of God impact crater');
   const fallen=visit.scene.getObjectByName('Beast fallen pose');
-  const trigger=visit.area.interactions.find(i=>i.label==='Buka Buku');
+  const trigger=visit.area.interactions.find(i=>i.label==='Open Book');
   assert.ok(book&&crater&&fallen&&trigger);
   assert.deepEqual(book.position.toArray(),[18.75,7.90,5.83]);
   assert.ok(!trigger.reachable(new THREE.Vector3(18.75,EYE_HEIGHT,5.83)));

@@ -27,7 +27,8 @@ export function marketRow(kit, layout, { x, z, yaw, span, bays, depth, side = 0 
     const u = (i + .5) * spacing - span / 2;
     const open = i > 0 && i < bays - 1 && (bays < 5 || i % 2 === 0);
     const tailor = side === 1 && bays === 4 && i === 2;
-    const paint = tailor ? 0x65776d : shopColors[i % shopColors.length];
+    const bakery = side === 1 && bays === 4 && i === 1;
+    const paint = tailor ? 0x65776d : bakery ? 0x9b6044 : shopColors[i % shopColors.length];
     const opening = spacing - .91;
     const pier = .455;
     for (const s of [-1, 1]) {
@@ -38,7 +39,7 @@ export function marketRow(kit, layout, { x, z, yaw, span, bays, depth, side = 0 
     face(ink.plaster, u, 2.91, -recess / 2, opening, .68, recess);
     face(paint, u, 2.48, .065, opening + .26, .27, .14);
     face(0xa99272, u, 2.51, .146, opening * .73, .178, .036);
-    face.label(tailor ? '裁縫店' : specialties[i % specialties.length], u, 2.512, .18, .61, .186);
+    face.label(tailor ? '裁縫店' : bakery ? '包子舖' : specialties[i % specialties.length], u, 2.512, .18, .61, .186);
     face(ink.wood, u, .09, -.045, opening, .14, .18);
 
     for (const s of [-1, 1]) {
@@ -46,6 +47,7 @@ export function marketRow(kit, layout, { x, z, yaw, span, bays, depth, side = 0 
     }
     if (open) {
       if (tailor) tailorShop(face, solid, u, opening);
+      else if (bakery) bakeryShop(face, solid, u, opening);
       else stockedCounter(face, solid, u, opening, i, paint);
     } else {
       solid(u, -.83, opening, 1.76, floorRise);
@@ -129,4 +131,22 @@ function tailorShop(face, solid, x, width) {
     face(0xddd0b0,u,1.87,-1.316,.13,.12,.03);
     for(let k=0;k<3;k++)face(ink.dark,u,1.69-k*.13,-1.315,.025,.025,.025);
   }
+}
+
+function bakeryShop(face, solid, x, width) {
+  // The work surface faces the courtyard. The baker stands behind it.
+  face(0x805d3f,x,.44,-.18,1.82,.88,.54);
+  face(0xb3966d,x,.91,-.18,1.94,.08,.65);
+  solid(x,-.18,1.94,.65,.95);
+  face(0xd9c6a0,x,.957,-.22,.61,.02,.43);
+  // Flour sack, folded towel, wooden shelves and trays of steamed buns.
+  for(const s of [-1,1]){
+    face(0x79553b,x+s*1.19,.65,-1.63,.75,.08,.36);
+    face(0x79553b,x+s*1.19,1.38,-1.63,.75,.08,.36);
+    face(0xb69a70,x+s*1.19,1.47,-1.57,.57,.12,.28);
+    face(0xe3d0a5,x+s*1.19,1.57,-1.57,.53,.10,.26);
+    face(0xb69a70,x+s*1.19,.75,-1.57,.58,.13,.29);
+  }
+  face(0xe0d3b4,x-.75,.99,-.22,.29,.07,.30);
+  face(0x8d6744,x+.73,1.02,-.21,.33,.15,.34);
 }
