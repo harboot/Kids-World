@@ -306,7 +306,7 @@ export function buildCourtyard(THREE, scene, layout, touch, viewmodel, camera, p
   const tailor = buildTailor(THREE, scene, layout, onEncounter, sound);
   const sauce = buildSauce(THREE, scene, layout, sound);
   const donut = buildDonut(THREE, scene, layout, viewmodel, camera, sound);
-  const axeGang = buildAxeGang(THREE, scene, layout, sound);
+  const axeGang = buildAxeGang(THREE, scene, layout, sound, playCue);
   const harpists = buildHarpists(THREE, scene, playCue);
   const fong = buildFong(THREE, scene, layout, viewmodel, playCue);
   const lipstick = buildLipstickGirl(THREE, scene, layout, onEncounter, sound);

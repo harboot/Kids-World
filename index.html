@@ -123,6 +123,8 @@
       </header>
       <button id="sound" class="sound-setting" type="button" aria-label="Mute sound" aria-pressed="false" hidden>Sound: On</button>
       <div class="speed-options">
+        <label for="sound-volume">Sound volume <output id="sound-volume-value" for="sound-volume">96%</output></label>
+        <input id="sound-volume" type="range" min="0" max="100" step="1" value="96">
         <label for="turn-speed">Turn speed <output id="turn-speed-value" for="turn-speed">100%</output></label>
         <input id="turn-speed" type="range" min="50" max="100" step="1" value="100">
         <label for="move-speed">Movement speed <output id="move-speed-value" for="move-speed">100%</output></label>

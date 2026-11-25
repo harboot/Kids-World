@@ -1,3 +1,4 @@
+import { cinematicCues } from './performance-audio.js';
 import { beastPosition } from './the-beast.js';
 import { PLAYER_ONLY_LAYER } from '../../core/render-layers.js';
 import { EYE_HEIGHT } from '../../core/player.js';
@@ -20,7 +21,7 @@ export function craterContains(x,z,radius=0){
   return inside;
 }
 const smooth=t=>t*t*(3-2*t);
-export function buildHandOfGod({THREE,scene,camera,viewmodel,beast,setCraterOpen=()=>{}}){
+export function buildHandOfGod({THREE,scene,camera,viewmodel,beast,setCraterOpen=()=>{},playCue=()=>{}}){
   const book=new THREE.Group();book.name='Hand of God floating book';scene.add(book);
   function box(parent,name,color,w,h,d,x,y,z){
     const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color,roughness:.9}));m.name=name;m.position.set(x,y,z);parent.add(m);return m;
@@ -65,7 +66,7 @@ export function buildHandOfGod({THREE,scene,camera,viewmodel,beast,setCraterOpen
       top.set(beastPosition.x+1.2,65,beastPosition.z+1.8);
       aimQ.setFromRotationMatrix(matrix.lookAt(top,aimPoint,up));
       release=guideCamera(()=>{});if(!release)return;
-      state='book-rise';time=0;armed=false;
+      state='book-rise';time=0;armed=false;playCue(cinematicCues[state]);
     }
   };
   function reset(){
@@ -98,11 +99,15 @@ export function buildHandOfGod({THREE,scene,camera,viewmodel,beast,setCraterOpen
       return;
     }
     while(dt>1e-8&&state!=='idle'){
+      const before=time;
       const step=Math.min(dt,durations[state]-time);time+=step;dt-=step;pose();
+      const marks=state==='lift'?[1,2,3,4]:state==='impact'?[.8,1.8,3,4.5,6,7.5]:[];
+      for(const mark of marks)if(before<mark&&time>=mark)playCue(state==='lift'?cinematicCues.wind:mark<3?cinematicCues.rubble:cinematicCues.rumble);
       if(time<durations[state]-1e-8)break;
       const next=phases[phases.indexOf(state)+1];time=0;
       if(!next){reset();break;}
       state=next;
+      playCue(cinematicCues[state]);
       if(state==='lift')book.visible=false;
       if(state==='impact'){
         hand.visible=false;crater.visible=true;setCraterOpen(true);beast.setDefeated(true);beast.root.position.y=-.035-craterDepth+.01;

@@ -183,7 +183,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   }
 
   const { camera } = view;
-  const audio = createAudio(game.querySelector('#sound'));
+  const audio = createAudio(game.querySelector('#sound'), settings.querySelector('#sound-volume'), settings.querySelector('#sound-volume-value'));
   const progress = createLevelProgress(areas);
   const player = createPlayer(THREE, camera);
   const worlds = createWorldManager(THREE, {
@@ -191,6 +191,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     services: {
       hud: game, isPlaying: playerInput,
       playCue: notes => playing() && audio.playCue(notes),
+      setMusicDuck: active => audio.setMusicDuck(playing() && active),
       notify: message => { if (playing()) missionHud.notify(message); },
       reducedMotion: () => motionPreference.matches,
       isPlayerGrounded: () => player.grounded,
