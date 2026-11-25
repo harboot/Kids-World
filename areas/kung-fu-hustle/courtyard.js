@@ -33,7 +33,7 @@ function perimeterWall(kit, layout, random, x1, z1, x2, z2) {
   }
 }
 
-function pavedYard(kit, random, coverKit, craterPolygon) {
+function pavedYard(kit, random, coverKit, craterPolygon, craterContains) {
   const { beam } = kit;
   kit.ground(craterPolygon);
   if(coverKit)coverKit.groundCover(craterPolygon);
@@ -52,7 +52,7 @@ function pavedYard(kit, random, coverKit, craterPolygon) {
     for (let col = -22; col <= 22; col++) {
       const x = col * 1.28 + (row % 2) * .55;
       if (Math.abs(x) > edge - .77) continue;
-      const pavingKit=coverKit&&x>-5.5&&x<5&&z>2.1&&z<14?coverKit:kit;
+      const pavingKit=coverKit&&craterContains(x,z,.85)?coverKit:kit;
       const {box}=pavingKit;
       const path = Math.abs(x) < 2.6 || z < -6 || z > 8.3 || Math.abs(x) > 13 + (z + 7.5) * .48;
       const paint = pavers[Math.floor(random() * pavers.length)];
@@ -351,9 +351,9 @@ function courtyardProps(kit, layout, random) {
   layout.solid(-5.78, -8.71, 1.8, .43, .54);
 }
 
-export function courtyard(kit, layout, random, coverKit, craterPolygon) {
+export function courtyard(kit, layout, random, coverKit, craterPolygon, craterContains) {
   const { box, drum, ring, beam } = kit;
-  pavedYard(kit, random, coverKit, craterPolygon);
+  pavedYard(kit, random, coverKit, craterPolygon, craterContains);
   const edges = footprint.map((point, i) => [point, footprint[(i + 1) % footprint.length]]);
   for (const [[x1, z1], [x2, z2]] of edges) {
     if (z1 === gateZ && z2 === gateZ) {
