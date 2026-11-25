@@ -1,5 +1,5 @@
 {
-  "version": "92b623372d2b9c65550883230a91df8723d2ab8adc4eb820d3bb5897119c88ae",
+  "version": "c4a280e71ea84685b4617f201c47f844a3ea46af9016627f93d2d1200f37acd4",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "1a5db8551dce0d9f228425025073fc5a0ab552f2b6fbc2078f800e10d1a9d97f"
+      "revision": "5677a88c95faff20854d530afe387ff847d19823fddb4db92d4c7f15fa5617be"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -191,7 +191,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/courtyard.js",
-      "revision": "6ecbe3256ac51b4b831d4f1b226ae26d6bee137db2b8b658094fcc91d7cc0749"
+      "revision": "1a6234284580c773ec51e13c6d73c75d10815b3b9119571dab79e8da40c13b94"
     },
     {
       "path": "./areas/kung-fu-hustle/damage.js",
@@ -199,11 +199,11 @@
     },
     {
       "path": "./areas/kung-fu-hustle/hand-of-god.js",
-      "revision": "415ee436b9291edba1573be78efca956b64acfc473af60d4a8bb1f9fb4924fb8"
+      "revision": "c90301046cd1160ca43f0dbe580aaffff3ff7c221f44bbdfa8809bcc95c7c048"
     },
     {
       "path": "./areas/kung-fu-hustle/index.js",
-      "revision": "4e48350e58d3a5453285b82a8c43c879df33baaebaa81123dd322a2e82f243d7"
+      "revision": "e3e6184d2d90da4752b34c726d91fee463278901a7cb57cbbb951577c4f70841"
     },
     {
       "path": "./areas/kung-fu-hustle/kung-fu-hustle.jpg",
@@ -219,7 +219,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/masonry.js",
-      "revision": "c33676204c91ab0b540efa59f4f58b178ed6b8b86cbe92c51f14fa5161fdda47"
+      "revision": "80730c2e0baa58d17f68977d64a369ced948706b7bfd1f4355d6a50bd93a3f5e"
     },
     {
       "path": "./areas/kung-fu-hustle/metadata.js",
@@ -239,7 +239,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/scene.js",
-      "revision": "66f3b9289bdf9144556f921ad76f02d9dfd47ccdccf2dc013daa0681241fcadc"
+      "revision": "c3c2ce15d37b11a2878e50e16a554261fd0b267eab4381ad45adbb581f226cf8"
     },
     {
       "path": "./areas/kung-fu-hustle/the-beast.js",
