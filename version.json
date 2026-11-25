@@ -1,13 +1,13 @@
 {
-  "version": "da351cc661b730c932bba57d6dcd3d6ff68087cef3a940acd5b0804edf964a42",
+  "version": "a2a1acd11b66069e6b218bb0f8fdfff48729aab0d6640764e3b1a1ab4e277ae5",
   "files": [
     {
       "path": "./area-catalog.js",
-      "revision": "248a371c4a0fd240bdda74c431a042578a5295dd78d7cad614ede0e714d2b346"
+      "revision": "e8512b64040da1c2c6e56eb27da46d136db53a0cb2e8fa01796bea3d72890825"
     },
     {
       "path": "./area-stats.json",
-      "revision": "5bdc1ef4ff6d60f753821c22699672a8a8b15c55e7adcffe040f46c86e9aedec"
+      "revision": "0ad21e79898720596ec5be8b360b390bf450aec28fc5976298149ec31b8ad3ec"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -191,7 +191,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/coolie.js",
-      "revision": "e52958964a172175675505e94e4b13b7b3448fe92c6b8c13946ff02c6635122a"
+      "revision": "54168eaf2980cd046113a043fbe632c668b1fae1022daf310012a53e7a6e5a7c"
     },
     {
       "path": "./areas/kung-fu-hustle/courtyard.js",
@@ -219,7 +219,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/index.js",
-      "revision": "54ef54c3e4ba961667a463eea1b250e70842109791387103ea66efaa9f5a1eba"
+      "revision": "084390fad74ef7b136ee8cbf69a63b86b6ac3b1ee2505601263216b6b98aa004"
     },
     {
       "path": "./areas/kung-fu-hustle/kung-fu-hustle.jpg",
@@ -239,7 +239,11 @@
     },
     {
       "path": "./areas/kung-fu-hustle/metadata.js",
-      "revision": "06ce009f4ab222600594ae96033b6099dc827afc9a925c3b7020c4e2747a9dc3"
+      "revision": "46ae992a4a0497c3d9256d2a46b5686a7cd22356091e062b701e74951b1b71bd"
+    },
+    {
+      "path": "./areas/kung-fu-hustle/missions.js",
+      "revision": "29ea180b3592cbcd622b88d93f339bb88c44ea9b60cdf729373667cdf66e361b"
     },
     {
       "path": "./areas/kung-fu-hustle/music.js",
@@ -251,7 +255,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/resident.js",
-      "revision": "421d271f3f5bb8252e18564ac8323ff28ad5ca7b2fd3728a0c158677fefcf1bb"
+      "revision": "6e9fb4d819d767445fb08cbb472962cc7f8494e0b21a8bd67b62470ed7bc0c90"
     },
     {
       "path": "./areas/kung-fu-hustle/sauce.js",
@@ -259,15 +263,15 @@
     },
     {
       "path": "./areas/kung-fu-hustle/scene.js",
-      "revision": "452c08ae65e864f2e0c1e077c16a1377bf0ca65e0c4e020b34021e3dbe731c2e"
+      "revision": "898299797b981ffa8347b9fd2a264ed5579ffce26d44cd8123e85ca53d299cec"
     },
     {
       "path": "./areas/kung-fu-hustle/tailor.js",
-      "revision": "95af07b19c02a3c4c161edc28c469219e00da0f2a04f84ff1406293720d58358"
+      "revision": "064f60e4a07afa05a32f8c5d37c1811e4e121b622ca171256f366ff94c84d6ec"
     },
     {
       "path": "./areas/kung-fu-hustle/the-beast.js",
-      "revision": "0f69774854f074ea63419aee3a5ceb1ed9aaa405e4f98e39538a204f0be58e51"
+      "revision": "956c8e300e2247746017a9c3262a78844bd32aca3a09c22ef20554b36c2bef84"
     },
     {
       "path": "./areas/military-base/buildings.js",

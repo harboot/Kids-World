@@ -173,7 +173,7 @@ function legGeometry(THREE, kind) {
   return m.finish();
 }
 
-export function buildCoolie(THREE,scene,layout) {
+export function buildCoolie(THREE,scene,layout,onEncounter=()=>{}) {
   const root=new THREE.Group();
   root.name='Coolie — porter';
   root.position.set(cooliePosition.x,cooliePosition.y,cooliePosition.z);
@@ -255,6 +255,7 @@ export function buildCoolie(THREE,scene,layout) {
   let squatTime=0,depth=0,mode='squat',phase=0,entryDepth=0,armed=true,side=0;
   pose(0);
   return {
+    reset(){squatTime=depth=phase=entryDepth=0;mode='squat';armed=true;side=0;pose(0);},
     update(dt,player) {
       if(!Number.isFinite(dt)||dt<=0)return;
       dt=Math.min(dt,.1);
@@ -278,7 +279,7 @@ export function buildCoolie(THREE,scene,layout) {
       else if(phase<1.92)pose(0,1,1,side);
       else if(phase<2.20)pose(0,1,1-smooth((phase-1.92)/.28),side);
       else if(phase<2.65)pose(0,1-smooth((phase-2.20)/.45),0,side);
-      else {mode='squat';squatTime=0;depth=0;side=1-side;pose(0);}
+      else {mode='squat';squatTime=0;depth=0;side=1-side;pose(0);onEncounter('coolie');}
     }
   };
 }
