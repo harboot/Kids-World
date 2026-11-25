@@ -299,5 +299,5 @@ export function buildCourtyard(THREE, scene, layout, touch) {
     kit.box(0x8b7c79, x, height, z, width + .34, .26, 5.24, 0, 0, 0, false);
   }
   kit.finish();
-  return { update(dt, player) { coolie.update(dt, player); resident.update(dt, player); beast.update(dt, player); } };
+  return { beast, update(dt, player) { coolie.update(dt, player); resident.update(dt, player); beast.update(dt, player); } };
 }

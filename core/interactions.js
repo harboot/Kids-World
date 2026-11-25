@@ -36,6 +36,7 @@ export function createInteractions(THREE, { button, glyph, label, camera, playin
 
   function update() {
     const item = nearby();
+    if (item?.automatic && !pinned) { runAction(item); button.hidden = true; return; }
     button.hidden = !item;
     if (!item) return;
     const key = touchMode() ? '↗' : 'Space';
