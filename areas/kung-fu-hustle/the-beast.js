@@ -96,9 +96,13 @@ export function buildBeast(THREE, scene, layout) {
   });
   layout.solid(beastPosition.x,beastPosition.z-.17,1.9,2.0,.95);
   const target=new THREE.Vector3();
-  let time=0;
+  let time=0, defeated=false;
   const smooth=t=>t*t*(3-2*t);
-  return {root, update(dt,player){
+  return {root, setDefeated(value){
+    defeated=Boolean(value);time=0;body.position.y=0;head.rotation.y=0;throat.scale.set(1,1,1);
+    root.scale.y=defeated?.36:1;tilt.rotation.x=defeated?.35:-.16;
+  }, update(dt,player){
+    if(defeated)return;
     if(!Number.isFinite(dt)||dt<=0)return;
     dt=Math.min(dt,.1);time=(time+dt)%3.2;
     const pulse=time<1.15?smooth(time/1.15):time<1.45?1:time<2.75?1-smooth((time-1.45)/1.3):0;
