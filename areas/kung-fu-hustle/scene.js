@@ -285,10 +285,10 @@ export function buildCourtyard(THREE, scene, layout, touch) {
   // Keep the removable ground cover and nearby paving separate from static batches.
   const cover = new THREE.Group(); cover.name = 'Handprint removable ground cover'; scene.add(cover);
   const coverKit = masonryKit(THREE, cover);
-  courtyard(kit, layout, random, coverKit, craterPolygon);
+  courtyard(kit, layout, random, coverKit, craterPolygon, craterContains);
   coverKit.finish();
   let craterOpen=false;
-  layout.addBarrier((x,z,radius,feet)=>craterOpen&&feet<.25&&craterContains(x,z,radius));
+  layout.addBarrier((x,z,radius,feet)=>craterOpen&&feet<2.5&&craterContains(x,z,radius));
   function setCraterOpen(value){craterOpen=value;cover.visible=!value;}
   const coolie = buildCoolie(THREE, scene, layout);
   const beast = buildBeast(THREE, scene, layout);
