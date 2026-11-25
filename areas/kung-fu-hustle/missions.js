@@ -8,6 +8,7 @@ const definitions = [
   ['fong', 'Buy a Lollipop', 'Find Fong at the candy shop and buy a lollipop.'],
   ['landlady', 'Meet the Landlady', 'Walk past the Landlady’s window on the top-floor west gallery.'],
   ['beast', 'Meet the Beast', 'Approach the Beast from the front in the courtyard.'],
+  ['lipstick', 'Meet Lipstick Girl', 'Find the crouching woman in a blue dress on the west side of the courtyard.'],
   ['book', 'Discover the Buddha Palm', 'Find and open the book on the third-floor east gallery.'],
 ];
 const victory = [[67,{duration:.24,level:.12}],[72,{duration:.24,level:.12},.14],[79,{duration:.40,level:.13},.29]];

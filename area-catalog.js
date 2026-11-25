@@ -68,7 +68,8 @@ export const areaMetadata = {
     "themeColor": "#d9ae88",
     "width": 62,
     "depth": 44,
-    "missionCount": 10,
+    "completionRevision": 2,
+    "missionCount": 11,
     "spawn": {
       "x": 0,
       "z": 18.2

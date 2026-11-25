@@ -93,7 +93,7 @@ Keep changes area-local, modular, child-friendly, and compatible with the existi
 
 ## Worlds & Missions
 
-**8 public areas · 58 total missions**
+**8 public areas · 59 total missions**
 
 | World | Missions | Highlights |
 | --- | ---: | --- |
@@ -104,6 +104,6 @@ Keep changes area-local, modular, child-friendly, and compatible with the existi
 | [Arendelle Village](https://harboot.github.io/Kids-World/?area=arendelle-village) | 3 | Catch and sell fish, return the lost reindeer and repair the clock tower. |
 | [Princess Gallery](https://harboot.github.io/Kids-World/?area=princess-gallery) | 10 | Explore fairy-tale exhibits, meet characters and discover interactive scenes. |
 | [Military Base](https://harboot.github.io/Kids-World/?area=military-base) | 5 | Patrol, repair a tank, deliver supplies, activate radar and ride a helicopter. |
-| [Kung Fu Hustle](https://harboot.github.io/Kids-World/?area=kung-fu-hustle) | 10 | Meet residents, draw water, eat a bun, dance, play guzheng, buy a lollipop and discover Buddha Palm. |
+| [Kung Fu Hustle](https://harboot.github.io/Kids-World/?area=kung-fu-hustle) | 11 | Meet residents, draw water, eat a bun, dance, play guzheng, buy a lollipop and discover Buddha Palm. |
 
 Areas without formal missions offer free exploration and interactive activities. See [Area Statistics](https://harboot.github.io/Kids-World/stats.html) for the current area inventory.
