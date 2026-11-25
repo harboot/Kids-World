@@ -1,5 +1,5 @@
 {
-  "version": "59d8e82fa4e1dc218ad89ba5ecd1feb3ad5e809946943b19320abfba4a2aa662",
+  "version": "a34d44f6c2239765c0f18f70915c1681cbf24a604b8e4dc554fd6fbdaa0982fa",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "ff578e46e207c5d27ed713e501921c15d9d04b59d72a2ca03004f125be24ada8"
+      "revision": "d072af1a69e3684e38707c85553887b878b4d838cd9fcb1004392f570068fca8"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -199,7 +199,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/damage.js",
-      "revision": "30f4632ad4409397af5f610748bff08bba87aec5800f3de18c6ed9fd21e0f1bd"
+      "revision": "8aa7696d7ce5efef4c5afe1f41713837f41ca5a7fc96b245e7d25d6833d67326"
     },
     {
       "path": "./areas/kung-fu-hustle/donut.js",
@@ -211,7 +211,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/harpists.js",
-      "revision": "ef7a865fe338b9c90e729ea1777c4ab7332d47628a650040ca4618f84f3acef3"
+      "revision": "9a9323e4f3b0610ae300f73a8f82f1e17c952a5fc8ca31926ddafa7f74c94cb9"
     },
     {
       "path": "./areas/kung-fu-hustle/index.js",

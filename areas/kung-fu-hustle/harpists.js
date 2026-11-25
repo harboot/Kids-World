@@ -88,10 +88,16 @@ export function buildHarpists(THREE, scene, playCue=()=>{}) {
   function pose(){
     const beat=active?time/interval*Math.PI:0;
     for(const n of [seated,standing]){
-      n.head.rotation.x=active?(n.seated?.12:.04)*Math.sin(beat):0;
+      const groove=active?Math.sin(beat*.5):0;
+      n.g.rotation.y=n.seated?0:.15*groove;
+      n.g.rotation.z=n.seated?0:.035*groove;
+      n.head.rotation.x=active?(n.seated?.12:.11)*Math.sin(beat):0;
+      n.head.rotation.y=n.seated?0:.18*groove;
       for(const l of n.arms){const s=l.s, pluck=active?Math.sin(beat+s*Math.PI/2):0;
-        const sy=n.seated?.95:1.34, ex=s*(n.seated?.33:.25),ey=n.seated?.82:1.04,ez=n.seated?.23:.04;
-        const hx=s*(n.seated?.44+.22*pluck:.25),hy=n.seated?1.01+.035*pluck:.78,hz=n.seated?.60+.045*pluck:.045;
+        const gesture=!n.seated&&active ? .5+.5*pluck : 0;
+        const sy=n.seated?.95:1.34, ex=s*(n.seated?.33:.25+.10*gesture),ey=n.seated?.82:1.04+.19*gesture,ez=n.seated?.23:.04+.13*gesture;
+        const hx=s*(n.seated?.44+.22*pluck:.25+.22*gesture),hy=n.seated?1.01+.035*pluck:.78+.49*gesture,hz=n.seated?.60+.045*pluck:.045+.30*gesture;
+        l.hand.rotation.set(n.seated?0:-.45*gesture,0,n.seated?0:s*.32*gesture);
         aim(l.upper,s*.20,sy,0,ex,ey,ez,.30);aim(l.lower,ex,ey,ez,hx,hy,hz,.29);l.hand.position.set(hx,hy,hz);
       }
     }

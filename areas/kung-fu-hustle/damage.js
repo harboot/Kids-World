@@ -43,9 +43,13 @@ export function damagedRearWall(kit, layout, height, random) {
   kit.box(0x51483e,r.x,r.y+1.48,r.z-2.15,r.halfWidth*2,2.96,.18);
   kit.box(0x81705c,r.x,r.y-.035,r.z-1.03,r.halfWidth*2,.07,2.06);
   const face = kit.wall(0, gallery.rear, 0);
-  face(ink.wood,r.x,r.sill-.04,.07,r.halfWidth*2+.12,.08,.22);
-  face(ink.wood,r.x,r.lintel+.045,.07,r.halfWidth*2+.12,.09,.22);
-  for(const side of [-1,1])face(ink.wood,r.x+side*(r.halfWidth+.035),(r.sill+r.lintel)/2,.07,.07,r.lintel-r.sill,.19);
+  // A single joined frame, entirely forward of the plaster facade. Its inner
+  // edge is inset into the opening, never coplanar with the masonry reveal.
+  const left=r.x-r.halfWidth,right=r.x+r.halfWidth;
+  kit.extrude('Harpists aperture frame',ink.wood,
+    [[left-.08,r.sill-.025],[right+.08,r.sill-.025],[right+.08,r.lintel+.08],[left-.08,r.lintel+.08]],
+    .14,0,0,r.z+.025,0,
+    [[[left+.025,r.sill+.025],[right-.025,r.sill+.025],[right-.025,r.lintel-.025],[left+.025,r.lintel-.025]]]);
   for (const [i, [x, y]] of opening.entries()) {
     const [nextX, nextY] = opening[(i + 1) % opening.length];
     const dx = nextX - x;
