@@ -26,7 +26,7 @@ export default {
     ];
     function reset(){
       cinematic.reset();courtyard.coolie.reset();courtyard.sauce.reset();courtyard.donut.reset();
-      courtyard.axeGang.reset();courtyard.harpists.reset();courtyard.fong.reset();progress.reset();
+      courtyard.axeGang.reset();courtyard.harpists.reset();courtyard.fong.reset();courtyard.lipstick.reset();progress.reset();
     }
     return {
       obstacles: layout.obstacles,

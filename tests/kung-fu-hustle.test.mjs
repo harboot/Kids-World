@@ -37,7 +37,7 @@ test('the public courtyard route starts within the gate and resets to the same s
   const { visit, position, reset, walk } = await start(t);
   assert.equal(visit.definition.id, id);
   assert.equal(areas[id].show, true);
-  assert.equal(visit.area.missionStatus.missions.length, 10);
+  assert.equal(visit.area.missionStatus.missions.length, 11);
   assert.ok(visit.area.missionStatus.missions.every(m=>m.current===0&&!m.complete));
   assert.deepEqual(position.toArray(), [0, EYE_HEIGHT, gateZ - 2.2]);
   assert.ok(walk(3, 4));

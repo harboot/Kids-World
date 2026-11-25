@@ -1,13 +1,13 @@
 {
-  "version": "a2a1acd11b66069e6b218bb0f8fdfff48729aab0d6640764e3b1a1ab4e277ae5",
+  "version": "4290eef45f67883b1b904356bb9ca92e28068f4927732c01e99b590f336ec7f5",
   "files": [
     {
       "path": "./area-catalog.js",
-      "revision": "e8512b64040da1c2c6e56eb27da46d136db53a0cb2e8fa01796bea3d72890825"
+      "revision": "740ddaff534067fdfa6b8140a5888a236110756c05eacc83e50d1b5eff4b65d0"
     },
     {
       "path": "./area-stats.json",
-      "revision": "0ad21e79898720596ec5be8b360b390bf450aec28fc5976298149ec31b8ad3ec"
+      "revision": "9b0f0c09d8f93157c3f3b7acc1993e1f27c8b6298ff097cb3975acc47d4b5a44"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -219,7 +219,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/index.js",
-      "revision": "084390fad74ef7b136ee8cbf69a63b86b6ac3b1ee2505601263216b6b98aa004"
+      "revision": "51786a72d83aa5f52aa510eecaf15813e2533b703f9556cf512ef45c5a8f8508"
     },
     {
       "path": "./areas/kung-fu-hustle/kung-fu-hustle.jpg",
@@ -228,6 +228,10 @@
     {
       "path": "./areas/kung-fu-hustle/layout.js",
       "revision": "db171d0380e8b89395b71f1e726689fb8d58071932ea5a18c3564b8e0ce286aa"
+    },
+    {
+      "path": "./areas/kung-fu-hustle/lipstick-girl.js",
+      "revision": "720828dba4f38f5b76da9ff8369450aacfdaf85a80ea62212c407d5db239ca0b"
     },
     {
       "path": "./areas/kung-fu-hustle/market.js",
@@ -239,11 +243,11 @@
     },
     {
       "path": "./areas/kung-fu-hustle/metadata.js",
-      "revision": "46ae992a4a0497c3d9256d2a46b5686a7cd22356091e062b701e74951b1b71bd"
+      "revision": "74a65fde63a62239bbb8b39347757b83d1c24b2a328f32272c7ea6fd4e7b3088"
     },
     {
       "path": "./areas/kung-fu-hustle/missions.js",
-      "revision": "29ea180b3592cbcd622b88d93f339bb88c44ea9b60cdf729373667cdf66e361b"
+      "revision": "2d76831babb5f271907b554c2b799c45ad3cd7b112aa5aea70449a82a902a0a0"
     },
     {
       "path": "./areas/kung-fu-hustle/music.js",
@@ -263,7 +267,7 @@
     },
     {
       "path": "./areas/kung-fu-hustle/scene.js",
-      "revision": "898299797b981ffa8347b9fd2a264ed5579ffce26d44cd8123e85ca53d299cec"
+      "revision": "0f0b54da69baca614f5277e658c942d9bcb969c753a0c357c10eb36b4ee74240"
     },
     {
       "path": "./areas/kung-fu-hustle/tailor.js",
