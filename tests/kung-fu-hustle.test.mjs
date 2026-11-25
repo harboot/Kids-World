@@ -201,7 +201,8 @@ test('each stair run has a single continuous mesh with one tread hit from above'
 test('jumping clears rails on the highest gallery and lands quickly in the courtyard', async t => {
   const { visit, player, position } = await start(t);
   const height = 3 * 3.25;
-  player.reset({ x: -7, z: -8.17, elevation: height }, visit.area);
+  // Choose a clear landing lane beside the Axe Gang formation.
+  player.reset({ x: -10.4, z: -8.17, elevation: height }, visit.area);
   assert.ok(player.jump(visit.area));
   const forward = new THREE.Vector2(0, 1);
   let peak = height;
