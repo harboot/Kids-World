@@ -1,4 +1,5 @@
 import { beastPosition } from './the-beast.js';
+import { PLAYER_ONLY_LAYER } from '../../core/render-layers.js';
 import { EYE_HEIGHT } from '../../core/player.js';
 export const bookPosition=Object.freeze({x:18.75,y:13.13,z:5.83});
 export const durations=Object.freeze({'book-rise':1.4,lift:5,aim:.8,dive:1.25,impact:10});
@@ -17,7 +18,7 @@ export function buildHandOfGod({THREE,scene,camera,viewmodel,beast}){
   const shape=new THREE.Shape(outline.map(([x,y])=>new THREE.Vector2(x,y)));
   const hand=new THREE.Group();hand.name='Hand of God first-person palm';viewmodel.add(hand);
   const palm=new THREE.Mesh(new THREE.ExtrudeGeometry(shape,{depth:.24,bevelEnabled:true,bevelSegments:1,steps:1,bevelSize:.07,bevelThickness:.06}),new THREE.MeshBasicMaterial({color:0xc88e66}));
-  palm.scale.setScalar(.12);hand.add(palm);hand.position.set(.12,-.17,-.85);hand.rotation.z=-.15;hand.visible=false;
+  palm.scale.setScalar(.12);hand.add(palm);hand.position.set(.12,-.17,-.85);hand.rotation.z=-.15;hand.visible=false;hand.traverse(object=>object.layers.set(PLAYER_ONLY_LAYER));
   // Beveled, darkened footprint gives a recessed appearance without altering collision.
   const crater=new THREE.Group();crater.name='Hand of God impact crater';scene.add(crater);
   crater.position.set(beastPosition.x,.045,beastPosition.z);crater.rotation.x=-Math.PI/2;
