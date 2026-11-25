@@ -36,16 +36,31 @@ export function buildSauce(THREE, scene, layout) {
     const m=new THREE.Mesh(g,mat);m.name=name;m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;
   }
   const torso=group(root,'Sauce torso',0,.84,0);
-  batch(torso,'Slim bare chest and protruding belly',(o,b,t)=>{
-    o(skin,0,.30,0,.212,.32,.139,12,8);
-    o(skin,0,.07,.07,.205,.235,.205,12,8);
-    o(skin,0,-.065,0,.182,.12,.135,10,6);
-    for(const s of [-1,1]){
-      o(skin,s*.18,.47,0,.103,.105,.106);
-      o(0xad795b,s*.096,.31,.13,.079,.085,.025);
+  batch(torso,'Slim bare chest and protruding belly',(o,b,t,add)=>{
+    // One continuous torso: broad, flat chest tapering into a modest forward belly.
+    // Rings carry the silhouette instead of separate chest and stomach spheres.
+    const rings=[[-.17,.142,.106,.01],[-.09,.183,.143,.035],
+      [.03,.204,.177,.060],[.14,.204,.166,.045],[.26,.19,.134,.006],
+      [.39,.218,.128,0],[.49,.218,.112,-.008],[.55,.104,.078,0]];
+    const pos=[], n=14;
+    function v(k,j){
+      const [y,w,d,z]=rings[k], a=j*2*Math.PI/n;
+      return [Math.sin(a)*w,y,z+Math.cos(a)*d];
     }
+    for(let k=0;k<rings.length-1;k++)for(let j=0;j<n;j++){
+      const a=v(k,j),b=v(k,j+1),c=v(k+1,j+1),d=v(k+1,j);
+      pos.push(...a,...b,...c,...a,...c,...d);
+    }
+    for(let j=0;j<n;j++){
+      pos.push(0,rings[0][0],rings[0][3],...v(0,j+1),...v(0,j));
+      const k=rings.length-1;
+      pos.push(0,rings[k][0],rings[k][3],...v(k,j),...v(k,j+1));
+    }
+    const body=new THREE.BufferGeometry();
+    body.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+    add(body,skin,0,0,0);
     t(skin,0,.59,0,.065,.087,.15);
-    o(0x85583e,0,.028,.269,.014,.012,.006,6,4);
+    o(0x936448,0,.028,.239,.009,.008,.004,6,4);
   });
   const head=group(torso,'Sauce head',0,.66,0);
   batch(head,'Confused face and wet short hair',(o,b)=>{
@@ -117,7 +132,7 @@ export function buildSauce(THREE, scene, layout) {
   batch(splash,'Falling water',(o)=>{for(let i=0;i<12;i++)o(0x9dc9cf,Math.sin(i*2.4)*.11,-(i%5)*.09,Math.cos(i*2.4)*.09,.017,.045,.017,6,4);});
   const rim={x:wellPosition.x+.62,z:wellPosition.z+.65,y:.85};
   let state='idle', time=0, idle=0;
-  const trigger={x:wellPosition.x,z:wellPosition.z,anchorY:1.25,radius:2.45,label:'Timba Air',silent:true,
+  const trigger={x:wellPosition.x,z:wellPosition.z,anchorY:1.25,radius:2.45,label:'Draw Water',silent:true,
     get active(){return state==='idle';},
     reachable(p){return Math.abs(p.y-EYE_HEIGHT)<.85;},
     act(){if(state!=='idle')return;state='draw';time=0;render();}};
@@ -151,9 +166,9 @@ export function buildSauce(THREE, scene, layout) {
       poseArm(left,-1,vec(-.35,1.43,.12),vec(-.13,1.73,.09+Math.sin(time*10)*.045));
     }else{
       const motion=Math.sin(idle*11)*.047;
-      const hand=vec(.14+motion,1.56,.25);
+      const hand=vec(.19+motion,1.51,.22);
       poseArm(right,1,vec(.31,1.15,.16),hand);
-      brush.position.copy(hand);brush.rotation.y=1.15;
+      brush.position.copy(hand);brush.rotation.set(0,1.35,0);
       poseArm(left,-1,vec(-.24,1.02,.02),vec(-.24,.76,.06));
       water.position.y=.245;
     }

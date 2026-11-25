@@ -4,6 +4,7 @@ import { courtyard } from './courtyard.js';
 import { buildCoolie } from './coolie.js';
 import { buildTailor } from './tailor.js';
 import { buildSauce } from './sauce.js';
+import { buildDonut } from './donut.js';
 import { craterPolygon, craterContains } from './hand-of-god.js';
 import { buildBeast } from './the-beast.js';
 import { marketRow } from './market.js';
@@ -265,7 +266,7 @@ function walkways(kit, layout) {
   }
 }
 
-export function buildCourtyard(THREE, scene, layout, touch) {
+export function buildCourtyard(THREE, scene, layout, touch, viewmodel, camera) {
   const random = seededRandom(1748);
   const kit = masonryKit(THREE, scene);
   scene.background = new THREE.Color(0xd4c1ae);
@@ -296,6 +297,7 @@ export function buildCourtyard(THREE, scene, layout, touch) {
   const beast = buildBeast(THREE, scene, layout);
   const tailor = buildTailor(THREE, scene, layout);
   const sauce = buildSauce(THREE, scene, layout);
+  const donut = buildDonut(THREE, scene, layout, viewmodel, camera);
 
   // A muted skyline sits outside the playable compound.
   // Leave the underground impact zone clear of the skyline base slab.
@@ -314,5 +316,5 @@ export function buildCourtyard(THREE, scene, layout, touch) {
     kit.box(0x8b7c79, x, height, z, width + .34, .26, 5.24, 0, 0, 0, false);
   }
   kit.finish();
-  return { beast, sauce, setCraterOpen, update(dt, player) { coolie.update(dt, player); resident.update(dt, player); beast.update(dt, player); tailor.update(dt, player); sauce.update(dt); } };
+  return { beast, sauce, donut, setCraterOpen, update(dt, player) { coolie.update(dt, player); resident.update(dt, player); beast.update(dt, player); tailor.update(dt, player); sauce.update(dt); donut.update(dt, player); } };
 }
