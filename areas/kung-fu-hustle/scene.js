@@ -2,6 +2,7 @@ import { seededRandom } from '../../core/random.js';
 import { damagedRearWall } from './damage.js';
 import { courtyard } from './courtyard.js';
 import { buildCoolie } from './coolie.js';
+import { buildTailor } from './tailor.js';
 import { craterPolygon, craterContains } from './hand-of-god.js';
 import { buildBeast } from './the-beast.js';
 import { marketRow } from './market.js';
@@ -292,6 +293,7 @@ export function buildCourtyard(THREE, scene, layout, touch) {
   function setCraterOpen(value){craterOpen=value;cover.visible=!value;}
   const coolie = buildCoolie(THREE, scene, layout);
   const beast = buildBeast(THREE, scene, layout);
+  const tailor = buildTailor(THREE, scene, layout);
 
   // A muted skyline sits outside the playable compound.
   // Leave the underground impact zone clear of the skyline base slab.
@@ -310,5 +312,5 @@ export function buildCourtyard(THREE, scene, layout, touch) {
     kit.box(0x8b7c79, x, height, z, width + .34, .26, 5.24, 0, 0, 0, false);
   }
   kit.finish();
-  return { beast, setCraterOpen, update(dt, player) { coolie.update(dt, player); resident.update(dt, player); beast.update(dt, player); } };
+  return { beast, setCraterOpen, update(dt, player) { coolie.update(dt, player); resident.update(dt, player); beast.update(dt, player); tailor.update(dt, player); } };
 }
