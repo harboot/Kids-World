@@ -56,6 +56,7 @@ function setup(t, { muted = false, failResume = false } = {}) {
     destination = new AudioNode();
     gains = [];
     cues = [];
+    panners = [];
 
     constructor() {
       super();
@@ -72,6 +73,10 @@ function setup(t, { muted = false, failResume = false } = {}) {
       const node = Object.assign(new AudioNode(), { gain: parameter() });
       this.gains.push(node);
       return node;
+    }
+
+    createStereoPanner() {
+      const node=Object.assign(new AudioNode(),{pan:parameter()});this.panners.push(node);return node;
     }
 
     createOscillator() {
@@ -401,4 +406,36 @@ test('ducking lowers only music, is idempotent and restores on pause',async t=>{
   const length=music.gain.changes.length;audio.setMusicDuck(true);assert.equal(music.gain.changes.length,length);
   assert.equal(master.gain.value,.96);audio.setPlaying(false);
   audio.setMusicDuck(false);assert.equal(master.gain.value,.96);
+});
+
+test('spatial cues share a gain and panner, track movement and release on stop',t=>{
+  const {contexts}=setup(t),audio=createAudio(new SoundButton());
+  audio.unlock();audio.setPlaying(true);
+  const listener={x:0,y:1.68,z:0},source={x:3,z:0,eyeY:1.68,range:10};
+  audio.setListener(listener,{x:1,z:0});
+  const notes=[[60,{duration:.2,level:.1}],[72,{duration:.3,level:.1},.05]];
+  assert.equal(audio.playCue(notes,source),true);
+  const ctx=contexts[0],gain=ctx.gains[1],pan=ctx.panners[0];
+  assert.ok(gain.gain.value>0&&gain.gain.value<1);
+  assert.equal(pan.pan.value,.85);
+  audio.setListener({x:2,y:1.68,z:0},{x:-1,z:0});
+  assert.equal(gain.gain.changes.at(-1)[0],1);
+  assert.equal(pan.pan.changes.at(-1)[0],-.85);
+  audio.setListener({x:20,y:1.68,z:0},{x:1,z:0});
+  assert.equal(gain.gain.changes.at(-1)[0],0);
+  assert.equal(audio.playCue(notes,source),false);
+  ctx.cues[0].onended();assert.equal(gain.disconnected,false);
+  ctx.cues[1].onended();assert.equal(gain.disconnected,true);assert.equal(pan.disconnected,true);
+  audio.setListener(listener,{x:1,z:0});
+  assert.ok(audio.playCue(notes,source));const second=ctx.panners[1];
+  audio.setPlaying(false);assert.equal(second.disconnected,true);
+  assert.ok(ctx.cues.slice(-2).every(n=>n.disconnected));
+});
+test('positional cues degrade to mono gain if stereo panning is unavailable',t=>{
+  const {contexts}=setup(t),audio=createAudio(new SoundButton());
+  audio.unlock();audio.setPlaying(true);
+  contexts[0].createStereoPanner=undefined;
+  audio.setListener({x:0,y:1.68,z:0},{x:1,z:0});
+  assert.equal(audio.playCue([[60,{duration:.1,level:.1}]],{x:2,z:0,eyeY:1.68,range:5}),true);
+  audio.setScore(courtyardMusic);assert.ok(contexts[0].gains[1].disconnected);
 });
