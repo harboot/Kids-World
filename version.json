@@ -1,5 +1,5 @@
 {
-  "version": "c021898d6b1577f4254d75f2b00676b478b0013cb7c7738597ad88697a7d5e0f",
+  "version": "ed1c6018c1d5e9f7c41c66ea83a0e4d84e2d44009fcd982410f55f173a872ba6",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "4192f0469dd32ea4dbe57d44064b576b9c186cbda8eb619c7a78af8a1ac9ac75"
+      "revision": "7f3e29503ec84ea050d9089e9349e1aaa210d6fa46c784fc96bb36dea7fe844f"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -186,6 +186,10 @@
       "revision": "982db5375250440292f9140a0a4f454b1d967eca825952d90107b2ab486b242f"
     },
     {
+      "path": "./areas/kung-fu-hustle/ambient.js",
+      "revision": "11f75b777edca046e8aa5339cc7c185fc37be1571a730227f44ac902dec553ad"
+    },
+    {
       "path": "./areas/kung-fu-hustle/axe-gang.js",
       "revision": "9493c623ccc951430a2efdad639750525f82db729e993c5c4d1727fb62b37e9d"
     },
@@ -271,11 +275,11 @@
     },
     {
       "path": "./areas/kung-fu-hustle/scene.js",
-      "revision": "8bc94ec45e8dcd015f2889d355b0dc0976e8a3cd13d5dbb13c36f20eef577a96"
+      "revision": "93e8c3c3ddb798bc6f2a7ce6c7432768d82ee55c54e23e1dc785d07f3344ce3b"
     },
     {
       "path": "./areas/kung-fu-hustle/sounds.js",
-      "revision": "ec1525394e0114bd27409a20df45e68a389cc3305bd385c5aa900ad8f6a6937b"
+      "revision": "36ba30fa216aea3d1c739d18d7792c5055186fe651ad8a9db0555a6e452fd53e"
     },
     {
       "path": "./areas/kung-fu-hustle/tailor.js",
@@ -659,7 +663,7 @@
     },
     {
       "path": "./core/audio.js",
-      "revision": "e7ad7fb2af96b16ae9e2e92f51ad8984d4cf9959b8170a380dc681c412b37181"
+      "revision": "53875a0a0ebb9ff4d1f1db9e010a6ef3b939b74c953ffa34cf1c0d95b2ca9ba3"
     },
     {
       "path": "./core/controls.js",
@@ -679,7 +683,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "b254e38a9d35da2f6b331bcfbe4a8ccedd607aa7cdb6937fd671efe07a0a7907"
+      "revision": "00e1a29db65d71515ee4a6b93ad3f97c9428b18ab6e9416559261f9cfcc05fee"
     },
     {
       "path": "./core/geometry.js",
@@ -724,6 +728,10 @@
     {
       "path": "./core/scene-exporter.js",
       "revision": "ca487db9f3f74f7f1379030dcadc8636400a8873342f3ff1693d1677e74aac85"
+    },
+    {
+      "path": "./core/spatial-audio.js",
+      "revision": "2976336697237be3003d9a1342b3c34eb7955a7102066947f622312980a20945"
     },
     {
       "path": "./core/world-manager.js",
