@@ -21,7 +21,7 @@ export function areaURL(url, id) {
   return target;
 }
 
-const visitServices = ['isPlaying', 'playCue', 'notify', 'carryPlayer', 'completeLevel'];
+const visitServices = ['isPlaying', 'playCue', 'setMusicDuck', 'notify', 'carryPlayer', 'completeLevel'];
 
 export class AreaInitializationError extends Error {
   constructor(id, cause) {

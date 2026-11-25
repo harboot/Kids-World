@@ -377,3 +377,28 @@ test('filtered noise cues reuse a buffer and stop with mute or area change',asyn
   audio.setScore(gardenMusic);
   assert.ok(started.at(-1).disconnected);
 });
+
+test('master volume defaults to 150 percent of old gain, persists and respects mute',t=>{
+  const {contexts,storage}=setup(t),button=new SoundButton(),slider=new SoundButton(),display={};
+  const audio=createAudio(button,slider,display);
+  assert.equal(slider.value,'96');assert.equal(display.textContent,'96%');
+  audio.unlock();assert.equal(contexts[0].gains[0].gain.value,.96);
+  slider.value='42';slider.dispatchEvent(new Event('input'));
+  assert.equal(storage.get('kids-world-volume'),'42');
+  assert.equal(contexts[0].gains[0].gain.changes.at(-1)[0],.42);
+  button.click();assert.equal(contexts[0].gains[0].gain.changes.at(-1)[0],.0001);
+  audio.setVolume(30);assert.equal(contexts[0].gains[0].gain.changes.at(-1)[0],.0001);
+  button.click();assert.equal(contexts[0].gains[0].gain.changes.at(-1)[0],.3);
+  const next=new SoundButton();createAudio(new SoundButton(),next);assert.equal(next.value,'30');
+});
+test('ducking lowers only music, is idempotent and restores on pause',async t=>{
+  const {contexts,renders,tick}=setup(t),audio=createAudio(new SoundButton());
+  audio.unlock();audio.setScore(courtyardMusic);audio.setPlaying(true);audio.setMusicDuck(true);tick();
+  renders[0].finish();await renders[0].done.promise;
+  const [master,music]=contexts[0].gains;assert.equal(music.gain.value,.55*.22);
+  audio.setMusicDuck(false);assert.equal(music.gain.changes.at(-1)[0],.55);
+  audio.setMusicDuck(true);assert.equal(music.gain.changes.at(-1)[0],.55*.22);
+  const length=music.gain.changes.length;audio.setMusicDuck(true);assert.equal(music.gain.changes.length,length);
+  assert.equal(master.gain.value,.96);audio.setPlaying(false);
+  audio.setMusicDuck(false);assert.equal(master.gain.value,.96);
+});

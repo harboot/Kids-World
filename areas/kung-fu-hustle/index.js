@@ -8,14 +8,14 @@ import { createKungFuMissions } from './missions.js';
 export default {
   ...metadata,
   music,
-  load({ THREE, scene, touch, camera, viewmodel, playCue, completeLevel, isLevelComplete, notify }) {
+  load({ THREE, scene, touch, camera, viewmodel, playCue, setMusicDuck=()=>{}, completeLevel, isLevelComplete, notify }) {
     const layout = courtyardLayout();
     const progress = createKungFuMissions({completeLevel,isLevelComplete,notify,playCue});
     let cinematic;
     const courtyard = buildCourtyard(THREE, scene, layout, touch, viewmodel, camera, playCue, id=>{
       if(cinematic?.state==='idle')progress.complete(id);
     });
-    cinematic = buildHandOfGod({ THREE, scene, camera, viewmodel, beast: courtyard.beast, setCraterOpen: courtyard.setCraterOpen });
+    cinematic = buildHandOfGod({ THREE, scene, camera, viewmodel, beast: courtyard.beast, setCraterOpen: courtyard.setCraterOpen, playCue });
     const activities = [
       ['book',()=>cinematic.state!=='idle'],
       ['sauce',()=>courtyard.sauce.state!=='idle'],
@@ -24,7 +24,13 @@ export default {
       ['harpists',()=>courtyard.harpists.playing],
       ['fong',()=>courtyard.fong.kissing],
     ];
+    function syncMusic(){setMusicDuck(cinematic.state!=='idle'||courtyard.axeGang.dancing||courtyard.harpists.playing);}
+    for(const trigger of [cinematic.trigger,courtyard.axeGang.trigger,courtyard.harpists.trigger]){
+      const act=trigger.act;
+      trigger.act=(...args)=>{act(...args);syncMusic();};
+    }
     function reset(){
+      setMusicDuck(false);
       cinematic.reset();courtyard.resetSounds();courtyard.coolie.reset();courtyard.sauce.reset();courtyard.donut.reset();
       courtyard.axeGang.reset();courtyard.harpists.reset();courtyard.fong.reset();courtyard.lipstick.reset();progress.reset();
     }
@@ -37,7 +43,7 @@ export default {
       unload: reset,
       update(dt, player) {
         const running=activities.map(([,busy])=>busy());
-        courtyard.update(dt, player, cinematic.state==='idle');cinematic.update(dt, player);
+        courtyard.update(dt, player, cinematic.state==='idle');cinematic.update(dt, player);syncMusic();
         for(let i=0;i<activities.length;i++)if(running[i]&&!activities[i][1]())progress.complete(activities[i][0]);
       },
       getGroundHeight: layout.getGroundHeight,

@@ -1,6 +1,8 @@
 const muteKey = 'kids-world-muted';
 const minVolume = 0.0001;
-const masterVolume = 0.64;
+const volumeKey = 'kids-world-volume';
+const defaultVolume = 96; // 50% above previous .64 gain.
+const musicDuckRatio = .22;
 const musicVolume = 0.55;
 const sampleRate = 24000;
 const frequency = pitch => 440 * 2 ** ((pitch - 69) / 12);
@@ -94,12 +96,15 @@ function renderLoop(OfflineContext, { beat, beatsPerBar = 4, bars, accompaniment
   return context.startRendering();
 }
 
-export function createAudio(button) {
+export function createAudio(button, volumeSlider, volumeDisplay) {
   const AudioContext = globalThis.AudioContext || globalThis.webkitAudioContext;
   const OfflineContext = globalThis.OfflineAudioContext || globalThis.webkitOfflineAudioContext;
   let muted = false;
+  let volume = defaultVolume, ducked = false;
   try {
     muted = localStorage.getItem(muteKey) === '1';
+    const saved = localStorage.getItem(volumeKey);
+    if (saved != null && saved !== '' && Number.isFinite(Number(saved))) volume = Math.max(0, Math.min(100, Math.round(Number(saved))));
   } catch {
     // The sound control still works when storage is unavailable.
   }
@@ -119,6 +124,26 @@ export function createAudio(button) {
     button.title = muted ? 'Unmute sound' : 'Mute sound';
   }
 
+  function syncVolume() {
+    if (volumeSlider) {
+      volumeSlider.value = String(volume);
+      volumeSlider.setAttribute('aria-valuetext', volume + '%');
+    }
+    if (volumeDisplay) volumeDisplay.textContent = volume + '%';
+    if (master) master.gain.setTargetAtTime(muted ? minVolume : volume / 100, context.currentTime, .015);
+  }
+  function setVolume(value) {
+    if (!Number.isFinite(Number(value))) return;
+    volume = Math.max(0, Math.min(100, Math.round(Number(value))));
+    syncVolume();
+    try { localStorage.setItem(volumeKey, String(volume)); } catch {}
+  }
+  function setMusicDuck(active) {
+    active = Boolean(active);
+    if (ducked === active) return;
+    ducked = active;
+    if (track && !track.stopping) track.gain.gain.setTargetAtTime(musicVolume * (ducked ? musicDuckRatio : 1), context.currentTime, .06);
+  }
   function unlock() {
     if (!AudioContext || muted) return;
     let opening;
@@ -126,7 +151,7 @@ export function createAudio(button) {
       if (!context) {
         opening = new AudioContext();
         const gain = opening.createGain();
-        gain.gain.value = masterVolume;
+        gain.gain.value = volume / 100;
         gain.connect(opening.destination);
         opening.addEventListener('statechange', syncMusic);
         context = opening;
@@ -156,7 +181,7 @@ export function createAudio(button) {
   function startMusic(buffer) {
     const gain = context.createGain();
     const source = context.createBufferSource();
-    gain.gain.value = musicVolume;
+    gain.gain.value = musicVolume * (ducked ? musicDuckRatio : 1);
     source.buffer = buffer;
     source.loop = true;
     source.connect(gain).connect(master);
@@ -207,7 +232,7 @@ export function createAudio(button) {
 
   function setPlaying(active) {
     playing = active;
-    if (!active) stopCues();
+    if (!active) { stopCues(); setMusicDuck(false); }
     syncMusic();
   }
 
@@ -215,6 +240,7 @@ export function createAudio(button) {
     if (score === next) return;
     stopMusic();
     stopCues();
+    setMusicDuck(false);
     score = next;
     syncMusic();
   }
@@ -259,6 +285,8 @@ export function createAudio(button) {
   if (AudioContext) {
     syncButton();
     button.hidden = false;
+    syncVolume();
+    volumeSlider?.addEventListener('input', () => setVolume(volumeSlider.value));
     button.addEventListener('click', () => {
       muted = !muted;
       try {
@@ -268,11 +296,11 @@ export function createAudio(button) {
       }
       syncButton();
       if (muted) stopCues();
-      if (master) master.gain.setTargetAtTime(muted ? minVolume : masterVolume, context.currentTime, 0.01);
+      syncVolume();
       unlock();
       syncMusic();
     });
   }
 
-  return { unlock, setScore, setPlaying, effect, playCue };
+  return { unlock, setScore, setPlaying, effect, playCue, setVolume, setMusicDuck };
 }

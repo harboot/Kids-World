@@ -1,3 +1,4 @@
+import { harpistPluck } from './performance-audio.js';
 import { EYE_HEIGHT } from '../../core/player.js';
 import { floorRise, gallery } from './layout.js';
 
@@ -83,7 +84,7 @@ export function buildHarpists(THREE, scene, playCue=()=>{}) {
   function emit(){
     const p=pitches[next],w=pool[next%pool.length];w.born=next*interval;w.g.visible=true;next++;
     // Original pentatonic plucks, using the game's sound/mute/lifetime service.
-    playCue([[p,{duration:.48,level:.16,attack:.004,wave:'triangle'}],[p+12,{duration:.19,level:.047,attack:.003,wave:'sine'}]]);
+    playCue(harpistPluck(p));
   }
   function pose(){
     const beat=active?time/interval*Math.PI:0;
