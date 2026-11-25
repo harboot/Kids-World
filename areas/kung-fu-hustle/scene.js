@@ -6,8 +6,10 @@ import { buildCoolie } from './coolie.js';
 import { buildTailor } from './tailor.js';
 import { buildSauce } from './sauce.js';
 import { buildDonut } from './donut.js';
-import { buildAxeGang } from './axe-gang.js';
-import { buildHarpists } from './harpists.js';
+import { buildAxeGang, brotherSumPosition } from './axe-gang.js';
+import { buildHarpists, harpistRoom } from './harpists.js';
+import { EYE_HEIGHT } from '../../core/player.js';
+import { createAmbientSounds } from './ambient.js';
 import { buildFong } from './fong.js';
 import { buildLipstickGirl } from './lipstick-girl.js';
 import { craterPolygon, craterContains } from './hand-of-god.js';
@@ -274,6 +276,7 @@ function walkways(kit, layout) {
 
 export function buildCourtyard(THREE, scene, layout, touch, viewmodel, camera, playCue, onEncounter) {
   const audio=createCharacterSounds(playCue);
+  const ambient=createAmbientSounds(playCue);
   const sound=audio.play;
   const random = seededRandom(1748);
   const kit = masonryKit(THREE, scene);
@@ -306,8 +309,8 @@ export function buildCourtyard(THREE, scene, layout, touch, viewmodel, camera, p
   const tailor = buildTailor(THREE, scene, layout, onEncounter, sound);
   const sauce = buildSauce(THREE, scene, layout, sound);
   const donut = buildDonut(THREE, scene, layout, viewmodel, camera, sound);
-  const axeGang = buildAxeGang(THREE, scene, layout, sound, playCue);
-  const harpists = buildHarpists(THREE, scene, playCue);
+  const axeGang = buildAxeGang(THREE, scene, layout, sound, notes=>playCue?.(notes,{x:brotherSumPosition.x,z:brotherSumPosition.z,eyeY:EYE_HEIGHT,range:23,maxFloors:1}));
+  const harpists = buildHarpists(THREE, scene, notes=>playCue?.(notes,{x:harpistRoom.x,z:harpistRoom.z+.87,eyeY:harpistRoom.y+EYE_HEIGHT,range:22,maxFloors:1}));
   const fong = buildFong(THREE, scene, layout, viewmodel, playCue);
   const lipstick = buildLipstickGirl(THREE, scene, layout, onEncounter, sound);
 
@@ -328,5 +331,5 @@ export function buildCourtyard(THREE, scene, layout, touch, viewmodel, camera, p
     kit.box(0x8b7c79, x, height, z, width + .34, .26, 5.24, 0, 0, 0, false);
   }
   kit.finish();
-  return { coolie, beast, sauce, donut, axeGang, harpists, fong, lipstick, setCraterOpen, resetSounds(){audio.reset();resident.reset();}, update(dt, player, audible=true) { audio.setListener(audible?player:null); coolie.update(dt, player); resident.update(dt, player); beast.update(dt, player); tailor.update(dt, player); sauce.update(dt); donut.update(dt, player); axeGang.update(dt); harpists.update(dt); fong.update(dt, player); lipstick.update(dt, player); } };
+  return { coolie, beast, sauce, donut, axeGang, harpists, fong, lipstick, setCraterOpen, resetSounds(){audio.reset();ambient.reset();resident.reset();}, update(dt, player, audible=true) { audio.setListener(audible?player:null); ambient.update(dt,player,audible&&!axeGang.dancing&&!harpists.playing); coolie.update(dt, player); resident.update(dt, player); beast.update(dt, player); tailor.update(dt, player); sauce.update(dt); donut.update(dt, player); axeGang.update(dt); harpists.update(dt); fong.update(dt, player); lipstick.update(dt, player); } };
 }
