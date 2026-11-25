@@ -1,11 +1,11 @@
 {
-  "updatedAt": "2026-11-25T09:07:05.723Z",
+  "updatedAt": "2026-11-25T09:16:08.513Z",
   "summary": {
     "totalAreas": 9,
     "publicAreas": 8,
     "hiddenAreas": 1,
-    "totalFiles": 171,
-    "totalBytes": 1429147
+    "totalFiles": 172,
+    "totalBytes": 1437846
   },
   "areas": [
     {
@@ -74,10 +74,10 @@
       "depth": 44,
       "mapArea": 2728,
       "missionCount": 0,
-      "folderBytes": 170198,
-      "totalFiles": 19,
-      "jsFiles": 18,
-      "jsBytes": 148831,
+      "folderBytes": 178897,
+      "totalFiles": 20,
+      "jsFiles": 19,
+      "jsBytes": 157530,
       "imageFiles": 1,
       "imageBytes": 21367,
       "imageFormats": [
