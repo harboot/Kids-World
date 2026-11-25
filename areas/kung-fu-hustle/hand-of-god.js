@@ -53,7 +53,7 @@ export function buildHandOfGod({THREE,scene,camera,viewmodel,beast}){
   };
   function reset(){
     release?.({x:landing.x,z:landing.z,elevation:0,yaw:0});release=null;
-    state='idle';time=idle=0;armed=false;hand.visible=crater.visible=false;book.visible=true;
+    state='idle';time=idle=0;armed=true;hand.visible=crater.visible=false;book.visible=true;
     book.position.set(bookPosition.x,bookPosition.y,bookPosition.z);beast.setDefeated(false);
   }
   function pose(){
