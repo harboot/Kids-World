@@ -5,6 +5,7 @@ import { buildCoolie } from './coolie.js';
 import { buildTailor } from './tailor.js';
 import { buildSauce } from './sauce.js';
 import { buildDonut } from './donut.js';
+import { buildAxeGang } from './axe-gang.js';
 import { craterPolygon, craterContains } from './hand-of-god.js';
 import { buildBeast } from './the-beast.js';
 import { marketRow } from './market.js';
@@ -298,6 +299,7 @@ export function buildCourtyard(THREE, scene, layout, touch, viewmodel, camera) {
   const tailor = buildTailor(THREE, scene, layout);
   const sauce = buildSauce(THREE, scene, layout);
   const donut = buildDonut(THREE, scene, layout, viewmodel, camera);
+  const axeGang = buildAxeGang(THREE, scene);
 
   // A muted skyline sits outside the playable compound.
   // Leave the underground impact zone clear of the skyline base slab.
@@ -316,5 +318,5 @@ export function buildCourtyard(THREE, scene, layout, touch, viewmodel, camera) {
     kit.box(0x8b7c79, x, height, z, width + .34, .26, 5.24, 0, 0, 0, false);
   }
   kit.finish();
-  return { beast, sauce, donut, setCraterOpen, update(dt, player) { coolie.update(dt, player); resident.update(dt, player); beast.update(dt, player); tailor.update(dt, player); sauce.update(dt); donut.update(dt, player); } };
+  return { beast, sauce, donut, axeGang, setCraterOpen, update(dt, player) { coolie.update(dt, player); resident.update(dt, player); beast.update(dt, player); tailor.update(dt, player); sauce.update(dt); donut.update(dt, player); axeGang.update(dt); } };
 }
