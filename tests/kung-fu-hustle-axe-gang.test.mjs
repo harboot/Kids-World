@@ -3,9 +3,11 @@ import { test } from 'node:test';
 import * as THREE from '../vendor/three.module.min.js';
 import { buildAxeGang, brotherSumPosition, danceDuration } from '../areas/kung-fu-hustle/axe-gang.js';
 import { EYE_HEIGHT } from '../core/player.js';
+import { courtyardLayout } from '../areas/kung-fu-hustle/layout.js';
+import { walkElevation } from '../core/movement.js';
 
 test('Brother Sum leads six synchronized dancers and the interaction resets', () => {
-  const scene=new THREE.Scene(), gang=buildAxeGang(THREE,scene);
+  const scene=new THREE.Scene(), gang=buildAxeGang(THREE,scene,courtyardLayout());
   const {group,trigger}=gang;
   assert.deepEqual(group.position.toArray(),Object.values(brotherSumPosition));
   assert.equal(group.children.length,7);
@@ -27,4 +29,25 @@ test('Brother Sum leads six synchronized dancers and the interaction resets', ()
   trigger.act(); gang.update(1); gang.reset();
   assert.equal(gang.dancing,false);
   assert.equal(trigger.active,true);
+});
+
+test('each gang member blocks movement in idle and dance without sealing the formation', () => {
+  const scene=new THREE.Scene(), layout=courtyardLayout();
+  const gang=buildAxeGang(THREE,scene,layout);
+  assert.equal(layout.obstacles.length,7);
+  const world={...layout};
+  function checkBodies(){
+    for(const npc of gang.group.children){
+      const x=gang.group.position.x+npc.position.x,z=gang.group.position.z+npc.position.z;
+      assert.equal(walkElevation(world,{x,z:z+1},x,z,0,true),null);
+      assert.equal(walkElevation(world,{x,z:z+1},x,z,.5,false),null);
+    }
+  }
+  checkBodies();
+  // The two columns leave a central aisle for the player.
+  const x=brotherSumPosition.x,z=brotherSumPosition.z-3.30;
+  assert.equal(walkElevation(world,{x,z:z+.1},x,z,0,true),0);
+  gang.trigger.act();
+  for(let i=0;i<32;i++){gang.update(.25);checkBodies();}
+  gang.reset();checkBodies();
 });

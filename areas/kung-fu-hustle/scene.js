@@ -299,7 +299,7 @@ export function buildCourtyard(THREE, scene, layout, touch, viewmodel, camera) {
   const tailor = buildTailor(THREE, scene, layout);
   const sauce = buildSauce(THREE, scene, layout);
   const donut = buildDonut(THREE, scene, layout, viewmodel, camera);
-  const axeGang = buildAxeGang(THREE, scene);
+  const axeGang = buildAxeGang(THREE, scene, layout);
 
   // A muted skyline sits outside the playable compound.
   // Leave the underground impact zone clear of the skyline base slab.

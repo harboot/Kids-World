@@ -5,7 +5,7 @@ export const danceDuration = 16 * .56;
 const beat = .56;
 const smooth = t => { t = Math.max(0, Math.min(1, t)); return t*t*(3-2*t); };
 
-export function buildAxeGang(THREE, scene) {
+export function buildAxeGang(THREE, scene, layout) {
   const group = new THREE.Group();
   group.name = 'Axe Gang formation';
   group.position.set(brotherSumPosition.x, brotherSumPosition.y, brotherSumPosition.z);
@@ -113,6 +113,8 @@ export function buildAxeGang(THREE, scene) {
     root.name=name; root.position.set(x,0,z); root.scale.setScalar(scale); group.add(root);
     const limbs=[-1,1].map(s=>({s,upper:root.getObjectByName('Upper arm '+s),fore:root.getObjectByName('Forearm '+s),hand:root.getObjectByName('Hand '+s),thigh:root.getObjectByName('Thigh '+s),shin:root.getObjectByName('Shin '+s),shoe:root.getObjectByName('Shoe '+s)}));
     dancers.push({root,torso:root.getObjectByName('Torso'),head:root.getObjectByName('Head'),limbs,x,z});
+    // One body collider per NPC, with room for the dance's 0.20-unit lateral sway.
+    layout.solid(brotherSumPosition.x+x, brotherSumPosition.z+z, 1.20, .68, 1.95);
   }
   addDancer(leader,'Brother Sum',0,0,1.04);
   for(let row=0;row<3;row++) for(const s of [-1,1]) {
