@@ -462,12 +462,12 @@ test('Beast breathes, tracks nearby players and returns to neutral behind or ups
   assert.ok(Math.abs(head.rotation.y)<.01);
 });
 
-test('Hand of God automatically eligible at book height and completes reusable cinematic', async t => {
+test('Hand of God manually activated at book height and completes reusable cinematic', async t => {
   const {visit,position}=await start(t);
   const book=visit.scene.getObjectByName('Hand of God floating book');
   const crater=visit.scene.getObjectByName('Hand of God impact crater');
   const fallen=visit.scene.getObjectByName('Beast fallen pose');
-  const trigger=visit.area.interactions.find(i=>i.automatic);
+  const trigger=visit.area.interactions.find(i=>i.label==='Buka Buku');
   assert.ok(book&&crater&&fallen&&trigger);
   assert.deepEqual(book.position.toArray(),[18.75,7.90,5.83]);
   assert.ok(!trigger.reachable(new THREE.Vector3(18.75,EYE_HEIGHT,5.83)));
@@ -476,17 +476,26 @@ test('Hand of God automatically eligible at book height and completes reusable c
   const advance=seconds=>{for(let i=0;i<Math.round(seconds*60);i++)visit.area.update(1/60,position);};
   advance(.1);
   assert.ok(trigger.active&&trigger.reachable(position));
+  assert.ok(!trigger.automatic);
+  assert.ok(book.visible);
   let released=0;
   trigger.act({guideCamera:()=>()=>{released++;}});
   advance(1.5);
   assert.equal(book.visible,false);
   advance(4.9);
-  assert.ok(position.y>30);
+  assert.ok(position.y>60);
   advance(2.1);
   assert.ok(crater.visible&&fallen.visible);
+  assert.equal(released,1);
+  const cover=visit.scene.getObjectByName('Handprint removable ground cover');
+  assert.equal(cover.visible,false);
+  position.set(5,EYE_HEIGHT,14);
   advance(9);
+  assert.deepEqual(position.toArray(),[5,EYE_HEIGHT,14]);
   assert.ok(crater.visible);
   advance(1.1);
   assert.ok(book.visible&&!crater.visible&&!fallen.visible);
+  assert.equal(cover.visible,true);
+  assert.deepEqual(position.toArray(),[5,EYE_HEIGHT,14]);
   assert.equal(released,1);
 });
