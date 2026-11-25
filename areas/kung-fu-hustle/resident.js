@@ -122,7 +122,7 @@ function buildBra(THREE, kit, hands) {
   oval(binding, 0, .097, bust + .034, .154, .089, .068, 0, 0, .12);
 }
 
-export function buildResident(THREE, kit, scene) {
+export function buildResident(THREE, kit, scene, onEncounter=()=>{}) {
   const { oval, beam } = kit;
   const robe = 0xbc848c;
   const trim = 0xe4c6c4;
@@ -204,6 +204,7 @@ export function buildResident(THREE, kit, scene) {
         target.sub(head.position);
         const distance = Math.hypot(target.x, target.z);
         if (distance < 5.2 && target.z > .15) {
+          onEncounter('landlady');
           turn = clamp(Math.atan2(target.x, target.z), -.85, .85);
           tilt = clamp(-Math.atan2(target.y, distance), -.23, .23);
         }

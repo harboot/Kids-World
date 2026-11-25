@@ -5,7 +5,7 @@ export function beastHeadTarget(x, z, distance, sameFloor) {
   if (!sameFloor || distance >= 4 || z <= 0) return 0;
   return Math.max(-beastYawLimit, Math.min(beastYawLimit, Math.atan2(x, z)));
 }
-export function buildBeast(THREE, scene, layout) {
+export function buildBeast(THREE, scene, layout, onEncounter=()=>{}) {
   const root = new THREE.Group();
   root.name = 'The Beast — Fire Cloud Evil God';
   root.position.set(beastPosition.x, beastPosition.y, beastPosition.z);
@@ -130,6 +130,7 @@ export function buildBeast(THREE, scene, layout) {
       const sameFloor=Math.abs(target.y-1.68)<1.05;
       const distance=Math.hypot(target.x,target.z);
       turn=beastHeadTarget(target.x,target.z-head.position.z,distance,sameFloor);
+      if(sameFloor&&distance<4&&target.z-head.position.z>0)onEncounter('beast');
     }
     head.rotation.y+=(turn-head.rotation.y)*(1-Math.exp(-6*dt));
   }};

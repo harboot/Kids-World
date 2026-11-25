@@ -63,12 +63,12 @@ export const areaMetadata = {
       "Kung Fu",
       "Hustle"
     ],
-    "description": "Explore a damaged tenement, open market stalls, and four floors of courtyard stairs and corridors.",
+    "description": "Meet the tenement residents, dance with the Axe Gang, hear the Harpists, and discover the Buddha Palm.",
     "canvasLabel": "3D courtyard and walkable galleries of an old Shanghai tenement",
     "themeColor": "#d9ae88",
     "width": 62,
     "depth": 44,
-    "missionCount": 0,
+    "missionCount": 10,
     "spawn": {
       "x": 0,
       "z": 18.2

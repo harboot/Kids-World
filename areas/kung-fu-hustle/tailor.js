@@ -8,7 +8,7 @@ const frontYaw=-Math.PI/2;
 const skin=0xc08c68, shirt=0xe5dfd0, suspenders=0x494039, pants=0x454341, shoes=0x292a28;
 const mix=(a,b,t)=>a+(b-a)*t;
 
-export function buildTailor(THREE,scene,layout){
+export function buildTailor(THREE,scene,layout,onEncounter=()=>{}){
   const root=new THREE.Group();root.name='Tailor — Hung Gar master';
   root.position.set(tailorPosition.x,tailorPosition.y,tailorPosition.z);
   root.rotation.y=frontYaw;scene.add(root);
@@ -160,5 +160,6 @@ export function buildTailor(THREE,scene,layout){
     turn+=(yaw-turn)*(1-Math.exp(-7*Math.min(dt,.1)));
     root.rotation.y=frontYaw+turn;
     pose(blend*blend*(3-2*blend));
+    if(ready&&blend>=1)onEncounter('tailor');
   }};
 }
