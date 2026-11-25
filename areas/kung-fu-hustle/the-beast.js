@@ -95,12 +95,28 @@ export function buildBeast(THREE, scene, layout) {
     o(0xc28b61,0,-.025,.08,.20,.22,.17,12,7);
   });
   layout.solid(beastPosition.x,beastPosition.z-.17,1.9,2.0,.95);
+  const fallen=group('Beast fallen pose',root);
+  batch('Beast prone limbs and jacket',fallen,(o,l)=>{
+    o(cloth,0,.17,-.22,.39,.17,.55,12,7);
+    for(const s of [-1,1]){
+      l(cloth,[s*.28,.17,.15],[s*.72,.11,.36],.16,.12);
+      l(cloth,[s*.72,.11,.36],[s*.94,.08,.62],.12,.08);
+      o(skin,s*.97,.07,.65,.12,.055,.15,8,5);
+      l(cloth,[s*.16,.15,-.55],[s*.24,.10,-1.12],.17,.13);
+      l(cloth,[s*.24,.10,-1.12],[s*.31,.09,-1.50],.13,.10);
+      o(0x292929,s*.31,.08,-1.61,.13,.075,.21);
+    }
+  });
+  const fallenHead=tilt.clone(true);
+  fallenHead.position.set(0,.16,.48);fallenHead.rotation.set(Math.PI/2,0,0);fallen.add(fallenHead);
+  fallen.visible=false;
+  const planted=root.getObjectByName('Beast planted limbs');
   const target=new THREE.Vector3();
   let time=0, defeated=false;
   const smooth=t=>t*t*(3-2*t);
   return {root, setDefeated(value){
     defeated=Boolean(value);time=0;body.position.y=0;head.rotation.y=0;throat.scale.set(1,1,1);
-    root.scale.y=defeated?.36:1;tilt.rotation.x=defeated?.35:-.16;
+    planted.visible=body.visible=!defeated;fallen.visible=defeated;tilt.rotation.x=-.16;
   }, update(dt,player){
     if(defeated)return;
     if(!Number.isFinite(dt)||dt<=0)return;
