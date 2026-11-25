@@ -71,19 +71,67 @@ export function buildFong(THREE,scene,layout,viewmodel,playCue=()=>{}){
   for(let i=0;i<sp.count;i++){const a=Math.atan2(sp.getZ(i),sp.getX(i)),y=sp.getY(i);col.setHex(Math.sin(a*7+y*25)*Math.cos(a*3-y*19)>.40?0xf0c8bd:skirt);sc.push(col.r,col.g,col.b);}
   sg.setAttribute('color',new THREE.Float32BufferAttribute(sc,3));const sm=new THREE.Mesh(sg,new THREE.MeshStandardMaterial({vertexColors:true,flatShading:true}));sm.position.y=.62;sm.castShadow=true;root.add(sm);
   const head=group(torso,'Fong head',0,.56,0);
-  batch(head,({oval,box})=>{
-    oval(skin,0,.145,0,.253,.328,.246);oval(skin,0,.045,.035,.183,.151,.194);
-    oval(hair,0,.246,-.039,.272,.169,.257);oval(hair,0,.132,-.103,.247,.265,.091);
-    for(const s of [-1,1]){
-      oval(skin,s*.127,.12,0,.043,.079,.041);oval(hair,s*.111,.185,-.025,.054,.170,.137);
-      oval(0xf0d5bd,s*.052,.154,.112,.060,.026,.025);oval(0x2b2521,s*.051,.153,.126,.024,.023,.013);
-      box(0x49332a,s*.052,.189,.115,.063,.012,.012,0,0,-s*.12);
+  // Continuous oval face: no separate chin sphere or oversized nose.
+  const rings=[[-.018,.018,.035,.025],[.008,.061,.060,.024],[.040,.091,.080,.018],
+    [.079,.112,.099,.008],[.125,.124,.113,.002],[.169,.122,.113,-.002],
+    [.208,.119,.108,-.004],[.249,.111,.098,-.006],[.284,.085,.077,-.008],[.315,.018,.022,-.008]];
+  function profile(y){
+    let i=1;while(i<rings.length-1&&y>rings[i][0])i++;
+    const a=rings[i-1],b=rings[i],t=Math.max(0,Math.min(1,(y-a[0])/(b[0]-a[0])));
+    return a.slice(1).map((v,j)=>v+(b[j+1]-v)*t);
+  }
+  const segments=32;
+  function shell(name,paint,levels,point){
+    const p=[],idx=[];
+    for(let i=0;i<levels;i++)for(let j=0;j<segments;j++)p.push(...point(i,j*2*Math.PI/segments));
+    for(let i=0;i<levels-1;i++)for(let j=0;j<segments;j++){
+      const a=i*segments+j,b=i*segments+(j+1)%segments,c=b+segments,d=a+segments;
+      idx.push(a,b,c,a,c,d);
     }
-    oval(hair,-.049,.236,.084,.165,.077,.092,0,0,-.38);
-    oval(skin,0,.109,.130,.046,.067,.055);oval(0xa74b46,0,.047,.125,.066,.019,.021);
-    oval(0x372a25,0,.14,-.145,.11,.11,.085);oval(0x9f4f57,0,.105,-.178,.094,.045,.078);
-    oval(hair,0,-.07,-.179,.12,.34,.104);oval(hair,.018,-.258,-.163,.092,.20,.09);
+    for(let j=1;j<segments-1;j++)idx.push(0,j+1,j,(levels-1)*segments,(levels-1)*segments+j,(levels-1)*segments+j+1);
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setIndex(idx);g.computeVertexNormals();
+    const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:paint,roughness:.92}));m.name=name;m.castShadow=true;head.add(m);
+  }
+  shell('Fong continuous oval face',skin,rings.length,(i,a)=>{
+    const [y,w,d,z]=rings[i];return [w*Math.sin(a),y,z+d*Math.cos(a)];
   });
+  // Hairline slopes gently around the temples; the cap follows the skull.
+  shell('Fong swept-back hair',hair,8,(i,a)=>{
+    const front=(1+Math.cos(a))/2;
+    const base=.045+.208*Math.pow(front,3)+.008*Math.sin(a)*front;
+    const y=base+(.315-base)*i/7,[w,d,z]=profile(y);
+    return [(w+.009)*Math.sin(a),y+.008,z+(d+.009)*Math.cos(a)];
+  });
+  batch(head,({oval})=>{
+    for(const s of [-1,1])oval(skin,s*.122,.124,-.006,.039,.071,.038);
+    oval(hair,0,.124,-.132,.104,.102,.087);
+    oval(0x94616a,0,.098,-.165,.086,.033,.074);
+    oval(hair,0,-.055,-.174,.107,.314,.097,0,0,-.07);
+    oval(hair,.026,-.244,-.160,.074,.168,.075,0,0,.18);
+  });
+  const surface=(x,y)=>{const [w,d,z]=profile(y);return z+d*Math.sqrt(Math.max(0,1-(x/w)**2));};
+  // Small face details hug the curved surface rather than floating as spheres.
+  function patch(name,paint,outline,cx,cy,raise=.005,edge=.003){
+    const points=[cx,cy,surface(cx,cy)+raise],ix=[];
+    for(const [x,y] of outline)points.push(x,y,surface(x,y)+edge);
+    for(let i=0;i<outline.length;i++)ix.push(0,i+1,(i+1)%outline.length+1);
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(points,3));g.setIndex(ix);g.computeVertexNormals();
+    const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:paint,roughness:.92,side:THREE.DoubleSide}));m.name=name;head.add(m);
+  }
+  function almond(x,y,w,h){return [[x-w,y],[x-w*.53,y+h*.76],[x,y+h],[x+w*.58,y+h*.65],[x+w,y],[x+w*.48,y-h*.55],[x,y-h*.70],[x-w*.58,y-h*.48]];}
+  for(const s of [-1,1]){
+    const x=s*.052,y=.167;
+    patch('Fong upper lash line',0x49332b,almond(x,y+.001,.031,.013),x,y,.006,.004);
+    patch('Fong almond eye',0xf2e4d6,almond(x,y,.027,.010),x,y,.008,.006);
+    patch('Fong brown iris',0x42342c,almond(x,y,.0105,.010),x,y,.011,.009);
+    patch('Fong pupil',0x241d1a,almond(x,y,.005,.007),x,y,.013,.011);
+    patch('Fong eye glint',0xfff4e3,almond(x-.0025,y+.004,.0022,.0022),x-.0025,y+.004,.015,.014);
+    const brow=[[s*.024,.201],[s*.046,.207],[s*.065,.208],[s*.083,.202],[s*.085,.197],[s*.063,.202],[s*.046,.201],[s*.024,.196]];
+    patch('Fong curved eyebrow',0x493a32,brow,s*.054,.202,.005,.004);
+  }
+  patch('Fong subtle nose',skin,[[0,.156],[.011,.123],[.014,.099],[.007,.094],[0,.096],[-.007,.094],[-.014,.099],[-.011,.123]],0,.109,.023,.001);
+  patch('Fong natural upper lip',0x9d5952,[[-.025,.065],[-.009,.070],[0,.067],[.009,.070],[.025,.065],[0,.061]],0,.065,.006,.003);
+  patch('Fong natural lower lip',0xb8756b,[[-.025,.065],[0,.061],[.025,.065],[.012,.055],[0,.052],[-.012,.055]],0,.058,.006,.003);
   const arm=group(torso,'Fong offering arm',.20,.39,0);
   batch(arm,({oval,box})=>{oval(white,0,-.10,0,.142,.25,.155);oval(skin,0,-.23,.015,.10,.18,.10);oval(skin,0,-.35,.035,.092,.105,.093);});
   const held=lolly(arm,'Fong held lollipop',0,-.12,.145,.105,.15);held.rotation.x=-.25;
