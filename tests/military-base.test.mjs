@@ -31,7 +31,13 @@ async function fixture(reducedMotion) {
     assert.fail(`Could not walk to ${x}, ${z} from ${camera.position.x.toFixed(2)}, ${camera.position.z.toFixed(2)}`);
   }
   spawn(militaryBase.spawn.x, militaryBase.spawn.z);
-  return { worlds, visit, camera, spawn, walk };
+  function settle() {
+    player.stop();
+    step.set(0, 0);
+    for (let i = 0; i < 30; i++) player.move(1 / 60, step, worlds.active);
+    assert.ok(player.grounded, 'player settles on the floor');
+  }
+  return { worlds, visit, camera, spawn, walk, settle };
 }
 
 test('the South Gate leads to a walkable HQ lobby and the physical stairs work in both directions', async t => {
@@ -172,7 +178,7 @@ test('mission sites are in the environment and animated scenery resets with the 
 });
 
 test('both barracks have walkable open doors, clear aisles, and collidable bunk beds', async t => {
-  const { worlds, visit, camera, spawn, walk } = await fixture();
+  const { worlds, visit, camera, spawn, walk, settle } = await fixture();
   t.after(worlds.unload);
   visit.scene.updateMatrixWorld(true);
   for (const [name, width, depth] of [['Barracks 01',10.8,14],['Barracks 02',10.45,15]]) {
@@ -191,6 +197,7 @@ test('both barracks have walkable open doors, clear aisles, and collidable bunk 
     assert.equal(hall.children.filter(o=>o.name.startsWith(name+' bunk ')).length,8);
     walk(middle.x,middle.z);
     walk(approach.x,approach.z);
+    settle();
     assert.equal(camera.position.y,EYE_HEIGHT);
   }
   for (const name of ['COMMAND AVE','EAST SERVICES','MOTOR POOL','BARRACKS','FLIGHT LINE','SOUTH LOOKOUT'])
