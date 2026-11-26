@@ -1,8 +1,9 @@
 import { SURFACE_GAP } from '../../core/geometry.js';
 import { shutter, window } from './buildings.js';
-import { checkpoints, fence, lookout } from './layout.js';
+import { checkpoints, fence, lookout, northPost } from './layout.js';
 import { hazard, stripe } from './roads.js';
 import { ink } from './scenery.js';
+import { buildNorthPost } from './observation-props.js';
 
 function fenceLine(kit, [x, z], [endX, endZ]) {
   const { group, box, part, solid } = kit;
@@ -132,7 +133,8 @@ function sideCheckpoint(kit, data, west) {
   const { group, box, sign, solid } = kit;
   const { x, z, name } = data;
   const station = group(name, x, 0, z, west ? Math.PI / 2 : 0);
-  booth(kit, name + ' booth', x - (west ? 2.4 : 1.14), z - 1.5, west ? Math.PI / 2 : 0, west ? 'WEST POST' : 'NORTH POST');
+  if (west) booth(kit, name + ' booth', x - 2.4, z - 1.5, Math.PI / 2, 'WEST POST');
+  else buildNorthPost(kit);
   for (const side of [-1, 1]) {
     box(station, ink.dark, side * 1.9, 1.46, 2.62, .13, 2.92, .15);
     solid(station, side * 1.9, 2.62, .15, .17, 2.92);
@@ -254,6 +256,7 @@ export function buildPerimeter(kit) {
     getCeilingHeight(x, z) {
       const { x: cx, z: cz, width, depth, height } = lookout;
       if (Math.abs(x - cx) <= width / 2 && Math.abs(z - cz) <= depth / 2) return height + 2.77;
+      if (Math.abs(x - northPost.x) <= northPost.width / 2 && Math.abs(z - northPost.z) <= northPost.depth / 2) return northPost.floor + 2.65;
       return Infinity;
     },
     blocksGround(x, z, radius, _feet, from) {

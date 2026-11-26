@@ -114,6 +114,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   let previousFrame = null;
   let interactionRevision = 0;
   let guidedCamera;
+  let guidedFov;
   let driveVehicle;
   let stepDistance = 0;
   let finishStartup;
@@ -330,8 +331,10 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   function clearVisitPresentation() {
     interactionRevision++;
     guidedCamera = undefined;
+    guidedFov = undefined;
     driveVehicle = undefined;
     delete game.dataset.driving;
+    delete game.dataset.viewMode;
     stepDistance = 0;
     if (levelPicker.open) levelPicker.close();
     if (settings.open) settings.close();
@@ -484,9 +487,12 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     levelPicker.showModal();
   });
 
-  function guideCamera(look, current, { camera: rideCamera, prompt, drive } = {}) {
+  function guideCamera(look, current, { camera: rideCamera, prompt, drive, fov, viewMode } = {}) {
     const stop = player.guide(look);
     guidedCamera = rideCamera;
+    guidedFov = Number.isFinite(fov) ? fov : undefined;
+    if (viewMode) game.dataset.viewMode = viewMode;
+    else delete game.dataset.viewMode;
     driveVehicle = drive;
     if (drive) game.dataset.driving = 'true';
     stepDistance = 0;
@@ -498,8 +504,10 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
       if (!current() || !stop()) return;
       delete game.dataset.seated;
       guidedCamera = undefined;
+      guidedFov = undefined;
       driveVehicle = undefined;
       delete game.dataset.driving;
+      delete game.dataset.viewMode;
       if (prompt) interactions.pin(null);
       controls.clear();
       if (spawn) relocate(spawn);
@@ -649,9 +657,10 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
         interactions.update();
       }
       drone?.update();
-      if (guidedCamera && (guidedCamera.aspect !== camera.aspect || guidedCamera.fov !== camera.fov)) {
+      const viewFov = guidedFov ?? camera.fov;
+      if (guidedCamera && (guidedCamera.aspect !== camera.aspect || guidedCamera.fov !== viewFov)) {
         guidedCamera.aspect = camera.aspect;
-        guidedCamera.fov = camera.fov;
+        guidedCamera.fov = viewFov;
         guidedCamera.updateProjectionMatrix();
       }
       const rendered = view.render(visit.scene, activePlayer, drone?.camera ?? guidedCamera);

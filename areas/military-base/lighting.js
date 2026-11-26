@@ -163,6 +163,8 @@ export function createNightLighting({ kit, props, missions, tank, driving, jeep,
     source(ceilingPosition.x, ceilingPosition.y - .36, ceilingPosition.z,
       { name: 'Barracks interior', color: 0xffe1b1, range: 8, intensity: 28, priority: 3, pool: false });
   });
+  const post = scene.getObjectByName('North Post CCTV room');
+  if (post) source(post.position.x, 2.3, post.position.z, { name: 'CCTV room', color: cool, range: 6, intensity: 23, priority: 4, pool: false });
   // Bright entrances and work areas. No per-fixture real light allocations.
   for (const [x, z, y, color, name, radius] of [
     [-3.4, fence.south, 3.4, warm, 'South gate', 6],

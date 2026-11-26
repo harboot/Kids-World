@@ -20,8 +20,8 @@ export function buildTankCourse(kit) {
     new THREE.MeshBasicMaterial({color:0x83f0ff,side:THREE.DoubleSide,toneMapped:false}));
   ring.rotation.x=-Math.PI/2;ring.position.y=.105;ring.raycast=()=>{};marker.add(ring);
   scene.add(marker);
-  function show(i) {
-    const point=tankTestCheckpoints[i];marker.visible=Boolean(point);
+  function show(i, riding = false) {
+    const point=tankTestCheckpoints[i];marker.visible=Boolean(point && riding);
     if(point)marker.position.set(point.x,0,point.z);
   }
   show(0);
