@@ -7,7 +7,7 @@ import { passengerEye } from '../areas/military-base/helicopter.js';
 import { headquarters, helipad, motorPool, repairTank, tankTestCheckpoints } from '../areas/military-base/layout.js';
 import { createDroneCamera } from '../core/drone-view.js';
 import { nearestInteraction } from '../core/interactions.js';
-import { overlaps, walkElevation } from '../core/movement.js';
+import { overlaps, walkElevation, floorHeight } from '../core/movement.js';
 import { createPlayer, EYE_HEIGHT } from '../core/player.js';
 import { createWorldManager } from '../core/world-manager.js';
 
@@ -168,7 +168,7 @@ test('one medical crate and one radar console complete their respective missions
   assert.ok(source.every(item => item.active));
 });
  
-test('three ordered tank checkpoints require the Scout Tank, not walking or Jeep driving', async t => {
+test('vehicle checkpoints are hidden on foot, progress survives switching vehicles and order is enforced', async t => {
   const { area, camera, find, node, row } = await missionFixture(t, { reducedMotion: () => true });
   const marker = node('Tank driving checkpoint');
   const tank = node('Tank 01');
@@ -177,34 +177,67 @@ test('three ordered tank checkpoints require the Scout Tank, not walking or Jeep
   const update = () => area.update(0,camera.position);
   const move = (vehicle, point) => { vehicle.position.x = point.x; vehicle.position.z = point.z; update(); };
   assert.equal(mission.total, 3);
-  assert.equal(marker.visible, true);
-  camera.position.set(tankTestCheckpoints[0].x, 1.68, tankTestCheckpoints[0].z);
-  update();
-  assert.equal(mission.current, 0);
+  assert.equal(mission.title, 'Vehicle Driving Test');
+  assert.equal(marker.visible, false);
+  camera.position.set(tankTestCheckpoints[0].x,1.68,tankTestCheckpoints[0].z);
+  update(); assert.equal(mission.current,0); assert.equal(marker.visible,false);
   const mount = item => {
-    let exit;
-    camera.position.set(item.x,1.68,item.z);
+    let exit;camera.position.set(item.x,1.68,item.z);
     item.act({guideCamera(_look,opts){exit=opts.prompt;return ()=>{};}});
-    return exit;
+    update();return exit;
   };
-  mount(find('Drive Jeep')[0]);
-  move(jeep,tankTestCheckpoints[0]);
-  assert.equal(mission.current,0);
-  area.reset();
-  mount(find('Drive Tank')[0]);
-  assert.equal(find('Drive Jeep')[0].active,false);
-  move(tank,tankTestCheckpoints[1]);
-  assert.equal(mission.current,0);
-  for (const [i,p] of tankTestCheckpoints.entries()) {
-    move(tank,p);update();
-    assert.equal(mission.current,i+1);
-    if (i<2) assert.equal(marker.position.x,tankTestCheckpoints[i+1].x);
-  }
-  assert.equal(mission.complete,true);
-  assert.equal(marker.visible,false);
-  area.reset();
-  assert.equal(mission.current,0);
+  const exit=mount(find('Drive Jeep')[0]);
   assert.equal(marker.visible,true);
+  move(jeep,tankTestCheckpoints[1]);assert.equal(mission.current,0);
+  move(jeep,tankTestCheckpoints[0]);assert.equal(mission.current,1);
+  exit.act();update();assert.equal(marker.visible,false);
+  mount(find('Drive Tank')[0]);
+  assert.equal(marker.visible,true);assert.equal(find('Drive Jeep')[0].active,false);
+  for (let i=1;i<3;i++) {move(tank,tankTestCheckpoints[i]);assert.equal(mission.current,i+1);}
+  assert.equal(mission.complete,true);assert.equal(marker.visible,false);
+  area.reset();assert.equal(mission.current,0);assert.equal(marker.visible,false);
+});
+ 
+test('night vision binoculars use a zoomed independent camera, can look around, and complete on use', async t => {
+  const {area,camera,find,node,row}=await missionFixture(t);
+  const item=find('Use Binoculars')[0];
+  assert.ok(node('Night vision binoculars'));
+  assert.equal(item.reachable({y:1.68}),false);
+  camera.position.set(item.x-.7,5.43,item.z);
+  const start=camera.position.clone();
+  let look,opts,releases=0;
+  item.act({guideCamera(l,o){look=l;opts=o;return ()=>{releases++;};}});
+  assert.equal(opts.viewMode,'night-vision');assert.equal(opts.fov,26);
+  assert.notEqual(opts.camera,camera);assert.equal(row('night-observation').complete,true);
+  const before=opts.camera.quaternion.clone();look(.4,.2);
+  assert.ok(before.angleTo(opts.camera.quaternion)>.2);
+  assert.equal(opts.prompt.label,'Exit Binoculars');
+  opts.prompt.act();assert.equal(releases,1);assert.deepEqual(camera.position,start);
+  area.reset();assert.equal(row('night-observation').current,0);
+});
+
+test('CCTV console cycles five real fixed views with one camera and exits on sixth interaction', async t => {
+  const {area,camera,find,node,row}=await missionFixture(t);
+  const item=find('View CCTV')[0];const mission=row('cctv-monitoring');
+  for(let i=1;i<=5;i++){assert.ok(node('CCTV monitor '+i));assert.ok(node('CCTV camera '+i));}
+  let opts,release=0;
+  const start=camera.position.clone();
+  item.act({guideCamera(_look,o){opts=o;return ()=>{release++;};}});
+  assert.equal(opts.viewMode,'cctv');assert.equal(opts.fov,58);
+  const cameraView=opts.camera;
+  const locations=new Set();
+  for(let i=1;i<=5;i++){
+    assert.equal(opts.camera,cameraView);
+    assert.equal(mission.current,i);
+    assert.match(opts.prompt.label,new RegExp('CCTV '+i+'/5'));
+    locations.add(cameraView.position.toArray().join(','));
+    if(i<5)opts.prompt.act();
+  }
+  assert.equal(locations.size,5);assert.equal(mission.complete,false);
+  opts.prompt.act();assert.equal(release,1);assert.equal(mission.complete,true);assert.deepEqual(camera.position,start);
+  area.reset();assert.equal(mission.current,0);assert.equal(mission.complete,false);
+  item.act({guideCamera(_look,o){opts=o;return ()=>{release++;};}});
+  area.reset();assert.equal(release,2);assert.equal(mission.current,0);
 });
  
 test('the circuit is clockwise on the actual Drone View projection and keeps the facilities on its right', async t => {
@@ -303,7 +336,7 @@ test('every mission prompt can be reached from a clear standing position', async
       for (let i = 0; i < 32; i++) {
         const x = item.x + Math.sin(i * Math.PI / 16) * r;
         const z = item.z + Math.cos(i * Math.PI / 16) * r;
-        const floor = area.getGroundHeight(x, z, 0);
+        const floor = floorHeight(area, x, z, (item.anchorY ?? 1.38) - 1.1);
         const standing = { x, z, y: EYE_HEIGHT + floor };
         if (walkElevation(area, standing, x, z, floor, true) === floor && item.reachable(standing)) accessible = true;
       }
@@ -324,6 +357,12 @@ test('the last independent mission records area completion once across repeat vi
     assert.equal(completions.length, visit);
     for (const item of find('Pick Up Component')) { item.act(); find('Install Component')[0].act(); }
     advance(6);
+    const night = find('Use Binoculars')[0];
+    let prompt;
+    const guideCamera = (_look,opts) => { prompt=opts.prompt; return ()=>{}; };
+    night.act({guideCamera}); prompt.act();
+    find('View CCTV')[0].act({guideCamera});
+    for(let i=0;i<5;i++) prompt.act();
     const tank = area.interactions.find(item => item.label === 'Drive Tank');
     tank.act({ guideCamera() { return () => {}; } });
     const scout = area === worlds.active.area ? worlds.active.scene.getObjectByName('Tank 01') : null;

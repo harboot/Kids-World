@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import * as THREE from '../vendor/three.module.min.js';
 import { areas } from '../game.js';
 import { militaryBase } from '../areas/military-base/index.js';
-import { antennas, checkpoints, fence, headquarters, helipad, hospital, lookout, motorPool, repairTank, supplyDepot } from '../areas/military-base/layout.js';
+import { antennas, checkpoints, fence, headquarters, helipad, hospital, lookout, motorPool, repairTank, supplyDepot, northPost } from '../areas/military-base/layout.js';
 import { walkElevation } from '../core/movement.js';
 import { createPlayer, EYE_HEIGHT } from '../core/player.js';
 import { createWorldManager } from '../core/world-manager.js';
@@ -146,7 +146,7 @@ test('mission sites are in the environment and animated scenery resets with the 
   t.after(worlds.unload);
   const { area, scene } = visit;
   assert.deepEqual(area.missionStatus.missions.map(({ current, total }) => [current, total]),
-    [[0, 3], [0, 2], [0, 1], [0, 1], [0, 1], [0, 3]]);
+    [[0, 3], [0, 2], [0, 1], [0, 1], [0, 1], [0, 3], [0, 1], [0, 5]]);
   assert.ok(area.interactions.some(({ label }) => label === 'Board Helicopter'));
   for (const { name } of checkpoints.slice(1)) assert.ok(scene.getObjectByName(name));
   assert.ok(scene.getObjectByName('Open South Gate'));
@@ -204,4 +204,16 @@ test('both barracks have walkable open doors, clear aisles, and collidable bunk 
     assert.equal(visit.scene.getObjectByName(name+' wayfinding'),undefined);
   const lamp = visit.scene.children.find(o=>o.name==='Night street lamp' && o.position.x===11.2);
   assert.ok(lamp.getObjectByName('HOSPITAL →'));
+});
+
+test('North Post is walkable through its open front and contains a solid monitoring desk', async t => {
+  const { worlds, visit, camera, spawn, walk, settle } = await fixture();
+  t.after(worlds.unload);
+  const {x,z,depth,floor}=northPost;
+  const outside=z+depth/2+1.0;
+  spawn(x,outside);
+  walk(x,z+.30);assert.equal(camera.position.y,EYE_HEIGHT+floor);
+  assert.ok(visit.scene.getObjectByName('CCTV control desk'));
+  assert.equal(walkElevation(visit.area,camera.position,x,z-1.28,floor,true),null);
+  walk(x,outside);settle();assert.equal(camera.position.y,EYE_HEIGHT);
 });
