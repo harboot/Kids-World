@@ -13,6 +13,20 @@ export function buildSoldiers(kit, moving) {
   const { add } = moving;
   const poses = [];
   const gestures = new Map();
+  // The model faces +Z, so its right shoulder is on local -X.
+  const { THREE } = kit;
+  const down = new THREE.Vector3(0,-1,0);
+  const upperLength=.25, lowerLength=.30;
+  const upperSalute=new THREE.Quaternion().setFromUnitVectors(down,new THREE.Vector3(-.19,.155,.055).normalize());
+  const lowerSaluteWorld=new THREE.Quaternion().setFromUnitVectors(down,new THREE.Vector3(.245,.20,.12).normalize());
+  const lowerSalute=upperSalute.clone().invert().multiply(lowerSaluteWorld);
+  function salutePose(arms, amount) {
+    const t=THREE.MathUtils.clamp(amount,0,1);
+    const right=arms[0];
+    right.rotation.set(0,0,-.08);
+    right.quaternion.slerp(upperSalute,t);
+    right.getObjectByName('Elbow').quaternion.identity().slerp(lowerSalute,t);
+  }
 
   function person(name, role, x, z, yaw, action = 'idle', route = null, elevation = 0, parent = kit.scene) {
     const index = poses.length;
@@ -42,8 +56,11 @@ export function buildSoldiers(kit, moving) {
     const legs = [];
     for (const side of [-1, 1]) {
       const arm = group('Arm', side * .28, .44, 0, 0, core);
-      add(arm, 'box', colors.jacket, side * .024, -.173, 0, .141, .40, .178);
-      add(arm, 'box', skin, side * .025, -.394, .011, .115, .113, .135);
+      add(arm, 'box', colors.jacket, 0, -upperLength/2, 0, .141, upperLength+.03, .178);
+      const elbow=group('Elbow',0,-upperLength,0,0,arm);
+      add(elbow,'box',colors.jacket,0,-lowerLength/2,0,.127,lowerLength+.025,.145);
+      const hand=group('Hand',0,-lowerLength-.045,0,0,elbow);
+      add(hand,'box',skin,0,0,0,.112,.115,.075);
       arms.push(arm);
       const leg = group('Leg', side * .109, .78, 0, 0, npc);
       add(leg, 'box', colors.trousers, 0, -.321, 0, .174, .67, .189);
@@ -70,14 +87,18 @@ export function buildSoldiers(kit, moving) {
         const swing = Math.sin(phase + i * Math.PI);
         arm.rotation.x = (action === 'idle' ? Math.sin(time * 1.8 + index + i) * .065 : swing * gait);
         arm.rotation.z = i === 0 ? -.08 : .08;
+        arm.getObjectByName('Elbow').quaternion.identity();
         legs[i].rotation.x = -swing * gait * .77;
       }
       const gesture = gestures.get(name);
       if (gesture) {
         const envelope = Math.min(1, gesture.time / .24, (gesture.duration - gesture.time) / .33);
         if (gesture.type === 'salute') {
-          arms[0].rotation.z = -.08 + 2.48 * envelope;
-          arms[0].rotation.x = .14 * envelope;
+          core.position.y=.79;
+          head.rotation.set(0,0,0);
+          arms[1].rotation.set(0,0,.08);
+          for(const leg of legs) leg.rotation.x=0;
+          salutePose(arms,Math.min(1,gesture.time/.30));
         } else {
           for (const arm of arms) arm.rotation.x = -1.27 * envelope;
           head.rotation.x = .18 * envelope;
@@ -116,31 +137,30 @@ export function buildSoldiers(kit, moving) {
   hall.updateWorldMatrix(true,false);hall.localToWorld(localPoint);
   let wakeTime=-1;
   function poseSleeper(dt) {
-    if(wakeTime>=0)wakeTime+=dt;
+    if(wakeTime>=0)wakeTime=Math.min(1.3,wakeTime+dt);
     const a=Math.max(0,Math.min(1,wakeTime/.55));
     const b=Math.max(0,Math.min(1,(wakeTime-.55)/.45));
     npc.position.set(-4.06+1.31*a,.135+.78*(1-a),4.53-.78*a);
     npc.rotation.set(-Math.PI/2*(1-a),Math.PI/2*a,0,'YXZ');
     core.position.y=.79;head.rotation.set(0,0,0);
     for(const leg of legs)leg.rotation.x=-Math.PI/2*a*(1-b);
-    for(const [i,arm] of arms.entries()){arm.rotation.x=0;arm.rotation.z=i===0?-.08:.08;}
-    if(wakeTime>=1) {
-      const salute=Math.min(1,(wakeTime-1)/.22,Math.max(0,(2.8-wakeTime)/.25));
-      arms[0].rotation.z=-.08+2.48*salute;
-      arms[0].rotation.x=.14*salute;
+    for(const [i,arm] of arms.entries()){
+      arm.rotation.set(0,0,i===0?-.08:.08);
+      arm.getObjectByName('Elbow').quaternion.identity();
     }
+    if(wakeTime>=1) salutePose(arms,Math.min(1,(wakeTime-1)/.22));
   }
   poseSleeper(0);
   const sleeper={point:{x:localPoint.x,y:localPoint.y,z:localPoint.z},wake(){if(wakeTime<0)wakeTime=0;},get ready(){return wakeTime>=1.25;}};
   return {
     sleeper,
     cue(name, type) {
-      gestures.set(name, { type, time: 0, duration: type === 'salute' ? 1.65 : 1.12 });
+      gestures.set(name, { type, time: 0, duration: type === 'salute' ? Infinity : 1.12 });
     },
     reset() { gestures.clear(); wakeTime=-1; poseSleeper(0); },
     update(time, dt) {
       for (const [name, gesture] of gestures) {
-        gesture.time += dt;
+        gesture.time = gesture.type === 'salute' ? Math.min(.30,gesture.time+dt) : gesture.time+dt;
         if (gesture.time >= gesture.duration) gestures.delete(name);
       }
       for (const pose of poses) pose(time);

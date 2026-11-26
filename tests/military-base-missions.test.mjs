@@ -54,6 +54,21 @@ async function missionFixture(t, { reducedMotion = () => false } = {}) {
   return { area, scene, worlds, visit, camera, player, node, find, board, row, beginFlight, advance, notices, cues, completions };
 }
 
+function assertSalute(npc) {
+  npc.updateWorldMatrix(true,true);
+  const core=npc.getObjectByName('Uniform and head');
+  const arm=core.getObjectByName('Arm');
+  const elbow=arm.getObjectByName('Elbow');
+  const hand=elbow.getObjectByName('Hand');
+  const local=o=>core.worldToLocal(o.getWorldPosition(new THREE.Vector3()));
+  const wrist=local(hand), joint=local(elbow);
+  assert.ok(joint.x<-.40 && joint.y>.49,'right elbow points outward');
+  assert.ok(wrist.x<-.12 && wrist.x>-.30 && wrist.y>.73 && wrist.y<.90 && wrist.z>.08,'right hand beside the temple');
+  const other=core.children.filter(o=>o.name==='Arm')[1];
+  assert.ok(local(other.getObjectByName('Hand')).y<.0,'left hand rests down');
+  return arm.quaternion.clone();
+}
+
 test('security panels at South Gate, West Post and East Post activate once and cue guards', async t => {
   const { area, find, row, node, advance } = await missionFixture(t);
   const panels = find('Activate Security');
@@ -71,12 +86,19 @@ test('security panels at South Gate, West Post and East Post activate once and c
   assert.equal(panel.getObjectByName('Red indicator').scale.x, 0);
   assert.equal(panel.getObjectByName('Blue indicator').scale.x, 1);
   advance(.5);
-  assert.ok(guardArm.rotation.z > 2);
+  const salute=assertSalute(node('South Gate guard west'));
+  advance(5);
+  assert.ok(guardArm.quaternion.angleTo(salute)<1e-6);
+  assertSalute(node('South Gate guard west'));
   assert.equal(row('security-patrol').current, 1);
   panels[1].act();
   panels[2].act();
   assert.equal(row('security-patrol').complete, true);
+  advance(5);
+  assertSalute(node('West checkpoint guard'));
+  assertSalute(node('East checkpoint guard'));
   area.reset();
+  assert.ok(Math.abs(guardArm.rotation.z)<.15);
   assert.equal(panel.getObjectByName('Red indicator').scale.x, 1);
   assert.ok(panels.every(item => item.active));
 });
@@ -132,12 +154,16 @@ test('barracks inspection wakes one sleeping soldier, who stands and salutes bef
   advance(.8);
   assert.ok(Math.abs(npc.rotation.x)<1e-6);
   assert.ok(Math.abs(npc.position.y-.135)<1e-6);
-  assert.ok(arm.rotation.z>2);
+  const salute=assertSalute(npc);
+  advance(10);
+  assert.ok(arm.quaternion.angleTo(salute)<1e-6);
+  assertSalute(npc);
   assert.equal(row('barracks-inspection').current,1);
   assert.equal(row('barracks-inspection').complete,true);
   area.reset();
   assert.deepEqual(npc.position,initial);
   assert.equal(npc.rotation.x,-Math.PI/2);
+  assert.ok(Math.abs(arm.rotation.z)<.15);
   assert.equal(wake.active,true);
 });
 
