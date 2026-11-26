@@ -1,6 +1,8 @@
 import { fence, headquarters, helipad, hospital, motorPool, repairTank, supplyDepot, radarControl } from './layout.js';
 
 export const maxLocalLights = 4;
+export const starCount = 860;
+export const scoutHeadlights = Object.freeze({ offset: 10.5, range: 20, intensity: 110, width: 2.7, length: 8.5 });
 const warm = 0xffd597;
 const cool = 0xe1f1ff;
 const beacon = 0xffe4a8;
@@ -24,26 +26,78 @@ export function setNightEnvironment(THREE, scene, touch) {
   moon.shadow.bias = -.00015;
   scene.add(moon);
 
-  // Lightweight sky decoration: one moon and one batched star field; no post-processing.
-  const moonDisc = new THREE.Mesh(new THREE.CircleGeometry(5.5, 24),
-    new THREE.MeshBasicMaterial({ color: 0xe8efff, toneMapped: false, fog: false, side: THREE.DoubleSide }));
-  moonDisc.name = 'Moon disc';
-  moonDisc.position.set(-88, 79, -118);
-  moonDisc.lookAt(0, 3, 0);
-  moonDisc.raycast = () => {};
-  scene.add(moonDisc);
+  // The gameplay camera clips at 115 units. Keep sky decoration camera-relative
+  // at 78 units, drawn behind the world, rather than moving terrain or changing Core.
+  const skyRadius = 78;
+  const cameraPosition = new THREE.Vector3();
+  const skyPosition = new THREE.Vector3();
+  function anchorSky(object, order) {
+    object.frustumCulled = false;
+    object.renderOrder = order;
+    object.raycast = () => {};
+    object.material.depthTest = false;
+    object.material.depthWrite = false;
+    object.updateMatrix();
+    object.onBeforeRender = (_renderer, _scene, camera) => {
+      cameraPosition.setFromMatrixPosition(camera.matrixWorld);
+      skyPosition.copy(object.position).add(cameraPosition);
+      object.matrixWorld.copy(object.matrix).setPosition(skyPosition);
+    };
+    scene.add(object);
+  }
+  // One textured, fully illuminated disk with subtle lunar maria.
+  const moonDisc = new THREE.Mesh(new THREE.CircleGeometry(3.85, 48),
+    new THREE.MeshBasicMaterial({ map: moonTexture(THREE), color: 0xffffff, toneMapped: false, fog: false, side: THREE.DoubleSide }));
+  moonDisc.name = 'Full moon';
+  const moonDirection = new THREE.Vector3(-.43, .22, -.87).normalize();
+  moonDisc.position.copy(moonDirection).multiplyScalar(skyRadius - 1);
+  moonDisc.lookAt(0, 0, 0);
+  anchorSky(moonDisc, -999);
   let seed = 81019;
   const random = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
-  const positions = [];
-  for (let i = 0; i < 104; i++) {
-    const azimuth = random() * Math.PI * 2, elevation = .13 + random() * 1.15;
-    const r = 155 * Math.cos(elevation);
-    positions.push(Math.cos(azimuth) * r, Math.sin(elevation) * 155, Math.sin(azimuth) * r);
+  const positions = [], colors = [];
+  const tint = new THREE.Color(), direction = new THREE.Vector3();
+  while (positions.length / 3 < starCount) {
+    const azimuth = random() * Math.PI * 2;
+    const elevation = Math.asin(.025 + random() * .975);
+    direction.set(Math.cos(azimuth) * Math.cos(elevation), Math.sin(elevation), Math.sin(azimuth) * Math.cos(elevation));
+    if (direction.dot(moonDirection) > .997) continue;
+    positions.push(direction.x * skyRadius, direction.y * skyRadius, direction.z * skyRadius);
+    const brightness = .32 + .68 * random() ** 1.8;
+    tint.setHex(random() < .12 ? 0xffdfba : 0xd1e2ff).multiplyScalar(brightness);
+    colors.push(tint.r, tint.g, tint.b);
   }
   const stars = new THREE.BufferGeometry();
   stars.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-  const sky = new THREE.Points(stars, new THREE.PointsMaterial({ color: 0xa4b9d8, size: 1.5, sizeAttenuation: false, fog: false, toneMapped: false }));
-  sky.name = 'Night stars'; sky.raycast = () => {}; scene.add(sky);
+  stars.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  const sky = new THREE.Points(stars, new THREE.PointsMaterial({ vertexColors: true, size: 1.8, sizeAttenuation: false, fog: false, toneMapped: false }));
+  sky.name = 'Night stars';
+  anchorSky(sky, -1000);
+}
+
+function moonTexture(THREE) {
+  const n = 96, data = new Uint8Array(n * n * 4);
+  const maria = [[-.38,.26,.25,.34], [.14,.38,.18,.21], [.38,.04,.25,.21],
+    [-.12,-.16,.29,.19], [-.51,-.25,.13,.17], [.23,-.42,.16,.12]];
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+    const u = (x + .5) / n * 2 - 1, v = (y + .5) / n * 2 - 1;
+    let shade = 0;
+    for (const [cx, cy, rx, ry] of maria) {
+      const r = ((u - cx) / rx) ** 2 + ((v - cy) / ry) ** 2;
+      shade += 25 * Math.exp(-r * 1.8);
+    }
+    const noise = Math.sin(x * 2.13 + y * 3.71) * Math.cos(y * 1.7 - x * .61) * 4;
+    const k = (y * n + x) * 4;
+    data[k] = 232 - shade + noise;
+    data[k + 1] = 239 - shade + noise;
+    data[k + 2] = 246 - shade * .85 + noise;
+    data[k + 3] = 255;
+  }
+  const tex = new THREE.DataTexture(data, n, n, THREE.RGBAFormat);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.magFilter = tex.minFilter = THREE.LinearFilter;
+  tex.needsUpdate = true;
+  return tex;
 }
 
 function glowTexture(THREE) {
@@ -161,7 +215,7 @@ export function createNightLighting({ kit, props, missions, tank, driving }) {
   }
   pools.forEach(({ item }, i) => glow.setColorAt(i, color.setHex(item.color)));
   glow.setColorAt(pools.length, color.setHex(0xffe6be));
-  const headlamp = { x: 0, y: 2, z: 0, color: 0xffe9c4, range: 13, intensity: 70, name: 'Scout headlights' };
+  const headlamp = { x: 0, y: 2, z: 0, color: 0xffe9c4, range: scoutHeadlights.range, intensity: scoutHeadlights.intensity, name: 'Scout headlights' };
   const candidates = [];
   function update(position) {
     const px = position?.x ?? 0, py = position?.y ?? 1.68, pz = position?.z ?? 0;
@@ -176,9 +230,9 @@ export function createNightLighting({ kit, props, missions, tank, driving }) {
     const heading = tank.ground.rotation.y;
     const x = tank.ground.position.x, z = tank.ground.position.z;
     const drive = driving.active;
-    const gx = x + Math.sin(heading) * 4.2, gz = z + Math.cos(heading) * 4.2;
+    const gx = x + Math.sin(heading) * scoutHeadlights.offset, gz = z + Math.cos(heading) * scoutHeadlights.offset;
     // Headlamp ground wash travels with the scout; pool slot reserved while driving.
-    writePool(pools.length, gx, .109, gz, 1.8, 3.4, -heading, drive);
+    writePool(pools.length, gx, .109, gz, scoutHeadlights.width, scoutHeadlights.length, heading, drive);
     glow.instanceMatrix.needsUpdate = dirty || drive || glow.userData.wasDriving !== drive;
     glow.userData.wasDriving = drive;
     candidates.length = 0;
