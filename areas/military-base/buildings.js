@@ -6,8 +6,8 @@ import { ink } from './scenery.js';
 export function window(kit, wall, x, y, z, width, height) {
   const { box } = kit;
   box(wall, ink.dark, x, y, z + .045, width + .22, height + .20, .17);
-  box(wall, ink.glass, x, y, z + .14, width, height, .05);
-  box(wall, ink.glassLight, x, y + height * .30, z + .175, width - .05, height * .18, .016);
+  box(wall, 0xe6c88c, x, y, z + .14, width, height, .05, [], true);
+  box(wall, 0xffe9b5, x, y + height * .30, z + .175, width - .05, height * .18, .016, [], true);
   for (const side of [-1, 1]) box(wall, ink.steel, x + side * width * .177, y, z + .188, .063, height, .035);
   box(wall, ink.paleTeal, x, y - height / 2 - .08, z + .17, width + .18, .12, .28);
 }
@@ -256,7 +256,7 @@ function tankGarage(kit) {
     }
     box(garage, ink.paleTeal, center, 8.49, -.1, .19, .13, 14.89);
     box(garage, ink.dark, center, 6.48, 7.75, 4.50, .57, .08);
-    for (const x of [-1.38, 0, 1.38]) box(garage, ink.glassLight, center + x, 6.48, 7.806, 1.18, .36, .044);
+    for (const x of [-1.38, 0, 1.38]) box(garage, 0xffe0a4, center + x, 6.48, 7.806, 1.18, .36, .044, [], true);
     box(garage, ink.footing, center + 1.45, 7.89, -2.64, 2.02, .27, 1.35);
     box(garage, bay === 2 ? ink.yellow : 0xdf8662, center + 1.45, 8.06, -2.64, 1.31, .15, .87);
   }
@@ -353,7 +353,7 @@ function airControl(kit) {
   for (const side of [-1, 1]) {
     for (const x of [-3.08, -1.04, 1.04, 3.08]) box(tower, ink.paleTeal, x, 8.33, side * 3.01, .12, 1.61, .115);
     for (const z of [-2.78, -.91, .91, 2.78]) box(tower, ink.paleTeal, side * 3.28, 8.33, z, .115, 1.61, .12);
-    box(tower, ink.glassLight, 0, 8.76, side * 3.01, 6.19, .15, .05);
+    box(tower, 0xffe0a4, 0, 8.76, side * 3.01, 6.19, .15, .05, [], true);
   }
   for (const y of [2.4, 4.02, 5.65]) window(kit, tower, 0, y, 1.98, .85, .68);
   shutter(kit, tower, 0, 1.11, 2, 1.3, 2.1);

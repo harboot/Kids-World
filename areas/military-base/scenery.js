@@ -258,14 +258,15 @@ export function createScenery(THREE, scene, document, playerRadius = PLAYER_RADI
 
   function movingParts() {
     const parts = new Map();
-    function add(node, kind, tint, x, y, z, w, h, d, rotation = []) {
-      if (!parts.has(kind)) parts.set(kind, { entries: [] });
+    function add(node, kind, tint, x, y, z, w, h, d, rotation = [], unlit = false) {
+      const key = kind + ':' + unlit;
+      if (!parts.has(key)) parts.set(key, { kind, unlit, entries: [] });
       const local = new THREE.Object3D();
       local.position.set(x, y, z);
       local.rotation.set(rotation[0] ?? 0, rotation[1] ?? 0, rotation[2] ?? 0);
       local.scale.set(w, h, d);
       local.updateMatrix();
-      parts.get(kind).entries.push({ node, local: local.matrix, tint });
+      parts.get(key).entries.push({ node, local: local.matrix, tint });
     }
     function update() {
       scene.updateMatrixWorld();
@@ -277,9 +278,9 @@ export function createScenery(THREE, scene, document, playerRadius = PLAYER_RADI
       }
     }
     function build() {
-      for (const [kind, partsOfKind] of parts) {
-        const { entries } = partsOfKind;
-        const material = kind === 'shadow' ? (shadowInk ??= shadowMaterial()) : staticMaterial;
+      for (const partsOfKind of parts.values()) {
+        const { kind, unlit, entries } = partsOfKind;
+        const material = kind === 'shadow' ? (shadowInk ??= shadowMaterial()) : unlit ? unlitMaterial : staticMaterial;
         const mesh = new THREE.InstancedMesh(shape(kind), material, entries.length);
         mesh.name = 'Military Base animated ' + kind;
         if (kind === 'shadow') mesh.raycast = () => {};
@@ -297,8 +298,8 @@ export function createScenery(THREE, scene, document, playerRadius = PLAYER_RADI
       groundShadow(node, x, z, width, depth, y = .048) {
         add(node, 'shadow', 0x344f61, x, y, z, width, depth, 1, [-Math.PI / 2, 0, 0]);
       },
-      box(node, tint, x, y, z, width, height, depth, rotation) {
-        add(node, 'box', tint, x, y, z, width, height, depth, rotation);
+      box(node, tint, x, y, z, width, height, depth, rotation, unlit = false) {
+        add(node, 'box', tint, x, y, z, width, height, depth, rotation, unlit);
       },
       beam(node, tint, a, b, width, depth, kind) {
         beam(node, tint, a, b, width, depth, kind, add);

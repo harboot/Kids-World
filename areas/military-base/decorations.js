@@ -156,7 +156,7 @@ function radar(kit, moving) {
         moving.beam(dish, ink.steel, [0, -.33, 0], [2.62 * Math.cos(angle), .435, 2.62 * Math.sin(angle)], .059);
       }
       for (const side of [-1, 1]) moving.beam(dish, ink.dark, [side * 1.58, -.046, 0], [0, 1.45, 0], .086);
-      moving.part(dish, 'post', ink.yellow, 0, 1.46, 0, .17, .39, .17);
+      moving.part(dish, 'post', 0xff655d, 0, 1.46, 0, .17, .39, .17, [], true);
     } else if (kind === 'relay') {
       const relay = group('Relay antenna head', 0, height, 0, .28, mast);
       pivots.relay = relay;
@@ -165,7 +165,7 @@ function radar(kit, moving) {
         moving.beam(relay, ink.pale, [0, 1.12, 0], [side * 1.65, .95, .46], .095);
         for (let j = 0; j < 4; j++) moving.box(relay, ink.steel, side * (.43 + j * .35), 1, .16, .065, .065, 1.1 - j * .16);
       }
-      moving.part(relay, 'cap', 0xf47752, 0, 2.13, 0, .11, .11, .11);
+      moving.part(relay, 'cap', 0xff6058, 0, 2.13, 0, .14, .14, .14, [], true);
     }
   }
   const { x, z } = antennas.find(item => item.kind === 'array');
@@ -178,12 +178,12 @@ function radar(kit, moving) {
   }
   for (let i = -4; i <= 4; i++) moving.add(array, 'box', ink.teal, i * .45, 1.08, 0, .078, 1.03, .097, [.18, 0, 0]);
   for (const y of [.86, 1.09, 1.34]) moving.add(array, 'box', ink.teal, 0, y, 0, 4.45, .034, .074);
-  moving.add(array, 'box', ink.yellow, 0, 1.65, 0, .25, .16, .21);
+  moving.add(array, 'box', 0xff6058, 0, 1.65, 0, .25, .16, .21, [], true);
   const control = group('Radar Control Station', radarControl.x, 0, radarControl.z);
   box(control, ink.steel, 0, 1.39, 0, 5.65, 2.78, 4.73);
   box(control, ink.dark, 0, 2.84, 0, 5.93, .23, 5.03);
   box(control, ink.dark, 0, 1.04, 2.409, 1.05, 2.08, .19);
-  box(control, ink.glassLight, -1.62, 1.72, 2.42, 1.2, .71, .12);
+  box(control, 0xffdf9a, -1.62, 1.72, 2.42, 1.2, .71, .12, [], true);
   box(control, ink.olive, 1.67, .89, 2.45, 1.45, 1.52, .21);
   sign(control, 'RADAR CONTROL', 0, 2.52, 2.48, 4.63, .53);
   solid(control, 0, 0, 5.69, 4.82, 2.98);
