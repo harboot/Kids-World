@@ -1,5 +1,5 @@
 {
-  "version": "0122c88910885500165fbe45f9b773d9370471cb553cf129c51a083d55b21452",
+  "version": "008a0d745b2de6415be9c98975e41418d560083c7122f1598512c18b0f72bd02",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "6ee41a229459adf9ce6495d7607289073d0674025e9c0ca68d640e3a54c287fd"
+      "revision": "bdb4a016c88c9849f11ee96416d2ed3de7de72f6c3ec2ed4e73181bcf8120f4a"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -359,11 +359,11 @@
     },
     {
       "path": "./areas/military-base/observation-props.js",
-      "revision": "21a2359cd4c1817541451ed1c1543fb7b2ae3b9621588a870f7a02310cf74446"
+      "revision": "0709a607eea141d175a428c33b6dc550e1650489db4967c27a40c6d0d878b651"
     },
     {
       "path": "./areas/military-base/observation.js",
-      "revision": "09edca383a0a89c4fb3dd8675acbc135f99adda34459449514ff4a4066d53732"
+      "revision": "96ba4497ae458ad437c6150e8f4def3c8baf626a120b1c0161b4db5e0a259282"
     },
     {
       "path": "./areas/military-base/perimeter.js",
