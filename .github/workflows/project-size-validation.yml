@@ -1,0 +1,23 @@
+name: One-time project size validation
+on:
+  push:
+    branches: [validation/project-total-size]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: 9f9234e5b528181f8eb7556ea77d4cd6ddd6e5d9
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: node scripts/generate-area-stats.mjs
+      - run: node scripts/generate-pwa-manifest.mjs
+      - run: node --test
+      - run: node scripts/generate-area-stats.mjs --check
+      - run: node scripts/generate-pwa-manifest.mjs --check
+      - run: node -e "console.log(require('./area-stats.json').summary); console.log(require('./version.json').version)"
