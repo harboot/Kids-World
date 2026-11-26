@@ -1,13 +1,13 @@
 {
-  "version": "a040d3a81cceef1a72d9022c73e5a61bc63ac843e43c351e84d8d79cd938c2b6",
+  "version": "9bc0cc68c8273b4600b16bff22b39249e6910cf33e2d37e81eef26ddbb9e8ff7",
   "files": [
     {
       "path": "./area-catalog.js",
-      "revision": "fde449147d2390f7cbcd98b5c90ec3a01f43cda460b2e295407e9bd608596048"
+      "revision": "27b7837d876cada83a3628e650a2b41f857025a5dcd6af84c5c2b2d05920b9dc"
     },
     {
       "path": "./area-stats.json",
-      "revision": "a7c5b09cdf2e062c23c04f8129d24503ee5ec2d50432758cef43a9e9b679fc32"
+      "revision": "81f0a84dad706c38eef990f270cc325841ebf33d981eeeeac006a4f7ec9e5d16"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -323,15 +323,15 @@
     },
     {
       "path": "./areas/military-base/lighting.js",
-      "revision": "0641585e610c2cd1c477ef0f4df0f9e80650336f1ac78b3c4779362743c2208b"
+      "revision": "71b9b16f5fa577458bbc51e02fbc1d628b629b0b7da19f7834a43a6d53325fcb"
     },
     {
       "path": "./areas/military-base/metadata.js",
-      "revision": "da98503c71663810caf8f63c75fc8a2d160d99c5b6c854743d6bf27e9803750f"
+      "revision": "f735995b92152fabc73e781c171a2df49c07b0436f01a18a1fbc6f16a91fb797"
     },
     {
       "path": "./areas/military-base/military-base.jpg",
-      "revision": "a57ccc6a9baffec9091f48b05690cea7e3298636541ab68caee3e36f17bce9f0"
+      "revision": "16cc28d0983b6d83b1aafb764e7db02e06f11e62fe82cfda3d155f25ba7b27eb"
     },
     {
       "path": "./areas/military-base/mission-props.js",
@@ -367,7 +367,7 @@
     },
     {
       "path": "./areas/military-base/terrain.js",
-      "revision": "74da9c8aafa9e22405e95c470ef061d1131242be2bfb45f5a5c4e2b8dbe4b72c"
+      "revision": "aa017bb4ef813b57b396e25d95b7aa1248ee4d12fc9079c3cb84e2a4d8fd9be5"
     },
     {
       "path": "./areas/military-base/vehicles.js",
