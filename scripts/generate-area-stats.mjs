@@ -284,6 +284,20 @@ export async function readAreaSources(root) {
   return areas;
 }
 
+// Count the complete website source, including shared and hidden area assets.
+ // Generated release metadata is excluded to avoid a self-referential size/hash cycle.
+async function projectSize(root) {
+  const roots = ['areas', 'assets', 'core', 'pwa', 'vendor'];
+  const entries = ['game.js', 'index.html', 'manifest.webmanifest', 'snow.html', 'stats.html', 'style.css'];
+  const excluded = /(?:^|\/)(?:\.[^/]+|docs|test|tests|__tests__|node_modules)(?:\/|$)|\.(?:md|markdown|map)$|\.(?:test|spec)\.[cm]?js$/i;
+  const paths = new Set((await Promise.all(roots.map(dir => folderFiles(root, dir)))).flat().filter(path => !excluded.test(path)));
+  for (const path of entries) {
+    const info = await lstat(join(root,path)).catch(error => { if(error.code !== 'ENOENT') throw error; });
+    if(info?.isFile()) paths.add(path);
+  }
+  return (await fileStats(root,paths)).folderBytes;
+}
+
 export async function generateAreaStats(root) {
   const areas = [];
   for (const { entry, directory, metadataPath, ...area } of await readAreaSources(root)) {
@@ -292,7 +306,7 @@ export async function generateAreaStats(root) {
   }
   const summary = {
     totalAreas: areas.length, publicAreas: 0, hiddenAreas: 0, totalFiles: 0,
-    totalBytes: 0,
+    totalBytes: 0, projectBytes: await projectSize(root),
   };
   for (const area of areas) {
     if (area.visibility === 'Public') summary.publicAreas++;
