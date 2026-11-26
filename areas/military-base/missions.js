@@ -5,8 +5,6 @@ import { repairTank } from './layout.js';
 const areaId = 'military-base';
 const confirmation = [[69, { duration: .19, level: .12 }], [76, { duration: .29, level: .11 }, .13]];
 const engineCue = [[34, { endPitch: 43, duration: 1.3, level: .16, attack: .36, wave: 'triangle' }]];
-const antennaHeadings = { dish: .83, array: 1.11, relay: -.80 };
-const alignTime = 1.55;
 const parkTime = 4.65;
 const easing = t => t * t * (3 - 2 * t);
 const ownHeight = (point, player) => Math.abs(player.y - (point.y ?? 0) - EYE_HEIGHT) < 1.12;
@@ -17,22 +15,22 @@ function objective(id, title, total) {
 
 export function createMissions({
   THREE, camera, props, radarHeads, tank, helicopter, soldiers, reducedMotion, playCue, notify,
-  completeLevel, isLevelComplete,
+  completeLevel, isLevelComplete, course, driving,
 }) {
-  const { security, parts, supplies, delivered, hospitalDrop, antennasControls, station, screen, scan } = props;
+  const { security, parts, supplies, delivered, hospitalDrop, station, screen, scan } = props;
   const patrol = objective('security-patrol', 'Security Patrol', 3);
-  const repair = objective('repair-tank', 'Repair the Tank', 3);
-  const supply = objective('supply-delivery', 'Supply Delivery', 3);
-  const radar = objective('radar-activation', 'Radar Activation', 3);
+  const repair = objective('repair-tank', 'Repair the Tank', parts.length);
+  const supply = objective('supply-delivery', 'Supply Delivery', supplies.length);
+  const radar = objective('radar-activation', 'Radar Activation', 1);
   const ride = objective('helicopter-patrol', 'Helicopter Patrol', 1);
-  const missions = [patrol, repair, supply, radar, ride];
+  const drivingTest = objective('tank-driving-test', 'Tank Driving Test', course.points.length);
+  const missions = [patrol, repair, supply, radar, ride, drivingTest];
   const inventory = [];
   const collected = new Set();
   const activated = new Set();
   const removedSupplies = new Set();
-  const alignments = antennasControls.map(({ kind }) => ({ kind, start: radarHeads[kind].rotation.y, time: 0, started: false }));
+  const radarStart = radarHeads.dish.rotation.y;
   let carriedSupply = false;
-  let visitedRadar = false;
   let scanTime = 0;
   let arraySpin = 0;
   let engineTime = 0;
@@ -126,38 +124,34 @@ export function createMissions({
     else notify('Medical supplies received.');
   }, 2.2, .73);
 
-  add(station, radar, 'Inspect Radar Console', () => !visitedRadar, () => {
-    visitedRadar = true;
-    notify('Radar console checked. Align the three antennas.');
+  add(station, radar, 'Activate Radar', () => !radar.complete, () => {
+    radar.current = 1;
+    station.light(true);
+    screen.scale.setScalar(1);
+    playCue(confirmation);
+    finish(radar, 'Radar Activation Complete!');
   });
-  for (const [i, panel] of antennasControls.entries()) {
-    const alignment = alignments[i];
-    add(panel, radar, 'Align Antenna', () => visitedRadar && !alignment.started, () => {
-      alignment.started = true;
-      panel.light(true);
-      radar.current++;
-      if (radar.current < radar.total) notify(panel.name + ' aligning.');
-    });
-  }
   interactions.push(flight.board);
 
   function updateRadar(dt) {
-    for (const item of alignments) {
-      if (item.started) item.time = Math.min(alignTime, item.time + dt);
-      radarHeads[item.kind].rotation.y = item.start + (antennaHeadings[item.kind] - item.start) * easing(item.time / alignTime);
-    }
-    if (radar.current === radar.total && !radar.complete && alignments.every(item => item.time >= alignTime)) {
-      station.light(true);
-      screen.scale.setScalar(1);
-      playCue(confirmation);
-      finish(radar, 'Radar Activation Complete!');
-    }
-    if (radar.complete) {
-      scanTime += dt;
-      arraySpin += dt * (reducedMotion() ? .19 : .53);
-      radarHeads.array.rotation.y += arraySpin;
-      scan.position.y = 1.57 + Math.sin(scanTime * 2.15) * .24;
-    }
+    if (!radar.complete) return;
+    scanTime += dt;
+    arraySpin = (arraySpin + dt * (reducedMotion() ? .19 : .53)) % (Math.PI * 2);
+    radarHeads.dish.rotation.y = radarStart + arraySpin;
+    scan.position.y = 1.57 + Math.sin(scanTime * 2.15) * .24;
+  }
+
+  function updateDrivingTest() {
+    if (!driving.active || drivingTest.complete) return;
+    const point = course.points[drivingTest.current];
+    const pos = driving.position;
+    if (Math.hypot(pos.x - point.x, pos.z - point.z) > course.radius) return;
+    context = drivingTest;
+    drivingTest.current++;
+    course.show(drivingTest.current);
+    playCue(confirmation);
+    if (drivingTest.current === drivingTest.total) finish(drivingTest, 'Tank Driving Test Complete!');
+    else notify('Checkpoint ' + drivingTest.current + '/' + drivingTest.total + '. Follow the next light beam.');
   }
 
   function playerInTankLane(player, from, next) {
@@ -200,16 +194,13 @@ export function createMissions({
       if (repair.current === repair.total) return 'Keep the parking lane clear while the tank parks.';
       return 'Find components by the workshop, service sheds, and tank garage.';
     }
-    if (context === radar && !radar.complete) {
-      return visitedRadar ? 'Align the dish, rotating array, and west relay at their panels.'
-        : 'Inspect the console beside the Radar Control Station.';
-    }
-    if (context === supply && !supply.complete) return 'Collect another crate at the Supply Depot loading dock.';
+    if (driving.active && !drivingTest.complete) return 'Drive the Scout Tank through checkpoint ' + (drivingTest.current + 1) + ' of ' + drivingTest.total + '. Follow the light beam.';
     if (!patrol.complete) return 'Activate the panels at South Gate, Motor Pool, and South Lookout.';
     const next = missions.find(row => !row.complete);
     if (next === repair) return 'Find the tank components around the workshop and vehicle yard.';
     if (next === supply) return 'Pick up medical supplies at the Supply Depot loading dock.';
-    if (next === radar) return 'Inspect the console beside the Radar Control Station.';
+    if (next === radar) return 'Activate the console beside the Radar Control Station.';
+    if (next === drivingTest) return 'Board the Scout Tank and follow the three checkpoint light beams.';
     return 'Board at the helicopter’s right passenger door for a sightseeing flight.';
   }
 
@@ -224,11 +215,12 @@ export function createMissions({
       activated.clear();
       removedSupplies.clear();
       for (const row of missions) { row.current = 0; row.complete = false; }
-      for (const panel of [...security, ...antennasControls, station]) panel.light(false);
+      for (const panel of [...security, station]) panel.light(false);
       for (const object of [...parts, ...supplies]) object.prop.scale.setScalar(1);
       for (const object of delivered) object.scale.setScalar(0);
-      for (const item of alignments) { item.started = false; item.time = 0; }
-      carriedSupply = visitedRadar = parkingStarted = tankBlocked = false;
+      radarHeads.dish.rotation.y = radarStart;
+      course.show(0);
+      carriedSupply = parkingStarted = tankBlocked = false;
       scanTime = arraySpin = engineTime = driveTime = 0;
       context = undefined;
       screen.scale.setScalar(0);
@@ -238,6 +230,7 @@ export function createMissions({
     update(dt, position) {
       updateTank(dt, position);
       updateRadar(dt);
+      updateDrivingTest();
       flight.update(dt);
     },
   };

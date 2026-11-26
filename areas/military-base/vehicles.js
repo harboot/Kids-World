@@ -2,6 +2,7 @@ import { cross } from './buildings.js';
 import { motorPool, repairTank, surveyPads } from './layout.js';
 import { ink } from './scenery.js';
 import { buildCompactTank } from './compact-tank.js';
+import { buildDrivableJeep } from './jeep.js';
 
 function wheel(kit, parent, x, y, z, radius, width) {
   const { part } = kit;
@@ -208,12 +209,12 @@ export function buildVehicles(kit, moving) {
   tank(kit, 'Tank 02', x - 4.0, z + 13.4, .14, 0x90bd64);
   tank(kit, 'Tank 03', x + 3.1, z + 13.0, -.13, 0x65a766);
   const repair = tank(kit, 'Tank 04 under repair', repairTank.x, repairTank.z, repairTank.yaw, 0x92ab55, moving);
-  jeep(kit, -5.65, 41.6, -.37, 'Entrance patrol jeep');
+  const drivableJeep = buildDrivableJeep(kit, moving, -5.65, 41.6, -.37);
   jeep(kit, 55.4, 41.1, .26, 'Perimeter patrol jeep');
   truck(kit, -37, 39.4, -.14, 'Military transport truck');
   truck(kit, -45.8, -26.5, 1.65, 'Maintenance pickup', false, true);
   truck(kit, 30.15, 9.1, Math.PI / 2, 'Field ambulance', true);
   truck(kit, 55.9, 13.8, .12, 'Supply truck');
   surveyPads.forEach((pad, index) => surveyAircraft(kit, pad, index + 1));
-  return { repair, drivable };
+  return { repair, drivable, drivableJeep };
 }

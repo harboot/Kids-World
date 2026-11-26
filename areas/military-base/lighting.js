@@ -116,7 +116,7 @@ function glowTexture(THREE) {
   return tex;
 }
 
-export function createNightLighting({ kit, props, missions, tank, driving }) {
+export function createNightLighting({ kit, props, missions, tank, driving, jeep, jeepDriving }) {
   const { THREE, scene, group, box } = kit;
   const sources = [];
   const pools = [];
@@ -188,7 +188,7 @@ export function createNightLighting({ kit, props, missions, tank, driving }) {
       floor, color: beacon, range: 7, intensity: 24, priority: 5, active: () => p.prop.scale.x > .01 });
     item.marker = true;
   }
-  for (const panel of [...props.security, ...props.antennasControls, props.station]) {
+  for (const panel of [...props.security, props.station]) {
     const y = panel.y ?? 0;
     source(panel.x, y + 2.0, panel.z, { name: panel.name + ' console', radius: 1.8,
       floor: y + .108, color: cool, range: 7, intensity: 30, priority: 4 });
@@ -241,9 +241,10 @@ export function createNightLighting({ kit, props, missions, tank, driving }) {
       writePool(i, pool.item.x, pool.floor, pool.item.z, pool.radius, pool.radius, 0, enabled);
       dirty = true;
     });
-    const heading = tank.ground.rotation.y;
-    const x = tank.ground.position.x, z = tank.ground.position.z;
-    const drive = driving.active;
+    const vehicle = jeepDriving?.active ? jeep : tank;
+    const heading = vehicle.ground.rotation.y;
+    const x = vehicle.ground.position.x, z = vehicle.ground.position.z;
+    const drive = driving.active || Boolean(jeepDriving?.active);
     const gx = x + Math.sin(heading) * scoutHeadlights.offset, gz = z + Math.cos(heading) * scoutHeadlights.offset;
     // Headlamp ground wash travels with the scout; pool slot reserved while driving.
     writePool(pools.length, gx, .109, gz, scoutHeadlights.width, scoutHeadlights.length, heading, drive);

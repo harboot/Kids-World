@@ -146,7 +146,7 @@ test('mission sites are in the environment and animated scenery resets with the 
   t.after(worlds.unload);
   const { area, scene } = visit;
   assert.deepEqual(area.missionStatus.missions.map(({ current, total }) => [current, total]),
-    [[0, 3], [0, 3], [0, 3], [0, 3], [0, 1]]);
+    [[0, 3], [0, 2], [0, 1], [0, 1], [0, 1], [0, 3]]);
   assert.ok(area.interactions.some(({ label }) => label === 'Board Helicopter'));
   for (const { name } of checkpoints.slice(1)) assert.ok(scene.getObjectByName(name));
   assert.ok(scene.getObjectByName('Open South Gate'));
@@ -162,7 +162,7 @@ test('mission sites are in the environment and animated scenery resets with the 
   const snapshot = () => [radar.rotation.y, rotor.rotation.y, flag.getZ(flag.count - 1), patrol.position.z];
   const initial = snapshot();
   worlds.update(.5);
-  assert.equal(snapshot()[0], initial[0], 'the radar waits for alignment');
+  assert.equal(snapshot()[0], initial[0], 'the radar waits for activation');
   snapshot().slice(1).forEach((value, i) => assert.notEqual(value, initial[i + 1]));
   worlds.reset();
   assert.deepEqual(snapshot(), initial);
