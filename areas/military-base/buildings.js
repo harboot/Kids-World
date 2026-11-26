@@ -348,12 +348,6 @@ function airControl(kit) {
 export function buildBuildings(kit) {
   command(kit);
   tankGarage(kit);
-  for (const [i, x] of [-50.4, -39.5, -28.1].entries()) {
-    roundHall(kit, {
-      name: 'Service Shed 0' + (i + 1), x, z: -35.3 + i * .73, width: 9.35, depth: 12.1,
-      tint: i % 2 ? 0x48a88c : 0x64ac75, yaw: -.10, service: true, open: i !== 1,
-    });
-  }
   buildBarracks(kit, { name: 'Barracks 01', x: -45.8, z: -8.2, width: 10.8, depth: 14, tint: 0x73ac73, yaw: 1.49 });
   buildBarracks(kit, { name: 'Barracks 02', x: -44.6, z: 7.15, width: 10.45, depth: 15, tint: 0x60ad92, yaw: 1.45 });
   utilityHall(kit, { name: 'Maintenance', x: -44, z: 25, width: 14.6, depth: 11.2, tint: 0x84aa91, yaw: -.12 });

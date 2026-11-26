@@ -121,7 +121,7 @@ export function buildSoldiers(kit, moving) {
     }
   }
   person('Workshop technician', 'crew', -42.0, 33.2, -.81);
-  person('Service shed technician', 'crew', -31.6, -27.95, -.61);
+  person('Robot hangar technician', 'crew', -29.1, -28.3, -.61);
   person('Garage checkpoint guard', 'guard', 51.78, 40.3, -.45);
   person('Lookout checkpoint guard', 'guard', lookout.x - 1.24, lookout.z - 1.51, .18, 'idle', null, lookout.height);
   person('Tank mechanic', 'crew', repairTank.x + 3.03, repairTank.z + .35, -Math.PI / 2);
