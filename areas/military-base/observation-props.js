@@ -1,13 +1,14 @@
 import { binocularPoint, northPost, lookout } from './layout.js';
 import { ink } from './scenery.js';
 
-// Five fixed in-world views. No simultaneous render targets.
+// Five fixed in-world housings. The live viewpoint sits beyond the lens, along its optical axis.
+export const cctvLensClearance = .78;
 export const cctvViews = Object.freeze([
-  { name: 'South Gate', eye: [-6.7,4.5,60.6], target: [0,1.3,52] },
-  { name: 'Headquarters', eye: [-5.2,6.2,9.3], target: [-11,1.3,14] },
-  { name: 'Motor Pool', eye: [51.4,5.1,36.8], target: [32,1.1,44] },
-  { name: 'Helipad', eye: [11.5,5.1,-31.3], target: [22,1.2,-35] },
-  { name: 'North Post', eye: [-8.14,3.2,-56.1], target: [-6,1,-49] },
+  { name: 'South Gate', eye: [-6.7,6.2,60.0], target: [0,1.3,52] },
+  { name: 'Headquarters', eye: [-5.2,7.4,9.3], target: [-11,1.3,14] },
+  { name: 'Motor Pool', eye: [51.4,7.3,41.0], target: [32,1.1,44] },
+  { name: 'Helipad', eye: [11.5,6.4,-31.3], target: [22,1.2,-35] },
+  { name: 'North Post', eye: [-8.14,5.7,-56.1], target: [-6,1,-45] },
 ]);
 
 export function buildNorthPost(kit) {
@@ -80,15 +81,17 @@ export function buildObservationProps(kit) {
     part(mount,'drum',ink.rubber,s*.18,1.28,-.13,.108,.12,.108,[Math.PI/2,0,0]);
   }
   box(mount,0x83c8a1,0,1.34,-.015,.08,.055,.12,[],true);
-  // Place small housings near their actual virtual viewpoint, without creating lights.
+  // Orient the physical housing along the same optical axis as the live view.
   cctvViews.forEach(({eye,target},i)=>{
     const [ex,ey,ez]=eye;
     const yaw=Math.atan2(target[0]-ex,target[2]-ez);
     const cam=group('CCTV camera '+(i+1),ex,ey,ez,yaw);
+    cam.rotation.order='YXZ';
+    cam.rotation.x=Math.atan2(ey-target[1],Math.hypot(target[0]-ex,target[2]-ez));
     box(cam,ink.steel,0,.08,-.18,.24,.23,.26);
-    box(cam,ink.pale,0,0,0,.30,.21,.44,[.23,0,0]);
-    box(cam,ink.dark,0,-.04,.24,.24,.17,.055,[.23,0,0]);
-    part(cam,'drum',ink.glassLight,0,-.04,.274,.067,.026,.067,[Math.PI/2+.23,0,0]);
+    box(cam,ink.pale,0,0,0,.30,.21,.44);
+    box(cam,ink.dark,0,0,.24,.24,.17,.055);
+    part(cam,'drum',ink.glassLight,0,0,.274,.067,.026,.067,[Math.PI/2,0,0]);
     box(cam,0xff7761,.11,-.04,.276,.028,.028,.018,[],true);
   });
   return { binocular:binocularPoint, console:{x:northPost.x,z:northPost.z-.72,y:northPost.floor}, cameras:cctvViews };

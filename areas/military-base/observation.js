@@ -1,9 +1,11 @@
 import { EYE_HEIGHT } from '../../core/player.js';
 import { headquarters, lookout } from './layout.js';
+import { cctvLensClearance } from './observation-props.js';
 
 export function createObservation({ THREE, camera, observation, onNight, onCamera, onCctvExit }) {
   const view = new THREE.PerspectiveCamera(26,camera?.aspect ?? 1,.07,115);
   const target=new THREE.Vector3();
+  const forward=new THREE.Vector3();
   let release,mode,index=0,yaw=0,pitch=0;
   const clamp=THREE.MathUtils.clamp;
   function pointNight() {
@@ -16,7 +18,15 @@ export function createObservation({ THREE, camera, observation, onNight, onCamer
   }
   function showCamera(i) {
     const data=observation.cameras[i];
-    index=i;view.position.set(...data.eye);view.lookAt(...data.target);view.updateMatrixWorld(true);
+    index=i;
+    view.position.set(...data.eye);
+    target.set(...data.target);
+    // The static scenery is instanced: hiding the housing group cannot hide its baked geometry.
+    // Move the optical origin beyond the front of the housing instead.
+    forward.subVectors(target,view.position).normalize();
+    view.position.addScaledVector(forward,cctvLensClearance);
+    view.lookAt(target);
+    view.updateMatrixWorld(true);
     onCamera(i);
   }
   function stop(complete=false) {
