@@ -31,7 +31,13 @@ async function fixture(reducedMotion) {
     assert.fail(`Could not walk to ${x}, ${z} from ${camera.position.x.toFixed(2)}, ${camera.position.z.toFixed(2)}`);
   }
   spawn(militaryBase.spawn.x, militaryBase.spawn.z);
-  return { worlds, visit, camera, spawn, walk };
+  function settle() {
+    player.stop();
+    step.set(0, 0);
+    for (let i = 0; i < 30; i++) player.move(1 / 60, step, worlds.active);
+    assert.ok(player.grounded, 'player settles on the floor');
+  }
+  return { worlds, visit, camera, spawn, walk, settle };
 }
 
 test('the South Gate leads to a walkable HQ lobby and the physical stairs work in both directions', async t => {
@@ -126,7 +132,7 @@ test('fences, closed buildings and parked vehicles use Core collision', async t 
   const { area } = visit;
   const blocked = (x, z) => walkElevation(area, camera.position, x, z, 0, true) === null;
   for (const [x, z] of [[fence.east, 40], [-fence.gate, fence.south + 4], [0, fence.approach],
-    [hospital.x, hospital.z], [-44, 7], [repairTank.x, repairTank.z],
+    [hospital.x, hospital.z], [repairTank.x, repairTank.z],
     [-5.65, 41.6], [helipad.x, helipad.z], [30.15, 9.1]]) {
     assert.ok(blocked(x, z), `expected a collision at ${x}, ${z}`);
   }
@@ -169,4 +175,33 @@ test('mission sites are in the environment and animated scenery resets with the 
   assert.ok(disposed);
   assert.equal(scene.children.length, 0);
   assert.equal(reentered.scene.getObjectByName('Rotating radar antenna').rotation.y, initial[0]);
+});
+
+test('both barracks have walkable open doors, clear aisles, and collidable bunk beds', async t => {
+  const { worlds, visit, camera, spawn, walk, settle } = await fixture();
+  t.after(worlds.unload);
+  visit.scene.updateMatrixWorld(true);
+  for (const [name, width, depth] of [['Barracks 01',10.8,14],['Barracks 02',10.45,15]]) {
+    const hall = visit.scene.getObjectByName(name);
+    const local = (x,z) => new THREE.Vector3(x,0,z).applyMatrix4(hall.matrixWorld);
+    const approach = local(0,depth/2+1.1);
+    spawn(approach.x,approach.z);
+    const middle = local(0,0), rear = local(0,-4.4);
+    walk(middle.x,middle.z);
+    assert.equal(camera.position.y,EYE_HEIGHT+.135);
+    walk(rear.x,rear.z);
+    const bed = local(width/2-1.34,-4.65);
+    assert.equal(walkElevation(visit.area,camera.position,bed.x,bed.z,.135,true),null);
+    const wall = local(width/2-.12,0);
+    assert.equal(walkElevation(visit.area,camera.position,wall.x,wall.z,.135,true),null);
+    assert.equal(hall.children.filter(o=>o.name.startsWith(name+' bunk ')).length,8);
+    walk(middle.x,middle.z);
+    walk(approach.x,approach.z);
+    settle();
+    assert.equal(camera.position.y,EYE_HEIGHT);
+  }
+  for (const name of ['COMMAND AVE','EAST SERVICES','MOTOR POOL','BARRACKS','FLIGHT LINE','SOUTH LOOKOUT'])
+    assert.equal(visit.scene.getObjectByName(name+' wayfinding'),undefined);
+  const lamp = visit.scene.children.find(o=>o.name==='Night street lamp' && o.position.x===11.2);
+  assert.ok(lamp.getObjectByName('HOSPITAL →'));
 });

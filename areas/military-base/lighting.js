@@ -1,6 +1,8 @@
 import { fence, headquarters, helipad, hospital, motorPool, repairTank, supplyDepot, radarControl } from './layout.js';
 
 export const maxLocalLights = 4;
+export const localActivationScale = .5;
+export const localActivationDistance = range => (range + 10) * localActivationScale;
 export const starCount = 860;
 export const scoutHeadlights = Object.freeze({ offset: 10.5, range: 20, intensity: 110, width: 2.7, length: 8.5 });
 const warm = 0xffd597;
@@ -148,7 +150,19 @@ export function createNightLighting({ kit, props, missions, tank, driving }) {
     box(pole, warm, 0, 4.16, .32, .40, .04, .56, [], true);
     kit.solid(pole, 0, 0, .16, .16, 4.3);
     source(x, 3.7, z + .32, { radius: 5.4, range: 12, intensity: 66, name: 'Street lamp' });
+    // Keep only key directions, mounted high on existing light poles instead of standalone posts.
+    const directions = x === 11.2 && z === 15 ? ['HOSPITAL →', 'SUPPLY DEPOT']
+      : x === 10.7 && z === 30 ? ['MOTOR POOL →', 'REPAIR BAY']
+      : x === 10.8 && z === -9 ? ['FLIGHT LINE', 'HELIPAD / RADAR'] : null;
+    if (directions) kit.sign(pole, directions[0], 0, 3.14, .13, 1.78, .38, { sub: directions[1] });
   }
+  const ceilingPosition = new THREE.Vector3();
+  scene.traverse(node => {
+    if (node.name !== 'Barracks ceiling fixture') return;
+    node.getWorldPosition(ceilingPosition);
+    source(ceilingPosition.x, ceilingPosition.y - .36, ceilingPosition.z,
+      { name: 'Barracks interior', color: 0xffe1b1, range: 8, intensity: 28, priority: 3, pool: false });
+  });
   // Bright entrances and work areas. No per-fixture real light allocations.
   for (const [x, z, y, color, name, radius] of [
     [-3.4, fence.south, 3.4, warm, 'South gate', 6],
@@ -239,7 +253,7 @@ export function createNightLighting({ kit, props, missions, tank, driving }) {
     for (const item of sources) {
       if (!item.active()) continue;
       const distance = Math.hypot(px - item.x, py - item.y, pz - item.z);
-      if (distance > item.range + 10) continue;
+      if (distance > localActivationDistance(item.range)) continue;
       item.score = distance - item.priority;
       candidates.push(item);
     }

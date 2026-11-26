@@ -238,25 +238,9 @@ function flag(kit, document) {
   };
 }
 
-function streetSigns(kit) {
-  for (const [x, z, yaw, label, sub] of [
-    [3.6, 39.8, .24, 'COMMAND AVE', 'HQ  /  FLIGHT LINE'],
-    [11.1, 13.1, -.27, 'EAST SERVICES', 'HOSPITAL  →'],
-    [13.9, 28.0, .16, 'MOTOR POOL', 'GARAGES  →'],
-    [-31.5, 17.3, .26, 'BARRACKS', 'WORKSHOP  /  STORES'],
-    [12.3, -21.55, .09, 'FLIGHT LINE', 'HELIPAD  /  RADAR  →'],
-    [57.4, 57.2, -.32, 'SOUTH LOOKOUT', 'RAMP  →'],
-  ]) {
-    const pole = kit.group(label + ' wayfinding', x, 0, z, yaw);
-    kit.box(pole, ink.dark, 0, 1.16, 0, .12, 2.33, .14);
-    kit.sign(pole, label, 0, 2.14, .10, 3.19, .68, { sub });
-    kit.solid(pole, 0, 0, .16, .16, 2.47);
-  }
-}
-
 function heatingStation(kit) {
   const { group, part, box, beam, solid, sign } = kit;
-  const plant = group('Snow-melt plant', -29.5, 0, 41.2, -.19);
+  const plant = group('Water treatment plant', -29.5, 0, 41.2, -.19);
   box(plant, ink.footing, 0, .145, 0, 4.06, .29, 8.24);
   for (const [i, z] of [-2.56, 0, 2.56].entries()) {
     part(plant, 'post', 0x4c7082, 0, 1.10, z, 1.03, 1.75, 1.03);
@@ -267,7 +251,7 @@ function heatingStation(kit) {
     solid(plant, 0, z, 2.02, 2.02, 2.21);
   }
   box(plant, ink.dark, 0, 1.03, 4.08, .09, 2.06, .11);
-  sign(plant, 'SNOW-MELT PLANT', 0, 1.85, 4.12, 2.82, .49, { style: 'gold' });
+  sign(plant, 'WATER PLANT', 0, 1.85, 4.12, 2.82, .49, { style: 'gold' });
   solid(plant, 0, 4.08, .13, .18, 2.06);
 }
 
@@ -291,7 +275,6 @@ export function buildDecorations(kit, moving, document) {
   fuelFarm(kit);
   heatingStation(kit);
   medicalSupplies(kit);
-  streetSigns(kit);
   for (const [x, z, yaw] of [[12, -25, 1.7], [48, -23, -.4], [31, -45, -1.2], [54.7, 37, -1.6],
     [-26.1, 12.3, 1.6], [35.4, 7.6, Math.PI], [56, 10.1, Math.PI], [-10.8, 46.5, Math.PI]]) {
     floodlight(kit, x, z, yaw, 5.0);

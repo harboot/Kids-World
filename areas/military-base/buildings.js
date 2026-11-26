@@ -2,6 +2,7 @@ import { SURFACE_GAP } from '../../core/geometry.js';
 import { headquarters, hospital, motorPool, supplyDepot } from './layout.js';
 import { hazard } from './roads.js';
 import { ink } from './scenery.js';
+import { buildBarracks } from './barracks.js';
 
 export function window(kit, wall, x, y, z, width, height) {
   const { box } = kit;
@@ -371,8 +372,8 @@ export function buildBuildings(kit) {
       tint: i % 2 ? 0x48a88c : 0x64ac75, yaw: -.10, service: true, open: i !== 1,
     });
   }
-  roundHall(kit, { name: 'Barracks 01', x: -45.8, z: -8.2, width: 10.8, depth: 14, tint: 0x73ac73, yaw: 1.49 });
-  roundHall(kit, { name: 'Barracks 02', x: -44.6, z: 7.15, width: 10.45, depth: 15, tint: 0x60ad92, yaw: 1.45 });
+  buildBarracks(kit, { name: 'Barracks 01', x: -45.8, z: -8.2, width: 10.8, depth: 14, tint: 0x73ac73, yaw: 1.49 });
+  buildBarracks(kit, { name: 'Barracks 02', x: -44.6, z: 7.15, width: 10.45, depth: 15, tint: 0x60ad92, yaw: 1.45 });
   utilityHall(kit, { name: 'Maintenance', x: -44, z: 25, width: 14.6, depth: 11.2, tint: 0x84aa91, yaw: -.12 });
   utilityHall(kit, { name: 'Equipment Stores', x: -48.7, z: 39, width: 12.4, depth: 7.3, tint: 0xacbb9b, yaw: 1.56 });
   roundHall(kit, { name: 'Helicopter Hangar', x: 43, z: -44.9, width: 22.8, depth: 8, tint: 0x71b5a0, hangar: true });
