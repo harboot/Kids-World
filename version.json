@@ -1,5 +1,5 @@
 {
-  "version": "3bc9a619073a7cb8f89a80371f2df2293997f368f73ca7bb40afe110e227a7d7",
+  "version": "092a4a5924c46fa62575ece8f325c7ebfc199a3e7e2b7066d94da3e5408620da",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "8d88d795521c29d9f44ce10b1afcfceb55f1bbf2786b6274f0e973e1015b39a6"
+      "revision": "8e3913b8499f4a66be9871c9d2b359f2302b26226c04870950440172cb016d93"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -375,11 +375,11 @@
     },
     {
       "path": "./areas/military-base/robot-hangar.js",
-      "revision": "990b675d9528c82e30d516edbe02d186983010493e173f1a23578b29398cd45a"
+      "revision": "5d20ae4e58f5c3d1fce96dd117307ce53387be976faa2a4430fd60b4f0aef724"
     },
     {
       "path": "./areas/military-base/scenery.js",
-      "revision": "59fe96914b13942f68546735ee97b480b9c4cce20424e077631de2dd84d3de7e"
+      "revision": "f6238ed84ae0d11abad09dbdadb502038fbd60aefd8ad55df80ba7069eab3608"
     },
     {
       "path": "./areas/military-base/soldiers.js",
