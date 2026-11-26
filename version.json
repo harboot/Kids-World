@@ -1,5 +1,5 @@
 {
-  "version": "8b6739ebf9d316092e0908dc45ac4ad5dcfbeef00bedc644bce94de9075f5461",
+  "version": "e28a9ff478e6506e8bd951975dd65e7a196841a9dbb744c2504bb83bbc483a1a",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "30d9eb06b2bd44b984bf4a7de4ce899e87cba5df72877d0121c6ecd0318021a8"
+      "revision": "3ab1c5433a87f6a5a9a72c09515b31ff38a29b244d8ac5ef67ad3088451ddcc1"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -294,6 +294,10 @@
       "revision": "65ed13ae2dde21f08a48ebf7c1dee1c152e55c8e46308e74931d1b940393dccc"
     },
     {
+      "path": "./areas/military-base/compact-tank.js",
+      "revision": "a689de3ad7b3f8534c50d8e7dd4d9c5c6ed3216885ce56c6000c34f7334f377f"
+    },
+    {
       "path": "./areas/military-base/decorations.js",
       "revision": "8de3c8a2dfcda7ff3a8ae53db940f05bb616364f39e9bb3462b6f9dd832f751b"
     },
@@ -355,7 +359,7 @@
     },
     {
       "path": "./areas/military-base/tank-driving.js",
-      "revision": "17dff06362e6b3f51f232fee500fb24a62bfad055dcbcd92752891b4a2221c23"
+      "revision": "678ef94db2dc6fb54811afedb7231ff2baa9f8e9cf15f40624898bb8c14c9283"
     },
     {
       "path": "./areas/military-base/terrain.js",
@@ -363,7 +367,7 @@
     },
     {
       "path": "./areas/military-base/vehicles.js",
-      "revision": "b338ea836edf0f3c258ae0b1aeafbe543ea4b607d19ae9eae48c7284eb914d91"
+      "revision": "4fe24d752b9e1ce9ea802c895fca9df21865270c9d4670402df2c5ef2b74d369"
     },
     {
       "path": "./areas/princess-gallery/ariel-character.js",
