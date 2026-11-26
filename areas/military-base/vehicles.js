@@ -1,6 +1,7 @@
 import { cross } from './buildings.js';
 import { motorPool, repairTank, surveyPads } from './layout.js';
 import { ink } from './scenery.js';
+import { buildCompactTank } from './compact-tank.js';
 
 function wheel(kit, parent, x, y, z, radius, width) {
   const { part } = kit;
@@ -10,12 +11,11 @@ function wheel(kit, parent, x, y, z, radius, width) {
   part(parent, 'drum', ink.dark, x + side * (width / 2 + .068), y, z, radius * .23, .052, radius * .23, [0, 0, Math.PI / 2]);
 }
 
-function tank(kit, name, x, z, yaw, tint, moving, drivable = false) {
+function tank(kit, name, x, z, yaw, tint, moving) {
   const { group } = kit;
-  const repair = Boolean(moving) && !drivable;
+  const repair = Boolean(moving);
   const { part, box, beam } = moving ?? kit;
   const solid = moving ? kit.movingSolid : kit.solid;
-  const wheels = [], treads = [];
   const lift = repair ? .24 : 0;
   const ground = group(name, x, 0, z, yaw);
   (moving ?? kit).groundShadow(ground, .51, -.32, 5.08, 7.88, .061);
@@ -26,24 +26,10 @@ function tank(kit, name, x, z, yaw, tint, moving, drivable = false) {
     for (let k = -2; k <= 2; k++) {
       if (repair && side === 1 && k === 1) continue;
       const zz = k * .91;
-      if (drivable) {
-        const wheel = group('Road wheel', xx + side * .424, .52 + (Math.abs(k) === 2 ? .08 : 0), zz, 0, vehicle);
-        part(wheel, 'drum', 0x6f7d60, 0, 0, 0, .39, .092, .39, [0, 0, Math.PI / 2]);
-        part(wheel, 'drum', ink.dark, side * .054, 0, 0, .15, .05, .15, [0, 0, Math.PI / 2]);
-        box(wheel, ink.steel, side * .056, .26, 0, .04, .075, .075);
-        wheels.push({ wheel, side });
-      } else {
-        part(vehicle, 'drum', 0x6f7d60, xx + side * .424, .52 + (Math.abs(k) === 2 ? .08 : 0), zz, .39, .092, .39, [0, 0, Math.PI / 2]);
-        part(vehicle, 'drum', ink.dark, xx + side * .478, .52 + (Math.abs(k) === 2 ? .08 : 0), zz, .15, .05, .15, [0, 0, Math.PI / 2]);
-      }
+      part(vehicle, 'drum', 0x6f7d60, xx + side * .424, .52 + (Math.abs(k) === 2 ? .08 : 0), zz, .39, .092, .39, [0, 0, Math.PI / 2]);
+      part(vehicle, 'drum', ink.dark, xx + side * .478, .52 + (Math.abs(k) === 2 ? .08 : 0), zz, .15, .05, .15, [0, 0, Math.PI / 2]);
     }
-    for (let i = -5; i <= 5; i++) {
-      if (drivable) {
-        const tread = group('Moving track link', xx, 1.108, i * .42, 0, vehicle);
-        box(tread, 0x465253, 0, 0, 0, .81, .055, .095);
-        treads.push({ tread, side, start: i * .42 });
-      } else box(vehicle, 0x465253, xx, 1.108, i * .42, .81, .055, .095);
-    }
+    for (let i = -5; i <= 5; i++) box(vehicle, 0x465253, xx, 1.108, i * .42, .81, .055, .095);
     box(vehicle, ink.moss, xx, 1.25, -.02, .91, .18, 4.92);
     box(vehicle, ink.white, side * 1.23, 1.35, 2.40, .27, .18, .16);
     box(vehicle, ink.red, side * 1.24, 1.24, -2.57, .23, .18, .12);
@@ -52,7 +38,7 @@ function tank(kit, name, x, z, yaw, tint, moving, drivable = false) {
   box(vehicle, ink.moss, 0, 1.69, -1.73, 1.88, .24, 1.27);
   for (const i of [-2, -1, 0, 1, 2]) box(vehicle, ink.dark, i * .27, 1.823, -1.84, .10, .026, 1.11);
   part(vehicle, 'drum', ink.dark, 0, 1.88, .22, .94, .25, .84);
-  const turret = group(name + ' turret', 0, 1.97, .17, repair ? -.21 : drivable ? 0 : .16, vehicle);
+  const turret = group(name + ' turret', 0, 1.97, .17, repair ? -.21 : .16, vehicle);
   part(turret, 'track', tint, 0, .31, -.05, 2.34, .82, 2.01, [0, Math.PI / 2, 0]);
   box(turret, ink.olive, 0, .72, -.27, 1.54, .12, 1.20);
   box(turret, ink.moss, 0, .32, 1.04, .84, .52, .35);
@@ -64,30 +50,9 @@ function tank(kit, name, x, z, yaw, tint, moving, drivable = false) {
   box(turret, ink.yellow, .40, .788, -.49, .35, .045, .23);
   for (const side of [-1, 1]) box(vehicle, 0xa8ca72, side * 1.37, 1.36, -.45, .55, .058, 1.11);
   beam(turret, ink.dark, [.77, .67, -.79], [.86, 1.74, -.86], .025);
-  if (drivable) {
-    box(vehicle, ink.dark, 0, 1.98, -1.46, .72, .20, .61);
-    box(vehicle, ink.olive, 0, 2.18, -1.76, .72, .48, .13);
-  }
   const hullSolid = solid(vehicle, 0, 0, 3.55, 5.25, 2.85);
   // A separate narrow footprint follows the overhanging part of the barrel.
   const barrelSolid = solid(turret, 0, 2.93, .28, 1.30, .58);
-  if (drivable) {
-    const travel = [0, 0];
-    return { ground, ownObstacles: [hullSolid.obstacle, barrelSolid.obstacle],
-      pose(px, pz, heading, left = 0, right = 0) {
-        ground.position.set(px, 0, pz);
-        ground.rotation.y = heading;
-        travel[0] += left; travel[1] += right;
-        for (const { wheel, side } of wheels) wheel.rotation.x = travel[side > 0 ? 1 : 0] / .39;
-        for (const { tread, side, start } of treads) {
-          const offset = travel[side > 0 ? 1 : 0] + start + 2.31;
-          tread.position.z = ((offset % 4.62) + 4.62) % 4.62 - 2.31;
-        }
-        hullSolid(); barrelSolid();
-      },
-      reset() { travel.fill(0); this.pose(x, z, yaw); },
-    };
-  }
   if (!repair) return;
   const support = group('Tank jack stands', 0, 0, 0, 0, ground);
   for (const xx of [-1.37, 1.37]) {
@@ -239,7 +204,7 @@ function surveyAircraft(kit, { x, z, yaw }, index) {
 
 export function buildVehicles(kit, moving) {
   const { x, z } = motorPool;
-  const drivable = tank(kit, 'Tank 01', x - 11.5, z + 13.2, -.08, 0x7cbd5c, moving, true);
+  const drivable = buildCompactTank(kit, moving, x - 11.5, z + 13.2, -.08);
   tank(kit, 'Tank 02', x - 4.0, z + 13.4, .14, 0x90bd64);
   tank(kit, 'Tank 03', x + 3.1, z + 13.0, -.13, 0x65a766);
   const repair = tank(kit, 'Tank 04 under repair', repairTank.x, repairTank.z, repairTank.yaw, 0x92ab55, moving);

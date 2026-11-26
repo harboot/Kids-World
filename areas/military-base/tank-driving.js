@@ -1,5 +1,6 @@
 import { EYE_HEIGHT } from '../../core/player.js';
 import { PLAYER_RADIUS, overlaps } from '../../core/movement.js';
+import { compactTank } from './compact-tank.js';
 
 export const tankConfig = Object.freeze({ forward: 15, reverse: 6, acceleration: 10, braking: 14, turn: 1.5 });
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
@@ -24,8 +25,8 @@ export function rectanglesOverlap(a, b) {
 
 function footprint(x, z, yaw) {
   return [
-    { x, z, yaw, width: 3.68, depth: 5.35 },
-    { ...offset(x, z, yaw, 0, 3.12), yaw, width: .38, depth: 1.50 },
+    { x, z, yaw, width: compactTank.width, depth: compactTank.depth },
+    { ...offset(x, z, yaw, 0, compactTank.cannonZ), yaw, width: compactTank.cannonWidth, depth: compactTank.cannonDepth },
   ];
 }
 
@@ -37,7 +38,7 @@ export function canPlaceTank(x, z, yaw, { obstacles, own, traversal, width, dept
         if (Math.abs(p.x) > width / 2 || Math.abs(p.z) > depth / 2 ||
             Math.abs(traversal.getGroundHeight?.(p.x, p.z, 0) ?? 0) > .18 ||
             traversal.blocksGround?.(p.x, p.z, .15, 0, { x, z }) ||
-            (traversal.getCeilingHeight?.(p.x, p.z, 0) ?? Infinity) < 4.5) return false;
+            (traversal.getCeilingHeight?.(p.x, p.z, 0) ?? Infinity) < compactTank.eyeHeight + .25) return false;
       }
     }
     for (const obstacle of obstacles) {
@@ -63,8 +64,8 @@ export function createTankDriving({ THREE, camera, model, obstacles, traversal, 
   let release, speed = 0, lookYaw = 0, pitch = -.32, wantedYaw = 0, wantedPitch = -.32, blend = 1, cueTime = 0;
   function local(u, v) { return offset(ground.position.x, ground.position.z, ground.rotation.y, u, v); }
   function exitPosition() {
-    for (const distance of [2.35, 2.85, 3.35, 3.85]) {
-      for (const [u, v] of [[-distance, -.55], [distance, -.55], [-distance, -1.8], [distance, -1.8], [0, -distance - 1]]) {
+    for (const distance of [compactTank.boardX + .10, 2.15, 2.65, 3.15]) {
+      for (const [u, v] of [[-distance, compactTank.boardZ], [distance, compactTank.boardZ], [-distance, -1.25], [distance, -1.25], [0, -Math.max(2.15, distance)]]) {
         const p = local(u, v);
         if (Math.abs(p.x) > width / 2 - PLAYER_RADIUS || Math.abs(p.z) > depth / 2 - PLAYER_RADIUS) continue;
         const y = traversal.getGroundHeight?.(p.x, p.z, 0) ?? 0;
@@ -79,8 +80,8 @@ export function createTankDriving({ THREE, camera, model, obstacles, traversal, 
   function cameraPose(dt) {
     const damping = reducedMotion() ? 1 : 1 - Math.exp(-dt * 10);
     lookYaw += (wantedYaw - lookYaw) * damping; pitch += (wantedPitch - pitch) * damping;
-    const p = local(0, -1.46), heading = ground.rotation.y + lookYaw;
-    eye.set(p.x, 4.12, p.z);
+    const p = local(0, compactTank.seatZ), heading = ground.rotation.y + lookYaw;
+    eye.set(p.x, compactTank.eyeHeight, p.z);
     target.set(eye.x + Math.sin(heading) * Math.cos(pitch), eye.y + Math.sin(pitch), eye.z + Math.cos(heading) * Math.cos(pitch));
     rotation.setFromRotationMatrix(matrix.lookAt(eye, target, up));
     blend = reducedMotion() ? 1 : Math.min(1, blend + dt / .35);
@@ -98,7 +99,7 @@ export function createTankDriving({ THREE, camera, model, obstacles, traversal, 
     const throttle = clamp(-input.y, -1, 1), steer = clamp(-input.x, -1, 1);
     const targetSpeed = throttle * (throttle >= 0 ? tankConfig.forward : tankConfig.reverse) * pace;
     speed = approach(speed, targetSpeed, (Math.abs(targetSpeed) > Math.abs(speed) && speed * targetSpeed >= 0 ? tankConfig.acceleration : tankConfig.braking) * dt);
-    const steps = Math.max(1, Math.ceil((Math.abs(speed) * dt + Math.abs(steer) * tankConfig.turn * dt * 4) / .18));
+    const steps = Math.max(1, Math.ceil((Math.abs(speed) * dt + Math.abs(steer) * tankConfig.turn * dt * 2.6) / .18));
     const step = dt / steps;
     let l = 0, r = 0;
     for (let i = 0; i < steps; i++) {
@@ -106,13 +107,13 @@ export function createTankDriving({ THREE, camera, model, obstacles, traversal, 
       let x = ground.position.x, z = ground.position.z;
       const turn = steer * tankConfig.turn * step;
       const nextHeading = wrap(heading + turn);
-      if (turn && canPlaceTank(x, z, nextHeading, world)) { heading = nextHeading; l += turn * 1.35; r -= turn * 1.35; }
+      if (turn && canPlaceTank(x, z, nextHeading, world)) { heading = nextHeading; l += turn * compactTank.trackOffset; r -= turn * compactTank.trackOffset; }
       const next = offset(x, z, heading, 0, speed * step);
       if (speed && canPlaceTank(next.x, next.z, heading, world)) { x = next.x; z = next.z; l += speed * step; r += speed * step; }
       else if (speed) speed = 0;
       ground.position.x = x; ground.position.z = z; ground.rotation.y = heading;
     }
-    model.pose(ground.position.x, ground.position.z, ground.rotation.y, l, r);
+    model.pose(ground.position.x, ground.position.z, ground.rotation.y, l, r, throttle, steer);
     cameraPose(dt);
     cueTime -= dt;
     if (cueTime <= 0) {
@@ -126,6 +127,7 @@ export function createTankDriving({ THREE, camera, model, obstacles, traversal, 
     const p = exitPosition();
     if (!p) { speed = 0; notify('No clear space to exit the tank. Move to an open area.'); return; }
     const stop = release; release = undefined; speed = 0;
+    model.pose(ground.position.x, ground.position.z, ground.rotation.y);
     playCue([[42, { endPitch: 29, duration: .28, level: .10, wave: 'triangle' }]]);
     stop(p);
   } };
@@ -139,9 +141,9 @@ export function createTankDriving({ THREE, camera, model, obstacles, traversal, 
     cameraPose(0);
   }
   const interactions = [-1, 1].map(side => ({
-    label: 'Drive Tank', radius: 1.4, anchorY: 1.4,
-    get x() { return local(side * 2.25, -.55).x; },
-    get z() { return local(side * 2.25, -.55).z; },
+    label: 'Drive Tank', radius: 1.25, anchorY: 1.25,
+    get x() { return local(side * compactTank.boardX, compactTank.boardZ).x; },
+    get z() { return local(side * compactTank.boardX, compactTank.boardZ).z; },
     get active() { return !release; },
     reachable(p) { return Math.abs(p.y - EYE_HEIGHT) < .65; },
     act: board,

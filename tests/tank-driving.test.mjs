@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { rectanglesOverlap, canPlaceTank } from '../areas/military-base/tank-driving.js';
+import { rectanglesOverlap, canPlaceTank, tankConfig } from '../areas/military-base/tank-driving.js';
+import { compactTank } from '../areas/military-base/compact-tank.js';
 import * as THREE from '../vendor/three.module.min.js';
 import { militaryBase } from '../areas/military-base/index.js';
 
@@ -8,7 +9,7 @@ test('oriented vehicle collision includes the overhanging cannon and map bounds'
   const a = { x: 0, z: 0, width: 3, depth: 5, yaw: .5 };
   assert.ok(rectanglesOverlap(a, { ...a, x: 1 }));
   assert.ok(!rectanglesOverlap(a, { ...a, x: 10 }));
-  const obstacle = { height: 2, footprint: { x: 0, z: 3.5, width: .5, depth: .5, yaw: 0 } };
+  const obstacle = { height: 2, footprint: { x: 0, z: 2.35, width: .5, depth: .5, yaw: 0 } };
   const world = { obstacles: [obstacle], own: new Set(), traversal: {}, width: 100, depth: 100 };
   assert.equal(canPlaceTank(0, 0, 0, world), false);
   world.own.add(obstacle);
@@ -28,10 +29,13 @@ test('Tank 01 drives, exits at its current location and resets without modifying
   let controller, exit, spawn;
   board.act({ guideCamera(_look, options) { controller = options.drive; exit = options.prompt; return p => { spawn = p; }; } });
   assert.equal(board.active, false);
-  assert.ok(camera.position.y > 3);
+  assert.ok(Math.abs(camera.position.y - compactTank.eyeHeight) < .001);
+  assert.ok(scene.getObjectByName('Scout open driver seat'));
+  assert.ok(scene.getObjectByName('Scout driver control panel'));
+  assert.equal(tank.children[0].name, 'Compact open scout tank');
   for (let i = 0; i < 45; i++) controller(1/60, { x: 0, y: -1 });
   assert.ok(tank.position.distanceTo(original) > .5);
-  assert.ok(Math.abs(camera.position.y - 4.12) < .001);
+  assert.ok(Math.abs(camera.position.y - compactTank.eyeHeight) < .001);
   exit.act();
   assert.ok(spawn);
   assert.ok(Math.hypot(spawn.x - tank.position.x, spawn.z - tank.position.z) < 5);
@@ -40,4 +44,18 @@ test('Tank 01 drives, exits at its current location and resets without modifying
   assert.ok(tank.position.distanceTo(original) < 1e-6);
   assert.equal(area.missionStatus.missions.length, 5);
   area.unload();
+});
+
+test('compact tank fits a narrow 2.8-unit lane without changing driving speeds', () => {
+  const obstacles = [-1, 1].map(side => ({
+    height: 5, footprint: { x: side * 1.65, z: 0, width: .5, depth: 20, yaw: 0 },
+  }));
+  const world = { obstacles, own: new Set(), traversal: {}, width: 100, depth: 100 };
+  assert.equal(canPlaceTank(0, 0, 0, world), true);
+  assert.equal(canPlaceTank(.35, 0, 0, world), false);
+  assert.equal(canPlaceTank(0, 0, Math.PI / 2, world), false);
+  assert.equal(tankConfig.forward, 15);
+  assert.equal(tankConfig.reverse, 6);
+  assert.equal(tankConfig.turn, 1.5);
+  assert.ok(compactTank.width < 3.55 && compactTank.depth < 5.25);
 });
