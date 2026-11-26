@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import * as THREE from '../vendor/three.module.min.js';
 import { militaryBase } from '../areas/military-base/index.js';
-import { maxLocalLights, starCount, scoutHeadlights } from '../areas/military-base/lighting.js';
+import { maxLocalLights, starCount, scoutHeadlights, localActivationDistance } from '../areas/military-base/lighting.js';
 
 test('night area retains one cached moon shadow and a fixed shadow-free local light pool', () => {
   const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera();
@@ -87,5 +87,22 @@ test('scout headlamp reaches farther forward and follows the heading without ext
   area.update(0, camera.position);
   const hidden = new THREE.Matrix4(); glow.getMatrixAt(glow.count - 1, hidden);
   assert.equal(hidden.elements[0], 0);
+  area.unload();
+});
+
+test('automatic local lights activate at half their former distance; scout headlights remain independent', () => {
+  assert.equal(localActivationDistance(12),11);
+  assert.equal(localActivationDistance(14),12);
+  assert.equal(localActivationDistance(7),8.5);
+  const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera();
+  const area = militaryBase.load({ THREE, scene, camera });
+  const lights = scene.children.filter(o=>o.isPointLight);
+  const pickup = area.interactions.find(item=>item.label==='Pick Up Component');
+  const matching = () => lights.some(light=>light.intensity>0 && Math.hypot(light.position.x-pickup.x,light.position.z-pickup.z)<.01);
+  area.update(0,{x:pickup.x,y:2,z:pickup.z+10});
+  assert.equal(matching(),false);
+  area.update(0,{x:pickup.x,y:2,z:pickup.z+5});
+  assert.equal(matching(),true);
+  assert.equal(lights.length,maxLocalLights);
   area.unload();
 });
