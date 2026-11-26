@@ -85,7 +85,7 @@ test('tank is repaired in place with a single interaction, all parts reassemble 
   const {area,find,row,node,advance}=await missionFixture(t);
   const [repair]=find('Repair Tank');
   const tank=node('Tank 04 under repair'), wheel=node('Installed road wheel'), loose=node('Loose tank road wheel');
-  const turret=node('Tank 04 under repair turret'), cover=node('Tank engine cover');
+  const turret=node('Tank 04 under repair turret'), cover=node('Tank 04 under repair engine cover');
   const start=tank.position.clone(), detached=turret.position.clone();
   assert.equal(find('Pick Up Component').length,0);
   assert.equal(find('Install Component').length,0);
@@ -109,6 +109,7 @@ test('tank is repaired in place with a single interaction, all parts reassemble 
   assert.equal(node('Tank jack stands').scale.x,0);
   assert.ok(Math.abs(cover.rotation.x)<1e-6);
   assert.deepEqual(tank.position,start);
+  assert.ok(tank.children.filter(o=>o.name==='Tank exhaust puff').every(o=>o.scale.x===0));
   area.reset();
   assert.deepEqual(turret.position,detached);
   assert.equal(wheel.scale.x,0);
