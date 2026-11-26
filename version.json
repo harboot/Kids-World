@@ -1,5 +1,5 @@
 {
-  "version": "ed1c6018c1d5e9f7c41c66ea83a0e4d84e2d44009fcd982410f55f173a872ba6",
+  "version": "8b6739ebf9d316092e0908dc45ac4ad5dcfbeef00bedc644bce94de9075f5461",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "7f3e29503ec84ea050d9089e9349e1aaa210d6fa46c784fc96bb36dea7fe844f"
+      "revision": "30d9eb06b2bd44b984bf4a7de4ce899e87cba5df72877d0121c6ecd0318021a8"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -311,7 +311,7 @@
     },
     {
       "path": "./areas/military-base/index.js",
-      "revision": "7b9f2b1dda02030f84cfb8b2db280bd6dd706521e584455d884471680abb15e1"
+      "revision": "71a88038276e542fd70ccec9adf6887b48436caef43f8b124a59a529b2a27081"
     },
     {
       "path": "./areas/military-base/layout.js",
@@ -347,11 +347,15 @@
     },
     {
       "path": "./areas/military-base/scenery.js",
-      "revision": "d80e9229d9b3f0dceaee0159b8a7837ed0951a8b2a61157abdfa0228de873f66"
+      "revision": "4b5ce7b3bd4c3bfe78a033d5ace2fe25af80f03ec0c4a0386cfd5ddb8453f357"
     },
     {
       "path": "./areas/military-base/soldiers.js",
       "revision": "c95e95a81c2cac86c554819bcf33449efcfcdd2bacec19c59a18b047e0c7f12b"
+    },
+    {
+      "path": "./areas/military-base/tank-driving.js",
+      "revision": "17dff06362e6b3f51f232fee500fb24a62bfad055dcbcd92752891b4a2221c23"
     },
     {
       "path": "./areas/military-base/terrain.js",
@@ -359,7 +363,7 @@
     },
     {
       "path": "./areas/military-base/vehicles.js",
-      "revision": "69f0094bda5495d211e846f9619d817eb3d5249fe077eb3b3b8dbc4f582f9bea"
+      "revision": "b338ea836edf0f3c258ae0b1aeafbe543ea4b607d19ae9eae48c7284eb914d91"
     },
     {
       "path": "./areas/princess-gallery/ariel-character.js",
@@ -667,7 +671,7 @@
     },
     {
       "path": "./core/controls.js",
-      "revision": "20457dc15b8d469842437d4e4d2f4cadd2f4eda52e6454906c6ba5854e7a78bf"
+      "revision": "df73d2510137e9680d1dc52d4c8925a12537a44b711ab999272bcd93831c4ba5"
     },
     {
       "path": "./core/coordinate-picker.js",
@@ -683,7 +687,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "00e1a29db65d71515ee4a6b93ad3f97c9428b18ab6e9416559261f9cfcc05fee"
+      "revision": "0b6e96fd6b0e97a9143b0f4cf8c8e1159e32a1d5db4890077f61b19510eb924a"
     },
     {
       "path": "./core/geometry.js",
@@ -779,7 +783,7 @@
     },
     {
       "path": "./style.css",
-      "revision": "4f3d13e71265ef91ff4e5f146a086ec1e6e076ea959b3462e9a4633c34168c5b"
+      "revision": "5616ca50635465164350312bc083ae8f3ee096339be0db9f30caf7864cab6c36"
     },
     {
       "path": "./vendor/three.LICENSE",
