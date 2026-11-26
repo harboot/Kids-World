@@ -11,7 +11,7 @@ export function releaseCapture(element, pointerId) {
   }
 }
 
-export function createControls(THREE, { game, canvas, joystick, thumb, playing, seated, touchMode, steeringMode = () => false, look, jump, interact, pause }) {
+export function createControls(THREE, { game, canvas, joystick, thumb, playing, seated, touchMode, steeringMode = () => false, driving = () => false, look, jump, interact, pause }) {
   const keys = new Set();
   const presses = new Map();
   const stickAxis = new THREE.Vector2();
@@ -134,7 +134,7 @@ export function createControls(THREE, { game, canvas, joystick, thumb, playing, 
     if (!press) return;
     press.moved ||= Math.hypot(event.clientX - press.startX, event.clientY - press.startY) >= 9;
     if (press.moved && lookPointer === event.pointerId) {
-      const horizontal = !steeringMode() || seated() ? (event.clientX - press.x) * 0.004 : 0;
+      const horizontal = !steeringMode() || seated() || driving() ? (event.clientX - press.x) * 0.004 : 0;
       look(horizontal, (event.clientY - press.y) * 0.004);
       press.x = event.clientX;
       press.y = event.clientY;
@@ -164,7 +164,7 @@ export function createControls(THREE, { game, canvas, joystick, thumb, playing, 
     const horizontal = Number(keys.has('lookRight')) - Number(keys.has('lookLeft'));
     const vertical = Number(keys.has('lookDown')) - Number(keys.has('lookUp'));
     const activeStick = stickAxis.lengthSq() > 0.01;
-    const steering = steeringMode();
+    const steering = steeringMode() && !driving();
     const stickTurn = activeStick && steering ? stickAxis.x * stickTurnSpeed : 0;
     const sideways = Number(keys.has('right')) - Number(keys.has('left'));
     const keyTurn = steering ? sideways * 1.65 : 0;
