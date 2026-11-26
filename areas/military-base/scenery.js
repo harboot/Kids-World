@@ -43,6 +43,20 @@ export function createScenery(THREE, scene, document, playerRadius = PLAYER_RADI
     rotorRing: () => new THREE.TorusGeometry(1, .18, 5, 14).rotateX(-Math.PI / 2),
     cap: () => new THREE.SphereGeometry(1, 10, 5),
     rock: () => new THREE.IcosahedronGeometry(1, 0),
+    mechArmor: () => {
+      const rings=[[-.5,.58,.60],[-.32,1,1],[.22,.94,.94],[.5,.63,.66]];
+      const points=[[-.33,-.5],[.33,-.5],[.5,-.31],[.5,.31],[.33,.5],[-.33,.5],[-.5,.31],[-.5,-.31]];
+      const vertices=[],indices=[];
+      for(const [y,w,d] of rings)for(const [x,z] of points)vertices.push(x*w,y,z*d);
+      for(let r=0;r<rings.length-1;r++)for(let j=0;j<8;j++){
+        const a=r*8+j,b=r*8+(j+1)%8,c=b+8,d=a+8;
+        indices.push(a,d,b,b,d,c);
+      }
+      for(let j=1;j<7;j++)indices.push(0,j,j+1,24,24+j+1,24+j);
+      const g=new THREE.BufferGeometry();
+      g.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));g.setIndex(indices);
+      const flat=g.toNonIndexed();flat.computeVertexNormals();g.dispose();return flat;
+    },
     track: () => profile(THREE, [[-.38, -.5], [.38, -.5], [.5, -.16], [.5, .27], [.36, .5], [-.34, .5], [-.5, .24], [-.5, -.24]]),
     crown: () => profile(THREE, [[-.5, 0], [.5, 0], [.34, 1], [-.34, 1]]),
     arch: () => profile(THREE, Array.from({ length: 13 }, (_, i) => {
