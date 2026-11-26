@@ -184,12 +184,12 @@
   </header>
   <main class="wrap">
     <h1>Area Statistics</h1>
-    <p class="description">Map dimensions and repository file sizes by area.</p>
+    <p class="description">Map dimensions, area file sizes and total website source size.</p>
     <dl class="summary" aria-label="Area summary" hidden>
       <div><dt>Last Update</dt><dd id="last-update"></dd></div>
       <div><dt>Public / Hidden Areas</dt><dd id="visibility-counts"></dd></div>
       <div><dt>Total Area Files</dt><dd id="total-files"></dd></div>
-      <div><dt>Total Area Size</dt><dd id="total-size"></dd></div>
+      <div><dt>Total Size</dt><dd id="total-size"></dd></div>
     </dl>
     <section class="inventory" aria-labelledby="area-list-heading">
       <div class="inventory-header">
@@ -289,7 +289,7 @@
       const values = {
         'visibility-counts': `${number.format(summary.publicAreas)} / ${number.format(summary.hiddenAreas)}`,
         'total-files': number.format(summary.totalFiles),
-        'total-size': size(summary.totalBytes),
+        'total-size': size(summary.projectBytes),
       };
       for (const [id, value] of Object.entries(values)) document.getElementById(id).textContent = value;
       const updated = document.getElementById('last-update');

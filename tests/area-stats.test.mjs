@@ -65,6 +65,11 @@ test('reads public and hidden definitions, owns only area files, and counts file
     'core/engine.js': 'excluded',
     'vendor/three.js': 'excluded',
     'assets/global.png': Buffer.alloc(1024),
+    'style.css': 'body{}',
+    'tests/test.js': 'excluded test',
+    'core/docs/notes.md': 'excluded documentation',
+    'node_modules/pkg/index.js': 'excluded dependency',
+    'area-stats.json': '{}',
   });
 
   const stats = await generateAreaStats(directory);
@@ -83,6 +88,7 @@ test('reads public and hidden definitions, owns only area files, and counts file
   assert.deepEqual(stats.summary, {
     totalAreas: 2, publicAreas: 1, hiddenAreas: 1, totalFiles: 9,
     totalBytes: winterFolder + secretBytes,
+    projectBytes: winterFolder + secretBytes + 4 * Buffer.byteLength('excluded') + 1024 + Buffer.byteLength('body{}') + (await readFile(join(directory,'game.js'))).length,
   });
   assert.equal(JSON.stringify(stats), JSON.stringify(await generateAreaStats(directory)));
 });
@@ -203,6 +209,8 @@ test('the dashboard renders the last update, grouped metrics, and links to image
   assert.equal(updated.textContent, '24 Nov 2026');
   assert.equal(updated.children[0].textContent, '01:10 WIB');
   assert.equal(ids['visibility-counts'].textContent, `${summary.publicAreas} / ${summary.hiddenAreas}`);
+  assert.match(html, /<dt>Total Size<\/dt>/);
+  assert.ok(summary.projectBytes > summary.totalBytes);
   assert.match(ids['total-size'].textContent, /^[\d,.]+ [KM]B$/);
   assert.equal(selectors['.summary'].hidden, false);
   assert.equal(selectors['.table-scroll'].hidden, false);

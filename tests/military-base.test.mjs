@@ -4,6 +4,7 @@ import * as THREE from '../vendor/three.module.min.js';
 import { areas } from '../game.js';
 import { militaryBase } from '../areas/military-base/index.js';
 import { antennas, checkpoints, fence, headquarters, helipad, hospital, lookout, motorPool, repairTank, supplyDepot, northPost, generatorSite } from '../areas/military-base/layout.js';
+import { hangarSite } from '../areas/military-base/robot-hangar.js';
 import { walkElevation } from '../core/movement.js';
 import { createPlayer, EYE_HEIGHT } from '../core/player.js';
 import { createWorldManager } from '../core/world-manager.js';
@@ -83,7 +84,7 @@ test('the robot hangar replaces service sheds and the roadway wraps around the H
   assert.ok(visit.scene.getObjectByName('Robot inspection catwalk'));
   spawn(-39.5,-27.5);
   walk(-39.5,-30.1);
-  assert.equal(camera.position.y,EYE_HEIGHT);
+  assert.ok(Math.abs(camera.position.y-EYE_HEIGHT-hangarSite.lowerStop)<1e-6);
 
   const road = visit.scene.getObjectByName('Road network around the district islands');
   const hitsRoad = (x, z) => {
