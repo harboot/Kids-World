@@ -13,8 +13,6 @@ export const checkpoints = [
 ];
 export const antennas = [
   { x: -4.0, z: -43.5, kind: 'dish' },
-  { x: 56, z: -44, kind: 'array' },
-  { x: -55, z: -46, kind: 'relay' },
 ];
 export const motorPool = { x: 34, z: 31 };
 export const repairTank = { x: motorPool.x + 12.5, z: motorPool.z + 14.2, yaw: 0.22 };
@@ -27,3 +25,6 @@ export const securityPanels = [
   { x: 50.55, z: 39.1, guard: 'Garage checkpoint guard', name: 'Motor Pool' },
   { x: lookout.x + 1.86, z: lookout.z - 1.95, y: lookout.height, guard: 'Lookout checkpoint guard', name: 'South Lookout' },
 ];
+
+// Ordered route on the main paved roads, away from parked vehicles.
+export const tankTestCheckpoints = [{ x: 8, z: 48 }, { x: 8, z: 20 }, { x: 26, z: 21 }];

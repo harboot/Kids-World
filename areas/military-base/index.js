@@ -10,6 +10,8 @@ import { buildSoldiers } from './soldiers.js';
 import { buildTerrain } from './terrain.js';
 import { buildVehicles } from './vehicles.js';
 import { createTankDriving } from './tank-driving.js';
+import { createJeepDriving } from './jeep.js';
+import { buildTankCourse } from './tank-course.js';
 import { metadata } from './metadata.js';
 import { music } from './music.js';
 import { createNightLighting, setNightEnvironment } from './lighting.js';
@@ -28,18 +30,21 @@ export const militaryBase = {
     buildRoads(kit);
     buildBuildings(kit);
     const traversal = buildPerimeter(kit);
-    const { repair: tank, drivable } = buildVehicles(kit, moving);
-    const driving = createTankDriving({ THREE, camera, model: drivable, obstacles: kit.obstacles, traversal,
-      width: metadata.width, depth: metadata.depth, reducedMotion, playCue, notify });
+    const { repair: tank, drivable, drivableJeep } = buildVehicles(kit, moving);
+    const vehicleOptions = { THREE, camera, obstacles: kit.obstacles, traversal,
+      width: metadata.width, depth: metadata.depth, reducedMotion, playCue, notify };
+    const driving = createTankDriving({ ...vehicleOptions, model: drivable, canBoard: () => !jeepDriving.active });
+    const jeepDriving = createJeepDriving({ ...vehicleOptions, model: drivableJeep, canBoard: () => !driving.active });
+    const course = buildTankCourse(kit);
     const helicopter = buildHelicopter(kit, moving, document);
     const { radarHeads, poseFlag } = buildDecorations(kit, moving, document);
     const soldiers = buildSoldiers(kit, moving);
     const props = buildMissionProps(kit, moving);
     const missions = createMissions({
       THREE, camera, props, radarHeads, tank, helicopter, soldiers, reducedMotion, playCue, notify,
-      completeLevel, isLevelComplete,
+      completeLevel, isLevelComplete, course, driving,
     });
-    const lighting = createNightLighting({ kit, props, missions, tank: drivable, driving });
+    const lighting = createNightLighting({ kit, props, missions, tank: drivable, driving, jeep: drivableJeep, jeepDriving });
     kit.finish();
     moving.build();
     lighting.update(metadata.spawn);
@@ -49,12 +54,13 @@ export const militaryBase = {
       ...traversal,
       obstacles: kit.obstacles,
       droneView: { center: { x: 0, z: 2 }, width: 163, depth: 155 },
-      interactions: [...missions.interactions, ...driving.interactions],
+      interactions: [...missions.interactions, ...driving.interactions, ...jeepDriving.interactions],
       missionStatus: missions.missionStatus,
-      unload() { driving.cancel(); missions.unload(); },
+      unload() { driving.cancel(); jeepDriving.cancel(); missions.unload(); },
       reset() {
         time = 0;
         driving.reset();
+        jeepDriving.reset();
         missions.reset();
         soldiers.reset();
         poseFlag(0);

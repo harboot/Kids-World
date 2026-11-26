@@ -110,9 +110,7 @@ function radar(kit, moving) {
   const pivots = {};
   for (const { x, z, kind } of antennas) {
     const mast = group('Radar ' + kind, x, 0, z);
-    if (kind === 'relay') {
-      box(mast, ink.footing, 0, .21, 0, 4.2, .42, 4.05);
-    } else {
+    {
       part(mast, 'post', ink.teal, 0, .26, 0, 3.5, .52, 3.5, [0, .22, 0]);
       part(mast, 'post', ink.pale, 0, .58, 0, 2.71, .16, 2.71, [0, .22, 0]);
       solid(mast, 0, 0, 4.55, 4.55, .66);
@@ -123,7 +121,7 @@ function radar(kit, moving) {
       }
       box(mast, ink.paleTeal, 0, .58, 2.65, 1.74, .16, .57);
     }
-    const height = kind === 'relay' ? 8.85 : kind === 'array' ? 7.0 : 4.72;
+    const height = 4.72;
     for (const side of [-1, 1]) {
       beam(mast, ink.dark, [side * 1.35, .40, 1.33], [side * .50, height, .51], .19);
       beam(mast, ink.dark, [side * 1.35, .40, -1.33], [side * .50, height, -.51], .19);
@@ -139,8 +137,9 @@ function radar(kit, moving) {
     box(mast, ink.teal, 0, height, 0, 1.45, .27, 1.45);
     solid(mast, 0, 0, 2.73, 2.73, height + 1);
     if (kind === 'dish') {
-      const dish = group('Radar dish', 0, height + .99, 0, -.42, mast);
-      pivots.dish = dish;
+      const spin = group('Rotating radar antenna', 0, height + .99, 0, -.42, mast);
+      pivots.dish = spin;
+      const dish = group('Radar dish', 0, 0, 0, 0, spin);
       dish.rotation.x = .88;
       beam(mast, ink.steel, [0, height, 0], [0, height + 1, 0], .35, .35, 'drum');
       const coordinates = Array.from({ length: 7 }, (_, i) => {
@@ -157,28 +156,8 @@ function radar(kit, moving) {
       }
       for (const side of [-1, 1]) moving.beam(dish, ink.dark, [side * 1.58, -.046, 0], [0, 1.45, 0], .086);
       moving.part(dish, 'post', 0xff655d, 0, 1.46, 0, .17, .39, .17, [], true);
-    } else if (kind === 'relay') {
-      const relay = group('Relay antenna head', 0, height, 0, .28, mast);
-      pivots.relay = relay;
-      moving.part(relay, 'drum', ink.dark, 0, 1.03, 0, .086, 2.08, .086);
-      for (const side of [-1, 1]) {
-        moving.beam(relay, ink.pale, [0, 1.12, 0], [side * 1.65, .95, .46], .095);
-        for (let j = 0; j < 4; j++) moving.box(relay, ink.steel, side * (.43 + j * .35), 1, .16, .065, .065, 1.1 - j * .16);
-      }
-      moving.part(relay, 'cap', 0xff6058, 0, 2.13, 0, .14, .14, .14, [], true);
     }
   }
-  const { x, z } = antennas.find(item => item.kind === 'array');
-  const array = group('Rotating radar antenna', x, 7.27, z, -.39);
-  pivots.array = array;
-  moving.add(array, 'box', ink.dark, 0, .29, 0, .46, .66, .46);
-  for (const side of [-1, 1]) {
-    moving.add(array, 'box', ink.pale, 0, 1.08 + side * .49, 0, 4.65, .075, .092, [.18, 0, 0]);
-    moving.add(array, 'box', ink.dark, side * 2.23, 1.08, 0, .13, 1.07, .087);
-  }
-  for (let i = -4; i <= 4; i++) moving.add(array, 'box', ink.teal, i * .45, 1.08, 0, .078, 1.03, .097, [.18, 0, 0]);
-  for (const y of [.86, 1.09, 1.34]) moving.add(array, 'box', ink.teal, 0, y, 0, 4.45, .034, .074);
-  moving.add(array, 'box', 0xff6058, 0, 1.65, 0, .25, .16, .21, [], true);
   const control = group('Radar Control Station', radarControl.x, 0, radarControl.z);
   box(control, ink.steel, 0, 1.39, 0, 5.65, 2.78, 4.73);
   box(control, ink.dark, 0, 2.84, 0, 5.93, .23, 5.03);
