@@ -146,7 +146,7 @@ test('mission sites are in the environment and animated scenery resets with the 
   t.after(worlds.unload);
   const { area, scene } = visit;
   assert.deepEqual(area.missionStatus.missions.map(({ current, total }) => [current, total]),
-    [[0, 3], [0, 2], [0, 1], [0, 1], [0, 1], [0, 3], [0, 1], [0, 5], [0, 1]]);
+    [[0, 3], [0, 1], [0, 1], [0, 1], [0, 1], [0, 3], [0, 1], [0, 5], [0, 1], [0, 1]]);
   assert.ok(area.interactions.some(({ label }) => label === 'Board Helicopter'));
   for (const { name } of checkpoints.slice(1)) assert.ok(scene.getObjectByName(name));
   assert.ok(scene.getObjectByName('Open South Gate'));

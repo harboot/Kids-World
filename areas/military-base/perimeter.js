@@ -107,7 +107,7 @@ function entrance(kit) {
     box(gate, ink.steel, x, 2.73, 0, .72, 5.46, .78);
     box(gate, ink.teal, x, 3.23, .43, .37, 3.55, .14);
     box(gate, ink.paleTeal, x, 5.57, 0, 1.03, .24, 1.04);
-    part(gate, 'cap', 0xffc966, x, 5.83, 0, .24, .22, .24, [], true);
+    part(gate, 'cap', 0xffc966, x, 5.83, 0, .24, .22, .24, [], 'powered');
     solid(gate, x, 0, 1.46, 1.55, 5.67);
     beam(gate, ink.teal, [x, 4.18, 0], [side * 6.29, 4.85, 0], .19);
     camera(kit, gate, side * 6.63, 4.44, .35, -side * .41);
@@ -248,6 +248,8 @@ export function buildPerimeter(kit) {
   entrance(kit);
   sideCheckpoint(kit, checkpoints[1], true);
   sideCheckpoint(kit, checkpoints[2], false);
+  const eastPost=checkpoints[3];
+  groupEastPost(kit,eastPost);
   tower(kit, -65, 55, 'West lookout');
   tower(kit, -65, -58, 'Northwest lookout');
   tower(kit, 65, -58, 'Northeast lookout');
@@ -282,4 +284,10 @@ export function buildPerimeter(kit) {
       return false;
     },
   };
+}
+
+function groupEastPost(kit, data) {
+  const post=booth(kit,'East Post booth',data.x,data.z,-Math.PI/2,'EAST POST');
+  post.name=data.name;
+  camera(kit,post,-.9,2.55,1.45,.14);
 }

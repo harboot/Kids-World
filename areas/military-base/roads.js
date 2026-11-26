@@ -101,7 +101,7 @@ function pad(kit) {
     const cx = Math.cos(angle) * (radius + .61);
     const cz = Math.sin(angle) * (radius + .61);
     box(landing, ink.dark, cx, .11, cz, .33, .22, .33);
-    box(landing, 0xffdf78, cx, .245, cz, .17, .075, .17, [], true);
+    box(landing, 0xffdf78, cx, .245, cz, .17, .075, .17, [], 'powered');
   }
 }
 

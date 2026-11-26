@@ -26,6 +26,8 @@ export function createScenery(THREE, scene, document, playerRadius = PLAYER_RADI
   const matrix = new THREE.Matrix4();
   const staticMaterial = new THREE.MeshLambertMaterial({ flatShading: true });
   const unlitMaterial = new THREE.MeshBasicMaterial({ toneMapped: false });
+  const poweredMaterial = new THREE.MeshBasicMaterial({ color: 0x24343d, toneMapped: false });
+  function setBuildingPower(enabled) { poweredMaterial.color.setHex(enabled ? 0xffffff : 0x24343d); }
   let shadowInk;
   const factories = {
     box: () => new THREE.BoxGeometry(),
@@ -239,9 +241,9 @@ export function createScenery(THREE, scene, document, playerRadius = PLAYER_RADI
 
   function finish() {
     for (const { kind, unlit, entries } of batches.values()) {
-      const material = kind === 'shadow' ? (shadowInk ??= shadowMaterial()) : unlit ? unlitMaterial : staticMaterial;
+      const material = kind === 'shadow' ? (shadowInk ??= shadowMaterial()) : unlit === 'powered' ? poweredMaterial : unlit ? unlitMaterial : staticMaterial;
       const mesh = new THREE.InstancedMesh(shape(kind), material, entries.length);
-      mesh.name = 'Military Base ' + kind + ' scenery';
+      mesh.name = unlit === 'powered' ? 'Powered building ' + kind + ' scenery' : 'Military Base ' + kind + ' scenery';
       entries.forEach(({ tint, world }, index) => {
         mesh.setMatrixAt(index, world);
         mesh.setColorAt(index, color.setHex(tint));
@@ -307,5 +309,5 @@ export function createScenery(THREE, scene, document, playerRadius = PLAYER_RADI
     };
   }
 
-  return { THREE, scene, group, part, box, beam, solid, movingSolid, sign, obstacles, finish, groundShadow, movingParts };
+  return { THREE, scene, group, part, box, beam, solid, movingSolid, sign, obstacles, finish, groundShadow, movingParts, setBuildingPower };
 }

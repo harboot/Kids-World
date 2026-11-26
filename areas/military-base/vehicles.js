@@ -36,8 +36,13 @@ function tank(kit, name, x, z, yaw, tint, moving) {
     box(vehicle, ink.red, side * 1.24, 1.24, -2.57, .23, .18, .12);
   }
   part(vehicle, 'track', tint, 0, 1.23, 0, 5.35, 1.22, 2.64, [0, Math.PI / 2, 0]);
-  box(vehicle, ink.moss, 0, 1.69, -1.73, 1.88, .24, 1.27);
-  for (const i of [-2, -1, 0, 1, 2]) box(vehicle, ink.dark, i * .27, 1.823, -1.84, .10, .026, 1.11);
+  const engineCover=group(name+' engine cover',0,1.69,-1.73,0,vehicle);
+  box(engineCover, ink.moss, 0, 0, 0, 1.88, .24, 1.27);
+  for (const i of [-2, -1, 0, 1, 2]) box(engineCover, ink.dark, i * .27, .133, -.11, .10, .026, 1.11);
+  if(repair) {
+    box(vehicle,ink.dark,0,1.74,-1.73,1.76,.12,1.16);
+    for(const x of [-.48,0,.48]) box(vehicle,ink.steel,x,1.78,-1.73,.29,.10,.73);
+  }
   part(vehicle, 'drum', ink.dark, 0, 1.88, .22, .94, .25, .84);
   const turret = group(name + ' turret', 0, 1.97, .17, repair ? -.21 : .16, vehicle);
   part(turret, 'track', tint, 0, .31, -.05, 2.34, .82, 2.01, [0, Math.PI / 2, 0]);
@@ -60,7 +65,10 @@ function tank(kit, name, x, z, yaw, tint, moving) {
     box(support, ink.yellow, xx, .14, .91, .90, .28, .68);
     box(support, ink.dark, xx, .049, .91, 1, .10, .76);
   }
-  wheel(moving, support, 2.60, .40, .83, .38, .25);
+  const looseWheel=group('Loose tank road wheel',2.60,.40,.83,0,ground);
+  part(looseWheel,'drum',ink.rubber,0,0,0,.38,.25,.38,[0,0,Math.PI/2]);
+  part(looseWheel,'drum',0x829083,.151,0,0,.23,.055,.23,[0,0,Math.PI/2]);
+  part(looseWheel,'drum',ink.dark,.193,0,0,.09,.052,.09,[0,0,Math.PI/2]);
   const wheelSolid = solid(support, 2.60, .83, .30, .75, .79);
   const restoredWheel = group('Installed road wheel', 0, 0, 0, 0, vehicle);
   part(restoredWheel, 'drum', 0x6f7d60, 1.774, .52, .91, .39, .092, .39, [0, 0, Math.PI / 2]);
@@ -78,21 +86,27 @@ function tank(kit, name, x, z, yaw, tint, moving) {
     parkingDistance,
     pose(distance, engineTime = 0, motes = true) {
       const start = engineTime === 0;
-      const settle = Math.min(1, engineTime / .78);
+      const raw = Math.min(1, engineTime / 1.4);
+      const settle = raw*raw*(3-2*raw);
       ground.position.set(x + Math.sin(yaw) * distance, 0, z + Math.cos(yaw) * distance);
       vehicle.position.y = lift * (1 - settle);
-      turret.rotation.y = -.21 + .70 * (1 - Math.cos(Math.PI * Math.min(1, engineTime / 5.25))) / 2;
-      support.scale.setScalar(start ? 1 : 0);
-      restoredWheel.scale.setScalar(start ? 0 : 1);
-      headlights.scale.setScalar(start ? 0 : 1);
+      turret.position.set(.42*(1-settle),1.97+.55*(1-settle),.17-.22*(1-settle));
+      turret.rotation.y = -.21 - .48*(1-settle);
+      engineCover.position.set(0,1.69+.48*(1-settle),-1.73-.21*(1-settle));
+      engineCover.rotation.x = -.9*(1-settle);
+      support.scale.setScalar(raw < 1 ? 1 : 0);
+      looseWheel.position.set(2.60+(1.79-2.60)*settle,.40+(.52-.40)*settle,.83+(.91-.83)*settle);
+      looseWheel.scale.setScalar(raw < 1 ? 1 : 0);
+      restoredWheel.scale.setScalar(raw < 1 ? 0 : 1);
+      headlights.scale.setScalar(raw < 1 ? 0 : 1);
       for (const [i, puff] of smoke.entries()) {
         const t = (engineTime - .13 * i) / 1.14;
-        puff.scale.setScalar(!start && motes && t > 0 && t < 1 ? Math.sin(Math.PI * t) * (.45 + t * .85) : 0);
+        puff.scale.setScalar(!start && raw < 1 && motes && t > 0 && t < 1 ? Math.sin(Math.PI * t) * (.45 + t * .85) : 0);
         puff.position.set(.8 + .54 * t, 1.76 + .93 * t, -2.38 - .67 * t);
       }
       hullSolid();
       barrelSolid();
-      wheelSolid(start);
+      wheelSolid(raw < 1);
     },
   };
 }

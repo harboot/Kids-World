@@ -162,7 +162,7 @@ function radar(kit, moving) {
   box(control, ink.steel, 0, 1.39, 0, 5.65, 2.78, 4.73);
   box(control, ink.dark, 0, 2.84, 0, 5.93, .23, 5.03);
   box(control, ink.dark, 0, 1.04, 2.409, 1.05, 2.08, .19);
-  box(control, 0xffdf9a, -1.62, 1.72, 2.42, 1.2, .71, .12, [], true);
+  box(control, 0xffdf9a, -1.62, 1.72, 2.42, 1.2, .71, .12, [], 'powered');
   box(control, ink.olive, 1.67, .89, 2.45, 1.45, 1.52, .21);
   sign(control, 'RADAR CONTROL', 0, 2.52, 2.48, 4.63, .53);
   solid(control, 0, 0, 5.69, 4.82, 2.98);

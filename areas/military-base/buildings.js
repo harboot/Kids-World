@@ -7,8 +7,8 @@ import { buildBarracks } from './barracks.js';
 export function window(kit, wall, x, y, z, width, height) {
   const { box } = kit;
   box(wall, ink.dark, x, y, z + .045, width + .22, height + .20, .17);
-  box(wall, 0xe6c88c, x, y, z + .14, width, height, .05, [], true);
-  box(wall, 0xffe9b5, x, y + height * .30, z + .175, width - .05, height * .18, .016, [], true);
+  box(wall, 0xe6c88c, x, y, z + .14, width, height, .05, [], 'powered');
+  box(wall, 0xffe9b5, x, y + height * .30, z + .175, width - .05, height * .18, .016, [], 'powered');
   for (const side of [-1, 1]) box(wall, ink.steel, x + side * width * .177, y, z + .188, .063, height, .035);
   box(wall, ink.paleTeal, x, y - height / 2 - .08, z + .17, width + .18, .12, .28);
 }
@@ -104,7 +104,7 @@ function command(kit) {
   part(mast, 'drum', 0x476a6f, 0, .14, 0, .38, .30, .38);
   beam(mast, ink.steel, [0, .12, 0], [0, 2.38, 0], .085, .085, 'drum');
   beam(mast, ink.pale, [-.88, 1.47, 0], [.88, 1.47, 0], .083);
-  part(mast, 'cap', 0xffbd55, 0, 2.38, 0, .15, .21, .15, [], true);
+  part(mast, 'cap', 0xffbd55, 0, 2.38, 0, .15, .21, .15, [], 'powered');
   const dish = group('HQ satellite uplink', -6.68, 7.75, -.2, -.53, hq);
   part(dish, 'post', ink.dark, 0, .54, 0, .24, 1.08, .24);
   part(dish, 'cap', ink.paleTeal, 0, 1.34, 0, 1.39, .22, 1.4, [.63, 0, 0]);
@@ -120,7 +120,7 @@ function command(kit) {
     box(hq, ink.glassLight, side * 3.78, 2.26, face - .25, 1.42, 2.48, .18);
     box(hq, ink.dark, side * 3.10, 2.30, face - .255, .12, 2.98, .22);
     solid(hq, side * 3.78, face - .25, 1.42, .24, 3.52);
-    box(hq, ink.white, side * 2.42, 4.25, face + .83, .71, .07, .25, [], true);
+    box(hq, ink.white, side * 2.42, 4.25, face + .83, .71, .07, .25, [], 'powered');
   }
   box(hq, ink.footing, 0, 2.63, rear + .02, 8.96, 3.93, .15);
   shutter(kit, hq, 0, 1.85, rear + .105, 1.60, 2.34, ink.teal);
@@ -150,7 +150,7 @@ function roundHall(kit, { name, x, z, width, depth, tint, yaw = 0, hangar = fals
       solid(building, x, front - roomDepth / 2, wing, roomDepth, height + rise + .15);
     }
     box(building, ink.footing, 0, height + .015, front - .024, entry, .234, .34);
-    box(building, ink.pale, 0, height - .071, front - 2.1, 1.85, .055, .22, [], true);
+    box(building, ink.pale, 0, height - .071, front - 2.1, 1.85, .055, .22, [], 'powered');
     box(building, 0x477d73, 0, .91, front - roomDepth + .08, 3.54, 1.31, .15);
     for (const x of [-1.12, 0, 1.12]) {
       box(building, ink.yellow, x, 1.27, front - roomDepth + .178, .36, .32, .075);
@@ -221,7 +221,7 @@ function utilityHall(kit, { x, z, width, depth, name, tint, yaw = 0, logistics =
   shutter(kit, hall, 0, logistics ? 2.09 : 1.83, front, 5.25, 3.32);
   sign(hall, name.toUpperCase(), 0, 4.05, front + .15, width * .61, .73);
   box(hall, ink.teal, 0, 3.54, front + 1.27, width * .82, .17, 2.26);
-  for (const side of [-1, 1]) box(hall, ink.white, side * width * .25, 3.431, front + 1.62, .82, .045, .20, [], true);
+  for (const side of [-1, 1]) box(hall, ink.white, side * width * .25, 3.431, front + 1.62, .82, .045, .20, [], 'powered');
   if (logistics) {
     step(kit, hall, 0, front + 1.14, 11.7, 2.26, .475, ink.footing);
     step(kit, hall, 4.0, front + 2.57, 2.85, .60, .315, ink.concrete);
@@ -257,7 +257,7 @@ function tankGarage(kit) {
     }
     box(garage, ink.paleTeal, center, 8.49, -.1, .19, .13, 14.89);
     box(garage, ink.dark, center, 6.48, 7.75, 4.50, .57, .08);
-    for (const x of [-1.38, 0, 1.38]) box(garage, 0xffe0a4, center + x, 6.48, 7.806, 1.18, .36, .044, [], true);
+    for (const x of [-1.38, 0, 1.38]) box(garage, 0xffe0a4, center + x, 6.48, 7.806, 1.18, .36, .044, [], 'powered');
     box(garage, ink.footing, center + 1.45, 7.89, -2.64, 2.02, .27, 1.35);
     box(garage, bay === 2 ? ink.yellow : 0xdf8662, center + 1.45, 8.06, -2.64, 1.31, .15, .87);
   }
@@ -267,7 +267,7 @@ function tankGarage(kit) {
   sign(garage, 'SERVICE BAY', openCenter, 5.10, front + .39, 6.8, .57, { style: 'gold' });
   for (const x of [-1, 1].map(side => openCenter + side * (openWidth / 2 - .1))) {
     box(garage, ink.yellow, x, 2.17, front + .11, .14, 4.28, .18);
-    box(garage, ink.white, x + (openCenter - x) * .50, 5.38, 4.16, 1.1, .052, .20, [], true);
+    box(garage, ink.white, x + (openCenter - x) * .50, 5.38, 4.16, 1.1, .052, .20, [], 'powered');
   }
   for (const x of [8.0, 14.0]) {
     box(garage, ink.yellow, x, .041, 3.76, .105, .012, 5.37);
@@ -336,13 +336,13 @@ function airControl(kit) {
   for (const side of [-1, 1]) {
     for (const x of [-3.08, -1.04, 1.04, 3.08]) box(tower, ink.paleTeal, x, 8.33, side * 3.01, .12, 1.61, .115);
     for (const z of [-2.78, -.91, .91, 2.78]) box(tower, ink.paleTeal, side * 3.28, 8.33, z, .115, 1.61, .12);
-    box(tower, 0xffe0a4, 0, 8.76, side * 3.01, 6.19, .15, .05, [], true);
+    box(tower, 0xffe0a4, 0, 8.76, side * 3.01, 6.19, .15, .05, [], 'powered');
   }
   for (const y of [2.4, 4.02, 5.65]) window(kit, tower, 0, y, 1.98, .85, .68);
   shutter(kit, tower, 0, 1.11, 2, 1.3, 2.1);
   sign(tower, 'AIR CONTROL', 0, 6.7, 2.14, 3.75, .62);
   part(tower, 'post', ink.dark, 2.01, 10.26, 1.52, .085, 1.6, .085);
-  part(tower, 'cap', 0xff7451, 2.01, 11.1, 1.52, .15, .15, .15, [], true);
+  part(tower, 'cap', 0xff7451, 2.01, 11.1, 1.52, .15, .15, .15, [], 'powered');
 }
 
 export function buildBuildings(kit) {

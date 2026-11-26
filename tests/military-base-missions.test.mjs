@@ -5,7 +5,7 @@ import { areas } from '../game.js';
 import { cruiseAltitude, flightDurations, sampleCircuit } from '../areas/military-base/helicopter-flight.js';
 import { passengerEye } from '../areas/military-base/helicopter.js';
 import { cctvViews, cctvLensClearance } from '../areas/military-base/observation-props.js';
-import { headquarters, helipad, motorPool, repairTank, tankTestCheckpoints } from '../areas/military-base/layout.js';
+import { headquarters, helipad, motorPool, repairTank, tankTestCheckpoints, securityPanels } from '../areas/military-base/layout.js';
 import { createDroneCamera } from '../core/drone-view.js';
 import { nearestInteraction } from '../core/interactions.js';
 import { overlaps, walkElevation, floorHeight } from '../core/movement.js';
@@ -54,18 +54,22 @@ async function missionFixture(t, { reducedMotion = () => false } = {}) {
   return { area, scene, worlds, visit, camera, player, node, find, board, row, beginFlight, advance, notices, cues, completions };
 }
 
-test('security panels activate once, signal green and cue the associated guards', async t => {
+test('security panels at South Gate, West Post and East Post activate once and cue guards', async t => {
   const { area, find, row, node, advance } = await missionFixture(t);
   const panels = find('Activate Security');
   assert.equal(panels.length, 3);
-  assert.equal(panels[2].reachable({ y: EYE_HEIGHT }), false);
-  assert.equal(panels[2].reachable({ y: EYE_HEIGHT + 3.75 }), true);
+  assert.ok(panels.every(panel=>panel.reachable({y:EYE_HEIGHT})));
+  assert.deepEqual(panels.map(p=>[p.x,p.z]),securityPanels.map(p=>[p.x,p.z]));
+  assert.equal(node('South Gate control panel').rotation.y,Math.PI);
+  assert.ok(node('04  /  EAST POST'));
+  assert.equal(node('Motor Pool control panel'),undefined);
+  assert.equal(node('South Lookout control panel'),undefined);
   const guardArm = node('South Gate guard west').getObjectByName('Arm');
   const panel = node('South Gate control panel');
   panels[0].act();
   panels[0].act();
   assert.equal(panel.getObjectByName('Red indicator').scale.x, 0);
-  assert.equal(panel.getObjectByName('Green indicator').scale.x, 1);
+  assert.equal(panel.getObjectByName('Blue indicator').scale.x, 1);
   advance(.5);
   assert.ok(guardArm.rotation.z > 2);
   assert.equal(row('security-patrol').current, 1);
@@ -77,54 +81,64 @@ test('security panels activate once, signal green and cue the associated guards'
   assert.ok(panels.every(item => item.active));
 });
 
-test('tank parts are unique, installation drives once and the tank yields to a player in its lane', async t => {
-  const { area, find, row, node, advance, notices, worlds, camera } = await missionFixture(t);
-  const pickups = find('Pick Up Component');
-  const [install] = find('Install Component');
-  const tank = node('Tank 04 under repair');
-  const wheel = node('Installed road wheel');
-  assert.equal(wheel.scale.x, 0);
-  assert.equal(install.active, false);
-  pickups.forEach(item => { item.act(); item.act(); });
-  assert.equal(pickups.length, 2);
-  assert.equal(node('Battery'), undefined);
-  assert.deepEqual(area.missionStatus.inventory, ['Engine Component', 'Track Component']);
-  assert.equal(node('Engine Component').scale.x, 0);
-  for (let i = 0; i < 2; i++) install.act();
-  assert.deepEqual(area.missionStatus.inventory, []);
-  assert.equal(row('repair-tank').current, 2);
-  assert.equal(row('repair-tank').complete, false);
-  const ahead = { x: repairTank.x + Math.sin(repairTank.yaw) * 3.4, y: EYE_HEIGHT,
-    z: repairTank.z + Math.cos(repairTank.yaw) * 3.4 };
-  advance(3, ahead);
-  assert.equal(tank.position.z, repairTank.z);
-  assert.match(notices.at(-1), /parking lane/);
-  assert.equal(node('Repaired tank headlights').scale.x, 1);
-  const barrel = node('Tank 04 under repair turret').localToWorld(new THREE.Vector3(0, 0, 2.93));
-  const stationary = area.obstacles.filter(object => object.height > .225 &&
-    !overlaps(object, tank.position.x, tank.position.z) && !overlaps(object, barrel.x, barrel.z));
-
-  for (let i = 0; i < 56; i++) {
-    worlds.update(.1, camera.position);
-    for (const x of [-1.60, 0, 1.60]) {
-      for (const z of [-2.48, 0, 2.48]) {
-        const point = tank.localToWorld(new THREE.Vector3(x, 0, z));
-        assert.ok(!stationary.some(obstacle => overlaps(obstacle, point.x, point.z)),
-          `tank position ${point.x.toFixed(2)},${point.z.toFixed(2)} remains clear of static obstacles`);
-      }
-    }
-  }
-  assert.ok(tank.position.z > repairTank.z + 4.5);
-  assert.equal(row('repair-tank').complete, true);
-  assert.equal(wheel.scale.x, 1);
-  const parked = tank.position.clone();
-  assert.equal(walkElevation(area, { x: parked.x - 3, z: parked.z }, parked.x, parked.z, 0, true), null);
-  advance(2);
-  assert.deepEqual(tank.position, parked);
+test('tank is repaired in place with a single interaction, all parts reassemble and reset', async t => {
+  const {area,find,row,node,advance}=await missionFixture(t);
+  const [repair]=find('Repair Tank');
+  const tank=node('Tank 04 under repair'), wheel=node('Installed road wheel'), loose=node('Loose tank road wheel');
+  const turret=node('Tank 04 under repair turret'), cover=node('Tank 04 under repair engine cover');
+  const start=tank.position.clone(), detached=turret.position.clone();
+  assert.equal(find('Pick Up Component').length,0);
+  assert.equal(find('Install Component').length,0);
+  assert.equal(node('Engine Component'),undefined);
+  assert.equal(node('Track Component'),undefined);
+  assert.equal(wheel.scale.x,0);
+  assert.equal(loose.scale.x,1);
+  assert.ok(cover.rotation.x<-.8);
+  assert.equal(repair.active,true);
+  repair.act();repair.act();
+  assert.equal(repair.active,false);
+  assert.deepEqual(area.missionStatus.inventory,[]);
+  advance(.7);
+  assert.ok(turret.position.y<detached.y);
+  assert.equal(row('repair-tank').complete,false);
+  advance(1);
+  assert.equal(row('repair-tank').current,1);
+  assert.equal(row('repair-tank').complete,true);
+  assert.equal(wheel.scale.x,1);
+  assert.equal(loose.scale.x,0);
+  assert.equal(node('Tank jack stands').scale.x,0);
+  assert.ok(Math.abs(cover.rotation.x)<1e-6);
+  assert.deepEqual(tank.position,start);
+  assert.ok(tank.children.filter(o=>o.name==='Tank exhaust puff').every(o=>o.scale.x===0));
   area.reset();
-  assert.equal(tank.position.z, repairTank.z);
-  assert.equal(wheel.scale.x, 0);
-  assert.ok(pickups.every(item => item.active));
+  assert.deepEqual(turret.position,detached);
+  assert.equal(wheel.scale.x,0);
+  assert.equal(loose.scale.x,1);
+  assert.equal(repair.active,true);
+});
+
+test('barracks inspection wakes one sleeping soldier, who stands and salutes before completion', async t=>{
+  const {area,find,row,node,advance}=await missionFixture(t);
+  const npc=node('Barracks sleeping soldier'), arm=npc.getObjectByName('Arm');
+  const [wake]=find('Wake Soldier');
+  const initial=npc.position.clone();
+  assert.equal(npc.parent.name,'Barracks 01');
+  assert.equal(npc.rotation.x,-Math.PI/2);
+  assert.equal(wake.active,true);
+  wake.act();wake.act();
+  assert.equal(wake.active,false);
+  advance(.65);
+  assert.equal(row('barracks-inspection').complete,false);
+  advance(.8);
+  assert.ok(Math.abs(npc.rotation.x)<1e-6);
+  assert.ok(Math.abs(npc.position.y-.135)<1e-6);
+  assert.ok(arm.rotation.z>2);
+  assert.equal(row('barracks-inspection').current,1);
+  assert.equal(row('barracks-inspection').complete,true);
+  area.reset();
+  assert.deepEqual(npc.position,initial);
+  assert.equal(npc.rotation.x,-Math.PI/2);
+  assert.equal(wake.active,true);
 });
 
 test('one medical crate and one radar console complete their respective missions and reset', async t => {
@@ -152,7 +166,7 @@ test('one medical crate and one radar console complete their respective missions
   const panels = [];
   scene.traverse(o => { if (o.name.endsWith(' control panel')) panels.push(o.name); });
   assert.deepEqual(panels.filter(n => !n.includes('Scout')).sort(),
-    ['Motor Pool control panel','Radar Console control panel','South Gate control panel','South Lookout control panel'].sort());
+    ['East Post control panel','Radar Console control panel','South Gate control panel','West Post control panel'].sort());
   advance(1);
   assert.equal(dish.rotation.y, initial);
   targets[0].act(); targets[0].act();
@@ -200,7 +214,7 @@ test('vehicle checkpoints are hidden on foot, progress survives switching vehicl
 });
  
 test('night vision binoculars use a zoomed independent camera, can look around, and complete on use', async t => {
-  const {area,camera,find,node,row}=await missionFixture(t);
+  const {area,scene,camera,find,node,row}=await missionFixture(t);
   const item=find('Use Binoculars')[0];
   assert.ok(node('Night vision binoculars'));
   assert.equal(item.reachable({y:1.68}),false);
@@ -212,6 +226,20 @@ test('night vision binoculars use a zoomed independent camera, can look around, 
   assert.notEqual(opts.camera,camera);assert.equal(row('night-observation').complete,true);
   const before=opts.camera.quaternion.clone();look(.4,.2);
   assert.ok(before.angleTo(opts.camera.quaternion)>.2);
+  // Test yaw limits and near-field occlusion using actual instanced scene geometry.
+  const ray=new THREE.Raycaster(),meshes=[];
+  scene.updateMatrixWorld(true);
+  scene.traverse(o=>{if(o.isMesh&&o.visible&&o.material&&!o.material.transparent)meshes.push(o);});
+  const check=()=>{for(const x of [-.6,0,.6])for(const y of [-.6,0,.6]){
+    ray.setFromCamera(new THREE.Vector2(x,y),opts.camera);ray.near=opts.camera.near;ray.far=.45;
+    assert.equal(ray.intersectObjects(meshes,false).length,0,'binocular near-field obstruction');
+  }};
+  look(100,100);check();const left=opts.camera.quaternion.clone();look(100,0);
+  assert.ok(left.angleTo(opts.camera.quaternion)<1e-6);
+  look(-200,0);check();const right=opts.camera.quaternion.clone();look(-200,0);
+  assert.ok(right.angleTo(opts.camera.quaternion)<1e-6);
+  const heading=q=>{const d=new THREE.Vector3(0,0,-1).applyQuaternion(q);d.y=0;return d.normalize();};
+  assert.ok(heading(left).dot(heading(right))<-.999);
   assert.equal(opts.prompt.label,'Exit Binoculars');
   opts.prompt.act();assert.equal(releases,1);assert.deepEqual(camera.position,start);
   area.reset();assert.equal(row('night-observation').current,0);
@@ -328,7 +356,6 @@ test('every mission prompt can be reached from a clear standing position', async
   const { area, find } = await missionFixture(t);
   const point = label => find(label)[0];
   point('Activate Radar').act();
-  point('Pick Up Component').act();
   point('Pick Up Supplies').act();
   const verify = item => {
     let accessible = false;
@@ -356,8 +383,9 @@ test('the last independent mission records area completion once across repeat vi
     find('Activate Security').forEach(item => item.act());
     for (const item of find('Pick Up Supplies')) { item.act(); find('Deliver Supplies')[0].act(); }
     assert.equal(completions.length, visit);
-    for (const item of find('Pick Up Component')) { item.act(); find('Install Component')[0].act(); }
-    advance(6);
+    find('Repair Tank')[0].act();
+    find('Wake Soldier')[0].act();
+    advance(2);
     const night = find('Use Binoculars')[0];
     let prompt;
     const guideCamera = (_look,opts) => { prompt=opts.prompt; return ()=>{}; };

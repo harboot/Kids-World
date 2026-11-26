@@ -124,13 +124,10 @@ export function createNightLighting({ kit, moving, props, missions, generator, t
   const sources = [];
   const pools = [];
   const switchedFixtures = [];
-  const powerGate = (x,z,reach=0) => Math.hypot(x-generatorSite.x,z-generatorSite.z) < generatorSite.darkRadius+reach;
   const place = createRoadsidePlacement(kit);
   function source(x, y, z, { color = warm, range = 12, intensity = 58, radius = 5.2,
-    floor = .108, active = () => true, priority = 0, name = 'Area lamp', pool = true } = {}) {
-    // Prevent both real lights and ground glows from spilling into the unpowered district.
-    const gated = powerGate(x,z,Math.max(range,radius));
-    const item = { x, y, z, color, range, intensity, active: () => active() && (!gated || generator.powered), priority, name };
+    floor = .108, active = () => true, priority = 0, name = 'Area lamp', pool = true, requiresPower = true } = {}) {
+    const item = { x, y, z, color, range, intensity, active: () => active() && (!requiresPower || generator.powered), priority, name };
     sources.push(item);
     if (pool) pools.push({ item, radius, floor, active: null });
     return item;
@@ -139,7 +136,10 @@ export function createNightLighting({ kit, moving, props, missions, generator, t
     // Non-colliding wall/marker lamps; physical poles are the existing perimeter fixtures.
     const node = group(name, x, y, z);
     box(node, 0x314357, 0, 0, 0, .36, .24, .22);
-    box(node, color, 0, -.015, .13, .25, .14, .045, [], true);
+    box(node,0x26383e,0,-.015,.13,.25,.14,.045);
+    const lit=group(name+' illuminated lens',0,0,0,0,node);
+    moving.box(lit,color,0,-.015,.156,.25,.14,.02,[],true);
+    return lit;
   }
 
   // Relocate all existing pole requests off the real asphalt; omit a pole if no safe spot exists.
@@ -149,7 +149,7 @@ export function createNightLighting({ kit, moving, props, missions, generator, t
     const {x,z}=site,{yaw,height}=request;
     const {lit}=buildFloodlight(kit,moving,x,z,yaw,height);
     const item=source(x+Math.sin(yaw)*2.3,height-1.25,z+Math.cos(yaw)*2.3,
-      {name:'Perimeter pool',radius:6.8,range:14,intensity:72});
+      {name:'Perimeter pool',radius:6.8,range:14,intensity:72,requiresPower:false});
     switchedFixtures.push({lit,item});
   }
   for (const [originalX,originalZ,directions] of [
@@ -167,7 +167,7 @@ export function createNightLighting({ kit, moving, props, missions, generator, t
     const lit=group('Street lamp illuminated lens',0,0,0,0,pole);
     moving.box(lit,warm,0,4.126,.32,.40,.025,.56,[],true);
     kit.solid(pole,0,0,.16,.16,4.3);
-    const item=source(x,3.7,z+.32,{radius:5.4,range:12,intensity:66,name:'Street lamp'});
+    const item=source(x,3.7,z+.32,{radius:5.4,range:12,intensity:66,name:'Street lamp',requiresPower:false});
     switchedFixtures.push({lit,item});
     if(directions)kit.sign(pole,directions[0],0,3.14,.13,1.78,.38,{sub:directions[1]});
   }
@@ -196,31 +196,31 @@ export function createNightLighting({ kit, moving, props, missions, generator, t
   ]) {
     source(x, y, z, { color, name, radius, range: 13, intensity: 78, priority: 2 });
   }
-  // Collectibles use the existing visibility state rather than duplicating mission logic.
-  for (const p of [...props.parts, ...props.supplies]) {
-    const isSupply = props.supplies.includes(p);
-    const floor = isSupply ? .565 : .51;
-    const name = p.name ?? 'Medical pickup';
-    fixture(p.x, floor + .65, p.z - .65, beacon, name + ' task marker');
-    // Marker glow and local light disappear after pickup; the physical lamp stays as scenery.
-    const item = source(p.x, floor + 1.6, p.z, { name: 'Objective ' + name, radius: isSupply ? 1.45 : 1.85,
-      floor, color: beacon, range: 7, intensity: 24, priority: 5, active: () => p.prop.scale.x > .01 });
-    item.marker = true;
+  const red=0xff3d42, blue=0x409fff;
+  const incomplete=id=>!missions.missionStatus.missions.find(m=>m.id===id)?.complete;
+  for(const p of props.supplies) {
+    const lit=fixture(p.x,1.215,p.z-.65,red,'Medical pickup task marker');
+    const item=source(p.x,2.165,p.z,{name:'Objective Medical pickup',radius:1.45,floor:.565,color:red,range:7,intensity:32,priority:6,requiresPower:false,active:()=>p.prop.scale.x>.01});
+    switchedFixtures.push({lit,item});
   }
-  for (const panel of [...props.security, props.station]) {
-    const y = panel.y ?? 0;
-    source(panel.x, y + 2.0, panel.z, { name: panel.name + ' console', radius: 1.8,
-      floor: y + .108, color: cool, range: 7, intensity: 30, priority: 4 });
+  for(const panel of [...props.security,props.station]) {
+    const y=panel.y??0;
+    source(panel.x,y+2,panel.z,{name:panel.name+' console',radius:1.8,floor:y+.108,color:blue,range:7,intensity:30,priority:5,requiresPower:false});
   }
-  source(repairTank.x - 2.6, 2.1, repairTank.z - .54,
-    { name: 'Component installation', radius: 2.3, priority: 4, range: 8, intensity: 34 });
-  source(props.hospitalDrop.x, 2.0, props.hospitalDrop.z,
-    { name: 'Medical receiving', radius: 2.5, color: cool, priority: 4, range: 8, intensity: 40 });
+  source(repairTank.x-2.66,2.1,repairTank.z-.54,{name:'Tank repair',radius:2.3,priority:5,range:8,intensity:34,color:blue,requiresPower:false,active:()=>incomplete('repair-tank')});
+  const receiving=source(props.hospitalDrop.x,2,props.hospitalDrop.z,{name:'Medical receiving',radius:2.5,color:red,priority:6,range:8,intensity:40,requiresPower:false,active:()=>incomplete('supply-delivery')});
+  switchedFixtures.push({lit:fixture(props.hospitalDrop.x,1.28,props.hospitalDrop.z-.65,red,'Medical receiving task marker'),item:receiving});
+  for(const [label,id] of [['Start Generator','restore-power'],['Wake Soldier','barracks-inspection'],['View CCTV','cctv-monitoring'],['Use Binoculars','night-observation'],['Board Helicopter','helicopter-patrol']]) {
+    const point=missions.interactions.find(i=>i.label===label);
+    if(!point)continue;
+    const floor=Math.max(.108,(point.anchorY??1.32)-1.22);
+    source(point.x,floor+1.65,point.z,{name:label+' marker',color:blue,radius:1.35,floor,range:6,intensity:24,priority:7,requiresPower:false,active:()=>incomplete(id)});
+  }
   for (let i = 0; i < 10; i++) {
     const a = i * Math.PI / 5;
     const x = helipad.x + Math.cos(a) * (helipad.radius + .61), z = helipad.z + Math.sin(a) * (helipad.radius + .61);
     // Existing landing-lamp geometry already glows. Only bake a small, shadow-free halo.
-    const item = { x, z, color: warm, active: () => true };
+    const item = { x, z, color: warm, active: () => generator.powered };
     pools.push({ item, radius: 1.15, floor: .107, active: null });
   }
 
@@ -252,6 +252,7 @@ export function createNightLighting({ kit, moving, props, missions, generator, t
   const candidates = [];
   function update(position) {
     const px = position?.x ?? 0, py = position?.y ?? 1.68, pz = position?.z ?? 0;
+    kit.setBuildingPower(generator.powered);
     let dirty = false;
     for (const {lit,item} of switchedFixtures) lit.scale.setScalar(item.active()?1:0);
     pools.forEach((pool, i) => {
