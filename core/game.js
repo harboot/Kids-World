@@ -114,6 +114,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   let previousFrame = null;
   let interactionRevision = 0;
   let guidedCamera;
+  let driveVehicle;
   let stepDistance = 0;
   let finishStartup;
   const ready = new Promise(resolve => { finishStartup = resolve; });
@@ -237,7 +238,8 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   });
   const controls = createControls(THREE, {
     game, canvas, joystick, thumb: game.querySelector('#joystick-thumb'),
-    playing: playerInput, touchMode, seated: () => player.seated,
+    playing: playerInput, touchMode, seated: () => player.seated && !driveVehicle,
+    driving: () => Boolean(driveVehicle),
     steeringMode: () => controlMode !== 'two-finger',
     look(dx, dy) { player.look(dx * turnSpeed(), dy * turnSpeed()); },
     interact: interactions.interact,
@@ -328,6 +330,8 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   function clearVisitPresentation() {
     interactionRevision++;
     guidedCamera = undefined;
+    driveVehicle = undefined;
+    delete game.dataset.driving;
     stepDistance = 0;
     if (levelPicker.open) levelPicker.close();
     if (settings.open) settings.close();
@@ -480,9 +484,12 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     levelPicker.showModal();
   });
 
-  function guideCamera(look, current, { camera: rideCamera, prompt } = {}) {
+  function guideCamera(look, current, { camera: rideCamera, prompt, drive } = {}) {
     const stop = player.guide(look);
     guidedCamera = rideCamera;
+    driveVehicle = drive;
+    if (drive) game.dataset.driving = 'true';
+    stepDistance = 0;
     if (prompt) interactions.pin(prompt);
     game.dataset.seated = 'true';
     controls.clear();
@@ -491,6 +498,8 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
       if (!current() || !stop()) return;
       delete game.dataset.seated;
       guidedCamera = undefined;
+      driveVehicle = undefined;
+      delete game.dataset.driving;
       if (prompt) interactions.pin(null);
       controls.clear();
       if (spawn) relocate(spawn);
@@ -625,7 +634,9 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
         const elapsed = previousFrame === null ? 0 : Math.min(0.25, Math.max(0, (stamp - previousFrame) / 1000));
         const dt = Math.min(elapsed, 0.05);
         previousFrame = stamp;
-        stepDistance += player.move(dt, controls.sample(dt).multiplyScalar(moveSpeed()), visit);
+        const input = controls.sample(dt);
+        if (driveVehicle) driveVehicle(dt, input, moveSpeed());
+        else stepDistance += player.move(dt, input.multiplyScalar(moveSpeed()), visit);
         if (stepDistance >= 1.55) {
           audio.effect('step');
           stepDistance -= 1.55;

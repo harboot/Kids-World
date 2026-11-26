@@ -90,17 +90,18 @@ export function createScenery(THREE, scene, document, playerRadius = PLAYER_RADI
     const center = new THREE.Vector3(x, 0, z).applyMatrix4(node.matrixWorld);
     const angle = Math.atan2(node.matrixWorld.elements[8], node.matrixWorld.elements[0]);
     const height = center.y + top;
+    const footprint = { x: center.x, z: center.z, width, depth, yaw: angle };
     const cosine = Math.cos(angle);
     const sine = Math.sin(angle);
     if (Math.abs(sine * cosine) < 1e-6) {
       const quarterTurn = Math.abs(sine) > 0.5;
-      obstacles.push({ ...rectangleBounds(center.x, center.z, quarterTurn ? depth : width, quarterTurn ? width : depth), height });
+      obstacles.push({ ...rectangleBounds(center.x, center.z, quarterTurn ? depth : width, quarterTurn ? width : depth), height, footprint });
       return;
     }
     obstacles.push({
       ...rectangleBounds(center.x, center.z, Math.abs(cosine) * width + Math.abs(sine) * depth,
         Math.abs(sine) * width + Math.abs(cosine) * depth),
-      height,
+      height, footprint,
       touches(px, pz) {
         const dx = px - center.x;
         const dz = pz - center.z;
@@ -116,6 +117,7 @@ export function createScenery(THREE, scene, document, playerRadius = PLAYER_RADI
     let cosine, sine;
     const obstacle = {
       height: -Infinity,
+      footprint: { x: 0, z: 0, width, depth, yaw: 0 },
       touches(px, pz) {
         const dx = px - center.x;
         const dz = pz - center.z;
@@ -136,8 +138,10 @@ export function createScenery(THREE, scene, document, playerRadius = PLAYER_RADI
       cosine = Math.cos(angle);
       sine = Math.sin(angle);
       obstacle.height = center.y + top;
+      Object.assign(obstacle.footprint, { x: center.x, z: center.z, yaw: angle });
     };
     sync();
+    sync.obstacle = obstacle;
     return sync;
   }
 

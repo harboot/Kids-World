@@ -9,6 +9,7 @@ import { createScenery } from './scenery.js';
 import { buildSoldiers } from './soldiers.js';
 import { buildTerrain } from './terrain.js';
 import { buildVehicles } from './vehicles.js';
+import { createTankDriving } from './tank-driving.js';
 import { metadata } from './metadata.js';
 import { music } from './music.js';
 
@@ -37,7 +38,9 @@ export const militaryBase = {
     buildRoads(kit);
     buildBuildings(kit);
     const traversal = buildPerimeter(kit);
-    const tank = buildVehicles(kit, moving);
+    const { repair: tank, drivable } = buildVehicles(kit, moving);
+    const driving = createTankDriving({ THREE, camera, model: drivable, obstacles: kit.obstacles, traversal,
+      width: metadata.width, depth: metadata.depth, reducedMotion, playCue, notify });
     const helicopter = buildHelicopter(kit, moving, document);
     const { radarHeads, poseFlag } = buildDecorations(kit, moving, document);
     const soldiers = buildSoldiers(kit, moving);
@@ -54,11 +57,12 @@ export const militaryBase = {
       ...traversal,
       obstacles: kit.obstacles,
       droneView: { center: { x: 0, z: 2 }, width: 163, depth: 155 },
-      interactions: missions.interactions,
+      interactions: [...missions.interactions, ...driving.interactions],
       missionStatus: missions.missionStatus,
-      unload: missions.unload,
+      unload() { driving.cancel(); missions.unload(); },
       reset() {
         time = 0;
+        driving.reset();
         missions.reset();
         soldiers.reset();
         poseFlag(0);
