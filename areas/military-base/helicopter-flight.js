@@ -2,7 +2,8 @@ import { EYE_HEIGHT } from '../../core/player.js';
 import { passengerDoor, passengerEye, parkedHeading } from './helicopter.js';
 import { helipad } from './layout.js';
 
-export const cruiseAltitude = 22.6;
+// The Titan maintenance gantry reaches 29.2 units; retain overhead clearance.
+export const cruiseAltitude = 36;
 export const flightDurations = Object.freeze({
   boarding: 2.45, startup: 3.25, takeoff: 8.4, patrol: 52, returning: 9,
   landing: 8.1, landed: 2.6, disembarking: 2.55,
