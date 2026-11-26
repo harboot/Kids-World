@@ -75,19 +75,15 @@ test('the motor pool service bay, logistics dock, and flight apron are walkable'
   assert.ok(Math.hypot(camera.position.x - helipad.x, camera.position.z - helipad.z) < helipad.radius);
 });
 
-test('the open service sheds are accessible and the roadway wraps around the HQ apron', async t => {
+test('the robot hangar replaces service sheds and the roadway wraps around the HQ apron', async t => {
   const { worlds, visit, camera, spawn, walk } = await fixture();
   t.after(worlds.unload);
-  visit.scene.updateMatrixWorld(true);
-  const shed = visit.scene.getObjectByName('Service Shed 01');
-  const local = (x, z) => new THREE.Vector3(x, 0, z).applyMatrix4(shed.matrixWorld);
-  const approach = local(0, 10);
-  const bay = local(0, 3.2);
-  spawn(approach.x, approach.z);
-  walk(bay.x, bay.z);
-  assert.equal(camera.position.y, EYE_HEIGHT + .135);
-  walk(approach.x, approach.z);
-  assert.equal(camera.position.y, EYE_HEIGHT);
+  assert.equal(visit.scene.getObjectByName('Service Shed 01'),undefined);
+  assert.ok(visit.scene.getObjectByName('Titan maintenance mech'));
+  assert.ok(visit.scene.getObjectByName('Robot inspection catwalk'));
+  spawn(-39.5,-27.5);
+  walk(-39.5,-30.1);
+  assert.equal(camera.position.y,EYE_HEIGHT);
 
   const road = visit.scene.getObjectByName('Road network around the district islands');
   const hitsRoad = (x, z) => {

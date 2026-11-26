@@ -344,7 +344,7 @@ test('flight locks the player, keeps the camera on the right seat, lands before 
   assert.equal(board.active, false);
   assert.ok(aircraft.worldToLocal(camera.position.clone()).distanceTo(new THREE.Vector3(...passengerEye)) < 1e-7);
   const aboveGround = aircraft.getWorldPosition(new THREE.Vector3()).y;
-  assert.ok(aboveGround > 21 && aboveGround < 24);
+  assert.ok(Math.abs(aboveGround - cruiseAltitude) < 1.5);
   const beforeLook = camera.quaternion.clone();
   player.look(-2.2, .12);
   advance(.4);

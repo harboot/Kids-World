@@ -14,6 +14,7 @@ import { createJeepDriving } from './jeep.js';
 import { buildTankCourse } from './tank-course.js';
 import { buildObservationProps } from './observation-props.js';
 import { buildGenerator } from './generator.js';
+import { buildRobotHangar } from './robot-hangar.js';
 import { metadata } from './metadata.js';
 import { music } from './music.js';
 import { createNightLighting, setNightEnvironment } from './lighting.js';
@@ -22,7 +23,7 @@ export const militaryBase = {
   ...metadata,
   music,
   load({ THREE, scene, camera, hud, playerRadius, touch, reducedMotion = () => false,
-    playCue = () => {}, notify = () => {}, completeLevel = () => {}, isLevelComplete = () => false }) {
+    carryPlayer = () => {}, playCue = () => {}, notify = () => {}, completeLevel = () => {}, isLevelComplete = () => false }) {
     setNightEnvironment(THREE, scene, touch);
 
     const document = hud?.ownerDocument;
@@ -31,6 +32,7 @@ export const militaryBase = {
     buildTerrain(kit);
     buildRoads(kit);
     buildBuildings(kit);
+    const hangar = buildRobotHangar(kit, moving, { camera, reducedMotion, carryPlayer, notify });
     const generator = buildGenerator(kit, moving);
     const traversal = buildPerimeter(kit);
     const { repair: tank, drivable, drivableJeep } = buildVehicles(kit, moving);
@@ -56,13 +58,16 @@ export const militaryBase = {
     let time = 0;
     return {
       ...traversal,
+      getGroundHeight(x,z,feet) { return hangar.getGroundHeight(x,z,feet) ?? traversal.getGroundHeight(x,z,feet); },
+      blocksGround(x,z,radius,feet,from) { return hangar.blocksGround(x,z,radius,feet,from) || traversal.blocksGround(x,z,radius,feet,from); },
       obstacles: kit.obstacles,
       droneView: { center: { x: 0, z: 2 }, width: 163, depth: 155 },
-      interactions: [...missions.interactions, ...driving.interactions, ...jeepDriving.interactions],
+      interactions: [...missions.interactions, ...driving.interactions, ...jeepDriving.interactions, ...hangar.interactions],
       missionStatus: missions.missionStatus,
       unload() { driving.cancel(); jeepDriving.cancel(); missions.unload(); },
       reset() {
         time = 0;
+        hangar.reset();
         driving.reset();
         jeepDriving.reset();
         missions.reset();
@@ -77,6 +82,7 @@ export const militaryBase = {
           time += dt;
           poseFlag(time);
         }
+        hangar.update(dt, position);
         missions.update(dt, position);
         soldiers.update(time, dt);
         lighting.update(missions.viewPosition ?? position ?? camera?.position ?? metadata.spawn);
