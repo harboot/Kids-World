@@ -12,11 +12,13 @@ function outside(x, z) {
   return Math.max(fence.west - x, x - fence.east, fence.north - z, z - fence.south);
 }
 
-function snowbank(x, z) {
+function desertHeight(x, z) {
   const extent = outside(x, z);
   if (extent < .65 || (Math.abs(x) < 9 && z > fence.south)) return 0;
   const edge = Math.min(1, (extent - .65) / 8);
   let height = .18 + .48 * Math.sin(x * .105 + z * .061) ** 2;
+  // Gentle wind-shaped ridges outside the playable compound only.
+  height += .75 * (.5 + .5 * Math.sin(x * .14 + z * .038 + Math.sin(z * .075))) ** 2;
   for (const [cx, cz, rx, rz, peak] of hills) {
     const distance = ((x - cx) / rx) ** 2 + ((z - cz) / rz) ** 2;
     height += peak * Math.max(0, 1 - distance) ** 2;
@@ -32,7 +34,8 @@ export function buildTerrain(kit) {
   plain.dispose();
   const points = geometry.attributes.position;
   const tint = new THREE.Color();
-  const slope = new THREE.Color(0xb8cbe0);
+  const slope = new THREE.Color(0x9b7147);
+  const crest = new THREE.Color(0xdfbd88);
   const colors = [];
   for (let i = 0; i < points.count; i += 3) {
     let elevation = 0;
@@ -41,47 +44,52 @@ export function buildTerrain(kit) {
     for (let j = i; j < i + 3; j++) {
       const px = points.getX(j);
       const pz = points.getZ(j);
-      const y = snowbank(px, pz);
+      const y = desertHeight(px, pz);
       points.setY(j, y);
       elevation += y / 3;
       x += px / 3;
       z += pz / 3;
     }
-    const snow = outside(x, z) > -1.6 && !(Math.abs(x) < 8 && z > fence.south + 1 && z < fence.approach);
-    if (snow) {
-      tint.setHex(0xe0eaf5).lerp(slope, Math.min(1, elevation / 27) * random() * .72);
-      tint.multiplyScalar(.88 + random() * .12);
+    const sand = outside(x, z) > -1.6 && !(Math.abs(x) < 8 && z > fence.south + 1 && z < fence.approach);
+    if (sand) {
+      const dune = .5 + .5 * Math.sin(x * .115 + z * .048);
+      tint.setHex(0xc5a171).lerp(crest, dune * .4)
+        .lerp(slope, Math.min(1, elevation / 27) * (.25 + random() * .45));
+      tint.multiplyScalar(.91 + random() * .09);
     } else tint.setHex(0xd0bea1).multiplyScalar(.96 + random() * .06);
     for (let j = 0; j < 3; j++) colors.push(tint.r, tint.g, tint.b);
   }
   geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
   geometry.computeVertexNormals();
   const landscape = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true }));
-  landscape.name = 'Snow-covered hills and spruce belt';
+  landscape.name = 'Moonlit desert dunes and sandstone hills';
   landscape.receiveShadow = true;
   scene.add(landscape);
 
-  const grove = group('Frosted perimeter spruce');
+  const scrub = group('Desert rocks and dry scrub');
   for (const [cx, cz, rx, rz, count] of [
-    [-82, -4, 9, 53, 21], [83, 8, 12, 52, 25], [-49, -77, 25, 10, 24], [32, -75, 33, 9, 24],
-    [-45, 76, 20, 10, 13], [43, 80, 24, 13, 17], [-110, -48, 12, 28, 12], [112, -64, 15, 21, 10],
+    [-82, -4, 9, 53, 15], [83, 8, 12, 52, 18], [-49, -77, 25, 10, 16], [32, -75, 33, 9, 16],
+    [-45, 76, 20, 10, 9], [43, 80, 24, 13, 11], [-110, -48, 12, 28, 9], [112, -64, 15, 21, 8],
   ]) {
     for (let i = 0; i < count; i++) {
       const x = cx + (random() * 2 - 1) * rx;
       const z = cz + (random() * 2 - 1) * rz;
-      const y = snowbank(x, z);
+      if (outside(x, z) < 2 || (Math.abs(x) < 10 && z > fence.south)) continue;
+      const y = desertHeight(x, z);
       const turn = random() * Math.PI;
-      if (i % 4 === 0) {
-        const size = .79 + random() * 1.76;
-        part(grove, 'rock', 0x839bb4, x, y + size * .17, z, size, size * .61, size * .78, [0, turn, 0]);
-        part(grove, 'rock', 0xd8e7f4, x + .08, y + size * .49, z - .05, size * .86, size * .33, size * .66, [0, turn, 0]);
+      const node = group('Desert cluster', x, y, z, turn, scrub);
+      if (i % 4 !== 0) {
+        const size = .6 + random() * 2.5;
+        part(node, 'rock', i % 2 ? 0xad895e : 0x9b795a, 0, size * .16, 0, size, size * .52, size * .77);
+        part(node, 'rock', 0xc0a075, size * .43, size * .11, -.27, size * .57, size * .36, size * .49, [0, .6, 0]);
       } else {
-        const size = 2.65 + random() * 5.1;
-        part(grove, 'post', 0x7b7b7c, x, y + size * .20, z, .20, size * .63, .20);
-        for (const [level, radius] of [[.43, .30], [.64, .24], [.84, .16]]) {
-          part(grove, 'cone', 0x809aa8, x, y + size * level, z, size * radius, size * .46, size * radius, [0, turn, 0]);
-          part(grove, 'cone', 0xdce8f8, x, y + size * (level + .071), z, size * radius * .93,
-            size * .41, size * radius * .93, [0, turn, 0]);
+        // Sparse low, dry grasses: no evergreen trees or snow.
+        for (let j = 0; j < 4; j++) {
+          const a = j * Math.PI / 2;
+          const height = .32 + random() * .4;
+          part(node, 'cone', j % 2 ? 0x8e8653 : 0xa69662,
+            Math.cos(a) * .15, height * .39, Math.sin(a) * .15,
+            .085, height, .085, [Math.sin(a) * .35, 0, -Math.cos(a) * .35]);
         }
       }
     }
