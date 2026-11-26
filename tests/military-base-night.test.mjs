@@ -18,7 +18,7 @@ test('night area retains one cached moon shadow and a fixed shadow-free local li
   assert.equal(lights.find(light => light.isDirectionalLight).shadow.mapSize.x, 512);
   const glow = scene.getObjectByName('Batched night ground illumination');
   assert.ok(glow.isInstancedMesh && glow.count > 20);
-  const pickup = area.interactions.find(item => item.label === 'Pick Up Component');
+  const pickup = area.interactions.find(item => item.label === 'Pick Up Supplies');
   camera.position.set(pickup.x, 1.68, pickup.z);
   area.update(0, camera.position);
   assert.ok(local.some(light => light.intensity > 0 && Math.hypot(light.position.x-pickup.x, light.position.z-pickup.z) < .1));
@@ -36,7 +36,7 @@ test('night area retains one cached moon shadow and a fixed shadow-free local li
   assert.ok(matching.some(i => { glow.getMatrixAt(i,after); return after.elements[0] === 0; }));
   area.reset();
   assert.ok(matching.some(i => { glow.getMatrixAt(i,after); return after.elements[0] !== 0; }));
-  assert.equal(area.missionStatus.missions.length, 9);
+  assert.equal(area.missionStatus.missions.length, 10);
   area.unload();
 });
 
@@ -98,7 +98,7 @@ test('automatic local lights activate at half their former distance; scout headl
   const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera();
   const area = militaryBase.load({ THREE, scene, camera });
   const lights = scene.children.filter(o=>o.isPointLight);
-  const pickup = area.interactions.find(item=>item.label==='Pick Up Component');
+  const pickup = area.interactions.find(item=>item.label==='Pick Up Supplies');
   const matching = () => lights.some(light=>light.intensity>0 && Math.hypot(light.position.x-pickup.x,light.position.z-pickup.z)<.01);
   area.update(0,{x:pickup.x,y:2,z:pickup.z+10});
   assert.equal(matching(),false);
@@ -108,21 +108,37 @@ test('automatic local lights activate at half their former distance; scout headl
   area.unload();
 });
 
-test('generator district lights and ground illumination are disabled until power is restored, and reset correctly',()=>{
+test('global building power controls windows and local lights, road and red/blue mission markers remain independent',()=>{
   const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera();
   const area=militaryBase.load({THREE,scene,camera});
-  const {x,z}=generatorSite;
   const lights=scene.children.filter(o=>o.isPointLight);
   const indicators=scene.getObjectByName('Generator powered indicators');
   const prompt=area.interactions.find(i=>i.label==='Start Generator');
   const mission=area.missionStatus.missions.find(m=>m.id==='restore-power');
-  const update=()=>area.update(0,{x,y:1.8,z});
-  const near=()=>lights.filter(o=>o.intensity>0 && Math.hypot(o.position.x-x,o.position.z-z)<generatorSite.darkRadius);
-  update();assert.equal(indicators.scale.x,0);assert.equal(near().length,0);
-  prompt.act();prompt.act();update();
-  assert.equal(indicators.scale.x,1);assert.ok(near().length>0);
-  assert.equal(mission.current,1);assert.equal(mission.complete,true);assert.equal(prompt.active,false);
-  assert.equal(lights.length,maxLocalLights);
-  area.reset();update();assert.equal(indicators.scale.x,0);assert.equal(near().length,0);assert.equal(mission.current,0);
+  const powered=scene.children.filter(o=>o.name.startsWith('Powered building '));
+  assert.ok(powered.length>2);
+  const color=0x24343d;
+  const isOff=()=>powered.every(o=>o.material.color.getHex()===color);
+  const activeAt=(x,z,tint)=>lights.some(o=>o.intensity>0&&Math.hypot(o.position.x-x,o.position.z-z)<.01&&(tint===undefined||o.color.getHex()===tint));
+  const move=(x,z,y=1.8)=>area.update(0,{x,y,z});
+  const {x,z}=generatorSite;
+  move(x,z);
+  assert.equal(indicators.scale.x,0);assert.ok(isOff());
+  assert.equal(activeAt(x,z),false);
+  const street=scene.children.find(o=>o.name==='Night street lamp');
+  move(street.position.x,street.position.z);
+  assert.ok(activeAt(street.position.x,street.position.z+.32));
+  for(const label of ['Pick Up Supplies','Deliver Supplies']){
+    const p=area.interactions.find(i=>i.label===label);
+    move(p.x,p.z);assert.ok(activeAt(p.x,p.z,0xff3d42),label+' marker must be red before power');
+  }
+  move(x,z);
+  prompt.act();prompt.act();move(x,z);
+  assert.equal(indicators.scale.x,1);
+  assert.ok(powered.every(o=>o.material.color.getHex()===0xffffff));
+  assert.ok(activeAt(x,z));assert.equal(mission.current,1);assert.equal(mission.complete,true);
+  assert.equal(prompt.active,false);assert.equal(lights.length,maxLocalLights);
+  area.reset();move(x,z);assert.equal(indicators.scale.x,0);assert.ok(isOff());
+  assert.equal(activeAt(x,z),false);assert.equal(mission.current,0);
   area.unload();
 });

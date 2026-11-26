@@ -136,7 +136,10 @@ export function createNightLighting({ kit, moving, props, missions, generator, t
     // Non-colliding wall/marker lamps; physical poles are the existing perimeter fixtures.
     const node = group(name, x, y, z);
     box(node, 0x314357, 0, 0, 0, .36, .24, .22);
-    box(node, color, 0, -.015, .13, .25, .14, .045, [], true);
+    box(node,0x26383e,0,-.015,.13,.25,.14,.045);
+    const lit=group(name+' illuminated lens',0,0,0,0,node);
+    moving.box(lit,color,0,-.015,.156,.25,.14,.02,[],true);
+    return lit;
   }
 
   // Relocate all existing pole requests off the real asphalt; omit a pole if no safe spot exists.
@@ -196,16 +199,17 @@ export function createNightLighting({ kit, moving, props, missions, generator, t
   const red=0xff3d42, blue=0x409fff;
   const incomplete=id=>!missions.missionStatus.missions.find(m=>m.id===id)?.complete;
   for(const p of props.supplies) {
-    fixture(p.x,1.215,p.z-.65,red,'Medical pickup task marker');
-    source(p.x,2.165,p.z,{name:'Objective Medical pickup',radius:1.45,floor:.565,color:red,range:7,intensity:32,priority:6,requiresPower:false,active:()=>p.prop.scale.x>.01});
+    const lit=fixture(p.x,1.215,p.z-.65,red,'Medical pickup task marker');
+    const item=source(p.x,2.165,p.z,{name:'Objective Medical pickup',radius:1.45,floor:.565,color:red,range:7,intensity:32,priority:6,requiresPower:false,active:()=>p.prop.scale.x>.01});
+    switchedFixtures.push({lit,item});
   }
   for(const panel of [...props.security,props.station]) {
     const y=panel.y??0;
     source(panel.x,y+2,panel.z,{name:panel.name+' console',radius:1.8,floor:y+.108,color:blue,range:7,intensity:30,priority:5,requiresPower:false});
   }
   source(repairTank.x-2.66,2.1,repairTank.z-.54,{name:'Tank repair',radius:2.3,priority:5,range:8,intensity:34,color:blue,requiresPower:false,active:()=>incomplete('repair-tank')});
-  source(props.hospitalDrop.x,2,props.hospitalDrop.z,{name:'Medical receiving',radius:2.5,color:red,priority:6,range:8,intensity:40,requiresPower:false,active:()=>incomplete('supply-delivery')});
-  fixture(props.hospitalDrop.x,1.28,props.hospitalDrop.z-.65,red,'Medical receiving task marker');
+  const receiving=source(props.hospitalDrop.x,2,props.hospitalDrop.z,{name:'Medical receiving',radius:2.5,color:red,priority:6,range:8,intensity:40,requiresPower:false,active:()=>incomplete('supply-delivery')});
+  switchedFixtures.push({lit:fixture(props.hospitalDrop.x,1.28,props.hospitalDrop.z-.65,red,'Medical receiving task marker'),item:receiving});
   for(const [label,id] of [['Start Generator','restore-power'],['Wake Soldier','barracks-inspection'],['View CCTV','cctv-monitoring'],['Use Binoculars','night-observation'],['Board Helicopter','helicopter-patrol']]) {
     const point=missions.interactions.find(i=>i.label===label);
     if(!point)continue;
