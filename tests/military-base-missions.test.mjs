@@ -4,6 +4,7 @@ import * as THREE from '../vendor/three.module.min.js';
 import { areas } from '../game.js';
 import { cruiseAltitude, flightDurations, sampleCircuit } from '../areas/military-base/helicopter-flight.js';
 import { passengerEye } from '../areas/military-base/helicopter.js';
+import { cctvViews, cctvLensClearance } from '../areas/military-base/observation-props.js';
 import { headquarters, helipad, motorPool, repairTank, tankTestCheckpoints } from '../areas/military-base/layout.js';
 import { createDroneCamera } from '../core/drone-view.js';
 import { nearestInteraction } from '../core/interactions.js';
@@ -372,4 +373,38 @@ test('the last independent mission records area completion once across repeat vi
     assert.deepEqual(completions, ['military-base']);
     area.reset();
   }
+});
+
+test('all five CCTV optical origins clear their physical housings and nearby scene geometry', async t => {
+  const {area,scene,find,node}=await missionFixture(t);
+  let opts;
+  find('View CCTV')[0].act({guideCamera(_look,o){opts=o;return ()=>{};}});
+  const view=opts.camera;
+  scene.updateMatrixWorld(true);
+  const ray=new THREE.Raycaster();
+  const meshes=[];
+  scene.traverse(o=>{if(o.isMesh && o.visible && o.material && !o.material.transparent)meshes.push(o);});
+  for(let i=0;i<cctvViews.length;i++){
+    const {eye,target}=cctvViews[i];
+    const origin=new THREE.Vector3(...eye);
+    const focus=new THREE.Vector3(...target);
+    const direction=focus.clone().sub(origin).normalize();
+    const expected=origin.clone().addScaledVector(direction,cctvLensClearance);
+    assert.ok(view.position.distanceTo(expected)<1e-6);
+    const housing=node('CCTV camera '+(i+1));
+    const axis=new THREE.Vector3(0,0,1).transformDirection(housing.matrixWorld);
+    assert.ok(axis.dot(direction)>.9999);
+    assert.ok(view.position.distanceTo(origin)>.7);
+    if(i===4)assert.ok(view.position.y>5,'North Post optical origin clears overhead sign');
+    // Check center and peripheral rays against actual rendered opaque geometry,
+    // not just gameplay colliders. Reject any large object immediately in front.
+    for(const x of [-.65,0,.65])for(const y of [-.65,0,.65]){
+      ray.setFromCamera(new THREE.Vector2(x,y),view);
+      ray.near=view.near;ray.far=1.15;
+      const hits=ray.intersectObjects(meshes,false);
+      assert.equal(hits.length,0,'CCTV '+(i+1)+' blocked at '+x+','+y+' by '+hits.map(h=>h.object.name).join(','));
+    }
+    if(i<4)opts.prompt.act();
+  }
+  opts.prompt.act();
 });
