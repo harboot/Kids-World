@@ -1,5 +1,5 @@
 {
-  "version": "2464071be3871fee5961cf6db0b55eb19ff8249ef22bf3cfffd8da93961c34fb",
+  "version": "b367dc01c6b124b2b69449531d0d76e522fa0bffcacecd9e47b3095a6d9b1d01",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "e152129461ff60a97c748e1ae1c2a25916fb4e4a0bf460e2ab6eb31de2be6643"
+      "revision": "c46c6094e45dd911b0f1c49f6fd659cfbff6741dc80638dd92977f0830ea86e5"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -379,7 +379,7 @@
     },
     {
       "path": "./areas/military-base/soldiers.js",
-      "revision": "c085364fb1b01b9295a6fb5ca2728662b867293a4c88a2f2e9d9bc4f73c19ddf"
+      "revision": "0245b0d37733c42597dd68f0c27946ea20de916398b6a2a8a54ca490b363c122"
     },
     {
       "path": "./areas/military-base/tank-course.js",
