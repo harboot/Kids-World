@@ -82,8 +82,8 @@ export const areaMetadata = {
       "Military",
       "Base"
     ],
-    "description": "Complete six missions at a desert military base under moonlight and take a nighttime helicopter sightseeing tour.",
-    "missionCount": 6,
+    "description": "Complete eight missions at a desert military base under moonlight and take a nighttime helicopter sightseeing tour.",
+    "missionCount": 8,
     "canvasLabel": "3D nighttime desert military base with illuminated gate, headquarters, tank yard, and helipad",
     "themeColor": "#142a43",
     "width": 154,

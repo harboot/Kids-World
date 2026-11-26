@@ -1,13 +1,13 @@
 {
-  "version": "b43ca92b0ec49cb4fa6652f1c91af19a73b92f3048155e703f8b4188ec83ea2a",
+  "version": "c74a4da5825a0a420254447ee1c8e9fb2d8f3b0cd342847c8fdda7bf5cc413b8",
   "files": [
     {
       "path": "./area-catalog.js",
-      "revision": "13f126a3a71af616f13c4b1583e7913a63e091d18c4421a45ff12c70c9c74714"
+      "revision": "2face32784256db89bd78962e11911152c467fc3945701bd9cf74f090cf0a4f7"
     },
     {
       "path": "./area-stats.json",
-      "revision": "4be80a963602610925f65841312bc69215a7d87a1142ee5603f995a16dfb1234"
+      "revision": "1d656d7cc5de16667f4bd1f57488729361eddd13badea03967fc4f25c06274dc"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -319,7 +319,7 @@
     },
     {
       "path": "./areas/military-base/index.js",
-      "revision": "0bfca96bdd7501a7f83a3ec00d0d34a2eb6d8ac73a7153af19692e8e284b5797"
+      "revision": "921c82903166b91b8ce6b088aeb14fe793bfb782ed6e54e3500d1ba59e183a20"
     },
     {
       "path": "./areas/military-base/jeep.js",
@@ -327,15 +327,15 @@
     },
     {
       "path": "./areas/military-base/layout.js",
-      "revision": "c31be3848907e7a702ce18252d6445e5b628b724c936573d5d05bfc5a48a3d93"
+      "revision": "fac23d655e24cc03aba2bc67f28b59f28917497682c2374ffb821e556f020014"
     },
     {
       "path": "./areas/military-base/lighting.js",
-      "revision": "4a71b036367283cdc662da3cda438a58b400d4de9ede561cfdc5a94414925767"
+      "revision": "5c5acd9140a0ac24ce8439cc447f62bbd13e9fcf6f74bf992e409e81a5d372c7"
     },
     {
       "path": "./areas/military-base/metadata.js",
-      "revision": "e2f527a78a9098be42c48ecdf5b5108c411a79d0aa9e1967d0a5a096789740cc"
+      "revision": "3c56f3c2ccc22a8e8dde850a33dc4028d7f2eebff4be9a6d78e5e06674f21717"
     },
     {
       "path": "./areas/military-base/military-base.jpg",
@@ -347,15 +347,23 @@
     },
     {
       "path": "./areas/military-base/missions.js",
-      "revision": "1df8022bb7a7fd74f9938caee00b712075d01e5ec32784706605b3d63a1d8604"
+      "revision": "4808cce2a76d116efe8fa917ea3c772d783be7d98b7ed42cf79f64c8eed01e32"
     },
     {
       "path": "./areas/military-base/music.js",
       "revision": "bd693a58043af02e4b29c55637d57b7c07b7a011818a9d54c86321b7b98d794b"
     },
     {
+      "path": "./areas/military-base/observation-props.js",
+      "revision": "21a2359cd4c1817541451ed1c1543fb7b2ae3b9621588a870f7a02310cf74446"
+    },
+    {
+      "path": "./areas/military-base/observation.js",
+      "revision": "09edca383a0a89c4fb3dd8675acbc135f99adda34459449514ff4a4066d53732"
+    },
+    {
       "path": "./areas/military-base/perimeter.js",
-      "revision": "87d76f4eaef4bb04d1f6f8eba4665052b1152fefe1b04a77cc87e133866875d9"
+      "revision": "eae728f72112c89671e6d6034db8123cac89ee2948bfc85daa194252c415abb8"
     },
     {
       "path": "./areas/military-base/roads.js",
@@ -371,7 +379,7 @@
     },
     {
       "path": "./areas/military-base/tank-course.js",
-      "revision": "1d4e57c6b492468b62bfade36a3d0f79051f9d4ad1663d3a331fad06d9f5503c"
+      "revision": "9816a9a3c0b7a207d2193642bfeece89f6aa3e21896fd45fe8b1fd07958101c7"
     },
     {
       "path": "./areas/military-base/tank-driving.js",
@@ -707,7 +715,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "0b6e96fd6b0e97a9143b0f4cf8c8e1159e32a1d5db4890077f61b19510eb924a"
+      "revision": "f6f6afb372a6fc9b6053614f54bfb58a9e3acfb7bd0e7523068bfd220b8475ae"
     },
     {
       "path": "./core/geometry.js",
@@ -807,7 +815,7 @@
     },
     {
       "path": "./style.css",
-      "revision": "5616ca50635465164350312bc083ae8f3ee096339be0db9f30caf7864cab6c36"
+      "revision": "881f47d81ca12c2e200b082d374c6f9b773bd7b401e6dc0e179f1d90ca3e195c"
     },
     {
       "path": "./vendor/three.LICENSE",
