@@ -30,13 +30,13 @@ test('open robot lift carries the player to a walkable surrounding catwalk and b
   assert.equal(area.blocksGround(h.x,h.z+2.95,.34,h.deck,{x:h.x,z:h.z+3.6}),true);
   walk(h.x,h.z+h.liftZ);
   assert.equal(ride.label,'Ride lift down');ride.act();for(let i=0;i<40;i++)tick();
-  assert.equal(lift.position.y,0);assert.ok(Math.abs(camera.position.y-EYE_HEIGHT)<1e-5);
+  assert.equal(lift.position.y,h.lowerStop);assert.ok(Math.abs(camera.position.y-EYE_HEIGHT-h.lowerStop)<1e-5);
   walk(h.x,h.z+h.liftZ+2.55);
   // Lower call works when empty platform is upstairs; reset restores lower position.
-  player.reset({x:h.x,z:h.z+h.liftZ},area,0);ride.act();for(let i=0;i<40;i++)tick();
+  player.reset({x:h.x,z:h.z+h.liftZ},area,h.lowerStop);ride.act();for(let i=0;i<40;i++)tick();
   walk(h.x,h.z+4.15);
   player.reset({x:h.x,z:h.z+h.liftZ+2.55},area,0);
   const call=area.interactions.find(i=>i.label==='Call lift to ground');
   assert.ok(call.active);call.act();for(let i=0;i<40;i++)tick();
-  assert.equal(lift.position.y,0);area.reset();assert.equal(ride.label,'Ride lift up');area.unload();
+  assert.equal(lift.position.y,h.lowerStop);area.reset();assert.equal(ride.label,'Ride lift up');area.unload();
 });
