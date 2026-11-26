@@ -1,13 +1,13 @@
 {
-  "version": "1c9fd59a9a00fe0f508806fb9641a812dd770e7bf80b148d78ab41e32ee401d0",
+  "version": "b43ca92b0ec49cb4fa6652f1c91af19a73b92f3048155e703f8b4188ec83ea2a",
   "files": [
     {
       "path": "./area-catalog.js",
-      "revision": "27b7837d876cada83a3628e650a2b41f857025a5dcd6af84c5c2b2d05920b9dc"
+      "revision": "13f126a3a71af616f13c4b1583e7913a63e091d18c4421a45ff12c70c9c74714"
     },
     {
       "path": "./area-stats.json",
-      "revision": "9496fa2b079bc784f63e22d6b3002399602bea6bd01ac4f00c895b1a28e930ef"
+      "revision": "4be80a963602610925f65841312bc69215a7d87a1142ee5603f995a16dfb1234"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -303,7 +303,7 @@
     },
     {
       "path": "./areas/military-base/decorations.js",
-      "revision": "96269a0deefa5a45dffd10cb4615ab807426417f3056bd1e4c80dbe39041bf2f"
+      "revision": "88f7457c1c04baae30cbeeb15e05dedc7be3d4f34ffd4d041508216b002f15c7"
     },
     {
       "path": "./areas/military-base/helicopter-cabin.js",
@@ -319,19 +319,23 @@
     },
     {
       "path": "./areas/military-base/index.js",
-      "revision": "cf4deb2dd7be95b72f02abb44516e2930bb87ae27227e2132f2ec925ed3301fd"
+      "revision": "0bfca96bdd7501a7f83a3ec00d0d34a2eb6d8ac73a7153af19692e8e284b5797"
+    },
+    {
+      "path": "./areas/military-base/jeep.js",
+      "revision": "ca3d2aeb1aa2027724da5726f5610698fcead26f2c9f54e75d80902bc81d083d"
     },
     {
       "path": "./areas/military-base/layout.js",
-      "revision": "649e23042aa137dc9a929ae558979697dfd3b5ba8b8bd8448f8174dc4a562d25"
+      "revision": "c31be3848907e7a702ce18252d6445e5b628b724c936573d5d05bfc5a48a3d93"
     },
     {
       "path": "./areas/military-base/lighting.js",
-      "revision": "62003640fa5073eb648e300deb4255365338bb64044ef74eb9ce238331f048ba"
+      "revision": "4a71b036367283cdc662da3cda438a58b400d4de9ede561cfdc5a94414925767"
     },
     {
       "path": "./areas/military-base/metadata.js",
-      "revision": "f735995b92152fabc73e781c171a2df49c07b0436f01a18a1fbc6f16a91fb797"
+      "revision": "e2f527a78a9098be42c48ecdf5b5108c411a79d0aa9e1967d0a5a096789740cc"
     },
     {
       "path": "./areas/military-base/military-base.jpg",
@@ -339,11 +343,11 @@
     },
     {
       "path": "./areas/military-base/mission-props.js",
-      "revision": "30fe3c14cbf13a39d061f17123f25d0c223772c284fcb2968afb2d45b4da04c8"
+      "revision": "a7372b57aa7254ce49d91c279e361f685e8ed4e696b1c954328f3d1c41ac4bb6"
     },
     {
       "path": "./areas/military-base/missions.js",
-      "revision": "8afc268b4d9ab8393dd4e765cf6decc6eed0ddd2acf46ad4cbdc5b56746980e1"
+      "revision": "1df8022bb7a7fd74f9938caee00b712075d01e5ec32784706605b3d63a1d8604"
     },
     {
       "path": "./areas/military-base/music.js",
@@ -366,8 +370,12 @@
       "revision": "c95e95a81c2cac86c554819bcf33449efcfcdd2bacec19c59a18b047e0c7f12b"
     },
     {
+      "path": "./areas/military-base/tank-course.js",
+      "revision": "1d4e57c6b492468b62bfade36a3d0f79051f9d4ad1663d3a331fad06d9f5503c"
+    },
+    {
       "path": "./areas/military-base/tank-driving.js",
-      "revision": "678ef94db2dc6fb54811afedb7231ff2baa9f8e9cf15f40624898bb8c14c9283"
+      "revision": "9b651093e5da4950d66fad69c05047310587071882657d4b8c3617b30c51c1aa"
     },
     {
       "path": "./areas/military-base/terrain.js",
@@ -375,7 +383,7 @@
     },
     {
       "path": "./areas/military-base/vehicles.js",
-      "revision": "4fe24d752b9e1ce9ea802c895fca9df21865270c9d4670402df2c5ef2b74d369"
+      "revision": "230b5fd42ea842b198b0293c9f54936d17333f418c6a08ad4079f42384722a93"
     },
     {
       "path": "./areas/princess-gallery/ariel-character.js",
@@ -748,6 +756,10 @@
     {
       "path": "./core/spatial-audio.js",
       "revision": "2976336697237be3003d9a1342b3c34eb7955a7102066947f622312980a20945"
+    },
+    {
+      "path": "./core/vehicle-driving.js",
+      "revision": "ff1b062b6a1f3a5c1b730e7dc5abb84875abf05ec714d1efeaa01e92454a4583"
     },
     {
       "path": "./core/world-manager.js",
