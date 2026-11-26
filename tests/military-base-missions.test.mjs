@@ -4,7 +4,7 @@ import * as THREE from '../vendor/three.module.min.js';
 import { areas } from '../game.js';
 import { cruiseAltitude, flightDurations, sampleCircuit } from '../areas/military-base/helicopter-flight.js';
 import { passengerEye } from '../areas/military-base/helicopter.js';
-import { headquarters, helipad, motorPool, repairTank } from '../areas/military-base/layout.js';
+import { headquarters, helipad, motorPool, repairTank, tankTestCheckpoints } from '../areas/military-base/layout.js';
 import { createDroneCamera } from '../core/drone-view.js';
 import { nearestInteraction } from '../core/interactions.js';
 import { overlaps, walkElevation } from '../core/movement.js';
@@ -85,11 +85,13 @@ test('tank parts are unique, installation drives once and the tank yields to a p
   assert.equal(wheel.scale.x, 0);
   assert.equal(install.active, false);
   pickups.forEach(item => { item.act(); item.act(); });
-  assert.deepEqual(area.missionStatus.inventory, ['Engine Component', 'Track Component', 'Battery']);
+  assert.equal(pickups.length, 2);
+  assert.equal(node('Battery'), undefined);
+  assert.deepEqual(area.missionStatus.inventory, ['Engine Component', 'Track Component']);
   assert.equal(node('Engine Component').scale.x, 0);
-  for (let i = 0; i < 3; i++) install.act();
+  for (let i = 0; i < 2; i++) install.act();
   assert.deepEqual(area.missionStatus.inventory, []);
-  assert.equal(row('repair-tank').current, 3);
+  assert.equal(row('repair-tank').current, 2);
   assert.equal(row('repair-tank').complete, false);
   const ahead = { x: repairTank.x + Math.sin(repairTank.yaw) * 3.4, y: EYE_HEIGHT,
     z: repairTank.z + Math.cos(repairTank.yaw) * 3.4 };
@@ -124,52 +126,87 @@ test('tank parts are unique, installation drives once and the tank yields to a p
   assert.ok(pickups.every(item => item.active));
 });
 
-test('supply delivery carries one crate at a time and alignment only spins the main radar after all three heads turn', async t => {
-  const { area, find, row, node, advance, cues } = await missionFixture(t);
+test('one medical crate and one radar console complete their respective missions and reset', async t => {
+  const { area, find, row, node, advance, cues, scene } = await missionFixture(t);
   const source = find('Pick Up Supplies');
   const [drop] = find('Deliver Supplies');
+  assert.equal(source.length, 1);
+  assert.equal(node('Medical pickup 2'), undefined);
   source[0].act();
-  source[1].act();
+  source[0].act();
   assert.ok(source.every(item => !item.active));
   assert.deepEqual(area.missionStatus.inventory, ['Medical Supplies']);
-  drop.act();
-  drop.act();
+  drop.act(); drop.act();
   assert.equal(row('supply-delivery').current, 1);
   assert.equal(node('Delivered medical crate 1').scale.x, 1);
-  assert.equal(node('Delivered medical crate 2').scale.x, 0);
-  for (const item of source.slice(1)) { item.act(); drop.act(); }
+  assert.equal(node('Delivered medical crate 2'), undefined);
   assert.ok(row('supply-delivery').complete);
-
-  const targets = find('Align Antenna');
-  const array = node('Rotating radar antenna');
-  const initial = array.rotation.y;
-  assert.ok(targets.every(item => !item.active));
-  find('Inspect Radar Console')[0].act();
-  assert.ok(targets.every(item => item.active));
-  targets[1].act();
-  targets[1].act();
-  advance(.55);
-  assert.notEqual(array.rotation.y, initial);
-  assert.equal(row('radar-activation').current, 1);
-  advance(2);
-  const aligned = array.rotation.y;
+  const targets = find('Activate Radar');
+  const dish = node('Rotating radar antenna');
+  const initial = dish.rotation.y;
+  assert.equal(targets.length, 1);
+  assert.equal(find('Align Antenna').length, 0);
+  assert.equal(node('Radar array'), undefined);
+  assert.equal(node('Radar relay'), undefined);
+  const panels = [];
+  scene.traverse(o => { if (o.name.endsWith(' control panel')) panels.push(o.name); });
+  assert.deepEqual(panels.filter(n => !n.includes('Scout')).sort(),
+    ['Motor Pool control panel','Radar Console control panel','South Gate control panel','South Lookout control panel'].sort());
   advance(1);
-  assert.equal(array.rotation.y, aligned);
-  targets[2].act();
-  targets[0].act();
-  assert.equal(row('radar-activation').complete, false);
-  advance(1.6);
+  assert.equal(dish.rotation.y, initial);
+  targets[0].act(); targets[0].act();
+  assert.equal(row('radar-activation').current, 1);
   assert.equal(row('radar-activation').complete, true);
   assert.equal(node('Online radar display').scale.x, 1);
+  advance(.6);
+  assert.notEqual(dish.rotation.y, initial);
   assert.ok(cues.length);
-  assert.notEqual(array.rotation.y, aligned);
   area.reset();
-  assert.equal(array.rotation.y, initial);
+  assert.equal(dish.rotation.y, initial);
   assert.equal(node('Delivered medical crate 1').scale.x, 0);
   assert.equal(node('Online radar display').scale.x, 0);
   assert.ok(source.every(item => item.active));
 });
-
+ 
+test('three ordered tank checkpoints require the Scout Tank, not walking or Jeep driving', async t => {
+  const { area, camera, find, node, row } = await missionFixture(t, { reducedMotion: () => true });
+  const marker = node('Tank driving checkpoint');
+  const tank = node('Tank 01');
+  const jeep = node('Entrance patrol jeep');
+  const mission = row('tank-driving-test');
+  const update = () => area.update(0,camera.position);
+  const move = (vehicle, point) => { vehicle.position.x = point.x; vehicle.position.z = point.z; update(); };
+  assert.equal(mission.total, 3);
+  assert.equal(marker.visible, true);
+  camera.position.set(tankTestCheckpoints[0].x, 1.68, tankTestCheckpoints[0].z);
+  update();
+  assert.equal(mission.current, 0);
+  const mount = item => {
+    let exit;
+    camera.position.set(item.x,1.68,item.z);
+    item.act({guideCamera(_look,opts){exit=opts.prompt;return ()=>{};}});
+    return exit;
+  };
+  mount(find('Drive Jeep')[0]);
+  move(jeep,tankTestCheckpoints[0]);
+  assert.equal(mission.current,0);
+  area.reset();
+  mount(find('Drive Tank')[0]);
+  assert.equal(find('Drive Jeep')[0].active,false);
+  move(tank,tankTestCheckpoints[1]);
+  assert.equal(mission.current,0);
+  for (const [i,p] of tankTestCheckpoints.entries()) {
+    move(tank,p);update();
+    assert.equal(mission.current,i+1);
+    if (i<2) assert.equal(marker.position.x,tankTestCheckpoints[i+1].x);
+  }
+  assert.equal(mission.complete,true);
+  assert.equal(marker.visible,false);
+  area.reset();
+  assert.equal(mission.current,0);
+  assert.equal(marker.visible,true);
+});
+ 
 test('the circuit is clockwise on the actual Drone View projection and keeps the facilities on its right', async t => {
   const { visit, scene } = await missionFixture(t);
   const { camera, focus } = createDroneCamera(THREE);
@@ -256,7 +293,7 @@ test('flight locks the player, keeps the camera on the right seat, lands before 
 test('every mission prompt can be reached from a clear standing position', async t => {
   const { area, find } = await missionFixture(t);
   const point = label => find(label)[0];
-  point('Inspect Radar Console').act();
+  point('Activate Radar').act();
   point('Pick Up Component').act();
   point('Pick Up Supplies').act();
   const verify = item => {
@@ -277,10 +314,9 @@ test('every mission prompt can be reached from a clear standing position', async
 });
 
 test('the last independent mission records area completion once across repeat visits', async t => {
-  const { area, find, beginFlight, advance, completions } = await missionFixture(t, { reducedMotion: () => true });
+  const { area, find, beginFlight, advance, completions, worlds } = await missionFixture(t, { reducedMotion: () => true });
   for (let visit = 0; visit < 2; visit++) {
-    find('Inspect Radar Console')[0].act();
-    find('Align Antenna').forEach(item => item.act());
+    find('Activate Radar')[0].act();
     beginFlight();
     advance(flightTime + .1, undefined, 20);
     find('Activate Security').forEach(item => item.act());
@@ -288,6 +324,10 @@ test('the last independent mission records area completion once across repeat vi
     assert.equal(completions.length, visit);
     for (const item of find('Pick Up Component')) { item.act(); find('Install Component')[0].act(); }
     advance(6);
+    const tank = area.interactions.find(item => item.label === 'Drive Tank');
+    tank.act({ guideCamera() { return () => {}; } });
+    const scout = area === worlds.active.area ? worlds.active.scene.getObjectByName('Tank 01') : null;
+    for (const point of tankTestCheckpoints) { scout.position.set(point.x,0,point.z); advance(.05); }
     assert.ok(area.missionStatus.missions.every(mission => mission.complete));
     assert.deepEqual(completions, ['military-base']);
     area.reset();

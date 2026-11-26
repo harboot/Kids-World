@@ -93,7 +93,7 @@ Keep changes area-local, modular, child-friendly, and compatible with the existi
 
 ## Worlds & Missions
 
-**8 public areas · 59 total missions**
+**8 public areas · 60 total missions**
 
 | World | Missions | Highlights |
 | --- | ---: | --- |

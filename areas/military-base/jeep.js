@@ -50,7 +50,7 @@ export function buildDrivableJeep(kit, moving, x, z, yaw) {
   box(steeringWheel,ink.steel,0,0,0,.07,.07,.065);
   part(car,'drum',ink.rubber,0,.99,-2.02,.41,.30,.41,[Math.PI/2,0,0]);
   box(car,ink.dark,0,.48,1.96,2.1,.17,.23);
-  const hull = movingSolid(car,0,-.05,jeepDimensions.width,jeepDimensions.depth,1.96);
+  const hull = movingSolid(car,0,0,jeepDimensions.width,jeepDimensions.depth,1.96);
   const travel=[0,0];
   function pose(px,pz,heading,left=0,right=0,throttle=0,steer=0) {
     car.position.set(px,0,pz); car.rotation.y=heading;
