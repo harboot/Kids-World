@@ -1,11 +1,12 @@
 {
-  "updatedAt": "2026-11-26T09:42:02.025Z",
+  "updatedAt": "2026-11-26T10:01:14.101Z",
   "summary": {
     "totalAreas": 9,
     "publicAreas": 8,
     "hiddenAreas": 1,
     "totalFiles": 188,
-    "totalBytes": 1537377
+    "totalBytes": 1537377,
+    "projectBytes": 2478170
   },
   "areas": [
     {
