@@ -35,7 +35,7 @@ export function buildBarracks(kit, { name, x, z, width, depth, tint, yaw }) {
     const face = group(name + ' window wall', s * side, 0, 0, s * Math.PI / 2, hall);
     for (let k = -front + 2; k < front - 1.2; k += 3.65) {
       box(face, ink.dark, k, 1.7, .045, 2.12, .93, .15);
-      box(face, 0xe6c88c, k, 1.7, .14, 1.94, .73, .05, [], true);
+      box(face, 0xe6c88c, k, 1.7, .14, 1.94, .73, .05, [], 'powered');
       for (const q of [-.36,.36]) box(face, ink.steel, k + q, 1.7, .19, .065, .73, .04);
     }
     box(hall, ink.dark, s * (doorWidth / 2 + .08), floor + doorHeight / 2, front + .025, .16, doorHeight, .18);
@@ -87,6 +87,6 @@ export function buildBarracks(kit, { name, x, z, width, depth, tint, yaw }) {
   for (const zz of [-3.45,3.45]) {
     const fixture = group('Barracks ceiling fixture', 0, roofY - .12, zz, 0, hall);
     box(fixture, ink.dark, 0, .035, 0, 1.53, .13, .26);
-    box(fixture, 0xffe4b5, 0, -.05, 0, 1.38, .06, .20, [], true);
+    box(fixture, 0xffe4b5, 0, -.05, 0, 1.38, .06, .20, [], 'powered');
   }
 }

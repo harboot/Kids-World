@@ -10,6 +10,7 @@ export const checkpoints = [
   { x: 0, z: fence.south, name: '01  /  SOUTH GATE' },
   { x: -64.8, z: 7, name: '02  /  WEST POST' },
   { x: -7, z: -57, name: '03  /  NORTH POST' },
+  { x: 67.3, z: -8.5, name: '04  /  EAST POST' },
 ];
 export const antennas = [
   { x: -4.0, z: -43.5, kind: 'dish' },
@@ -21,9 +22,9 @@ export const supplyDepot = { x: 47, z: 1 };
 
 export const radarControl = { x: -3, z: -34.8 };
 export const securityPanels = [
-  { x: -5.03, z: fence.south - 4.2, guard: 'South Gate guard west', name: 'South Gate' },
-  { x: 50.55, z: 39.1, guard: 'Garage checkpoint guard', name: 'Motor Pool' },
-  { x: lookout.x + 1.86, z: lookout.z - 1.95, y: lookout.height, guard: 'Lookout checkpoint guard', name: 'South Lookout' },
+  { x: -5.03, z: fence.south - 4.2, yaw: Math.PI, guard: 'South Gate guard west', name: 'South Gate' },
+  { x: -65.6, z: 2.8, yaw: Math.PI / 2, guard: 'West checkpoint guard', name: 'West Post' },
+  { x: 67.3, z: -5.4, yaw: -Math.PI / 2, guard: 'East checkpoint guard', name: 'East Post' },
 ];
 
 // Ordered route on the main paved roads, away from parked vehicles.

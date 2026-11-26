@@ -8,13 +8,19 @@ export function createObservation({ THREE, camera, observation, onNight, onCamer
   const forward=new THREE.Vector3();
   let release,mode,index=0,yaw=0,pitch=0;
   const clamp=THREE.MathUtils.clamp;
+  let centerYaw=0;
   function pointNight() {
-    target.set(view.position.x+Math.sin(yaw)*Math.cos(pitch),view.position.y+Math.sin(pitch),view.position.z+Math.cos(yaw)*Math.cos(pitch));
+    const p=observation.binocular;
+    forward.set(Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch));
+    // Optical pivot is above the baked binocular mesh; move forward along the viewing direction.
+    view.position.set(p.x,p.y+1.91,p.z).addScaledVector(forward,.52);
+    target.copy(view.position).add(forward);
     view.lookAt(target);view.updateMatrixWorld(true);
   }
   function look(dx,dy) {
     if(mode!=='night-vision')return;
-    yaw-=dx;pitch=clamp(pitch-dy,-1.15,.95);pointNight();
+    yaw=clamp(yaw-dx,centerYaw-Math.PI/2,centerYaw+Math.PI/2);
+    pitch=clamp(pitch-dy,-.35,.42);pointNight();
   }
   function showCamera(i) {
     const data=observation.cameras[i];
@@ -48,7 +54,8 @@ export function createObservation({ THREE, camera, observation, onNight, onCamer
     if(release||!guideCamera||!camera)return;
     const p=observation.binocular;
     view.position.set(p.x,p.y+1.40,p.z);
-    yaw=Math.atan2(headquarters.x-p.x,headquarters.z-p.z);
+    centerYaw=Math.atan2(headquarters.x-p.x,headquarters.z-p.z);
+    yaw=centerYaw;
     pitch=-.13;view.fov=26;view.updateProjectionMatrix();pointNight();
     mode='night-vision';
     release=guideCamera(look,{camera:view,prompt,fov:26,viewMode:mode});

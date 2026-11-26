@@ -6,8 +6,7 @@ import { createObservation } from './observation.js';
 const areaId = 'military-base';
 const confirmation = [[69, { duration: .19, level: .12 }], [76, { duration: .29, level: .11 }, .13]];
 const engineCue = [[34, { endPitch: 43, duration: 1.3, level: .16, attack: .36, wave: 'triangle' }]];
-const parkTime = 4.65;
-const easing = t => t * t * (3 - 2 * t);
+const repairTime = 1.4;
 const ownHeight = (point, player) => Math.abs(player.y - (point.y ?? 0) - EYE_HEIGHT) < 1.12;
 
 function objective(id, title, total) {
@@ -18,9 +17,9 @@ export function createMissions({
   THREE, camera, props, radarHeads, tank, helicopter, soldiers, reducedMotion, playCue, notify,
   completeLevel, isLevelComplete, course, driving, jeepDriving, observation, generator,
 }) {
-  const { security, parts, supplies, delivered, hospitalDrop, station, screen, scan } = props;
+  const { security, supplies, delivered, hospitalDrop, station, screen, scan } = props;
   const patrol = objective('security-patrol', 'Security Patrol', 3);
-  const repair = objective('repair-tank', 'Repair the Tank', parts.length);
+  const repair = objective('repair-tank', 'Repair the Tank', 1);
   const supply = objective('supply-delivery', 'Supply Delivery', supplies.length);
   const radar = objective('radar-activation', 'Radar Activation', 1);
   const ride = objective('helicopter-patrol', 'Helicopter Patrol', 1);
@@ -28,9 +27,9 @@ export function createMissions({
   const night = objective('night-observation', 'Night Observation', 1);
   const cctv = objective('cctv-monitoring', 'CCTV Monitoring', observation.cameras.length);
   const power = objective('restore-power', 'Restore Power', 1);
-  const missions = [patrol, repair, supply, radar, ride, drivingTest, night, cctv, power];
+  const inspection = objective('barracks-inspection', 'Barracks Inspection', 1);
+  const missions = [patrol, repair, supply, radar, ride, drivingTest, night, cctv, power, inspection];
   const inventory = [];
-  const collected = new Set();
   const activated = new Set();
   const removedSupplies = new Set();
   const radarStart = radarHeads.dish.rotation.y;
@@ -38,9 +37,8 @@ export function createMissions({
   let scanTime = 0;
   let arraySpin = 0;
   let engineTime = 0;
-  let driveTime = 0;
-  let parkingStarted = false;
-  let tankBlocked = false;
+  let repairing = false;
+  let inspecting = false;
   let context;
 
   function finish(mission, message) {
@@ -94,25 +92,17 @@ export function createMissions({
     });
   }
 
-  for (const [i, item] of parts.entries()) {
-    add(item, repair, 'Pick Up Component', () => !collected.has(i), () => {
-      collected.add(i);
-      item.prop.scale.setScalar(0);
-      inventory.push(item.name);
-      notify(item.name + ' collected.');
-    }, 1.63, .88);
-  }
   const install = { x: repairTank.x - 2.66, z: repairTank.z - .54 };
-  add(install, repair, 'Install Component', () => repair.current < repair.total && inventory.some(name => name !== 'Medical Supplies'), () => {
-    const index = inventory.findIndex(name => name !== 'Medical Supplies');
-    const [name] = inventory.splice(index, 1);
-    repair.current++;
-    if (repair.current === repair.total) {
-      parkingStarted = true;
-      playCue(engineCue);
-      notify('Tank started. Keep the parking lane clear.');
-    } else notify(name + ' installed.');
-  }, 1.20);
+  add(install, repair, 'Repair Tank', () => !repair.complete && !repairing, () => {
+    repairing = true;
+    playCue(engineCue);
+    notify('Reassembling the tank...');
+  }, 1.45);
+  add(soldiers.sleeper.point, inspection, 'Wake Soldier', () => !inspection.complete && !inspecting, () => {
+    inspecting = true;
+    soldiers.sleeper.wake();
+    notify('On your feet, soldier!');
+  }, 1.8);
 
   for (const [i, item] of supplies.entries()) {
     add(item, supply, 'Pick Up Supplies', () => !carriedSupply && !removedSupplies.has(i), () => {
@@ -171,34 +161,14 @@ export function createMissions({
     else notify('Checkpoint ' + drivingTest.current + '/' + drivingTest.total + '. Follow the next light beam.');
   }
 
-  function playerInTankLane(player, from, next) {
-    if (!player || player.y > 6.4) return false;
-    const dx = player.x - repairTank.x;
-    const dz = player.z - repairTank.z;
-    const cosine = Math.cos(repairTank.yaw);
-    const sine = Math.sin(repairTank.yaw);
-    const cross = dx * cosine - dz * sine;
-    const along = dx * sine + dz * cosine;
-    return Math.abs(cross) < 2.18 && along > from - 3.08 && along < next + 4.05;
-  }
-
-  function updateTank(dt, position) {
-    if (!parkingStarted || repair.complete) return;
-    engineTime += dt;
-    let distance = tank.parkingDistance * easing(driveTime / parkTime);
-    if (engineTime >= .80) {
-      const next = Math.min(parkTime, driveTime + dt);
-      const requested = tank.parkingDistance * easing(next / parkTime);
-      const blocked = playerInTankLane(position, distance, requested);
-      if (blocked && !tankBlocked) notify('Step clear of the tank’s parking lane.');
-      tankBlocked = blocked;
-      if (!blocked) {
-        driveTime = next;
-        distance = requested;
-      }
+  function updateTank(dt) {
+    if (!repairing || repair.complete) return;
+    engineTime = Math.min(repairTime,engineTime+dt);
+    tank.pose(0,engineTime,!reducedMotion());
+    if(engineTime>=repairTime) {
+      repair.current=1;
+      finish(repair,'Repair the Tank Complete!');
     }
-    tank.pose(distance, engineTime, !reducedMotion());
-    if (driveTime === parkTime) finish(repair, 'Repair the Tank Complete!');
   }
 
   function currentHint() {
@@ -206,23 +176,19 @@ export function createMissions({
     if (surveillance.mode === 'cctv') return 'Review all five CCTV views. Interact to switch cameras or exit.';
     if (!flight.board.active) return 'Enjoy the helicopter patrol.';
     if ((driving.active || jeepDriving.active) && !drivingTest.complete) return 'Drive through checkpoint ' + (drivingTest.current + 1) + ' of ' + drivingTest.total + '. Follow the light beam.';
-    if (tankBlocked) return 'Move clear of the tank’s marked parking lane.';
+    if (repairing && !repair.complete) return 'Reassembling the tank.';
     if (carriedSupply) return 'Deliver the medical supplies at the Field Hospital receiving platform.';
     if (missions.every(row => row.complete)) return 'All missions complete. Board the helicopter again for another tour.';
-    if (context === repair && !repair.complete) {
-      if (inventory.length) return 'Install the carried component on the left of the repair bay tank.';
-      if (repair.current === repair.total) return 'Keep the parking lane clear while the tank parks.';
-      return 'Find components by the workshop, service sheds, and tank garage.';
-    }
-    if (!patrol.complete) return 'Activate the panels at South Gate, Motor Pool, and South Lookout.';
+    if (!patrol.complete) return 'Activate the panels at South Gate, West Post, and East Post.';
     const next = missions.find(row => !row.complete);
-    if (next === repair) return 'Find the tank components around the workshop and vehicle yard.';
+    if (next === repair) return 'Go to Tank 04 in the Motor Pool and repair it.';
     if (next === supply) return 'Pick up medical supplies at the Supply Depot loading dock.';
     if (next === radar) return 'Activate the console beside the Radar Control Station.';
     if (next === drivingTest) return 'Board the Scout Tank or Jeep and follow the three checkpoint light beams.';
     if (next === night) return 'Use the night vision binoculars at South Lookout.';
     if (next === cctv) return 'Enter North Post and review the five CCTV views.';
-    if (next === power) return 'Enter the dark Generator building and start the generator at the control panel.';
+    if (next === power) return 'Enter the Generator building and restore power to the base.';
+    if (next === inspection) return 'Enter Barracks 01 and wake the sleeping soldier.';
     return 'Board at the helicopter’s right passenger door for a sightseeing flight.';
   }
 
@@ -235,25 +201,25 @@ export function createMissions({
       surveillance.cancel();
       flight.reset();
       inventory.length = 0;
-      collected.clear();
       activated.clear();
       removedSupplies.clear();
       for (const row of missions) { row.current = 0; row.complete = false; }
       for (const panel of [...security, station]) panel.light(false);
-      for (const object of [...parts, ...supplies]) object.prop.scale.setScalar(1);
+      for (const object of supplies) object.prop.scale.setScalar(1);
       for (const object of delivered) object.scale.setScalar(0);
       generator.setPowered(false);
       radarHeads.dish.rotation.y = radarStart;
       course.show(0);
-      carriedSupply = parkingStarted = tankBlocked = false;
-      scanTime = arraySpin = engineTime = driveTime = 0;
+      carriedSupply = repairing = inspecting = false;
+      scanTime = arraySpin = engineTime = 0;
       context = undefined;
       screen.scale.setScalar(0);
       updateRadar(0);
       tank.pose(0);
     },
     update(dt, position) {
-      updateTank(dt, position);
+      updateTank(dt);
+      if (inspecting && !inspection.complete && soldiers.sleeper.ready) { inspection.current=1; finish(inspection,'Barracks Inspection Complete!'); }
       updateRadar(dt);
       updateDrivingTest();
       flight.update(dt);

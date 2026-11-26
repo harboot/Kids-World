@@ -14,11 +14,11 @@ export function buildSoldiers(kit, moving) {
   const poses = [];
   const gestures = new Map();
 
-  function person(name, role, x, z, yaw, action = 'idle', route = null, elevation = 0) {
+  function person(name, role, x, z, yaw, action = 'idle', route = null, elevation = 0, parent = kit.scene) {
     const index = poses.length;
     const skin = skinTones[index % skinTones.length];
     const colors = uniforms[role];
-    const npc = group(name, x, elevation, z, yaw);
+    const npc = group(name, x, elevation, z, yaw, parent);
     const core = group('Uniform and head', 0, .79, 0, 0, npc);
     add(core, 'box', colors.trousers, 0, .011, 0, .41, .15, .28);
     add(core, 'box', colors.jacket, 0, .31, 0, .48, .49, .34);
@@ -50,7 +50,7 @@ export function buildSoldiers(kit, moving) {
       add(leg, 'box', ink.dark, 0, -.706, .043, .184, .151, .279);
       legs.push(leg);
     }
-    if (!route) groundShadow(npc, .143, -.11, .84, .68, .048);
+    if (!route && action !== 'sleep') groundShadow(npc, .143, -.11, .84, .68, .048);
     poses.push(time => {
       const phase = time * (action === 'march' ? 7.1 : 5.8) + index * (action === 'march' ? .055 : .48);
       let gait = action === 'march' ? .53 : 0;
@@ -84,12 +84,14 @@ export function buildSoldiers(kit, moving) {
         }
       } else head.rotation.x = 0;
     });
+    return {npc,core,head,arms,legs};
   }
 
   person('South Gate guard west', 'guard', -3.08, fence.south - 3.1, .23);
   person('South Gate guard east', 'guard', 3.12, fence.south - 3.3, -.23);
   person('West checkpoint guard', 'guard', -63.8, 4.4, Math.PI / 2);
   person('North checkpoint guard', 'guard', -6.25, -59.2, 0);
+  person('East checkpoint guard', 'guard', 66.8, -4.0, -Math.PI / 2);
   person('Flight line patrol', 'guard', 12.05, -41.6, 0, 'patrol', [12.05, -35.5]);
   person('West road patrol', 'guard', -60.0, -14.7, 0, 'patrol', [-60.0, -1.5]);
   for (const [row, z] of [10.7, 12.65].entries()) {
@@ -107,17 +109,42 @@ export function buildSoldiers(kit, moving) {
   person('Ambulance medic', 'medic', 33.9, 8.15, -.63);
   person('Logistics crew', 'crew', 48.05, 11.71, .44);
 
+  const hall=kit.scene.getObjectByName('Barracks 01');
+  const sleeperModel=person('Barracks sleeping soldier','guard',-4.06,4.53,0,'sleep',null,.915,hall);
+  const {npc,core,head,arms,legs}=sleeperModel;
+  const localPoint=new kit.THREE.Vector3(-2.65,.135,3.75);
+  hall.updateWorldMatrix(true,false);hall.localToWorld(localPoint);
+  let wakeTime=-1;
+  function poseSleeper(dt) {
+    if(wakeTime>=0)wakeTime+=dt;
+    const a=Math.max(0,Math.min(1,wakeTime/.55));
+    const b=Math.max(0,Math.min(1,(wakeTime-.55)/.45));
+    npc.position.set(-4.06+1.31*a,.135+.78*(1-a),4.53-.78*a);
+    npc.rotation.set(-Math.PI/2*(1-a),Math.PI/2*a,0,'YXZ');
+    core.position.y=.79;head.rotation.set(0,0,0);
+    for(const leg of legs)leg.rotation.x=-Math.PI/2*a*(1-b);
+    for(const [i,arm] of arms.entries()){arm.rotation.x=0;arm.rotation.z=i===0?-.08:.08;}
+    if(wakeTime>=1) {
+      const salute=Math.min(1,(wakeTime-1)/.22,Math.max(0,(2.8-wakeTime)/.25));
+      arms[0].rotation.z=-.08+2.48*salute;
+      arms[0].rotation.x=.14*salute;
+    }
+  }
+  poseSleeper(0);
+  const sleeper={point:{x:localPoint.x,y:localPoint.y,z:localPoint.z},wake(){if(wakeTime<0)wakeTime=0;},get ready(){return wakeTime>=1.25;}};
   return {
+    sleeper,
     cue(name, type) {
       gestures.set(name, { type, time: 0, duration: type === 'salute' ? 1.65 : 1.12 });
     },
-    reset() { gestures.clear(); },
+    reset() { gestures.clear(); wakeTime=-1; poseSleeper(0); },
     update(time, dt) {
       for (const [name, gesture] of gestures) {
         gesture.time += dt;
         if (gesture.time >= gesture.duration) gestures.delete(name);
       }
       for (const pose of poses) pose(time);
+      poseSleeper(dt);
     },
   };
 }

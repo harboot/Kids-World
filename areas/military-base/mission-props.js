@@ -1,13 +1,9 @@
 import { radarControl, securityPanels, supplyDepot } from './layout.js';
 import { ink } from './scenery.js';
 
-const componentSites = [
-  { name: 'Engine Component', x: -45.8, z: 33.9 },
-  { name: 'Track Component', x: 41.48, z: 39.84 },
-];
 function controlPanel(kit, moving, point, security = false) {
   const { x, z, y = 0, name } = point;
-  const console = kit.group(name + ' control panel', x, y, z);
+  const console = kit.group(name + ' control panel', x, y, z, point.yaw ?? 0);
   kit.box(console, ink.footing, 0, .09, 0, .60, .18, .52);
   kit.box(console, ink.steel, 0, .58, 0, .19, 1.16, .22);
   kit.box(console, ink.dark, 0, 1.19, .03, .65, .48, .24);
@@ -35,26 +31,6 @@ function controlPanel(kit, moving, point, security = false) {
   };
 }
 
-function components(kit, moving) {
-  const { box, part } = moving;
-  return componentSites.map((site, i) => {
-    const platform = kit.group(site.name + ' tray', site.x, 0, site.z);
-    kit.box(platform, ink.steel, 0, .20, 0, 1.12, .40, .79);
-    kit.box(platform, ink.dark, 0, .41, 0, 1.26, .08, .91);
-    kit.solid(platform, 0, 0, 1.2, .9, .45);
-    const prop = kit.group(site.name, 0, .45, 0, 0, platform);
-    if (i === 0) {
-      box(prop, 0x739393, 0, .23, 0, .68, .44, .55);
-      for (const x of [-.25, 0, .25]) box(prop, ink.dark, x, .47, -.07, .14, .13, .45);
-      part(prop, 'drum', ink.yellow, .37, .28, .08, .14, .13, .14, [0, 0, Math.PI / 2]);
-    } else if (i === 1) {
-      part(prop, 'track', ink.rubber, 0, .18, 0, .97, .35, .47);
-      for (const x of [-.3, -.10, .10, .3]) box(prop, 0x769594, x, .356, 0, .09, .045, .46);
-    }
-    return { ...site, prop };
-  });
-}
-
 function supplyCrate(kit, moving, name, x, y, z) {
   const crate = kit.group(name, x, y, z);
   moving.box(crate, 0xd0a471, 0, .28, 0, .80, .55, .70);
@@ -78,7 +54,6 @@ export function buildMissionProps(kit, moving) {
   const scan = kit.group('Radar scan line', 0, 0, 0, 0, screen);
   moving.box(scan, 0xb5ffc4, 0, 0, .18, 1.23, .039, .018);
 
-  const parts = components(kit, moving);
   const tankBoard = kit.group('Tank service marker', 49.38, 0, 43.17);
   kit.box(tankBoard, ink.steel, 0, .57, 0, .09, 1.15, .09);
   kit.sign(tankBoard, 'TANK SERVICE', 0, 1.02, .035, 1.55, .36, { style: 'gold' });
@@ -95,5 +70,5 @@ export function buildMissionProps(kit, moving) {
   kit.solid(receiver, 0, 0, 3.90, 1.14, .44);
   const delivered = [0].map((dx, i) =>
     supplyCrate(kit, moving, 'Delivered medical crate ' + (i + 1), hospitalDrop.x + dx, .44, hospitalDrop.z));
-  return { security, station, screen, scan, parts, supplies, hospitalDrop, delivered };
+  return { security, station, screen, scan, supplies, hospitalDrop, delivered };
 }
