@@ -1,5 +1,5 @@
 {
-  "version": "9bc0cc68c8273b4600b16bff22b39249e6910cf33e2d37e81eef26ddbb9e8ff7",
+  "version": "1c9fd59a9a00fe0f508806fb9641a812dd770e7bf80b148d78ab41e32ee401d0",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "81f0a84dad706c38eef990f270cc325841ebf33d981eeeeac006a4f7ec9e5d16"
+      "revision": "9496fa2b079bc784f63e22d6b3002399602bea6bd01ac4f00c895b1a28e930ef"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -290,8 +290,12 @@
       "revision": "57b4a6a15d054bbec4fd3fa22bbaad32d907f993730f529cd0f53c03e5e8de0c"
     },
     {
+      "path": "./areas/military-base/barracks.js",
+      "revision": "4b7c9fb953244e11a995f526f8d6ff994b42862a04eb76379cadf9b8eed08f32"
+    },
+    {
       "path": "./areas/military-base/buildings.js",
-      "revision": "29d8433e246cb5032525086a0013ac27bc1a03577948d38781d8fe565ff293b8"
+      "revision": "e33e1ca025bd619466fb895e9553eb1d0dcb25066e35be2016624f7c86b2908f"
     },
     {
       "path": "./areas/military-base/compact-tank.js",
@@ -299,7 +303,7 @@
     },
     {
       "path": "./areas/military-base/decorations.js",
-      "revision": "f787b0a54a1b252864aa2e8cd9f06745a0a2ede010ca62cbc19619501336aa81"
+      "revision": "96269a0deefa5a45dffd10cb4615ab807426417f3056bd1e4c80dbe39041bf2f"
     },
     {
       "path": "./areas/military-base/helicopter-cabin.js",
@@ -323,7 +327,7 @@
     },
     {
       "path": "./areas/military-base/lighting.js",
-      "revision": "71b9b16f5fa577458bbc51e02fbc1d628b629b0b7da19f7834a43a6d53325fcb"
+      "revision": "62003640fa5073eb648e300deb4255365338bb64044ef74eb9ce238331f048ba"
     },
     {
       "path": "./areas/military-base/metadata.js",
