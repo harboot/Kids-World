@@ -1,3 +1,4 @@
+import { generatorSite } from '../areas/military-base/layout.js';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import * as THREE from '../vendor/three.module.min.js';
@@ -35,7 +36,7 @@ test('night area retains one cached moon shadow and a fixed shadow-free local li
   assert.ok(matching.some(i => { glow.getMatrixAt(i,after); return after.elements[0] === 0; }));
   area.reset();
   assert.ok(matching.some(i => { glow.getMatrixAt(i,after); return after.elements[0] !== 0; }));
-  assert.equal(area.missionStatus.missions.length, 8);
+  assert.equal(area.missionStatus.missions.length, 9);
   area.unload();
 });
 
@@ -104,5 +105,24 @@ test('automatic local lights activate at half their former distance; scout headl
   area.update(0,{x:pickup.x,y:2,z:pickup.z+5});
   assert.equal(matching(),true);
   assert.equal(lights.length,maxLocalLights);
+  area.unload();
+});
+
+test('generator district lights and ground illumination are disabled until power is restored, and reset correctly',()=>{
+  const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera();
+  const area=militaryBase.load({THREE,scene,camera});
+  const {x,z}=generatorSite;
+  const lights=scene.children.filter(o=>o.isPointLight);
+  const indicators=scene.getObjectByName('Generator powered indicators');
+  const prompt=area.interactions.find(i=>i.label==='Start Generator');
+  const mission=area.missionStatus.missions.find(m=>m.id==='restore-power');
+  const update=()=>area.update(0,{x,y:1.8,z});
+  const near=()=>lights.filter(o=>o.intensity>0 && Math.hypot(o.position.x-x,o.position.z-z)<generatorSite.darkRadius);
+  update();assert.equal(indicators.scale.x,0);assert.equal(near().length,0);
+  prompt.act();prompt.act();update();
+  assert.equal(indicators.scale.x,1);assert.ok(near().length>0);
+  assert.equal(mission.current,1);assert.equal(mission.complete,true);assert.equal(prompt.active,false);
+  assert.equal(lights.length,maxLocalLights);
+  area.reset();update();assert.equal(indicators.scale.x,0);assert.equal(near().length,0);assert.equal(mission.current,0);
   area.unload();
 });

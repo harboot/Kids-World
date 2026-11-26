@@ -30,3 +30,5 @@ export const securityPanels = [
 export const tankTestCheckpoints = [{ x: 62, z: 5 }, { x: -30, z: -52 }, { x: -40, z: 48 }];
 export const northPost = { x: checkpoints[2].x - 1.14, z: checkpoints[2].z - 1.5, width: 4.6, depth: 4.0, floor: .135 };
 export const binocularPoint = { x: lookout.x - 1.72, y: lookout.height, z: lookout.z - 1.70 };
+
+export const generatorSite = Object.freeze({ x: -12, z: 33.2, width: 7.6, depth: 7.6, floor: .135, darkRadius: 14 });

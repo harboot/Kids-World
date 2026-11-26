@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import * as THREE from '../vendor/three.module.min.js';
 import { areas } from '../game.js';
 import { militaryBase } from '../areas/military-base/index.js';
-import { antennas, checkpoints, fence, headquarters, helipad, hospital, lookout, motorPool, repairTank, supplyDepot, northPost } from '../areas/military-base/layout.js';
+import { antennas, checkpoints, fence, headquarters, helipad, hospital, lookout, motorPool, repairTank, supplyDepot, northPost, generatorSite } from '../areas/military-base/layout.js';
 import { walkElevation } from '../core/movement.js';
 import { createPlayer, EYE_HEIGHT } from '../core/player.js';
 import { createWorldManager } from '../core/world-manager.js';
@@ -146,7 +146,7 @@ test('mission sites are in the environment and animated scenery resets with the 
   t.after(worlds.unload);
   const { area, scene } = visit;
   assert.deepEqual(area.missionStatus.missions.map(({ current, total }) => [current, total]),
-    [[0, 3], [0, 2], [0, 1], [0, 1], [0, 1], [0, 3], [0, 1], [0, 5]]);
+    [[0, 3], [0, 2], [0, 1], [0, 1], [0, 1], [0, 3], [0, 1], [0, 5], [0, 1]]);
   assert.ok(area.interactions.some(({ label }) => label === 'Board Helicopter'));
   for (const { name } of checkpoints.slice(1)) assert.ok(scene.getObjectByName(name));
   assert.ok(scene.getObjectByName('Open South Gate'));
@@ -202,8 +202,7 @@ test('both barracks have walkable open doors, clear aisles, and collidable bunk 
   }
   for (const name of ['COMMAND AVE','EAST SERVICES','MOTOR POOL','BARRACKS','FLIGHT LINE','SOUTH LOOKOUT'])
     assert.equal(visit.scene.getObjectByName(name+' wayfinding'),undefined);
-  const lamp = visit.scene.children.find(o=>o.name==='Night street lamp' && o.position.x===11.2);
-  assert.ok(lamp.getObjectByName('HOSPITAL →'));
+  assert.ok(visit.scene.children.some(o=>o.name==='Night street lamp' && o.getObjectByName('HOSPITAL →')));
 });
 
 test('North Post is walkable through its open front and contains a solid monitoring desk', async t => {
@@ -216,4 +215,32 @@ test('North Post is walkable through its open front and contains a solid monitor
   assert.ok(visit.scene.getObjectByName('CCTV control desk'));
   assert.equal(walkElevation(visit.area,camera.position,x,z-1.28,floor,true),null);
   walk(x,outside);settle();assert.equal(camera.position.y,EYE_HEIGHT);
+});
+
+test('Generator has an open walkable entrance, accessible start control and solid equipment', async t => {
+  const {worlds,visit,camera,spawn,walk,settle}=await fixture();
+  t.after(worlds.unload);
+  const {x,z,depth,floor}=generatorSite;
+  assert.equal(visit.scene.getObjectByName('Weather and communications lodge'),undefined);
+  assert.ok(visit.scene.getObjectByName('Generator electrical panels'));
+  const outside=z+depth/2+.85;
+  spawn(x,outside);walk(x,z);assert.equal(camera.position.y,EYE_HEIGHT+floor);
+  walk(x,z-1.25);
+  const prompt=visit.area.interactions.find(i=>i.label==='Start Generator');
+  assert.ok(Math.hypot(camera.position.x-prompt.x,camera.position.z-prompt.z)<prompt.radius);
+  assert.equal(walkElevation(visit.area,camera.position,x-2.22,z-.95,floor,true),null);
+  prompt.act();assert.equal(visit.area.missionStatus.missions.find(m=>m.id==='restore-power').complete,true);
+  walk(x,z);walk(x,outside);settle();assert.equal(camera.position.y,EYE_HEIGHT);
+});
+
+test('every street and perimeter lamp sits clear of the actual asphalt', async t => {
+  const {worlds,visit}=await fixture();t.after(worlds.unload);
+  const road=visit.scene.getObjectByName('Road network around the district islands');
+  const ray=new THREE.Raycaster(),down=new THREE.Vector3(0,-1,0);
+  const poles=visit.scene.children.filter(o=>['Night street lamp','Perimeter floodlight'].includes(o.name));
+  assert.ok(poles.length>=12);
+  for(const pole of poles)for(const [dx,dz] of [[0,0],[.5,0],[-.5,0],[0,.5],[0,-.5]]){
+    ray.set(new THREE.Vector3(pole.position.x+dx,12,pole.position.z+dz),down);
+    assert.equal(ray.intersectObject(road,false).length,0,'asphalt under '+pole.position.toArray());
+  }
 });

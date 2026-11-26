@@ -1,4 +1,7 @@
-import { fence, headquarters, helipad, hospital, motorPool, repairTank, supplyDepot, radarControl } from './layout.js';
+import { fence, headquarters, helipad, hospital, motorPool, repairTank, supplyDepot, radarControl, generatorSite } from './layout.js';
+
+import { createRoadsidePlacement } from './roads.js';
+import { buildFloodlight } from './perimeter.js';
 
 export const maxLocalLights = 4;
 export const localActivationScale = .5;
@@ -116,13 +119,18 @@ function glowTexture(THREE) {
   return tex;
 }
 
-export function createNightLighting({ kit, props, missions, tank, driving, jeep, jeepDriving }) {
+export function createNightLighting({ kit, moving, props, missions, generator, tank, driving, jeep, jeepDriving }) {
   const { THREE, scene, group, box } = kit;
   const sources = [];
   const pools = [];
+  const switchedFixtures = [];
+  const powerGate = (x,z,reach=0) => Math.hypot(x-generatorSite.x,z-generatorSite.z) < generatorSite.darkRadius+reach;
+  const place = createRoadsidePlacement(kit);
   function source(x, y, z, { color = warm, range = 12, intensity = 58, radius = 5.2,
     floor = .108, active = () => true, priority = 0, name = 'Area lamp', pool = true } = {}) {
-    const item = { x, y, z, color, range, intensity, active, priority, name };
+    // Prevent both real lights and ground glows from spilling into the unpowered district.
+    const gated = powerGate(x,z,Math.max(range,radius));
+    const item = { x, y, z, color, range, intensity, active: () => active() && (!gated || generator.powered), priority, name };
     sources.push(item);
     if (pool) pools.push({ item, radius, floor, active: null });
     return item;
@@ -134,28 +142,37 @@ export function createNightLighting({ kit, props, missions, tank, driving, jeep,
     box(node, color, 0, -.015, .13, .25, .14, .045, [], true);
   }
 
-  // Discover the existing floodlight models built by perimeter and decorations.
-  scene.traverse(node => {
-    if (node.name !== 'Perimeter floodlight') return;
-    const { x, z } = node.position, yaw = node.rotation.y;
-    // Existing lamps point towards local +Z; a low additive pool is offset in that direction.
-    const height = 5.15;
-    source(x + Math.sin(yaw) * 2.3, height - 1.25, z + Math.cos(yaw) * 2.3,
-      { name: 'Perimeter pool', radius: 6.8, range: 14, intensity: 72 });
-  });
-  for (const [x, z] of [[2.8, 53], [10.7, 30], [11.2, 15], [10.8, -9], [-29,-20], [-49,-21], [60,20], [60,-18], [-60,20], [-60,-18]]) {
-    const pole = group('Night street lamp', x, 0, z);
-    box(pole, 0x435362, 0, 2.15, 0, .13, 4.3, .13);
-    box(pole, 0x354654, 0, 4.24, .32, .48, .13, .74);
-    box(pole, warm, 0, 4.16, .32, .40, .04, .56, [], true);
-    kit.solid(pole, 0, 0, .16, .16, 4.3);
-    source(x, 3.7, z + .32, { radius: 5.4, range: 12, intensity: 66, name: 'Street lamp' });
-    // Keep only key directions, mounted high on existing light poles instead of standalone posts.
-    const directions = x === 11.2 && z === 15 ? ['HOSPITAL →', 'SUPPLY DEPOT']
-      : x === 10.7 && z === 30 ? ['MOTOR POOL →', 'REPAIR BAY']
-      : x === 10.8 && z === -9 ? ['FLIGHT LINE', 'HELIPAD / RADAR'] : null;
-    if (directions) kit.sign(pole, directions[0], 0, 3.14, .13, 1.78, .38, { sub: directions[1] });
+  // Relocate all existing pole requests off the real asphalt; omit a pole if no safe spot exists.
+  for (const request of kit.floodlightRequests ?? []) {
+    const site = place(request.x,request.z);
+    if (!site) continue;
+    const {x,z}=site,{yaw,height}=request;
+    const {lit}=buildFloodlight(kit,moving,x,z,yaw,height);
+    const item=source(x+Math.sin(yaw)*2.3,height-1.25,z+Math.cos(yaw)*2.3,
+      {name:'Perimeter pool',radius:6.8,range:14,intensity:72});
+    switchedFixtures.push({lit,item});
   }
+  for (const [originalX,originalZ,directions] of [
+    [2.8,53], [10.7,30,['MOTOR POOL →','REPAIR BAY']], [11.2,15,['HOSPITAL →','SUPPLY DEPOT']],
+    [10.8,-9,['FLIGHT LINE','HELIPAD / RADAR']], [-29,-20],[-49,-21],[60,20],[60,-18],[-60,20],[-60,-18],
+    [-12,40.2],[-19,30.8],
+  ]) {
+    const site=place(originalX,originalZ,directions?8:6);
+    if(!site)continue;
+    const {x,z}=site;
+    const pole=group('Night street lamp',x,0,z);
+    box(pole,0x435362,0,2.15,0,.13,4.3,.13);
+    box(pole,0x354654,0,4.24,.32,.48,.13,.74);
+    box(pole,0x303d42,0,4.16,.32,.40,.04,.56);
+    const lit=group('Street lamp illuminated lens',0,0,0,0,pole);
+    moving.box(lit,warm,0,4.126,.32,.40,.025,.56,[],true);
+    kit.solid(pole,0,0,.16,.16,4.3);
+    const item=source(x,3.7,z+.32,{radius:5.4,range:12,intensity:66,name:'Street lamp'});
+    switchedFixtures.push({lit,item});
+    if(directions)kit.sign(pole,directions[0],0,3.14,.13,1.78,.38,{sub:directions[1]});
+  }
+  source(generatorSite.x,2.7,generatorSite.z,{name:'Generator interior',color:warm,range:6,intensity:38,priority:8,pool:false});
+  source(generatorSite.x,2.7,generatorSite.z+4.5,{name:'Generator entrance',color:warm,range:8,intensity:55,priority:5,radius:4.8});
   const ceilingPosition = new THREE.Vector3();
   scene.traverse(node => {
     if (node.name !== 'Barracks ceiling fixture') return;
@@ -236,6 +253,7 @@ export function createNightLighting({ kit, props, missions, tank, driving, jeep,
   function update(position) {
     const px = position?.x ?? 0, py = position?.y ?? 1.68, pz = position?.z ?? 0;
     let dirty = false;
+    for (const {lit,item} of switchedFixtures) lit.scale.setScalar(item.active()?1:0);
     pools.forEach((pool, i) => {
       const enabled = pool.item.active();
       if (pool.active === enabled) return;
