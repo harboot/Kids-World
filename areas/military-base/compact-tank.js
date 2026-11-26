@@ -35,8 +35,8 @@ export function buildCompactTank(kit, moving, x, z, yaw) {
       treads.push({ tread, side, start });
     }
     box(body, armor, xx, .84, 0, .60, .17, 3.22);
-    box(body, ink.white, side * .87, .94, 1.56, .22, .13, .14);
-    box(body, ink.red, side * .87, .89, -1.63, .19, .12, .10);
+    box(body, 0xffedc8, side * .87, .94, 1.56, .22, .13, .14, [], true);
+    box(body, 0xff6055, side * .87, .89, -1.63, .19, .12, .10, [], true);
     box(body, trim, xx, .94, -.92, .42, .035, .68);
     for (const zz of [-1.15, -.92, -.69]) box(body, ink.dark, xx, .967, zz, .34, .023, .045);
     // Low open footrests and boarding handles, no roof or enclosing cabin.
@@ -60,7 +60,7 @@ export function buildCompactTank(kit, moving, x, z, yaw) {
   const face = group('Scout instrument face', 0, .09, -.14, 0, panel);
   face.rotation.x = -.45;
   box(face, ink.dark, 0, 0, 0, .94, .36, .10);
-  box(face, ink.glass, 0, .035, -.065, .30, .14, .024);
+  box(face, 0x6fb9b5, 0, .035, -.065, .30, .14, .024, [], true);
   for (const side of [-1, 1]) {
     part(face, 'drum', ink.steel, side * .30, .035, -.067, .075, .025, .075, [Math.PI / 2, 0, 0]);
     part(face, 'drum', ink.paleTeal, side * .30, .035, -.084, .053, .016, .053, [Math.PI / 2, 0, 0]);

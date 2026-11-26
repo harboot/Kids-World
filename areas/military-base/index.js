@@ -12,24 +12,14 @@ import { buildVehicles } from './vehicles.js';
 import { createTankDriving } from './tank-driving.js';
 import { metadata } from './metadata.js';
 import { music } from './music.js';
+import { createNightLighting, setNightEnvironment } from './lighting.js';
 
 export const militaryBase = {
   ...metadata,
   music,
   load({ THREE, scene, camera, hud, playerRadius, touch, reducedMotion = () => false,
     playCue = () => {}, notify = () => {}, completeLevel = () => {}, isLevelComplete = () => false }) {
-    scene.background = new THREE.Color(0xd4e2ee);
-    scene.fog = new THREE.Fog(0xd4e2ee, 51, 113);
-    scene.add(new THREE.HemisphereLight(0xf0f7ff, 0xaebccd, 1.35));
-    const sun = new THREE.DirectionalLight(0xfff1d7, 2.35);
-    sun.position.set(-40, 92, 46);
-    sun.castShadow = true;
-    sun.shadow.mapSize.set(touch ? 1024 : 2048, touch ? 1024 : 2048);
-    Object.assign(sun.shadow.camera, { left: -122, right: 122, top: 108, bottom: -108, near: 22, far: 209 });
-    sun.shadow.camera.updateProjectionMatrix();
-    sun.shadow.normalBias = .07;
-    sun.shadow.bias = -.00015;
-    scene.add(sun);
+    setNightEnvironment(THREE, scene, touch);
 
     const document = hud?.ownerDocument;
     const kit = createScenery(THREE, scene, document, playerRadius);
@@ -49,8 +39,10 @@ export const militaryBase = {
       THREE, camera, props, radarHeads, tank, helicopter, soldiers, reducedMotion, playCue, notify,
       completeLevel, isLevelComplete,
     });
+    const lighting = createNightLighting({ kit, props, missions, tank: drivable, driving });
     kit.finish();
     moving.build();
+    lighting.update(metadata.spawn);
 
     let time = 0;
     return {
@@ -68,6 +60,7 @@ export const militaryBase = {
         poseFlag(0);
         soldiers.update(0, 0);
         moving.update();
+        lighting.update(metadata.spawn);
       },
       update(dt, position) {
         if (!reducedMotion()) {
@@ -77,6 +70,7 @@ export const militaryBase = {
         missions.update(dt, position);
         soldiers.update(time, dt);
         moving.update();
+        lighting.update(position ?? camera?.position ?? metadata.spawn);
       },
     };
   },

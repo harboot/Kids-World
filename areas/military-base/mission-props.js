@@ -23,14 +23,14 @@ function controlPanel(kit, moving, point, security = false) {
   kit.solid(console, 0, 0, .60, .52, 1.45);
   const off = kit.group('Red indicator', 0, 0, 0, 0, console);
   const on = kit.group('Green indicator', 0, 0, 0, 0, console);
-  moving.box(off, 0xd65143, -.16, 1.24, .19, .126, .105, .041);
-  moving.box(on, 0x71eaa3, -.16, 1.24, .19, .126, .105, .041);
+  moving.box(off, 0xff6658, -.16, 1.24, .19, .126, .105, .041, [], true);
+  moving.box(on, 0x71eaa3, -.16, 1.24, .19, .126, .105, .041, [], true);
   for (const cx of [.031, .157]) kit.box(console, ink.paleTeal, cx, 1.20, .196, .061, .10, .038);
   if (security) {
     for (const side of [-1, 1]) {
       kit.beam(console, ink.steel, [0, 1.87, .02], [side * .41, 1.87, .02], .12);
       kit.box(console, ink.dark, side * .39, 1.86, .05, .22, .19, .19);
-      moving.box(on, 0xffdf81, side * .39, 1.872, .155, .161, .083, .034);
+      moving.box(on, 0xffdf81, side * .39, 1.872, .155, .161, .083, .034, [], true);
     }
   }
   return {

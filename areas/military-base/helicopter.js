@@ -31,13 +31,13 @@ export function buildHelicopter(kit, moving, document) {
     box(aircraft, ink.glassLight, side * 1.37, 2.40, -.66, .031, .11, .71);
     box(aircraft, ink.steel, side * 1.38, 1.10, .86, .28, .10, 1.46);
     box(aircraft, ink.yellow, side * 1.29, 1.68, -.87, .047, .17, .68);
-    box(aircraft, side > 0 ? 0xf17554 : 0x99d37e, side * 1.27, 1.62, -1.36, .11, .13, .16);
+    box(aircraft, side > 0 ? 0xff6557 : 0x81f5ac, side * 1.27, 1.62, -1.36, .11, .13, .16, [], true);
     part(aircraft, 'drum', ink.dark, side * .63, 2.83, -1.16, .26, 1.25, .26, [Math.PI / 2, 0, 0]);
   }
   beam(aircraft, ink.olive, [0, 2.16, -2.12], [0, 2.56, -6.67], .43, .56, 'post');
   part(aircraft, 'tip', ink.moss, 0, 3.02, -6.36, 1.47, 1.52, .19, [0, Math.PI / 2, -.29]);
   box(aircraft, ink.olive, 0, 2.49, -5.66, 2.64, .13, .61);
-  box(aircraft, ink.yellow, 0, 3.48, -6.59, .20, .22, .29);
+  box(aircraft, 0xffe2ac, 0, 3.48, -6.59, .20, .22, .29, [], true);
   part(aircraft, 'drum', ink.dark, 0, 3.4, .08, .19, .77, .19);
   const rotor = group('Main rotor', 0, 3.83, .08, 0, aircraft);
   part(rotor, 'drum', ink.steel, 0, .02, 0, .36, .16, .36);
