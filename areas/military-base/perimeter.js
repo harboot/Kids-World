@@ -1,6 +1,6 @@
 import { SURFACE_GAP } from '../../core/geometry.js';
 import { shutter, window } from './buildings.js';
-import { checkpoints, fence, lookout, northPost } from './layout.js';
+import { checkpoints, fence, lookout, northPost, generatorSite } from './layout.js';
 import { hazard, stripe } from './roads.js';
 import { ink } from './scenery.js';
 import { buildNorthPost } from './observation-props.js';
@@ -78,16 +78,24 @@ export function roadblock(kit, x, z, yaw = 0) {
 }
 
 export function floodlight(kit, x, z, yaw, height = 5.6) {
+  // Defer placement until all buildings, mission objects and vehicles exist.
+  (kit.floodlightRequests ??= []).push({ x, z, yaw, height });
+}
+
+export function buildFloodlight(kit, moving, x, z, yaw, height = 5.6) {
   const { group, box, part, solid } = kit;
   const lamp = group('Perimeter floodlight', x, 0, z, yaw);
   box(lamp, ink.concrete, 0, .11, 0, .78, .22, .78);
   part(lamp, 'post', ink.dark, 0, height / 2, 0, .090, height, .09);
   box(lamp, ink.dark, 0, height - .11, .15, 1.05, .14, .29);
+  const lit = group('Floodlight illuminated lenses', 0, 0, 0, 0, lamp);
   for (const x of [-.34, .34]) {
     box(lamp, ink.steel, x, height, .31, .55, .27, .29, [.39, 0, 0]);
-    box(lamp, 0xf7e1a2, x, height - .067, .454, .44, .155, .05, [.39, 0, 0], true);
+    box(lamp, 0x34454b, x, height - .067, .454, .44, .155, .05, [.39, 0, 0]);
+    moving.box(lit, 0xf7e1a2, x, height - .067, .487, .44, .155, .035, [.39, 0, 0], true);
   }
   solid(lamp, 0, 0, .19, .19, height);
+  return { lamp, lit };
 }
 
 function entrance(kit) {
@@ -257,6 +265,7 @@ export function buildPerimeter(kit) {
       const { x: cx, z: cz, width, depth, height } = lookout;
       if (Math.abs(x - cx) <= width / 2 && Math.abs(z - cz) <= depth / 2) return height + 2.77;
       if (Math.abs(x - northPost.x) <= northPost.width / 2 && Math.abs(z - northPost.z) <= northPost.depth / 2) return northPost.floor + 2.65;
+      if (Math.abs(x - generatorSite.x) <= generatorSite.width / 2 && Math.abs(z - generatorSite.z) <= generatorSite.depth / 2) return generatorSite.floor + 3.2;
       return Infinity;
     },
     blocksGround(x, z, radius, _feet, from) {

@@ -13,6 +13,7 @@ import { createTankDriving } from './tank-driving.js';
 import { createJeepDriving } from './jeep.js';
 import { buildTankCourse } from './tank-course.js';
 import { buildObservationProps } from './observation-props.js';
+import { buildGenerator } from './generator.js';
 import { metadata } from './metadata.js';
 import { music } from './music.js';
 import { createNightLighting, setNightEnvironment } from './lighting.js';
@@ -30,6 +31,7 @@ export const militaryBase = {
     buildTerrain(kit);
     buildRoads(kit);
     buildBuildings(kit);
+    const generator = buildGenerator(kit, moving);
     const traversal = buildPerimeter(kit);
     const { repair: tank, drivable, drivableJeep } = buildVehicles(kit, moving);
     const vehicleOptions = { THREE, camera, obstacles: kit.obstacles, traversal,
@@ -44,9 +46,9 @@ export const militaryBase = {
     const props = buildMissionProps(kit, moving);
     const missions = createMissions({
       THREE, camera, props, radarHeads, tank, helicopter, soldiers, reducedMotion, playCue, notify,
-      completeLevel, isLevelComplete, course, driving, jeepDriving, observation,
+      completeLevel, isLevelComplete, course, driving, jeepDriving, observation, generator,
     });
-    const lighting = createNightLighting({ kit, props, missions, tank: drivable, driving, jeep: drivableJeep, jeepDriving });
+    const lighting = createNightLighting({ kit, moving, props, missions, generator, tank: drivable, driving, jeep: drivableJeep, jeepDriving });
     kit.finish();
     moving.build();
     lighting.update(metadata.spawn);
@@ -67,8 +69,8 @@ export const militaryBase = {
         soldiers.reset();
         poseFlag(0);
         soldiers.update(0, 0);
-        moving.update();
         lighting.update(metadata.spawn);
+        moving.update();
       },
       update(dt, position) {
         if (!reducedMotion()) {
@@ -77,8 +79,8 @@ export const militaryBase = {
         }
         missions.update(dt, position);
         soldiers.update(time, dt);
-        moving.update();
         lighting.update(missions.viewPosition ?? position ?? camera?.position ?? metadata.spawn);
+        moving.update();
       },
     };
   },

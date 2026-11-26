@@ -162,3 +162,38 @@ export function buildRoads(kit) {
   stripe(kit, road, 60.3, lookout.rampEnd + .59, 5.7, .9, 0xbdb79f, 0, .026);
   pad(kit);
 }
+
+
+// Use the actual rounded road mesh, not approximate lane coordinates.
+// A pole must sit entirely outside the asphalt and remain on the paved apron.
+export function createRoadsidePlacement(kit) {
+  const { THREE, scene, obstacles } = kit;
+  const road = scene.getObjectByName('Road network around the district islands');
+  const apron = scene.getObjectByName('Ivory compound apron');
+  const ray = new THREE.Raycaster(), direction = new THREE.Vector3(0,-1,0), origin = new THREE.Vector3();
+  function hits(mesh,x,z) {
+    origin.set(x,12,z); ray.set(origin,direction);
+    return Boolean(mesh && ray.intersectObject(mesh,false).length);
+  }
+  function clear(x,z) {
+    for (const [u,v] of [[0,0],[.65,0],[-.65,0],[0,.65],[0,-.65],[.46,.46],[.46,-.46],[-.46,.46],[-.46,-.46]]) {
+      if (hits(road,x+u,z+v) || !hits(apron,x+u,z+v)) return false;
+    }
+    return !obstacles.some(o=>{
+      if (o.height <= .18) return false;
+      const p=o.footprint;
+      if (!p) return x>=o.left-.85 && x<=o.right+.85 && z>=o.front-.85 && z<=o.back+.85;
+      const dx=x-p.x,dz=z-p.z,c=Math.cos(p.yaw),s=Math.sin(p.yaw);
+      return Math.abs(dx*c-dz*s)<p.width/2+.85 && Math.abs(dx*s+dz*c)<p.depth/2+.85;
+    });
+  }
+  return function place(x,z,maxShift=6) {
+    if(clear(x,z))return {x,z};
+    for(let radius=.5;radius<=maxShift;radius+=.5)for(let i=0;i<24;i++){
+      const angle=i*Math.PI/12;
+      const px=x+Math.cos(angle)*radius,pz=z+Math.sin(angle)*radius;
+      if(clear(px,pz))return {x:px,z:pz};
+    }
+    return null;
+  };
+}

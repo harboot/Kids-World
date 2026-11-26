@@ -363,6 +363,7 @@ test('the last independent mission records area completion once across repeat vi
     night.act({guideCamera}); prompt.act();
     find('View CCTV')[0].act({guideCamera});
     for(let i=0;i<5;i++) prompt.act();
+    find('Start Generator')[0].act();
     const tank = area.interactions.find(item => item.label === 'Drive Tank');
     tank.act({ guideCamera() { return () => {}; } });
     const scout = area === worlds.active.area ? worlds.active.scene.getObjectByName('Tank 01') : null;

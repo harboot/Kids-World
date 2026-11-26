@@ -323,24 +323,6 @@ function fieldHospital(kit) {
   cross(kit, clinic, -4.84, 3.68, 5.45, .93, 0x48a674);
 }
 
-function signalStation(kit) {
-  const { group, part, box, beam, solid, sign, groundShadow } = kit;
-  const hut = group('Weather and communications lodge', -12, 0, 33.2, -.16);
-  groundShadow(hut, .8, -.6, 13.0, 12.4);
-  part(hut, 'octagon', 0x9cafa9, 0, .25, 0, 5.13, .50, 4.83, [0, Math.PI / 8, 0]);
-  part(hut, 'octagon', 0x66a988, 0, 2.05, 0, 4.72, 3.25, 4.39, [0, Math.PI / 8, 0]);
-  part(hut, 'octagon', 0x6dc1ad, 0, 3.74, 0, 5.03, .46, 4.74, [0, Math.PI / 8, 0]);
-  part(hut, 'dome', 0x399b95, 0, 3.93, 0, 4.04, 3.08, 3.92);
-  part(hut, 'octagon', 0xbdd6b0, 0, 4.12, 0, 4.09, .27, 3.94, [0, Math.PI / 8, 0]);
-  part(hut, 'drum', 0xd2a957, 0, 6.98, 0, .65, .27, .65);
-  beam(hut, ink.yellow, [0, 7, 0], [.48, 8.7, -.12], .109);
-  beam(hut, ink.pale, [-.72, 7.92, -.08], [1.38, 8.1, -.08], .075);
-  shutter(kit, hut, 0, 1.45, 4.06, 1.74, 2.42, 0x3b8884);
-  sign(hut, 'SIGNAL LODGE', 0, 3.17, 4.19, 3.8, .58);
-  for (const side of [-1, 1]) window(kit, hut, side * 2.60, 2.32, 4.04, 1.22, .82);
-  solid(hut, 0, 0, 8.72, 8.16, 5.4);
-}
-
 function airControl(kit) {
   const { group, box, solid, part, sign } = kit;
   const tower = group('Air Traffic Control', 53.4, 0, -32.5);
@@ -379,6 +361,5 @@ export function buildBuildings(kit) {
   roundHall(kit, { name: 'Helicopter Hangar', x: 43, z: -44.9, width: 22.8, depth: 8, tint: 0x71b5a0, hangar: true });
   airControl(kit);
   fieldHospital(kit);
-  signalStation(kit);
   utilityHall(kit, { name: 'Supply Depot', ...supplyDepot, width: 17, depth: 13, tint: 0x80ad87, logistics: true });
 }

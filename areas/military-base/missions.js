@@ -16,7 +16,7 @@ function objective(id, title, total) {
 
 export function createMissions({
   THREE, camera, props, radarHeads, tank, helicopter, soldiers, reducedMotion, playCue, notify,
-  completeLevel, isLevelComplete, course, driving, jeepDriving, observation,
+  completeLevel, isLevelComplete, course, driving, jeepDriving, observation, generator,
 }) {
   const { security, parts, supplies, delivered, hospitalDrop, station, screen, scan } = props;
   const patrol = objective('security-patrol', 'Security Patrol', 3);
@@ -27,7 +27,8 @@ export function createMissions({
   const drivingTest = objective('tank-driving-test', 'Vehicle Driving Test', course.points.length);
   const night = objective('night-observation', 'Night Observation', 1);
   const cctv = objective('cctv-monitoring', 'CCTV Monitoring', observation.cameras.length);
-  const missions = [patrol, repair, supply, radar, ride, drivingTest, night, cctv];
+  const power = objective('restore-power', 'Restore Power', 1);
+  const missions = [patrol, repair, supply, radar, ride, drivingTest, night, cctv, power];
   const inventory = [];
   const collected = new Set();
   const activated = new Set();
@@ -139,6 +140,12 @@ export function createMissions({
     playCue(confirmation);
     finish(radar, 'Radar Activation Complete!');
   });
+  add(generator.panel, power, 'Start Generator', () => !power.complete, () => {
+    generator.setPowered(true);
+    power.current = 1;
+    playCue(engineCue);
+    finish(power, 'Restore Power Complete!');
+  }, 1.35);
   interactions.push(flight.board);
 
   function updateRadar(dt) {
@@ -215,6 +222,7 @@ export function createMissions({
     if (next === drivingTest) return 'Board the Scout Tank or Jeep and follow the three checkpoint light beams.';
     if (next === night) return 'Use the night vision binoculars at South Lookout.';
     if (next === cctv) return 'Enter North Post and review the five CCTV views.';
+    if (next === power) return 'Enter the dark Generator building and start the generator at the control panel.';
     return 'Board at the helicopter’s right passenger door for a sightseeing flight.';
   }
 
@@ -234,6 +242,7 @@ export function createMissions({
       for (const panel of [...security, station]) panel.light(false);
       for (const object of [...parts, ...supplies]) object.prop.scale.setScalar(1);
       for (const object of delivered) object.scale.setScalar(0);
+      generator.setPowered(false);
       radarHeads.dish.rotation.y = radarStart;
       course.show(0);
       carriedSupply = parkingStarted = tankBlocked = false;

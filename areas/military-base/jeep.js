@@ -9,7 +9,7 @@ export function createJeepDriving(options) {
 }
 export function buildDrivableJeep(kit, moving, x, z, yaw) {
   const { group, movingSolid } = kit;
-  const { part, box, beam, groundShadow } = moving;
+  const { part, box, groundShadow } = moving;
   const car = group('Entrance patrol jeep', x, 0, z, yaw);
   groundShadow(car, .35, -.25, 3.24, 5.44, .048);
   box(car, ink.dark, 0, .51, 0, 1.77, .22, 3.96);
@@ -33,13 +33,8 @@ export function buildDrivableJeep(kit, moving, x, z, yaw) {
     box(car, 0xff6055, side*.69,.97,-2.0,.19,.14,.10,[],true);
     box(car, ink.dark, side*.42,1.11,-.61,.58,.19,.60);
     box(car, ink.dark, side*.42,1.36,-.91,.57,.65,.18,[.12,0,0]);
-    beam(car, ink.dark,[side*.78,.95,-1.58],[side*.63,1.93,-.91],.095);
-    beam(car, ink.dark,[side*.63,1.93,-.91],[side*.73,1.83,.47],.095);
-    beam(car, ink.dark,[side*.72,1.22,.45],[side*.72,1.82,.59],.09);
   }
-  box(car,ink.dark,0,1.94,-.9,1.32,.085,.085);
-  // Clear windshield opening and dashboard; no opaque pane blocking first-person view.
-  box(car,ink.dark,0,1.83,.59,1.52,.09,.09);
+  // Fully open cockpit: no upper crossbars, side bars or windshield frame obstructing the view.
   box(car,ink.dark,0,1.22,.45,1.52,.13,.17);
   box(car,ink.steel,0,1.30,.29,1.50,.19,.28);
   box(car,0x9ccbc1,.43,1.41,.15,.25,.08,.035,[],true);

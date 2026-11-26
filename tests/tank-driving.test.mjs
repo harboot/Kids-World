@@ -45,7 +45,7 @@ test('Tank 01 drives, exits at its current location and resets without modifying
   assert.equal(board.active, true);
   area.reset();
   assert.ok(tank.position.distanceTo(original) < 1e-6);
-  assert.equal(area.missionStatus.missions.length, 8);
+  assert.equal(area.missionStatus.missions.length, 9);
   area.unload();
 });
 
