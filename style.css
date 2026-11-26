@@ -64,6 +64,8 @@ button:focus-visible { outline: 3px solid #377b65; outline-offset: 3px; }
   background: #c4dedc;
 }
 #view { width: 100%; height: 100%; display: block; touch-action: none; }
+[data-view-mode="night-vision"] #view { filter: grayscale(1) brightness(1.85) contrast(1.12) sepia(1) hue-rotate(65deg) saturate(2.5); }
+[data-view-mode="cctv"] #view { filter: saturate(.64) contrast(1.08); }
 
 .hud {
   position: absolute;

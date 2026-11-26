@@ -35,7 +35,7 @@ test('night area retains one cached moon shadow and a fixed shadow-free local li
   assert.ok(matching.some(i => { glow.getMatrixAt(i,after); return after.elements[0] === 0; }));
   area.reset();
   assert.ok(matching.some(i => { glow.getMatrixAt(i,after); return after.elements[0] !== 0; }));
-  assert.equal(area.missionStatus.missions.length, 6);
+  assert.equal(area.missionStatus.missions.length, 8);
   area.unload();
 });
 

@@ -27,4 +27,6 @@ export const securityPanels = [
 ];
 
 // Ordered route on the main paved roads, away from parked vehicles.
-export const tankTestCheckpoints = [{ x: 8, z: 48 }, { x: 8, z: 20 }, { x: 26, z: 21 }];
+export const tankTestCheckpoints = [{ x: 62, z: 5 }, { x: -30, z: -52 }, { x: -40, z: 48 }];
+export const northPost = { x: checkpoints[2].x - 1.14, z: checkpoints[2].z - 1.5, width: 4.6, depth: 4.0, floor: .135 };
+export const binocularPoint = { x: lookout.x - 1.72, y: lookout.height, z: lookout.z - 1.70 };

@@ -1,6 +1,7 @@
 import { EYE_HEIGHT } from '../../core/player.js';
 import { createHelicopterFlight } from './helicopter-flight.js';
 import { repairTank } from './layout.js';
+import { createObservation } from './observation.js';
 
 const areaId = 'military-base';
 const confirmation = [[69, { duration: .19, level: .12 }], [76, { duration: .29, level: .11 }, .13]];
@@ -15,7 +16,7 @@ function objective(id, title, total) {
 
 export function createMissions({
   THREE, camera, props, radarHeads, tank, helicopter, soldiers, reducedMotion, playCue, notify,
-  completeLevel, isLevelComplete, course, driving,
+  completeLevel, isLevelComplete, course, driving, jeepDriving, observation,
 }) {
   const { security, parts, supplies, delivered, hospitalDrop, station, screen, scan } = props;
   const patrol = objective('security-patrol', 'Security Patrol', 3);
@@ -23,8 +24,10 @@ export function createMissions({
   const supply = objective('supply-delivery', 'Supply Delivery', supplies.length);
   const radar = objective('radar-activation', 'Radar Activation', 1);
   const ride = objective('helicopter-patrol', 'Helicopter Patrol', 1);
-  const drivingTest = objective('tank-driving-test', 'Tank Driving Test', course.points.length);
-  const missions = [patrol, repair, supply, radar, ride, drivingTest];
+  const drivingTest = objective('tank-driving-test', 'Vehicle Driving Test', course.points.length);
+  const night = objective('night-observation', 'Night Observation', 1);
+  const cctv = objective('cctv-monitoring', 'CCTV Monitoring', observation.cameras.length);
+  const missions = [patrol, repair, supply, radar, ride, drivingTest, night, cctv];
   const inventory = [];
   const collected = new Set();
   const activated = new Set();
@@ -60,7 +63,12 @@ export function createMissions({
     },
   });
 
-  const interactions = [];
+  const surveillance = createObservation({ THREE, camera, observation,
+    onNight() { context = night; night.current = 1; finish(night, 'Night Observation Complete!'); },
+    onCamera(index) { context = cctv; if (!cctv.complete) cctv.current = Math.max(cctv.current, index + 1); },
+    onCctvExit() { if (cctv.current === cctv.total) finish(cctv, 'CCTV Monitoring Complete!'); },
+  });
+  const interactions = [...surveillance.interactions];
   function add(point, mission, label, canAct, act, radius = 1.90, anchorY = (point.y ?? 0) + 1.32) {
     interactions.push({
       x: point.x, z: point.z, radius, anchorY, label,
@@ -142,15 +150,17 @@ export function createMissions({
   }
 
   function updateDrivingTest() {
-    if (!driving.active || drivingTest.complete) return;
+    const vehicle = driving.active ? driving : jeepDriving.active ? jeepDriving : null;
+    course.show(drivingTest.current, Boolean(vehicle) && !drivingTest.complete);
+    if (!vehicle || drivingTest.complete) return;
     const point = course.points[drivingTest.current];
-    const pos = driving.position;
+    const pos = vehicle.position;
     if (Math.hypot(pos.x - point.x, pos.z - point.z) > course.radius) return;
     context = drivingTest;
     drivingTest.current++;
-    course.show(drivingTest.current);
+    course.show(drivingTest.current, true);
     playCue(confirmation);
-    if (drivingTest.current === drivingTest.total) finish(drivingTest, 'Tank Driving Test Complete!');
+    if (drivingTest.current === drivingTest.total) finish(drivingTest, 'Vehicle Driving Test Complete!');
     else notify('Checkpoint ' + drivingTest.current + '/' + drivingTest.total + '. Follow the next light beam.');
   }
 
@@ -185,7 +195,10 @@ export function createMissions({
   }
 
   function currentHint() {
+    if (surveillance.mode === 'night-vision') return 'Look around through the night vision binoculars. Interact again to exit.';
+    if (surveillance.mode === 'cctv') return 'Review all five CCTV views. Interact to switch cameras or exit.';
     if (!flight.board.active) return 'Enjoy the helicopter patrol.';
+    if ((driving.active || jeepDriving.active) && !drivingTest.complete) return 'Drive through checkpoint ' + (drivingTest.current + 1) + ' of ' + drivingTest.total + '. Follow the light beam.';
     if (tankBlocked) return 'Move clear of the tank’s marked parking lane.';
     if (carriedSupply) return 'Deliver the medical supplies at the Field Hospital receiving platform.';
     if (missions.every(row => row.complete)) return 'All missions complete. Board the helicopter again for another tour.';
@@ -194,21 +207,24 @@ export function createMissions({
       if (repair.current === repair.total) return 'Keep the parking lane clear while the tank parks.';
       return 'Find components by the workshop, service sheds, and tank garage.';
     }
-    if (driving.active && !drivingTest.complete) return 'Drive the Scout Tank through checkpoint ' + (drivingTest.current + 1) + ' of ' + drivingTest.total + '. Follow the light beam.';
     if (!patrol.complete) return 'Activate the panels at South Gate, Motor Pool, and South Lookout.';
     const next = missions.find(row => !row.complete);
     if (next === repair) return 'Find the tank components around the workshop and vehicle yard.';
     if (next === supply) return 'Pick up medical supplies at the Supply Depot loading dock.';
     if (next === radar) return 'Activate the console beside the Radar Control Station.';
-    if (next === drivingTest) return 'Board the Scout Tank and follow the three checkpoint light beams.';
+    if (next === drivingTest) return 'Board the Scout Tank or Jeep and follow the three checkpoint light beams.';
+    if (next === night) return 'Use the night vision binoculars at South Lookout.';
+    if (next === cctv) return 'Enter North Post and review the five CCTV views.';
     return 'Board at the helicopter’s right passenger door for a sightseeing flight.';
   }
 
   return {
     interactions,
-    unload: flight.cancel,
+    unload() { surveillance.cancel(); flight.cancel(); },
+    get viewPosition() { return surveillance.viewPosition; },
     missionStatus: { missions, inventory, get hint() { return currentHint(); } },
     reset() {
+      surveillance.cancel();
       flight.reset();
       inventory.length = 0;
       collected.clear();

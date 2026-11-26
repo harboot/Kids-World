@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { rectanglesOverlap, canPlaceTank, tankConfig } from '../areas/military-base/tank-driving.js';
+import { canPlaceVehicle } from '../core/vehicle-driving.js';
+import { jeepDimensions } from '../areas/military-base/jeep.js';
 import { tankTestCheckpoints } from '../areas/military-base/layout.js';
 import { compactTank } from '../areas/military-base/compact-tank.js';
 import * as THREE from '../vendor/three.module.min.js';
@@ -43,7 +45,7 @@ test('Tank 01 drives, exits at its current location and resets without modifying
   assert.equal(board.active, true);
   area.reset();
   assert.ok(tank.position.distanceTo(original) < 1e-6);
-  assert.equal(area.missionStatus.missions.length, 6);
+  assert.equal(area.missionStatus.missions.length, 8);
   area.unload();
 });
 
@@ -87,15 +89,19 @@ test('Jeep drives with shared controls and a safe exit, and both vehicles reset 
   area.unload();
 });
 
-test('checkpoint centers can accommodate the full Scout Tank footprint', () => {
+test('spread-out checkpoint centers accommodate both vehicle footprints', () => {
   const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera();
   const area = militaryBase.load({THREE,scene,camera});
   const tank = scene.getObjectByName('Tank 01');
   const own = new Set(area.obstacles.filter(o=>o.footprint && Math.hypot(o.footprint.x-tank.position.x,o.footprint.z-tank.position.z)<2.6));
   const world={obstacles:area.obstacles,own,traversal:area,width:154,depth:150};
+  for(let i=0;i<tankTestCheckpoints.length;i++) for(let j=i+1;j<tankTestCheckpoints.length;j++) {
+    const a=tankTestCheckpoints[i],b=tankTestCheckpoints[j];assert.ok(Math.hypot(a.x-b.x,a.z-b.z)>70);
+  }
   for(const point of tankTestCheckpoints) {
     assert.ok(Array.from({length:16},(_,i)=>i*Math.PI/8).some(yaw=>canPlaceTank(point.x,point.z,yaw,world)),
       'clear checkpoint '+JSON.stringify(point));
+    assert.ok(Array.from({length:16},(_,i)=>i*Math.PI/8).some(yaw=>canPlaceVehicle(point.x,point.z,yaw,world,jeepDimensions)), 'clear Jeep checkpoint '+JSON.stringify(point));
   }
   area.unload();
 });

@@ -12,6 +12,7 @@ import { buildVehicles } from './vehicles.js';
 import { createTankDriving } from './tank-driving.js';
 import { createJeepDriving } from './jeep.js';
 import { buildTankCourse } from './tank-course.js';
+import { buildObservationProps } from './observation-props.js';
 import { metadata } from './metadata.js';
 import { music } from './music.js';
 import { createNightLighting, setNightEnvironment } from './lighting.js';
@@ -36,13 +37,14 @@ export const militaryBase = {
     const driving = createTankDriving({ ...vehicleOptions, model: drivable, canBoard: () => !jeepDriving.active });
     const jeepDriving = createJeepDriving({ ...vehicleOptions, model: drivableJeep, canBoard: () => !driving.active });
     const course = buildTankCourse(kit);
+    const observation = buildObservationProps(kit);
     const helicopter = buildHelicopter(kit, moving, document);
     const { radarHeads, poseFlag } = buildDecorations(kit, moving, document);
     const soldiers = buildSoldiers(kit, moving);
     const props = buildMissionProps(kit, moving);
     const missions = createMissions({
       THREE, camera, props, radarHeads, tank, helicopter, soldiers, reducedMotion, playCue, notify,
-      completeLevel, isLevelComplete, course, driving,
+      completeLevel, isLevelComplete, course, driving, jeepDriving, observation,
     });
     const lighting = createNightLighting({ kit, props, missions, tank: drivable, driving, jeep: drivableJeep, jeepDriving });
     kit.finish();
@@ -76,7 +78,7 @@ export const militaryBase = {
         missions.update(dt, position);
         soldiers.update(time, dt);
         moving.update();
-        lighting.update(position ?? camera?.position ?? metadata.spawn);
+        lighting.update(missions.viewPosition ?? position ?? camera?.position ?? metadata.spawn);
       },
     };
   },
