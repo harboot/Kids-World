@@ -1,5 +1,5 @@
 {
-  "version": "b367dc01c6b124b2b69449531d0d76e522fa0bffcacecd9e47b3095a6d9b1d01",
+  "version": "3bc9a619073a7cb8f89a80371f2df2293997f368f73ca7bb40afe110e227a7d7",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "c46c6094e45dd911b0f1c49f6fd659cfbff6741dc80638dd92977f0830ea86e5"
+      "revision": "8d88d795521c29d9f44ce10b1afcfceb55f1bbf2786b6274f0e973e1015b39a6"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -295,7 +295,7 @@
     },
     {
       "path": "./areas/military-base/buildings.js",
-      "revision": "db7a27ec5d9083c0e60cfa3b29bf0754abbc64f8b94035497618111ca8daa319"
+      "revision": "b5ca948ae1ea38f8f1b4b26499ab5164da663c05546a5f4ba7523eb753c14a66"
     },
     {
       "path": "./areas/military-base/compact-tank.js",
@@ -315,7 +315,7 @@
     },
     {
       "path": "./areas/military-base/helicopter-flight.js",
-      "revision": "7633e7a9141668884d746c0187e48fd104d77bad5304ad280d1ecde5cb012da0"
+      "revision": "e10e1cbbc8eed6d2c19a00417669eaf5cf68136e0ee9793f2425e507b35cbdc8"
     },
     {
       "path": "./areas/military-base/helicopter.js",
@@ -323,7 +323,7 @@
     },
     {
       "path": "./areas/military-base/index.js",
-      "revision": "02371fb8323c19b35edb458a276275c6f56f3480c5fc082cf6e8483490f71f00"
+      "revision": "8290ef0c137530f0dd3306b9e4c48807526d5c5827d4697384d5fb0a59480004"
     },
     {
       "path": "./areas/military-base/jeep.js",
@@ -374,12 +374,16 @@
       "revision": "c16ec7217575ce7267bef03ca860003c046b0da8481be82d755e3ebf8754e2ea"
     },
     {
+      "path": "./areas/military-base/robot-hangar.js",
+      "revision": "990b675d9528c82e30d516edbe02d186983010493e173f1a23578b29398cd45a"
+    },
+    {
       "path": "./areas/military-base/scenery.js",
       "revision": "59fe96914b13942f68546735ee97b480b9c4cce20424e077631de2dd84d3de7e"
     },
     {
       "path": "./areas/military-base/soldiers.js",
-      "revision": "0245b0d37733c42597dd68f0c27946ea20de916398b6a2a8a54ca490b363c122"
+      "revision": "0afef893fb72e0ce046b8d08c863b748be11d7c13cbf86a7a79d10f7ed43137e"
     },
     {
       "path": "./areas/military-base/tank-course.js",
