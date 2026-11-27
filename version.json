@@ -1,13 +1,13 @@
 {
-  "version": "14bd287d8f030473b41d5ff3d99ad7459c323c009c52985968c8e61ff1addc02",
+  "version": "b2f246096da388573d9f3d52951d3071c9d623a5a85ab7c51e0637d9ae2de38d",
   "files": [
     {
       "path": "./area-catalog.js",
-      "revision": "e04ced7f43c55cd9d1520abf5c48e3d403a68053998f111cebd864df55b6a692"
+      "revision": "199951597d01cd1e269105e0119fe07a5448f69677bf1c191fe965e64f513d4d"
     },
     {
       "path": "./area-stats.json",
-      "revision": "6f828e14595cb0da817f6fecfbf963b5d695f4d02028229d1576908989c5eedc"
+      "revision": "a1d8e06f25d44b0aea5f8d1ea59bae1514284ffbb7e76f5dbda1f93fa34d0f66"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -607,11 +607,11 @@
     },
     {
       "path": "./areas/snow-basin/activity.js",
-      "revision": "e85fbd049e92da35fd8abcc54bf6299f4d82a633356d6490f3f14a4a1f714d81"
+      "revision": "7dfcc8da096c2feea00e2fef42f3e0f51845b1c5480d3dbb8d11d606a3023e41"
     },
     {
       "path": "./areas/snow-basin/characters.js",
-      "revision": "2e98658abc5b01cd7b4a1dd9764799288aa9160f4971d5ba4ebd8ec5079dc609"
+      "revision": "73fb30b40f443ea2592945051df8a4aa05c3092d64c65e23a2e7b1caf72c59cb"
     },
     {
       "path": "./areas/snow-basin/ice-tower.js",
@@ -619,11 +619,11 @@
     },
     {
       "path": "./areas/snow-basin/index.js",
-      "revision": "b58de4e53b65d0f934efd1b34344eff2e6bea21c6937797b432cd3c9504132f4"
+      "revision": "286fcac1035d8a9ada2722dc4c6b13219d6103fe359ea2f451e35ab01dc91e97"
     },
     {
       "path": "./areas/snow-basin/metadata.js",
-      "revision": "593a0e695085ca7427f28fdd3be4f221adaa54467c3852dbf155611d2ae9c5a1"
+      "revision": "4b41c63a9d35cefde55eee8c2f20a21deaea2217f4c2f9fffee2b3974d2032d9"
     },
     {
       "path": "./areas/snow-basin/music.js",
@@ -636,6 +636,10 @@
     {
       "path": "./areas/snow-basin/scenery.js",
       "revision": "8eabb1047a04d16d263c3822014bd30c13b02546e26b809452b4c3bb473db5a8"
+    },
+    {
+      "path": "./areas/snow-basin/skating.js",
+      "revision": "1f6218f4d2b6820464adaf09650df9da8b69abbe9cf1c1914b62322c0f5e0252"
     },
     {
       "path": "./areas/snow-basin/slide-ride.js",
