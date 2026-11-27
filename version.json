@@ -1,13 +1,13 @@
 {
-  "version": "25de36564c3fc7a528cae82697bb629f58de3e517a014426d406cf1300ad1894",
+  "version": "9e821c64b1858b1df5a2f59ff61f502477537fc54da861977b2192e89b53c0b7",
   "files": [
     {
       "path": "./area-catalog.js",
-      "revision": "d44206097fd49a712a5118774da8ee7f0fcdfa838c7258638d7f0908c3d99937"
+      "revision": "d750260a071c8c3c29307401d32474dc5487f6a6021de987c8bc99a81f7f4ed2"
     },
     {
       "path": "./area-stats.json",
-      "revision": "4b76425d739063c3d5524ba164ea1af5df9f99784f81c497fa629014b408c709"
+      "revision": "5f2e9a6f79e7cfbc2226c4749bee03eda29fdd0a4e3fe9223648bf69d7c32012"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -471,7 +471,7 @@
     },
     {
       "path": "./areas/princess-gallery/exhibits.js",
-      "revision": "633cfb7ba0c7970243dc7e81ce0187dc8088e847d5538b7e3ab83682e31494be"
+      "revision": "b0e69911db34e789d6c81d43ab7dddb0dd9aa52684a9fbe7e8426161e0d2152d"
     },
     {
       "path": "./areas/princess-gallery/gallery.js",
@@ -487,7 +487,7 @@
     },
     {
       "path": "./areas/princess-gallery/index.js",
-      "revision": "7c2e370ad98c3ad14cb3bfca5ba400a317c8e70ce075e66b46136a08b09443d4"
+      "revision": "bf8932ba9e313ac1a0754016b4944121b49e258dead57e340f802c4f388342e1"
     },
     {
       "path": "./areas/princess-gallery/jasmine-carpet.js",
@@ -507,7 +507,7 @@
     },
     {
       "path": "./areas/princess-gallery/metadata.js",
-      "revision": "552d2cdc676867a7311ccca95eafbc69bb6fe0d7f5e1fde1a1dcad4f6fe7711d"
+      "revision": "bd1b7e4e172205540ca4a677eb1e5da3236946708a913ef43d5a13a3fdf1cb46"
     },
     {
       "path": "./areas/princess-gallery/mulan-character.js",
@@ -572,6 +572,10 @@
     {
       "path": "./areas/princess-gallery/tasting.js",
       "revision": "dcbf6d55230334943b1b017912b0d405e21522d18becf06169a56a1b352dbe9f"
+    },
+    {
+      "path": "./areas/princess-gallery/tiana.js",
+      "revision": "ef2227e0756e289978f599ac21206d688f0d523c39f9c58f6213f7382142f0cc"
     },
     {
       "path": "./areas/princess-gallery/visitors.js",
