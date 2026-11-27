@@ -1,3 +1,4 @@
+import { buildPrincessFace } from './princess-face.js';
 import { addGroup } from '../../core/geometry.js';
 import { MULAN_STAGE } from './mulan-garden.js';
 
@@ -28,13 +29,6 @@ export function buildMulanCharacter({ THREE, room, parts, colors }) {
   const boot = matte(0x3f3043);
   const steel = matte(0xbad7dc);
   const facets = new THREE.DodecahedronGeometry(1);
-  const headShape = facets.clone().rotateX(Math.atan((1 + Math.sqrt(5)) / 2));
-  const faceVertices = headShape.getAttribute('position');
-  for(let i=0;i<faceVertices.count;i++) {
-    const y=faceVertices.getY(i);
-    faceVertices.setX(i,faceVertices.getX(i)*(1-.15*Math.max(0,-y)));
-  }
-  headShape.computeVertexNormals();
   const clothShell = new THREE.CylinderGeometry(.28, .39, .42, 8);
   const tunicShell = new THREE.CylinderGeometry(.34, .285, .51, 8);
   const actor = addGroup(THREE, room, 'Mulan', x, top, z);
@@ -60,7 +54,7 @@ export function buildMulanCharacter({ THREE, room, parts, colors }) {
 
   const head = addGroup(THREE, body, 'Mulan head', 0, 1.831, .014);
   const portrait = new THREE.Group();
-  part(portrait, headShape, skin, 0, .023, .015, .336, .301, .298);
+  buildPrincessFace(THREE, parts, head, { skin, blush: rouge, brow: hair, lip: matte(0x963b50), iris: matte(0x4a3031), pearl: colors.cream }, false, { jaw: .20, eyeWidth: .95 });
   part(portrait, facets, hair, 0, .101, -.11, .345, .312, .256);
   part(portrait, facets, hair, -.109, .228, .090, .235, .119, .193).rotation.z = .35;
   part(portrait, facets, hair, .146, .225, .081, .182, .134, .172).rotation.z = -.48;
@@ -69,17 +63,8 @@ export function buildMulanCharacter({ THREE, room, parts, colors }) {
   beam(portrait, sash, [.116, .338, -.035], [.228, .164, -.066], .048, .028);
   part(portrait, 'box', colors.gold, -.108, .337, .089, .244, .035, .032).rotation.z = -.25;
   for (const side of [-1, 1]) {
-    part(portrait, facets, skin, side * .278, -.032, .008, .056, .080, .068);
-    part(portrait, 'gem', colors.gold, side * .297, -.092, .036, .031, .046, .026);
-    const eye = side * .098;
-    part(portrait, facets, hair, eye, .061, .253, .072, .041, .018).rotation.z = side * .15;
-    part(portrait, facets, colors.cream, eye, .056, .264, .053, .029, .015).rotation.z = side * .15;
-    part(portrait, facets, hair, eye + .003, .056, .276, .026, .029, .012);
-    part(portrait, facets, hair, eye, .131, .252, .061, .013, .012).rotation.z = -side * .14;
-    part(portrait, facets, rouge, side * .138, -.029, .250, .047, .025, .011);
-    beam(portrait, sash, [0, -.103, .259], [side * .061, -.087, .257], .016);
+    part(portrait, 'gem', colors.gold, side * .306, -.112, .036, .031, .046, .026);
   }
-  part(portrait, facets, skin, 0, -.019, .254, .046, .041, .055);
   batch(portrait, head);
 
   const arms = [-1, 1].map(side => {
