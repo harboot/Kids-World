@@ -1306,6 +1306,17 @@ test('Mulan’s gong starts one demonstration from the garden path and can be st
   const disk = room.getObjectByName('Suspended bronze disk');
   const blade = room.getObjectByName('Mulan practice sword');
   const body = room.getObjectByName('Mulan waist pivot');
+  const hips = room.getObjectByName('Mulan hips');
+  const torso = room.getObjectByName('Mulan body');
+  const legs = hips.children.filter(child => child.name === 'Mulan leg');
+  assert.equal(legs.length, 2);
+  assert.equal(torso.parent, body);
+  const checkWaist = () => {
+    const waist = body.getWorldPosition(new THREE.Vector3());
+    assert.ok(waist.distanceTo(hips.getWorldPosition(new THREE.Vector3())) < 1e-6);
+    for (const leg of legs) assert.ok(leg.getWorldPosition(new THREE.Vector3()).distanceTo(waist) < .18);
+  };
+  checkWaist();
   const mission = area.missionStatus.missions.find(entry => entry.id === 'mulan');
   const pose = () => [disk.rotation.x, ...blade.rotation.toArray(), ...body.rotation.toArray(), ...body.position.toArray()];
   const idle = pose();
@@ -1331,7 +1342,7 @@ test('Mulan’s gong starts one demonstration from the garden path and can be st
   assert.notEqual(disk.rotation.x, 0);
   assert.notDeepEqual(pose(), idle);
   assert.equal(mission.complete, false);
-  for (let i = 0; i < 25; i++) worlds.update(.05, camera.position, .24);
+  for (let i = 0; i < 25; i++) { worlds.update(.05, camera.position, .24); checkWaist(); }
   assert.equal(mission.complete, true);
   assert.deepEqual(pose(), idle);
   assert.equal(gong.active, true);
