@@ -1,13 +1,13 @@
 {
-  "version": "9bb0f8a4b2bd36dbc9afbbfceb84390364ca55f19b17436901dd737ffec658e6",
+  "version": "45e3dd3ac84a51b0aa32002c3b2bdd96b7781e0a2aaba5aa24537069226222dc",
   "files": [
     {
       "path": "./area-catalog.js",
-      "revision": "645677e7ce9c8c264c98ffb3a4b3e4bf0387adcd778298d165722282b7a916c3"
+      "revision": "000c03f0619d22ff56421a758d5bc0c539fb8ddc51e82c61f169e65a47765c20"
     },
     {
       "path": "./area-stats.json",
-      "revision": "53b585f15276bc5b89da43228280d29ed8f7d610fef24c97067c009deccae9df"
+      "revision": "bbb9941499da082b91f3d7485469084005658f71b6ae189bd754cc3be981b783"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -607,7 +607,7 @@
     },
     {
       "path": "./areas/snow-basin/activity.js",
-      "revision": "c69d2286a41b6b937919156490afbafe6922b0d84c20e93b65ddf944176c1925"
+      "revision": "be88c40eae6751ea637d95a8f0820e2885296079a667c493a4a88c268962834c"
     },
     {
       "path": "./areas/snow-basin/cabin.js",
@@ -623,7 +623,7 @@
     },
     {
       "path": "./areas/snow-basin/index.js",
-      "revision": "35d05af6232cdb9f776d6d2022a5dbd22b694f6e6e72055648148ca048e8462d"
+      "revision": "d056826074de55696097c31fdcf80bfb1462f8926cabb9ae7ca0df68b3d2009f"
     },
     {
       "path": "./areas/snow-basin/marshmallow.js",
@@ -631,7 +631,7 @@
     },
     {
       "path": "./areas/snow-basin/metadata.js",
-      "revision": "fa49469a31a68811f909c9a22c230a8a668b3f0394ca3510a0af98dfc124a980"
+      "revision": "f1880c02219dbee3a81af90c97686af60975c5540254cf616ba39dd85ca3f8b8"
     },
     {
       "path": "./areas/snow-basin/music.js",
@@ -672,6 +672,10 @@
     {
       "path": "./areas/snow-basin/terrain.js",
       "revision": "00717357e6a3e982c4151a67a54a33cee2fbee50fce69f7068b270fb6b998f90"
+    },
+    {
+      "path": "./areas/snow-basin/trolls.js",
+      "revision": "20cd215733c9c32fd228132651f285e17659912ec5c4a2b34f60a6992850d16e"
     },
     {
       "path": "./areas/wooden-house/cleaning.js",
