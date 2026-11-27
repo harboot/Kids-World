@@ -1,3 +1,4 @@
+import { cueSource } from './interaction-audio.js';
 import { addGroup, SURFACE_GAP } from '../../core/geometry.js';
 import { EYE_HEIGHT } from '../../core/player.js';
 import { buildMulanCharacter, MULAN_DEMONSTRATION_TIME } from './mulan-character.js';
@@ -115,7 +116,7 @@ export function buildMulan(context) {
     act() {
       if (!this.active || !near(camera?.position)) return;
       time = 0;
-      playCue(gongCue);
+      playCue(gongCue,cueSource(wx,wz,EYE_HEIGHT,9));
       pose(reducedMotion());
     },
   };
