@@ -1,13 +1,13 @@
 {
-  "version": "b2f246096da388573d9f3d52951d3071c9d623a5a85ab7c51e0637d9ae2de38d",
+  "version": "b2292f7830881672d69cd1ccd0ea6396a01dfdc3a185ffe282a326154ab1e353",
   "files": [
     {
       "path": "./area-catalog.js",
-      "revision": "199951597d01cd1e269105e0119fe07a5448f69677bf1c191fe965e64f513d4d"
+      "revision": "0b0e404f3bb702f18319f5db004d3062c9c3e509897291adce3e83bf639d3215"
     },
     {
       "path": "./area-stats.json",
-      "revision": "a1d8e06f25d44b0aea5f8d1ea59bae1514284ffbb7e76f5dbda1f93fa34d0f66"
+      "revision": "89c76a665737dd02899078f90adec224f62aae08a3a71ae20aa72d2e0e273bc9"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -607,7 +607,11 @@
     },
     {
       "path": "./areas/snow-basin/activity.js",
-      "revision": "7dfcc8da096c2feea00e2fef42f3e0f51845b1c5480d3dbb8d11d606a3023e41"
+      "revision": "77f6ce9e4eaf3dac22c47403e5c56e1d1c7b3a32374c518b077926bea6df505a"
+    },
+    {
+      "path": "./areas/snow-basin/cabin.js",
+      "revision": "bd3d62bc4bcd78d86fec54a00c7c58ff35dd17d1e438086849d29f788e76a2c9"
     },
     {
       "path": "./areas/snow-basin/characters.js",
@@ -619,11 +623,11 @@
     },
     {
       "path": "./areas/snow-basin/index.js",
-      "revision": "286fcac1035d8a9ada2722dc4c6b13219d6103fe359ea2f451e35ab01dc91e97"
+      "revision": "7bc19c68697f5045393fde30326349227662ae5ab95b2937025ca31eb79713eb"
     },
     {
       "path": "./areas/snow-basin/metadata.js",
-      "revision": "4b41c63a9d35cefde55eee8c2f20a21deaea2217f4c2f9fffee2b3974d2032d9"
+      "revision": "f9bf31aab6d7b2e6a480ebe24e569677bd948103fef338a26bd92e91738c2ffe"
     },
     {
       "path": "./areas/snow-basin/music.js",
@@ -635,7 +639,7 @@
     },
     {
       "path": "./areas/snow-basin/scenery.js",
-      "revision": "8eabb1047a04d16d263c3822014bd30c13b02546e26b809452b4c3bb473db5a8"
+      "revision": "14204dec9e287ef8f0c5c6c163b32dc271df0f6e17a341c9fd1ca2f302b34d0f"
     },
     {
       "path": "./areas/snow-basin/skating.js",

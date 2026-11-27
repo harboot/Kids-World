@@ -137,9 +137,9 @@ export const areaMetadata = {
       "Snow",
       "Basin"
     ],
-    "description": "Chop the pine, hit snowmen, ride the ice slide, meet Olaf, feed Sven, climb Ice Tower and skate through three checkpoints.",
-    "completionRevision": 4,
-    "missionCount": 7,
+    "description": "Chop the pine, hit snowmen, ride the ice slide, meet Olaf, feed Sven, climb Ice Tower, skate and warm up the cabin.",
+    "completionRevision": 5,
+    "missionCount": 8,
     "canvasLabel": "3D snow basin",
     "themeColor": "#e2f0f5",
     "width": 64,
