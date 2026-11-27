@@ -678,10 +678,18 @@ export function buildSnowWhite({ THREE, document, bay, exhibit, parts, obstacles
     shoe: matte(0x49363c), gold,
   };
   const glasses = new THREE.TorusGeometry(1, .15, 6, 16);
-  const actors = profiles.map(profile => createActor({ THREE, parts, bay, ground, profile, toWorld, obstacles, palette, glasses, playCue }));
+  // Nearby characters may share a trigger radius; avoid stacking identical notes.
+  let greetingCooldown = 0;
+  const greet = (notes, source) => {
+    if (greetingCooldown > 0) return;
+    greetingCooldown = .25;
+    playCue(notes, source);
+  };
+  const actors = profiles.map(profile => createActor({ THREE, parts, bay, ground, profile, toWorld, obstacles, palette, glasses, playCue: greet }));
   return {
     getGroundHeight(x, z) { return ground(...toLocal(x, z)); },
     update(dt, player, _grounded, still) {
+      greetingCooldown = Math.max(0, greetingCooldown - dt);
       let greeted = false;
       for (const actor of actors) {
         if (actor.update(dt, player, still)) greeted = true;
@@ -689,6 +697,7 @@ export function buildSnowWhite({ THREE, document, bay, exhibit, parts, obstacles
       return greeted;
     },
     reset() {
+      greetingCooldown = 0;
       for (const actor of actors) actor.reset();
     },
   };
