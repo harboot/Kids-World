@@ -1,3 +1,4 @@
+import { cueSource, entryCue, galleryCues } from './interaction-audio.js';
 import { addGroup, SURFACE_GAP } from '../../core/geometry.js';
 import { EYE_HEIGHT } from '../../core/player.js';
 import { addGallerySign, addSolid, spaceTransform } from './parts.js';
@@ -5,7 +6,7 @@ import { addGallerySign, addSolid, spaceTransform } from './parts.js';
 const tableSite = { x: .10, z: 2.53 };
 const tabletop = 1.21;
 
-export function buildEnchantedTea({ THREE, document, room, parts, exhibit, obstacles, palette }) {
+export function buildEnchantedTea({ THREE, document, room, parts, exhibit, obstacles, palette, playCue = () => {} }) {
   const { part, beam, batch, matte } = parts;
   const { gold, oak, dark, cream, wine, glow } = palette;
   const porcelain = matte(0xffead0);
@@ -135,8 +136,10 @@ export function buildEnchantedTea({ THREE, document, room, parts, exhibit, obsta
     candleLight.emissiveIntensity = .63 + intensity * (.43 + .21 * Math.sin(time * 6.8));
   }
   const local = [0, 0];
+  const audio = entryCue(playCue,galleryCues.belle,cueSource(...toWorld(tableSite.x,tableSite.z),EYE_HEIGHT));
   return {
     reset() {
+      audio.reset();
       nearby = false;
       time = blend = 0;
       pose();
@@ -146,6 +149,7 @@ export function buildEnchantedTea({ THREE, document, room, parts, exhibit, obsta
       const radius = nearby ? 4.32 : 4.02;
       nearby = Math.abs(player.y - EYE_HEIGHT) < 1.28 &&
         (x - tableSite.x) ** 2 + (z - tableSite.z) ** 2 <= radius * radius;
+      audio.update(nearby,dt);
       if (!nearby && !blend) return false;
       blend = still ? Number(nearby) : clamp(blend + dt * (nearby ? 2.3 : -1.9), 0, 1);
       time = still || blend === 0 ? 0 : (time + dt) % (Math.PI * 2 / 3.4);
