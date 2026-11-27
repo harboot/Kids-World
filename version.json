@@ -1,13 +1,13 @@
 {
-  "version": "9e821c64b1858b1df5a2f59ff61f502477537fc54da861977b2192e89b53c0b7",
+  "version": "c90e4a57c1be81297e1373146a664eaef93e0824e97cb0206fe8ba235c2c4367",
   "files": [
     {
       "path": "./area-catalog.js",
-      "revision": "d750260a071c8c3c29307401d32474dc5487f6a6021de987c8bc99a81f7f4ed2"
+      "revision": "e04ced7f43c55cd9d1520abf5c48e3d403a68053998f111cebd864df55b6a692"
     },
     {
       "path": "./area-stats.json",
-      "revision": "5f2e9a6f79e7cfbc2226c4749bee03eda29fdd0a4e3fe9223648bf69d7c32012"
+      "revision": "4db7dfeee612b871b3acabd024c51368168afd8947dbb6e9544476e7ab9b1669"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -471,7 +471,7 @@
     },
     {
       "path": "./areas/princess-gallery/exhibits.js",
-      "revision": "b0e69911db34e789d6c81d43ab7dddb0dd9aa52684a9fbe7e8426161e0d2152d"
+      "revision": "c251f3e77d36349fc0724b1f44c4d591cba56ac8021cff44793153f1916b336e"
     },
     {
       "path": "./areas/princess-gallery/gallery.js",
@@ -487,7 +487,7 @@
     },
     {
       "path": "./areas/princess-gallery/index.js",
-      "revision": "bf8932ba9e313ac1a0754016b4944121b49e258dead57e340f802c4f388342e1"
+      "revision": "bafe1d1cc308a1fb7fea183e4bf63f4f0bc2c40943cc163658c14aca5c299ee9"
     },
     {
       "path": "./areas/princess-gallery/jasmine-carpet.js",
@@ -507,7 +507,11 @@
     },
     {
       "path": "./areas/princess-gallery/metadata.js",
-      "revision": "bd1b7e4e172205540ca4a677eb1e5da3236946708a913ef43d5a13a3fdf1cb46"
+      "revision": "ae95e591e49b1326fe3e757b4ddea161c8b9ce676f4640d382d8e162dc60b497"
+    },
+    {
+      "path": "./areas/princess-gallery/moana.js",
+      "revision": "b3db1f1099df5d6b7714bc39f67e5b4fde9fcae9674fe2ce1a06b4aaca1fce79"
     },
     {
       "path": "./areas/princess-gallery/mulan-character.js",
