@@ -20,7 +20,8 @@ import { SURFACE_GAP } from '../../core/geometry.js';
 const axeSite = { x: 0.9, z: 5.9 };
 const treeSite = { x: 7.5, z: -1.85 };
 const sculptureSite = { x: -2.3, z: 13.92 };
-const treeClearance = 5.8;
+const treeClearance = 2.9;
+const chopRadius = 4.35;
 const landingBounds = { left: treeSite.x + 2.09, right: treeSite.x + 8.12, front: treeSite.z - 1.93, back: treeSite.z + 1.93 };
 const cues = {
   pickup: [[71, { duration: 0.14, level: 0.12 }], [79, { duration: 0.13, level: 0.10 }, 0.055]],
@@ -53,7 +54,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
   const { obstacles } = kit;
   const cabin = createCabin({ THREE, scene, kit, ground, reducedMotion, playCue, notify, onComplete: finishLevel });
   const slide = addIceSlide(THREE, scene, kit, ground);
-  const tower = addIceTower(THREE, scene, kit);
+  const tower = addIceTower(THREE, scene, kit, { camera, ground, signal, isPlayerGrounded, reducedMotion, playCue });
   let fedSven = false;
   let reachedTower = false;
   const skating = createSkating({ THREE, scene, ground, terrain, playCue, notify, onComplete: finishLevel });
@@ -84,14 +85,13 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
   const direction = new THREE.Vector3();
   const origin = new THREE.Vector3();
   let impactTime = Infinity;
-  let lastEye;
   let completionReported = false;
   const activity = createSnowActivity({
     width, depth, obstacles,
     cue(name) {
       if (name === 'land') {
         impactTime = 0;
-        dropAxe();
+
       }
       playCue?.(cues[name]);
       if (name === 'hit' || name === 'land') finishLevel();
@@ -157,7 +157,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
   }
 
   function throwBall() {
-    if (!isPlaying?.() || ride.riding || !state.held) return false;
+    if (!isPlaying?.() || ride.riding || tower.riding || !state.held) return false;
     const thrown = activity.throwBall(camera.getWorldPosition(origin), camera.getWorldDirection(direction));
     updateHeldBall();
     return thrown;
@@ -171,22 +171,22 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
     panel?.show(state.held);
   }
 
-  function placeAxe(x, z) {
-    axe.axe.position.set(x, ground(x, z) + 0.17, z);
+  function canReachTree(player) {
+    if (!player) return false;
+    const west=treeSite.x-player.x;
+    const distance=Math.hypot(west,treeSite.z-player.z);
+    return distance<=chopRadius && west>=distance*.45 &&
+      (player.y===undefined||Math.abs(player.y-EYE_HEIGHT-ground(player.x,player.z))<.8);
   }
-
-  function dropAxe() {
-    const eye = lastEye ?? camera?.position ?? axeSite;
-    camera?.getWorldDirection(direction);
-    const x = THREE.MathUtils.clamp(eye.x + direction.x * 0.8, -width / 2 + 0.4, width / 2 - 0.4);
-    const z = THREE.MathUtils.clamp(eye.z + direction.z * 0.8, -depth / 2 + 0.4, depth / 2 - 0.4);
-    placeAxe(x, z);
+  function equipNearbyAxe(player) {
+    if(state.tree==='upright')state.axe=canReachTree(player);
+    else if(state.tree==='fallen')state.axe=false;
   }
 
   function poseHeldAxe(fall) {
     const holder = axe.holder;
     const swinging = state.cooldown > 0;
-    holder.visible = state.axe && (!state.held || swinging) && !ride.riding;
+    holder.visible = state.axe && (!state.held || swinging) && !ride.riding && !tower.riding;
     const restX = Math.min(0.28, 0.32 * (camera?.aspect ?? 1));
     const progress = swinging ? 1 - state.cooldown / CHOP_COOLDOWN : 1;
     let side = 1;
@@ -204,8 +204,8 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
   }
 
   function updateModels() {
-    axe.axe.visible = !state.axe;
-    axe.ring.visible = !state.axe && state.tree === 'upright';
+    axe.axe.visible = false;
+    axe.ring.visible = false;
     treeBoundary.visible = state.tree !== 'fallen';
     const fall = state.fallTime / FALL_DURATION;
     poseHeldAxe(fall);
@@ -236,6 +236,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
   function reset() {
     activity.reset();
     ride.reset();
+    tower.reset();
     characters.reset();
     olafNose.reset();
     marshmallow.reset();
@@ -244,9 +245,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
     reachedTower = false;
     skating.reset();
     cabin.reset();
-    lastEye = undefined;
-    placeAxe(axeSite.x, axeSite.z);
-    axe.ring.position.y = ground(axeSite.x, axeSite.z) + SURFACE_GAP.detail;
+
     impactTime = Infinity;
     updateModels();
   }
@@ -307,19 +306,20 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
     get hint() {
       if (snowMissionsComplete(missions)) return 'Snow Basin complete!';
       if (state.tree === 'falling') return 'Watch the pine fall.';
-      if (ride.riding) return 'Ride the ice slide to the landing.';
+      if (ride.riding || tower.riding) return 'Ride the ice slide to the landing.';
+      if (tower.interaction.active && tower.atTop(camera?.position)) return 'Slide down Ice Tower.';
       if (state.held) return 'Aim and throw at the snowmen.';
       if (!missions.slide && ride.interaction.reachable(camera?.position)) return 'Slide down from the summit.';
-      if (!missions.pine) return state.axe ? 'Chop the pine from the pond side.' : 'Find the axe by the frozen lake.';
+      if (!missions.pine) return state.axe ? 'Chop the pine from the pond side.' : 'Approach the marked pine from the pond side to equip the axe.';
       if (!missions.snowmen) return 'Approach the snow pile in the west to pick up a snowball.';
       if (!missions.slide) return 'Follow the mountain trail to the ice slide.';
-      if (!missions.olaf) return olafNose.carrying ? 'Bring the carrot back to Olaf.' : "Find Olaf's glowing carrot near the northern ice hill.";
+      if (!missions.olaf) return olafNose.carrying ? 'Bring the carrot back to Olaf.' : "Find Olaf's glowing carrot in the northwest snowfield.";
       if (!missions.sven) return 'Offer Sven a carrot near the winter cabin.';
       if (!missions.tower) return 'Climb the spiral stairs to the top of Ice Tower.';
       if (!missions.skating) return skating.equipped ? 'Skate through three golden rings on the frozen lake.' : 'Put on the ice skates by the frozen lake.';
       if (!missions.cabin) return 'Enter the winter cabin and light the fireplace.';
       if (!missions.marshmallow) return 'Visit the giant snow mound near the southern ice hill.';
-      return 'Climb the large flat rock in the southwest clearing to wake the trolls.';
+      return 'Climb the large flat rock in the northeast clearing to wake the trolls.';
     },
   };
   return {
@@ -333,21 +333,12 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
     get missionStatus() { return missionStatus; },
     interactions: [
       {
-        ...axeSite, anchorY: ground(axeSite.x, axeSite.z) + 0.46, radius: 1.85, label: 'Pick up axe', silent: true,
-        get active() { return !state.axe && state.tree === 'upright'; },
-        act: activity.pickUpAxe,
-      },
-      {
-        ...treeSite, anchorY: 2.85, label: 'Chop tree', radius: 8.7, requiresView: true, silent: true,
-        reachable(player) {
-          const west = treeSite.x - player.x;
-          const distance = Math.hypot(west, treeSite.z - player.z);
-          // The clearance ring keeps the player back. Chop only from the side opposite the fall.
-          return west >= distance * 0.45;
-        },
+        ...treeSite, anchorY: 2.85, label: 'Chop tree', radius: chopRadius, requiresView: true, silent: true,
+        reachable: canReachTree,
         get active() { return activity.canChop(); },
         act: activity.chop,
       },
+      tower.interaction,
       ride.interaction,
       characters.interaction,
       skating.interaction,
@@ -355,10 +346,11 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
       ...olafNose.interactions,
     ],
     update(dt, player) {
-      lastEye = player;
-      activity.update(dt, player);
-      characters.update(dt, ride.riding ? undefined : player);
-      if (!ride.riding && player && (isPlayerGrounded?.() ?? true)) {
+      const riding=ride.riding||tower.riding;
+      equipNearbyAxe(riding?undefined:player);
+      activity.update(dt, riding?undefined:player);
+      characters.update(dt, riding ? undefined : player);
+      if (!riding && player && (isPlayerGrounded?.() ?? true)) {
         const feet = player.y - EYE_HEIGHT;
         if (!reachedTower && Math.abs(feet - ICE_TOWER.deckHeight) < 0.15 &&
             tower.surface(player.x, player.z, feet) === ICE_TOWER.deckHeight) {
@@ -368,9 +360,10 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
         }
         skating.update(player, true);
       }
-      olafNose.update(dt);
-      marshmallow.update(dt, ride.riding ? undefined : player);
-      trolls.update(dt, ride.riding ? undefined : player, isPlayerGrounded?.() ?? true);
+      olafNose.update(dt, riding?undefined:player, isPlayerGrounded?.()??true);
+      tower.update(dt, riding?undefined:player);
+      marshmallow.update(dt, riding ? undefined : player);
+      trolls.update(dt, riding ? undefined : player, isPlayerGrounded?.() ?? true);
       cabin.update(dt);
       ride.update(dt);
       if (impactTime < 0.56) impactTime += dt;
@@ -379,6 +372,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
     reset,
     unload() {
       ride.cancel();
+      tower.cancel();
       if (!onCleanup) panel?.dispose();
     },
   };

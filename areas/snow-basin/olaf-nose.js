@@ -1,7 +1,7 @@
 import { EYE_HEIGHT } from '../../core/player.js';
 import { SURFACE_GAP } from '../../core/geometry.js';
 
-export const CARROT_SITE = Object.freeze({ x: 21, z: -17 });
+export const CARROT_SITE = Object.freeze({ x: -18.48, y: 0, z: -17.84 });
 
 export function createOlafNose({ THREE, scene, kit, ground, characters, reducedMotion, playCue, notify, onComplete }) {
   const { x, z } = CARROT_SITE;
@@ -66,16 +66,13 @@ export function createOlafNose({ THREE, scene, kit, ground, characters, reducedM
     get carrying() { return carrying; },
     get complete() { return complete; },
     interactions: [
-      { x, z, anchorY: y + 0.55, radius: 2, label: 'Pick up carrot',
-        get active() { return !carrying && !complete; },
-        reachable(eye) { return Math.abs(eye.y - EYE_HEIGHT - ground(eye.x, eye.z)) < 0.5; },
-        act: pickup },
       { x: olaf.x, z: olaf.z, anchorY: olaf.y + 1.25, radius: 2.4, label: 'Return carrot',
         get active() { return carrying && !complete; },
         reachable(eye) { return Math.abs(eye.y - EYE_HEIGHT - olaf.y) < 1; },
         act: give },
     ],
-    update(dt) {
+    update(dt, eye, grounded = true) {
+      if (model.visible && eye && grounded && Math.hypot(eye.x-x,eye.z-z)<=1.65 && Math.abs(eye.y-EYE_HEIGHT-y)<0.5) pickup();
       if (!model.visible || reducedMotion?.()) return;
       time = (time + dt) % 600;
       model.position.y = y + 0.45 + 0.12 * Math.sin(time * 3);

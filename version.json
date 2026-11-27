@@ -1,5 +1,5 @@
 {
-  "version": "45e3dd3ac84a51b0aa32002c3b2bdd96b7781e0a2aaba5aa24537069226222dc",
+  "version": "16d557b1fad8d407ab9abbb328ec57ab6c91414986ae322f4c82f0f15db5f777",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "bbb9941499da082b91f3d7485469084005658f71b6ae189bd754cc3be981b783"
+      "revision": "f1432427b8bba5ab452552f01ed7de8a045b4c02ab6b4e973d85521433549782"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -619,11 +619,11 @@
     },
     {
       "path": "./areas/snow-basin/ice-tower.js",
-      "revision": "6c5bd06cab74a8cad33ebe4f7b3f54db094497f8b53c438c208380a4c9c622de"
+      "revision": "caabe0407429a87eb2c2d01d1064ab87e69ea8a1670769bbbf59bbbc6cc3d753"
     },
     {
       "path": "./areas/snow-basin/index.js",
-      "revision": "d056826074de55696097c31fdcf80bfb1462f8926cabb9ae7ca0df68b3d2009f"
+      "revision": "8a12fd9ccf8c615ba836075ba694e5ff76d9383a8394af5dd16caf7d5a5de916"
     },
     {
       "path": "./areas/snow-basin/marshmallow.js",
@@ -639,7 +639,7 @@
     },
     {
       "path": "./areas/snow-basin/olaf-nose.js",
-      "revision": "d2305be1eb4710fdcc879ca5ea77e142553fa75a4e901b2e8dd713665f9b62e3"
+      "revision": "c29f08cb391e3fe5631fa4e9f091ea5a27c49b38de4b0cc907bad95e1343f75f"
     },
     {
       "path": "./areas/snow-basin/props.js",
@@ -647,7 +647,7 @@
     },
     {
       "path": "./areas/snow-basin/scenery.js",
-      "revision": "14204dec9e287ef8f0c5c6c163b32dc271df0f6e17a341c9fd1ca2f302b34d0f"
+      "revision": "92984f9b5c7310136957dc0bfe540fd973bd8b661e5d6b6e96ed875aea325028"
     },
     {
       "path": "./areas/snow-basin/skating.js",
@@ -675,7 +675,7 @@
     },
     {
       "path": "./areas/snow-basin/trolls.js",
-      "revision": "20cd215733c9c32fd228132651f285e17659912ec5c4a2b34f60a6992850d16e"
+      "revision": "c1a7192e626a5becfac20eb612abc1ce05a9fc86df6c8fef7d061bd777760f6c"
     },
     {
       "path": "./areas/wooden-house/cleaning.js",
