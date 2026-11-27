@@ -4,8 +4,8 @@ import { galleryCues } from './interaction-audio.js';
 
 const tastes = {
   popcorn: { name: 'Popcorn', at: [.95, 2.02], cue: galleryCues.popcorn },
-  cotton: { name: 'Cotton candy', at: [.80, 1.93], cue: crunch },
-  hotDog: { name: 'Hot dog', at: [.88, 2.02], cue: crunch },
+  cotton: { name: 'Cotton candy', at: [.80, 1.93], cue: galleryCues.cotton },
+  hotDog: { name: 'Hot dog', at: [.88, 2.02], cue: galleryCues.hotDog },
   drink: { name: 'Cold drink', at: [.87, 1.92], cue: galleryCues.drink },
 };
 const duration = 2.96;
