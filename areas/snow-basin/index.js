@@ -1,5 +1,6 @@
 import { CHOPS, CHOP_COOLDOWN, FALL_DURATION, SNOWMAN_COUNT, THROWING_POSITION, createSnowActivity, snowMissionsComplete } from './activity.js';
 import { addAxe, addIceSculpture, addChopTree, addSnowPlay, showSnowmen } from './props.js';
+import { createTrollGathering } from './trolls.js';
 import { createOlafNose } from './olaf-nose.js';
 import { createMarshmallow } from './marshmallow.js';
 import { createCabin } from './cabin.js';
@@ -64,6 +65,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
     },
   });
   const olafNose = createOlafNose({ THREE, scene, kit, ground, characters, reducedMotion, playCue, notify, onComplete: finishLevel });
+  const trolls = createTrollGathering({ THREE, scene, kit, ground, reducedMotion, playCue, notify, playerRadius, onComplete: finishLevel });
   const marshmallow = createMarshmallow({ THREE, scene, kit, ground, reducedMotion, playCue, notify, playerRadius, onComplete: finishLevel });
   const axe = addAxe(THREE, scene, viewmodel, kit, axeSite);
   const pine = addChopTree(THREE, scene, kit, treeSite);
@@ -109,6 +111,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
     get skating() { return skating.complete; },
     get cabin() { return cabin.complete; },
     get marshmallow() { return marshmallow.complete; },
+    get trolls() { return trolls.complete; },
   };
 
   function finishLevel() {
@@ -236,6 +239,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
     characters.reset();
     olafNose.reset();
     marshmallow.reset();
+    trolls.reset();
     fedSven = false;
     reachedTower = false;
     skating.reset();
@@ -294,6 +298,11 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
         get current() { return Number(missions.marshmallow); },
         get complete() { return missions.marshmallow; },
       },
+      {
+        id: 'trolls', title: 'Troll Gathering', total: 1,
+        get current() { return Number(missions.trolls); },
+        get complete() { return missions.trolls; },
+      },
     ],
     get hint() {
       if (snowMissionsComplete(missions)) return 'Snow Basin complete!';
@@ -309,12 +318,13 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
       if (!missions.tower) return 'Climb the spiral stairs to the top of Ice Tower.';
       if (!missions.skating) return skating.equipped ? 'Skate through three golden rings on the frozen lake.' : 'Put on the ice skates by the frozen lake.';
       if (!missions.cabin) return 'Enter the winter cabin and light the fireplace.';
-      return 'Visit the giant snow mound near the southern ice hill.';
+      if (!missions.marshmallow) return 'Visit the giant snow mound near the southern ice hill.';
+      return 'Climb the large flat rock in the southwest clearing to wake the trolls.';
     },
   };
   return {
     obstacles,
-    getGroundHeight: (x, z, feet) => Math.max(ground(x, z), tower.surface(x, z, feet) ?? -Infinity),
+    getGroundHeight: (x, z, feet) => Math.max(ground(x, z), tower.surface(x, z, feet) ?? -Infinity, trolls.surface(x, z) ?? -Infinity),
     getGroundTraction: skating.getGroundTraction,
     blocksGround(x, z, radius, feet, from) {
       return terrain.blocksGround(x, z, radius) || slide.blocksGround(x, z, radius, feet) ||
@@ -360,6 +370,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
       }
       olafNose.update(dt);
       marshmallow.update(dt, ride.riding ? undefined : player);
+      trolls.update(dt, ride.riding ? undefined : player, isPlayerGrounded?.() ?? true);
       cabin.update(dt);
       ride.update(dt);
       if (impactTime < 0.56) impactTime += dt;

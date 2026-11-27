@@ -8,6 +8,7 @@ import {
   createSnowActivity, snowMissionsComplete, sweepSphere,
 } from '../areas/snow-basin/activity.js';
 import { CARROT_SITE } from '../areas/snow-basin/olaf-nose.js';
+import { TROLL_PLATFORM, TROLL_SITES } from '../areas/snow-basin/trolls.js';
 import { MARSHMALLOW_SITE } from '../areas/snow-basin/marshmallow.js';
 import { CABIN, FIREPLACE } from '../areas/snow-basin/cabin.js';
 import { SKATE_SITE, SKATE_CHECKPOINTS } from '../areas/snow-basin/skating.js';
@@ -171,7 +172,7 @@ async function buildWorld({ reducedMotion = () => false, saved = [] } = {}) {
   };
 }
 
-function assertProgress(area, { snowmen = 0, chops = 0, slide = 0, olaf = 0, sven = 0, tower = 0, skating = 0, cabin = 0, marshmallow = 0, pineFallen = chops === CHOPS } = {}) {
+function assertProgress(area, { snowmen = 0, chops = 0, slide = 0, olaf = 0, sven = 0, tower = 0, skating = 0, cabin = 0, marshmallow = 0, trolls = 0, pineFallen = chops === CHOPS } = {}) {
   assert.deepEqual(area.missionStatus.missions, [
     { id: 'pine', title: 'Chop Down the Pine', current: chops, total: 5, complete: pineFallen },
     { id: 'snowmen', title: 'Snowball Challenge', current: snowmen, total: 3, complete: snowmen === 3 },
@@ -182,6 +183,7 @@ function assertProgress(area, { snowmen = 0, chops = 0, slide = 0, olaf = 0, sve
     { id: 'skating', title: 'Ice Skating Challenge', current: skating, total: 3, complete: skating === 3 },
     { id: 'cabin', title: 'Warm Up the Cabin', current: cabin, total: 1, complete: cabin === 1 },
     { id: 'marshmallow', title: 'Meet Marshmallow', current: marshmallow, total: 1, complete: marshmallow === 1 },
+    { id: 'trolls', title: 'Troll Gathering', current: trolls, total: 1, complete: trolls === 1 },
   ]);
 }
 
@@ -758,7 +760,7 @@ test('completes exactly once in any mission order and preserves other area badge
   for (const order of orders.flatMap(base => Array.from({ length: 4 }, (_, index) => {
     const steps = base.split(' ');
     steps.splice(index, 0, 'olaf');
-    steps.push('sven', 'tower', 'skating', 'cabin', 'marshmallow');
+    steps.push('sven', 'tower', 'skating', 'cabin', 'marshmallow', 'trolls');
     if (index % 2) steps.reverse();
     return steps.join(' ');
   }))) {
@@ -785,6 +787,11 @@ test('completes exactly once in any mission order and preserves other area badge
           const point = towerStairPoint(ICE_TOWER.stairEnd - 2);
           game.stand({ ...point, elevation: point.y });
           game.frame(0);
+        } else if (id === 'trolls') {
+          game.stand(TROLL_PLATFORM);
+          for (let i = 0; i < 60; i++) game.frame(0.05);
+          game.stand(visit.definition.spawn);
+          game.frame(0);
         } else if (id === 'marshmallow') {
           game.stand({ x: MARSHMALLOW_SITE.x - 5, z: MARSHMALLOW_SITE.z });
           for (let i = 0; i < 80; i++) game.frame(0.05);
@@ -802,11 +809,11 @@ test('completes exactly once in any mission order and preserves other area badge
         missions.add(id);
         assertProgress(visit.area, { chops: missions.has('pine') ? 5 : 0,
           snowmen: missions.has('snowmen') ? 3 : 0, slide: Number(missions.has('slide')), olaf: Number(missions.has('olaf')), sven: Number(missions.has('sven')),
-          tower: Number(missions.has('tower')), skating: missions.has('skating') ? 3 : 0, cabin: Number(missions.has('cabin')), marshmallow: Number(missions.has('marshmallow')) });
-        assert.deepEqual(completions, missions.size === 9 ? ['snow'] : []);
+          tower: Number(missions.has('tower')), skating: missions.has('skating') ? 3 : 0, cabin: Number(missions.has('cabin')), marshmallow: Number(missions.has('marshmallow')), trolls: Number(missions.has('trolls')) });
+        assert.deepEqual(completions, missions.size === 10 ? ['snow'] : []);
       }
       assert.ok(progress.has('snow'));
-      assert.deepEqual(new Set(game.records()), new Set(['snow@6', 'garden@3', 'frozen-castle']));
+      assert.deepEqual(new Set(game.records()), new Set(['snow@7', 'garden@3', 'frozen-castle']));
       assert.equal(game.missionHud.toast.textContent, 'Snow Basin complete!');
       assert.equal(visit.area.missionStatus.hint, 'Snow Basin complete!');
       startRide(game);
@@ -822,9 +829,9 @@ test('completion requires each mission flag', () => {
     for (const snowmen of [false, true]) {
       for (const slide of [false, true]) {
         for (const olaf of [false, true]) {
-          for (const sven of [false, true]) for (const tower of [false, true]) for (const skating of [false, true]) for (const cabin of [false, true]) for (const marshmallow of [false, true]) {
-            const missions = { pine, snowmen, slide, olaf, sven, tower, skating, cabin, marshmallow };
-            assert.equal(snowMissionsComplete(missions), pine && snowmen && slide && olaf && sven && tower && skating && cabin && marshmallow);
+          for (const sven of [false, true]) for (const tower of [false, true]) for (const skating of [false, true]) for (const cabin of [false, true]) for (const marshmallow of [false, true]) for (const trolls of [false, true]) {
+            const missions = { pine, snowmen, slide, olaf, sven, tower, skating, cabin, marshmallow, trolls };
+            assert.equal(snowMissionsComplete(missions), pine && snowmen && slide && olaf && sven && tower && skating && cabin && marshmallow && trolls);
           }
         }
       }
@@ -1079,6 +1086,43 @@ test('Marshmallow wakes, roars and waves, then hides without losing mission prog
   assert.equal(mound.visible, true);
   assert.equal(giant.visible, false);
   assertProgress(area, { marshmallow: 1 });
+  game.worlds.reset();
+  assertProgress(area);
+});
+
+
+test('the troll rock can be walked up, wakes all trolls on top, and resets', async t => {
+  const game = await buildWorld();
+  t.after(game.worlds.unload);
+  const { area, scene } = game.visit;
+  const { x, z, height, baseRadius } = TROLL_PLATFORM;
+  const rocks = TROLL_SITES.map((_, i) => scene.getObjectByName('Sleeping troll rock ' + (i+1)));
+  const trolls = TROLL_SITES.map((_, i) => scene.getObjectByName('Awake troll ' + (i+1)));
+  assert.ok(rocks.every(r => r.visible));
+  assert.ok(trolls.every(r => !r.visible));
+  let pz=z-baseRadius-0.65;
+  let feet=area.getGroundHeight(x,pz);
+  game.stand({x,z:pz});
+  game.frame(1);
+  assertProgress(area);
+  while(pz<z){
+    const next=walkElevation(area,{x,z:pz},x,pz+.05,feet,true);
+    assert.notEqual(next,null,'rock approach blocked at '+pz);
+    feet=next;
+    pz+=.05;
+  }
+  assert.ok(Math.abs(feet-area.getGroundHeight(x,z))<.05);
+  assert.ok(feet>=height-.05);
+  game.stand({x,z});
+  for(let i=0;i<60;i++)game.frame(.05);
+  assert.ok(rocks.every(r=>!r.visible));
+  assert.ok(trolls.every(r=>r.visible));
+  assertProgress(area,{trolls:1});
+  game.stand(game.visit.definition.spawn);
+  for(let i=0;i<60;i++)game.frame(.05);
+  assert.ok(rocks.every(r=>r.visible));
+  assert.ok(trolls.every(r=>!r.visible));
+  assertProgress(area,{trolls:1});
   game.worlds.reset();
   assertProgress(area);
 });
