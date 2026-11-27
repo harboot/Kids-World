@@ -1,13 +1,13 @@
 {
-  "version": "b2292f7830881672d69cd1ccd0ea6396a01dfdc3a185ffe282a326154ab1e353",
+  "version": "9bb0f8a4b2bd36dbc9afbbfceb84390364ca55f19b17436901dd737ffec658e6",
   "files": [
     {
       "path": "./area-catalog.js",
-      "revision": "0b0e404f3bb702f18319f5db004d3062c9c3e509897291adce3e83bf639d3215"
+      "revision": "645677e7ce9c8c264c98ffb3a4b3e4bf0387adcd778298d165722282b7a916c3"
     },
     {
       "path": "./area-stats.json",
-      "revision": "89c76a665737dd02899078f90adec224f62aae08a3a71ae20aa72d2e0e273bc9"
+      "revision": "53b585f15276bc5b89da43228280d29ed8f7d610fef24c97067c009deccae9df"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -607,7 +607,7 @@
     },
     {
       "path": "./areas/snow-basin/activity.js",
-      "revision": "77f6ce9e4eaf3dac22c47403e5c56e1d1c7b3a32374c518b077926bea6df505a"
+      "revision": "c69d2286a41b6b937919156490afbafe6922b0d84c20e93b65ddf944176c1925"
     },
     {
       "path": "./areas/snow-basin/cabin.js",
@@ -615,7 +615,7 @@
     },
     {
       "path": "./areas/snow-basin/characters.js",
-      "revision": "73fb30b40f443ea2592945051df8a4aa05c3092d64c65e23a2e7b1caf72c59cb"
+      "revision": "5a60fdfa92d3b59b85fcca441f18c774468c91dfd7d77e6a08a9484762124be3"
     },
     {
       "path": "./areas/snow-basin/ice-tower.js",
@@ -623,15 +623,23 @@
     },
     {
       "path": "./areas/snow-basin/index.js",
-      "revision": "7bc19c68697f5045393fde30326349227662ae5ab95b2937025ca31eb79713eb"
+      "revision": "35d05af6232cdb9f776d6d2022a5dbd22b694f6e6e72055648148ca048e8462d"
+    },
+    {
+      "path": "./areas/snow-basin/marshmallow.js",
+      "revision": "38c7f880d5e0979e388a2982e70b720b785fef6ced75300441fd1ba6eaf3b629"
     },
     {
       "path": "./areas/snow-basin/metadata.js",
-      "revision": "f9bf31aab6d7b2e6a480ebe24e569677bd948103fef338a26bd92e91738c2ffe"
+      "revision": "fa49469a31a68811f909c9a22c230a8a668b3f0394ca3510a0af98dfc124a980"
     },
     {
       "path": "./areas/snow-basin/music.js",
       "revision": "67cd67ae1031011e32a9cefeeb8e455fec4ba796b0f4851eec497e04511ba8ae"
+    },
+    {
+      "path": "./areas/snow-basin/olaf-nose.js",
+      "revision": "d2305be1eb4710fdcc879ca5ea77e142553fa75a4e901b2e8dd713665f9b62e3"
     },
     {
       "path": "./areas/snow-basin/props.js",
