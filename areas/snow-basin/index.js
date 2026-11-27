@@ -85,7 +85,6 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
   const direction = new THREE.Vector3();
   const origin = new THREE.Vector3();
   let impactTime = Infinity;
-  let lastEye;
   let completionReported = false;
   const activity = createSnowActivity({
     width, depth, obstacles,
@@ -246,7 +245,6 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
     reachedTower = false;
     skating.reset();
     cabin.reset();
-    lastEye = undefined;
 
     impactTime = Infinity;
     updateModels();
@@ -348,7 +346,6 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
       ...olafNose.interactions,
     ],
     update(dt, player) {
-      lastEye = player;
       const riding=ride.riding||tower.riding;
       equipNearbyAxe(riding?undefined:player);
       activity.update(dt, riding?undefined:player);

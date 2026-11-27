@@ -236,8 +236,8 @@ function reachableCells(area, width = 32, depth = 30) {
   return queue;
 }
 
-test('the pine can be chopped from several positions with a clear view and a protected landing', async () => {
-  const { worlds, visit, camera } = await buildWorld();
+test('the pine automatically equips an axe within the reduced clearance and protects the landing', async () => {
+  const { worlds, visit } = await buildWorld();
   const { scene, area } = visit;
   const tree = scene.getObjectByName('Marked pine');
   assert.equal(scene.getObjectByName('Chop tree viewing zone'), undefined);
@@ -256,6 +256,8 @@ test('the pine can be chopped from several positions with a clear view and a pro
     assert.equal(walkElevation(area, position, position.x, position.z, 0, true), 0);
   }
   const ring = boundary.geometry.parameters.outerRadius;
+  assert.equal(ring, 2.9);
+  assert.equal(chop.radius, 4.35);
   const near = { x: chop.x - ring - 0.06, z: chop.z };
   assert.equal(nearestInteraction(area.interactions, near), chop);
   assert.equal(walkElevation(area, near, chop.x - ring + 0.06, chop.z, area.getGroundHeight(near.x, near.z), true), null);
@@ -879,7 +881,7 @@ test('the frozen lake is lower than snow, has walkable banks, and carries moment
   assert.ok(coastingDistance({ x: 0, z: 9.4 }) < 0.35);
 });
 
-test('the spiral reaches the Ice Tower lookout and can be walked down without jumping', async t => {
+test('the spiral reaches the Ice Tower lookout and transforms into a rideable slide', async t => {
   const game = await buildWorld();
   t.after(game.worlds.unload);
   const { visit, avatar, camera } = game;
