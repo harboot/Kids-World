@@ -1,5 +1,5 @@
 {
-  "version": "e6117590a2982da8ffe7ed2316a70175282f0d9d7bc8b30a310f763d405c342e",
+  "version": "ea85f47b9bea25fd5f0f6a59fd92d88bb36ce6b1166970e4ad9980ceed79754b",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "7229f3046827b4a28630462b816154d66ae48cc4372a204282c0064697097626"
+      "revision": "8e23af7e52eb33ceab2ceea681202212e3d02164cacfe7341288cbfc446cf980"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -471,7 +471,7 @@
     },
     {
       "path": "./areas/princess-gallery/exhibits.js",
-      "revision": "c251f3e77d36349fc0724b1f44c4d591cba56ac8021cff44793153f1916b336e"
+      "revision": "861079e9964f2cb87bcb8b40e93246fe5cc44d894d498a58f2d246e386e25c05"
     },
     {
       "path": "./areas/princess-gallery/gallery.js",
@@ -519,7 +519,7 @@
     },
     {
       "path": "./areas/princess-gallery/mulan-character.js",
-      "revision": "8e1fc72f2837f09593c4c0a29b9620c7ab86c2522f58375b75036114886d301b"
+      "revision": "725f05be45f6cea5e7180736166b411de09af2b8056138ce39ad807a28f26a89"
     },
     {
       "path": "./areas/princess-gallery/mulan-garden.js",
@@ -559,7 +559,7 @@
     },
     {
       "path": "./areas/princess-gallery/rapunzel-tower.js",
-      "revision": "251a56a2a2245832d0627762fc33c476d21fc8694a93f0b56c4c2457a70b6966"
+      "revision": "32885d6a80b075c59a49afb57d7d8b023e86f51e01555f2f2f3f639b048eb0e5"
     },
     {
       "path": "./areas/princess-gallery/rapunzel.js",
@@ -575,7 +575,7 @@
     },
     {
       "path": "./areas/princess-gallery/snow-white.js",
-      "revision": "ba2f7d2a9e71b4249bfe537aee8b33d52b37cb93996fc8724aba01d29d47744e"
+      "revision": "c91659ee9216033732498f68d3988b08eb1afb675d299141455c8095f0820e6f"
     },
     {
       "path": "./areas/princess-gallery/tasting.js",
