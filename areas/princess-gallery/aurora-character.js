@@ -73,6 +73,8 @@ export function buildAuroraCharacter(THREE, bed, parts, mattressTop) {
     part(foot, 'gem', gold, 0, .072, .058, .023, .014, .022);
   }
 
+  // Fixed hip fabric bridges the draped skirt and the rotating bodice.
+  part(actor, 'sphere', dress, 0, -.035, .025, .246, .167, .195);
   const body = addGroup(THREE, actor, 'Aurora upper body');
   const bodice = new THREE.Group();
   part(bodice, 'sphere', dress, 0, .257, 0, .292, .341, .204);
@@ -90,7 +92,7 @@ export function buildAuroraCharacter(THREE, bed, parts, mattressTop) {
   const head = addGroup(THREE, body, 'Aurora head', 0, 1.005, .017);
   const setEyes = buildPrincessFace(THREE, parts, head, {
     skin, blush: matte(0xe69a8e), brow: matte(0x85522c), lip: matte(0xb74667), iris: matte(0x7967a8), pearl,
-  }, true);
+  }, true, { jaw: .21, eyeWidth: .97 });
   const hairAndCrown = new THREE.Group();
   part(hairAndCrown, 'sphere', hair, 0, .036, -.136, .330, .387, .243);
   for (const side of [-1, 1]) {
@@ -115,6 +117,7 @@ export function buildAuroraCharacter(THREE, bed, parts, mattressTop) {
     part(arm, 'sphere', silk, 0, -.092, 0, .121, .164, .118);
     part(arm, 'sphere', rose, 0, -.197, 0, .080, .133, .074);
     const elbow = addGroup(THREE, arm, 'Aurora ' + label + ' elbow', 0, -.289, 0);
+    part(elbow, 'sphere', rose, 0, -.025, 0, .077, .081, .071);
     part(elbow, 'sphere', dress, 0, -.116, 0, .066, .152, .061);
     part(elbow, 'drum', collar, 0, -.232, .003, .065, .058, .064);
     part(elbow, 'sphere', skin, -side * .014, -.285, .012, .064, .088, .050);
