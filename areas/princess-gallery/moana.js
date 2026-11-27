@@ -1,3 +1,4 @@
+import { buildPrincessFace } from './princess-face.js';
 import { galleryCues } from './interaction-audio.js';
 import { addGroup, SURFACE_GAP } from '../../core/geometry.js';
 import { EYE_HEIGHT } from '../../core/player.js';
@@ -150,7 +151,8 @@ export function buildMoana(context) {
     part(moana,'sphere',skin,s*.17,.40,0,.13,.37,.15);
     part(moana,'sphere',skin,s*.17,.09,.10,.14,.09,.26);
   }
-  part(moana,new THREE.CylinderGeometry(.30,.48,.62,12),ivory,0,.80,0,1,1,1);
+  const skirt=new THREE.LatheGeometry([[.45,.48],[.49,.56],[.43,.78],[.32,1.10]].map(([r,y])=>new THREE.Vector2(r,y)),16);
+  part(moana,skirt,ivory,0,0,0,1,1,.80);
   for(let i=0;i<12;i++){
     const a=i*Math.PI/6;
     part(moana,'box',rope,Math.sin(a)*.40,.75,Math.cos(a)*.40,.075,.46,.09).rotation.y=a;
@@ -159,19 +161,27 @@ export function buildMoana(context) {
   part(moana,'sphere',skin,0,1.40,0,.33,.40,.23);
   part(moana,'sphere',red,0,1.44,.13,.31,.22,.15);
   part(moana,'drum',skin,0,1.74,0,.12,.20,.12);
-  part(moana,'sphere',skin,0,2.01,0,.26,.32,.24);
-  part(moana,'sphere',hair,0,2.17,-.09,.28,.25,.25);
+  const head=addGroup(THREE,moana,'Moana head',0,2.01,0);
+  buildPrincessFace(THREE,parts,head,{skin,blush:matte(0xc08366),brow:hair,lip:matte(0x8d4039),iris:matte(0x573626),pearl:ivory},false,{jaw:.13,eyeWidth:1.02});
+  part(head,'sphere',hair,0,.10,-.13,.33,.34,.27);
+  const shoulders=[];
+  for(const side of [-1,1]){
+    part(head,'sphere',hair,side*.16,.23,.12,.18,.11,.12).rotation.z=side*-.42;
+    part(head,'sphere',hair,side*.26,-.04,-.08,.12,.23,.17);
+  }
   for(const s of [-1,1]){
-    for(let i=0;i<5;i++)part(moana,'sphere',hair,s*(.25+.025*Math.sin(i)),2.05-i*.19,-.12,.13,.24,.18);
-    part(moana,'sphere',darkWood,s*.088,2.04,.221,.035,.043,.022);
+    for(let i=0;i<5;i++)part(head,'sphere',hair,s*(.27+.025*Math.sin(i*1.6)),-.02-i*.16,-.16-i*.02,.14,.20,.17);
     const arm=addGroup(THREE,moana,'Moana shoulder',s*.30,1.55,0);
     arm.rotation.z=s*.20;
+    part(arm,'sphere',skin,0,-.035,0,.112,.12,.11);
     part(arm,'sphere',skin,0,-.21,0,.105,.23,.11);
-    part(arm,'sphere',skin,0,-.52,.035,.09,.23,.10);
-    part(arm,'sphere',skin,0,-.72,.045,.10,.11,.09);
+    const elbow=addGroup(THREE,arm,'Moana elbow',0,-.38,.01);
+    part(elbow,'sphere',skin,0,-.025,0,.10,.10,.10);
+    part(elbow,'sphere',skin,0,-.16,.025,.09,.20,.10);
+    part(elbow,'sphere',skin,0,-.35,.035,.10,.11,.09);
+    shoulders.push({arm,elbow,s});
   }
-  part(moana,'sphere',skin,0,1.99,.244,.052,.067,.058);
-  part(moana,'sphere',red,0,1.90,.221,.078,.022,.026);
+  for(const side of [-1,1])beam(moana,rope,[side*.10,1.72,.17],[0,1.62,.25],.018);
   part(moana,'gem',sea,0,1.62,.25,.075,.12,.04);
   addRoundSolid(obstacles,...toWorld(-2.9,6),.65,2.5);
 
@@ -219,7 +229,7 @@ export function buildMoana(context) {
   const startRotation=new THREE.Quaternion(), facing=new THREE.Quaternion(), angles=new THREE.Euler(0,0,0,'YXZ');
   const local=[0,0];
   let release=null,time=0,yaw=0,pitch=0,completed=false,nextWave=2;
-  const dock=()=>{boat.position.set(0,.13,MOANA_DOCK.z);boat.rotation.set(0,Math.PI/2,0);wake.visible=false;moana.position.set(-2.9,0,6);moana.rotation.y=.30;};
+  const dock=()=>{boat.position.set(0,.13,MOANA_DOCK.z);boat.rotation.set(0,Math.PI/2,0);wake.visible=false;room.add(moana);moana.position.set(-2.9,0,6);moana.rotation.set(0,.30,0);for(const {arm,elbow,s} of shoulders){arm.rotation.set(0,0,s*.20);elbow.rotation.set(0,0,0);}};
   function stop(spawn){const restore=release;release=null;dock();restore?.(spawn);}
   function reachable(position){
     if(!position||!isPlayerGrounded()||Math.abs(position.y-EYE_HEIGHT)>.25)return false;
@@ -240,8 +250,14 @@ export function buildMoana(context) {
     const heading=Math.atan2(4.35*Math.cos(a),-5.65*Math.sin(a));
     boat.position.set(x,.13+(still?0:.065*Math.sin(a*4)),z);
     boat.rotation.set(0,heading,still?0:.035*Math.sin(a*2));
-    moana.position.set(x+Math.sin(heading)*1.15,boat.position.y+.56,z+Math.cos(heading)*1.15);
-    moana.rotation.y=heading;
+    // Attach to the moving hull so her feet follow its pitch and roll.
+    if(moana.parent!==boat)boat.add(moana);
+    moana.position.set(.17,.568,1.02);
+    moana.rotation.set(0,0,0);
+    for(const {arm,elbow,s} of shoulders){
+      arm.rotation.set(-.15,0,s*.32);
+      elbow.rotation.x=-.30+(still?0:.05*Math.sin(a*2));
+    }
     const [px,pz]=toWorld(x,z);
     eye.set(px,boat.position.y+.60+EYE_HEIGHT,pz);
     angles.set(pitch,heading+exhibit.rotation+Math.PI+yaw,0,'YXZ');
