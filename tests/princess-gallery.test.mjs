@@ -82,12 +82,7 @@ test('public gallery opens by normal and drone URLs with no castle progress', as
     const { missions } = visit.area.missionStatus;
     assert.deepEqual(missions.map(mission => mission.id), exhibits.map(exhibit => exhibit.id));
     assert.ok(missions.every(mission => !mission.complete && mission.current === 0 && mission.total === 1));
-    assert.match(visit.area.missionStatus.hint, /Visit Rapunzel and jump onto the observation platform/);
-    assert.match(visit.area.missionStatus.hint, /Approach Snow White and the seven dwarfs/);
-    assert.match(visit.area.missionStatus.hint, /Cinderella’s glass slipper on the ballroom stairs/);
-    assert.match(visit.area.missionStatus.hint, /Approach the enchanted rose to wake Aurora/);
-    assert.match(visit.area.missionStatus.hint, /Board Ariel’s shipwreck/);
-    assert.match(visit.area.missionStatus.hint, /Approach Belle’s enchanted tea table/);
+    assert.equal(visit.area.missionStatus.hint, 'Visit all 10 princess exhibits.');
     assert.equal(game.progress.has(CASTLE), false);
     assert.equal(game.progress.has(ID), false);
   }
@@ -1310,7 +1305,7 @@ test('Mulan’s gong starts one demonstration from the garden path and can be st
   const gong = area.interactions.find(item => item.label === 'Strike the great gong');
   const disk = room.getObjectByName('Suspended bronze disk');
   const blade = room.getObjectByName('Mulan practice sword');
-  const body = room.getObjectByName('Mulan body');
+  const body = room.getObjectByName('Mulan waist pivot');
   const mission = area.missionStatus.missions.find(entry => entry.id === 'mulan');
   const pose = () => [disk.rotation.x, ...blade.rotation.toArray(), ...body.rotation.toArray(), ...body.position.toArray()];
   const idle = pose();
