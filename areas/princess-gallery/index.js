@@ -3,7 +3,7 @@ import { buildGallery } from './gallery.js';
 import { metadata } from './metadata.js';
 import { music } from './music.js';
 
-const hint = 'Visit Rapunzel and jump onto the observation platform to make her wave. Approach Snow White and the seven dwarfs to see them react. Find Cinderella’s glass slipper on the ballroom stairs. Approach the enchanted rose to wake Aurora. Move away to let her sleep again. Take the stairs or the Adventure Wing lift to the Glass Walkway, or stop at a snack cart for a taste. Board Ariel’s shipwreck and open the treasure chest. Approach Belle’s enchanted tea table to see it dance. Ride Jasmine’s magic carpet around Agrabah Palace and rub the lamp to meet Jin. Strike the great gong to watch Mulan’s sword demonstration. Approach Tiana’s enchanted frog to meet Prince Naveen. Discover the story display in Moana’s preview room.';
+const hint = 'Visit Rapunzel and jump onto the observation platform to make her wave. Approach Snow White and the seven dwarfs to see them react. Find Cinderella’s glass slipper on the ballroom stairs. Approach the enchanted rose to wake Aurora. Move away to let her sleep again. Take the stairs or the Adventure Wing lift to the Glass Walkway, or stop at a snack cart for a taste. Board Ariel’s shipwreck and open the treasure chest. Approach Belle’s enchanted tea table to see it dance. Ride Jasmine’s magic carpet around Agrabah Palace and rub the lamp to meet Jin. Strike the great gong to watch Mulan’s sword demonstration. Approach Tiana’s enchanted frog to meet Prince Naveen. Board Moana’s canoe and sail around the tropical lagoon.';
 
 export const princessGallery = {
   ...metadata,

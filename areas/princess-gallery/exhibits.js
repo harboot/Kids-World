@@ -3,6 +3,7 @@ import { buildAurora } from './aurora.js';
 import { buildBelle } from './belle.js';
 import { buildCinderella } from './cinderella.js';
 import { buildJasmine } from './jasmine.js';
+import { buildMoana } from './moana.js';
 import { buildMulan } from './mulan.js';
 import { buildRapunzel } from './rapunzel.js';
 import { buildSnowWhite } from './snow-white.js';
@@ -89,10 +90,10 @@ export const exhibits = [
   },
   {
     id: 'moana', title: 'Moana', accent: 0x638eac, wing: 'adventure',
-    mission: 'Discover Moana’s voyaging paddle', display: 'Voyaging Paddle',
+    mission: 'Sail with Moana around the tropical lagoon',
     position: { x: 46, z: 40 }, rotation: -2.07,
     bounds: { width: 27, depth: 25, height: 22 }, shape: 'open', entrance: 8.8,
-    approach: [26, 25], status: 'coming-soon',
+    approach: [26, 25], status: 'complete', build: buildMoana,
   },
   {
     id: 'tiana', title: 'Tiana — The Princess and the Frog', accent: 0x85a358, wing: 'adventure',
