@@ -19,7 +19,7 @@ export function buildTiana({ THREE, document, bay, parts, exhibit, obstacles }) 
   const corners = [[-5.5,8],[6,8],[8.4,4],[7.6,-3.5],[5.3,-7.4],[-4.3,-7.1],[-8.2,-3.8],[-7.4,3.1]];
   corners.forEach(([x,z],i)=> i ? outline.lineTo(x,-z) : outline.moveTo(x,-z));
   outline.closePath();
-  part(ground, new THREE.ShapeGeometry(outline), grass, 0, 0, 0, 1,1,1).rotation.x=-Math.PI/2;
+  part(ground, new THREE.ShapeGeometry(outline), grass, 0, -SURFACE_GAP.detail, 0, 1,1,1).rotation.x=-Math.PI/2;
   part(ground,'box',wood,0,.025,4.45,2.65,.05,6.3);
   for(let i=0;i<12;i++) part(ground,'box',i%2?wood:bark,0,.065,1.58+i*.48,2.60,.025,.045);
   // The shallow ornamental pool is bounded by a solid low bank, not a swim zone.
@@ -49,14 +49,14 @@ export function buildTiana({ THREE, document, bay, parts, exhibit, obstacles }) 
     part(ground,'ball',leaf,x,h,z,1.35,1,1.15);
     addRoundSolid(obstacles,...toWorld(x,z),.40,h);
   }
-  const cabin = addGroup(THREE,ground,'Bayou stilt cottage',5.25,0,-3.8);
+  const cabin = addGroup(THREE,ground,'Bayou stilt cottage',4.9,0,-3.8);
   for(const x of [-1.35,1.35]) for(const z of [-1,1]) part(cabin,'box',bark,x,.6,z,.22,1.2,.22);
   part(cabin,'box',wood,0,1.14,0,3.05,.23,2.5);
   part(cabin,'box',wood,0,2.35,0,2.8,2.2,2.15);
   part(cabin,'box',dark,0,2.0,1.09,.65,1.45,.045);
   for(const x of [-.87,.87]) part(cabin,'box',glow,x,2.60,1.105,.47,.53,.055);
   for(const side of [-1,1]) part(cabin,'box',bark,side*.78,3.69,0,1.78,.18,2.7).rotation.z=-side*.47;
-  addSolid(obstacles,...toWorld(5.25,-3.8),3.15,2.7,4.2,exhibit.rotation);
+  addSolid(obstacles,...toWorld(4.9,-3.8),3.15,2.7,4.2,exhibit.rotation);
   for(let i=0;i<22;i++){
     const side=i%2?1:-1, x=side*(4.4+(i%3)*.29), z=-3.6+(i%11)*.55;
     for(let j=0;j<3;j++) part(ground,'cone',leaf,x+(j-1)*.16,.40+j*.07,z,.12,.8+j*.14,.12).rotation.z=(j-1)*.24;
@@ -114,8 +114,8 @@ export function buildTiana({ THREE, document, bay, parts, exhibit, obstacles }) 
     else part(actor,'box',gold,0,1.38,.23,.10,.28,.028);
     return actor;
   }
-  const tiana=person('Tiana',-2.4,1.9,true);
-  addRoundSolid(obstacles,...toWorld(-2.4,1.9),.68,2.5);
+  const tiana=person('Tiana',-2.8,2.7,true);
+  addRoundSolid(obstacles,...toWorld(-2.8,2.7),.68,2.5);
   const prince=person('Prince Naveen',0,-2.7,false);
   prince.position.y=.40;
   const magic=addGroup(THREE,stage,'Transformation sparkles',0,.8,0);
