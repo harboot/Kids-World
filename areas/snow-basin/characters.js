@@ -7,7 +7,7 @@ const svenCue = [
 ];
 const olafCue = [[76, { duration: 0.14, level: 0.08 }], [81, { duration: 0.18, level: 0.07 }, 0.075]];
 
-export function addSnowCharacters({ THREE, scene, kit, ground, playerRadius, reducedMotion, playCue, notify, onGreetOlaf, onFeedSven }) {
+export function addSnowCharacters({ THREE, scene, kit, ground, playerRadius, reducedMotion, playCue, notify, onFeedSven }) {
   const { box, cone, material, obstacles } = kit;
   const facet = new THREE.DodecahedronGeometry(1);
   const cylinder = new THREE.CylinderGeometry(1, 1, 1, 5);
@@ -163,7 +163,14 @@ export function addSnowCharacters({ THREE, scene, kit, ground, playerRadius, red
   smile.computeVertexNormals();
   olafHead.add(new THREE.Mesh(smile, material(coal)));
   part(olafHead, box, white, 0, 0.117, 0.326, 0.102, 0.062, 0.032);
-  part(olafHead, cone, 0xed7735, 0.015, 0.281, 0.417, 0.092, 0.366, 0.084, Math.PI / 2 - 0.09, 0, -0.10);
+  const nose = new THREE.Mesh(cone, material(0xed7735));
+  nose.name = 'Olaf carrot nose';
+  nose.position.set(0.015, 0.281, 0.417);
+  nose.scale.set(0.092, 0.366, 0.084);
+  nose.rotation.set(Math.PI / 2 - 0.09, 0, -0.10);
+  nose.visible = false;
+  olafHead.add(nose);
+  let celebration = 0;
   for (const side of [-1, 1]) {
     part(olafHead, snowball, white, side * 0.101, 0.391, 0.225, 0.092, 0.102, 0.064);
     part(olafHead, snowball, coal, side * 0.082, 0.389, 0.279, 0.042, 0.057, 0.027);
@@ -260,8 +267,7 @@ export function addSnowCharacters({ THREE, scene, kit, ground, playerRadius, red
       model: olaf, width: 0.36, depth: 0.29, height: 0.61, duration: 1.08,
       action() {
         playCue?.(olafCue);
-        notify?.('Olaf: Hi! Nice to meet you!');
-        onGreetOlaf();
+        notify?.(nose.visible ? 'Olaf: Hi! Nice to meet you!' : 'Olaf: Oh no! I lost my carrot nose near the ice hills!');
       },
       pose(t, reaction) {
         const bounce = Math.sin(t * 2.02);
@@ -292,6 +298,14 @@ export function addSnowCharacters({ THREE, scene, kit, ground, playerRadius, red
   }
 
   return {
+    olaf,
+    restoreNose() {
+      if (nose.visible) return false;
+      nose.visible = true;
+      celebration = 2;
+      playCue?.(olafCue);
+      return true;
+    },
     interaction: {
       x: sven.position.x, z: sven.position.z, anchorY: sven.position.y + 1.8, radius: 2.7,
       label: 'Offer carrot', get active() { return feeding === 0; },
@@ -324,6 +338,15 @@ export function addSnowCharacters({ THREE, scene, kit, ground, playerRadius, red
         const reaction = character.remaining > 0 ? 1 - character.remaining / character.duration : 0;
         character.pose(still ? 0 : time, reaction);
       }
+      if (celebration > 0) {
+        celebration = Math.max(0, celebration - dt);
+        if (!still) {
+          const hop = Math.abs(Math.sin((2 - celebration) * Math.PI * 1.5));
+          olafBody.position.y = hop * 0.38;
+          sticks[0].rotation.z = -0.45 - hop * 0.3;
+          sticks[1].rotation.z = 0.45 + hop * 0.3;
+        }
+      }
       feeding = Math.max(0, feeding - dt);
       carrot.visible = feeding > 0.35;
       carrot.scale.setScalar(Math.min(1, feeding / 0.75));
@@ -334,6 +357,8 @@ export function addSnowCharacters({ THREE, scene, kit, ground, playerRadius, red
     },
     reset() {
       feeding = 0;
+      celebration = 0;
+      nose.visible = false;
       carrot.visible = false;
       time = 0;
       for (const character of characters) {
