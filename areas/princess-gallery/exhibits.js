@@ -6,6 +6,7 @@ import { buildJasmine } from './jasmine.js';
 import { buildMulan } from './mulan.js';
 import { buildRapunzel } from './rapunzel.js';
 import { buildSnowWhite } from './snow-white.js';
+import { buildTiana } from './tiana.js';
 import { metadata } from './metadata.js';
 
 export const GALLERY_WIDTH = metadata.width;
@@ -95,10 +96,10 @@ export const exhibits = [
   },
   {
     id: 'tiana', title: 'Tiana — The Princess and the Frog', accent: 0x85a358, wing: 'adventure',
-    mission: 'Discover Tiana’s water lily', display: 'Water Lily',
+    mission: 'Approach the enchanted frog to meet Prince Naveen',
     position: { x: 18, z: 47 }, rotation: -2.91,
     bounds: { width: 19, depth: 17, height: 17 }, shape: 'open', entrance: 6.5,
-    approach: [11, 32], status: 'coming-soon',
+    approach: [11, 32], status: 'complete', build: buildTiana,
   },
 ];
 
