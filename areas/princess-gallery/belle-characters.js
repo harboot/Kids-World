@@ -32,6 +32,7 @@ function buildReadingBelle(THREE, room, parts, palette) {
     gathering.rotation.set(Math.cos(a) * -.43, a, Math.sin(a) * .39, 'YXZ');
     part(details, 'gem', goldLeaf, Math.sin(a) * .74, .45, Math.cos(a) * .56, .045, .12, .083);
   }
+  part(details, 'sphere', satin, 0, 1.31, 0, .248, .17, .193);
   part(details, 'sphere', goldLeaf, 0, 1.511, -.027, .29, .339, .205);
   part(details, 'drum', silk, 0, 1.267, 0, .256, .067, .199);
   part(details, 'sphere', skin, 0, 1.751, .026, .238, .101, .174);
@@ -41,6 +42,7 @@ function buildReadingBelle(THREE, room, parts, palette) {
     beam(details, silk, [side * .032, 1.626, .177], [side * .208, 1.793, .144], .052);
     const elbow = [side * .324, 1.383, .145];
     beam(details, skin, [side * .266, 1.682, 0], elbow, .11);
+    part(details, 'sphere', pearl, ...elbow, .065, .068, .063);
     beam(details, pearl, elbow, [side * .248, 1.487, .38], .115);
     part(details, 'sphere', pearl, side * .259, 1.483, .398, .070, .071, .084);
   }
@@ -61,7 +63,7 @@ function buildReadingBelle(THREE, room, parts, palette) {
   head.rotation.set(.17, -.09, -.069);
   buildPrincessFace(THREE, parts, head, {
     skin, blush: matte(0xd5967d), brow: brunette, lip: matte(0xab425d), iris: matte(0x785f46), pearl,
-  });
+  }, false, { jaw: .19, eyeWidth: .94 });
   const hair = new THREE.Group();
   part(hair, 'sphere', brunette, 0, .083, -.126, .334, .357, .263);
   part(hair, 'sphere', brunette, 0, .29, -.237, .216, .229, .176);

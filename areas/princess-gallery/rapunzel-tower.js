@@ -248,6 +248,7 @@ function buildRapunzelCharacter(THREE, actor, { part, matte }) {
   const skirtProfile = [[0.65, 0.01], [0.62, 0.10], [0.55, 0.39], [0.38, 0.78], [0.29, 1.04]]
     .map(([r, y]) => new THREE.Vector2(r, y));
   part(actor, new THREE.LatheGeometry(skirtProfile, 20), dress, 0, 0, 0, 1, 1, 0.77);
+  part(actor, 'sphere', dress, 0, 1.025, 0, .294, .125, .226);
   part(actor, 'sphere', bodice, 0, 1.20, 0, 0.34, 0.41, 0.23);
   part(actor, 'sphere', trim, 0, 1.01, 0, 0.33, 0.065, 0.25);
   part(actor, 'gem', petal, 0, 1.25, 0.235, 0.12, 0.18, 0.05);
@@ -268,8 +269,11 @@ function buildRapunzelCharacter(THREE, actor, { part, matte }) {
     part(head, 'sphere', linen, side * 0.327, -0.037, 0.079, 0.078, 0.099, 0.074);
     part(head, 'sphere', petal, side * 0.315, -0.115, 0.105, 0.042, 0.041, 0.044);
     part(head, 'sphere', dark, side * 0.122, 0.048, 0.326, 0.064, 0.086, 0.026);
-    part(head, 'sphere', olive, side * 0.122, 0.041, 0.345, 0.040, 0.057, 0.022);
-    part(head, 'sphere', linen, side * 0.122 - 0.015, 0.072, 0.361, 0.017, 0.016, 0.012);
+    part(head, 'sphere', linen, side * .122, .047, .338, .053, .066, .023);
+    part(head, 'sphere', olive, side * 0.122, 0.041, 0.354, 0.035, 0.051, 0.019);
+    part(head, 'sphere', dark, side*.122,.041,.369,.017,.028,.008);
+    part(head, 'sphere', hair, side*.122,.147,.306,.068,.015,.021).rotation.z=side*-.12;
+    part(head, 'sphere', linen, side * 0.122 - 0.015, 0.072, 0.379, 0.017, 0.016, 0.012);
     part(head, 'sphere', blush, side * 0.207, -0.081, 0.289, 0.069, 0.041, 0.021);
   }
   part(head, 'sphere', linen, 0, -0.051, 0.348, 0.060, 0.067, 0.072);
@@ -290,6 +294,7 @@ function buildRapunzelCharacter(THREE, actor, { part, matte }) {
     part(shoulder, 'sphere', trim, 0, -0.16, 0, 0.117, 0.068, 0.11);
     part(shoulder, 'sphere', linen, 0, -0.245, 0, 0.075, 0.17, 0.077);
     const elbow = addGroup(THREE, shoulder, side > 0 ? 'Rapunzel waving elbow' : 'Rapunzel resting elbow', 0, -0.36, 0.012);
+    part(elbow, 'sphere', linen, 0, -.035, .008, .075, .085, .075);
     part(elbow, 'sphere', linen, 0, -0.131, 0.012, 0.065, 0.164, 0.071);
     part(elbow, 'sphere', linen, 0, -0.30, 0.029, 0.084, 0.119, 0.050);
     part(elbow, 'sphere', linen, -0.063, -0.29, 0.036, 0.041, 0.069, 0.035).rotation.z = -0.44;

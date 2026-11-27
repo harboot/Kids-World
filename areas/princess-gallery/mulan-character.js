@@ -29,6 +29,12 @@ export function buildMulanCharacter({ THREE, room, parts, colors }) {
   const steel = matte(0xbad7dc);
   const facets = new THREE.DodecahedronGeometry(1);
   const headShape = facets.clone().rotateX(Math.atan((1 + Math.sqrt(5)) / 2));
+  const faceVertices = headShape.getAttribute('position');
+  for(let i=0;i<faceVertices.count;i++) {
+    const y=faceVertices.getY(i);
+    faceVertices.setX(i,faceVertices.getX(i)*(1-.15*Math.max(0,-y)));
+  }
+  headShape.computeVertexNormals();
   const clothShell = new THREE.CylinderGeometry(.28, .39, .42, 8);
   const tunicShell = new THREE.CylinderGeometry(.34, .285, .51, 8);
   const actor = addGroup(THREE, room, 'Mulan', x, top, z);
@@ -49,7 +55,7 @@ export function buildMulanCharacter({ THREE, room, parts, colors }) {
   beam(torso, tunic, [-.152, 1.51, .23], [.155, 1.13, .229], .10, .05);
   beam(torso, piping, [-.194, 1.51, .238], [.116, 1.13, .25], .034, .045);
   part(torso, 'gem', colors.gold, .15, 1.066, .242, .060, .057, .029);
-  part(torso, 'drum', skin, 0, 1.57, .018, .12, .18, .11);
+  part(torso, 'drum', skin, 0, 1.62, .018, .12, .24, .11);
   batch(torso, body);
 
   const head = addGroup(THREE, body, 'Mulan head', 0, 1.831, .014);
@@ -79,12 +85,14 @@ export function buildMulanCharacter({ THREE, room, parts, colors }) {
   const arms = [-1, 1].map(side => {
     const shoulder = addGroup(THREE, body, 'Mulan shoulder', side * .294, 1.45, -.013);
     const sleeve = new THREE.Group();
+    part(sleeve, facets, cloth, 0, -.025, 0, .132, .12, .132);
     part(sleeve, facets, cloth, 0, -.129, 0, .147, .220, .146);
     part(sleeve, 'drum', tunic, 0, -.253, 0, .111, .076, .104);
     batch(sleeve, shoulder);
 
     const elbow = addGroup(THREE, shoulder, 'Mulan elbow', 0, -.285, .006);
     const cuff = new THREE.Group();
+    part(cuff, facets, tunic, 0, -.024, 0, .105, .09, .104);
     part(cuff, facets, tunic, 0, -.106, .005, .103, .15, .098);
     part(cuff, 'drum', piping, 0, -.206, 0, .078, .062, .077);
     part(cuff, facets, skin, 0, -.263, .009, .074, .088, .082);

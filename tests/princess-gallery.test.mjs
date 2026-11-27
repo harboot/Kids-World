@@ -1906,6 +1906,8 @@ test('Moana canoe sails and returns, completes one mission and resets', async t 
   const { area, scene } = await worlds.load(ID);
   const exhibit = exhibits.find(entry => entry.id === 'moana');
   const boat = scene.getObjectByName('Moana voyaging canoe');
+  const moana = scene.getObjectByName('Moana');
+  const shoreParent = moana.parent;
   const ride = area.interactions.find(item => item.label === 'Sail with Moana');
   const mission = area.missionStatus.missions.find(entry => entry.id === 'moana');
   const [x,z] = spaceTransform(exhibit).toWorld(MOANA_DOCK.x, MOANA_DOCK.landingZ);
@@ -1920,15 +1922,19 @@ test('Moana canoe sails and returns, completes one mission and resets', async t 
   assert.equal(ride.active,false);
   for(let i=0;i<30;i++) worlds.update(.2,camera.position);
   assert.ok(boat.position.distanceTo(dock)>1);
+  assert.equal(moana.parent,boat,'Moana follows the hull transform');
+  assert.ok(Math.abs(moana.position.y-.568)<1e-6);
   assert.equal(mission.complete,false);
   for(let i=0;i<60;i++) worlds.update(.2,camera.position);
   assert.equal(mission.complete,true);
   assert.equal(restored,1);
+  assert.equal(moana.parent,shoreParent);
   assert.ok(boat.position.equals(dock));
   camera.position.set(x,EYE_HEIGHT,z);
   ride.act({guideCamera:guide});
   worlds.reset();
   assert.equal(restored,2);
+  assert.equal(moana.parent,shoreParent);
   assert.ok(boat.position.equals(dock));
   assert.equal(mission.complete,false);
 });
@@ -1964,4 +1970,28 @@ test('lift cabin has one visible walking surface at the physical floor height', 
   assert.ok(hits.length);
   assert.ok(Math.abs(hits[0].point.y-cabin.position.y)<1e-6);
   assert.equal(hits.filter(hit=>Math.abs(hit.point.y-cabin.position.y)<1e-6).length,1);
+});
+
+test('all ten princess portraits have finite geometry and the expected head hierarchy', async t => {
+  const {worlds} = fixture();
+  t.after(worlds.unload);
+  const {scene} = await worlds.load(ID);
+  for (const [id,name] of [
+    ['rapunzel','Rapunzel head'], ['snow-white','Snow White head'], ['cinderella','Cinderella head'],
+    ['aurora','Aurora head'], ['ariel','Ariel head'], ['belle','Belle head'], ['jasmine','Jasmine head'],
+    ['mulan','Mulan head'], ['tiana','Tiana head'], ['moana','Moana head'],
+  ]) {
+    const bay=scene.getObjectByName(id+' exhibit');
+    const head=bay?.getObjectByName(name);
+    assert.ok(head?.isGroup,name);
+    let count=0;
+    head.traverse(mesh=>{
+      if (!mesh.isMesh) return;
+      count++;
+      const pos=mesh.geometry.getAttribute('position');
+      assert.ok(pos && pos.count>=3,name);
+      assert.ok(pos.array.every(Number.isFinite),name);
+    });
+    assert.ok(count>=3,name);
+  }
 });

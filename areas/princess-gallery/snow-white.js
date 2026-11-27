@@ -80,6 +80,7 @@ function buildSnowWhiteModel(THREE, { part, matte }, { torso, head, arms, legs }
     hem.setX(i, x * pleat);
     hem.setZ(i, z * pleat);
   }
+  skirt.computeVertexNormals();
   part(torso, skirt, matte(trim.color, { flatShading: true }), 0, 0, 0, 1, 1, .78).name = 'Snow White fitted skirt';
 
   const bodice = dressLathe([
@@ -126,6 +127,7 @@ function buildSnowWhiteModel(THREE, { part, matte }, { torso, head, arms, legs }
     const x = side * .104;
     part(head, facets, white, x, .062, .267, .068, .073, .026).rotation.z = side * .16;
     part(head, facets, iris, x + .005, .064, .287, .032, .047, .016);
+    part(head, facets, ink, x+.005,.064,.299,.015,.025,.008);
     part(head, 'gem', white, x - .004, .082, .302, .011, .014, .006);
     part(head, facets, ink, x, .153, .27, .063, .015, .013).rotation.z = -side * .18;
     part(head, facets, rouge, side * .156, -.039, .269, .045, .026, .010).rotation.z = side * .13;
@@ -143,6 +145,7 @@ function buildSnowWhiteModel(THREE, { part, matte }, { torso, head, arms, legs }
     part(upper, facets, sleeve, 0, -.105, 0, .146, .185, .141);
     part(upper, facets, hat, 0, -.111, .131, .053, .09, .040);
     part(upper, cuff, trim, 0, -.268, 0, .101, .066, .098);
+    part(forearm, facets, skin, 0, -.018, .004, .077, .085, .073);
     part(forearm, facets, skin, 0, -.097, .012, .065, .181, .069);
     part(forearm, facets, skin, 0, -.274, .032, .086, .114, .071);
     batchCostumeParts(upper);

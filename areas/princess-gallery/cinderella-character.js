@@ -55,6 +55,7 @@ export function buildCinderellaCharacter(THREE, ballroom, parts, exhibit, obstac
   skirt([[.13, .88, .033, .045], [.24, .89, .036, .021], [.46, .82, .04, 0], [.73, .68, .028, 0],
     [.98, .48, .02, 0], [1.19, .245, .004, 0]], satin);
   skirt([[.15, .900, .033, .042], [.18, .904, .034, .037]], trim);
+  part(details, 'sphere', satin, 0, 1.20, 0, .251, .15, .199);
   part(details, 'sphere', silk, 0, 1.44, 0, .30, .35, .21);
   part(details, 'drum', trim, 0, 1.17, 0, .258, .069, .204);
   part(details, 'sphere', skin, 0, 1.728, .015, .243, .097, .164);
@@ -75,6 +76,7 @@ export function buildCinderellaCharacter(THREE, ballroom, parts, exhibit, obstac
     part(shoulder, 'sphere', pearl, 0, -.255, 0, .078, .111, .078);
     const elbow = addGroup(THREE, shoulder, '', 0, -.305, 0);
     elbow.rotation.set(raised ? -.78 : -.31, 0, -side * (raised ? 1.10 : .24));
+    part(elbow, 'sphere', pearl, 0, -.028, 0, .078, .085, .076);
     part(elbow, 'sphere', pearl, 0, -.132, 0, .070, .172, .068);
     part(elbow, 'sphere', pearl, 0, -.276, .018, .062, .095, .050);
     part(elbow, 'sphere', pearl, -side * .05, -.239, .023, .026, .050, .023).rotation.z = side * .31;
@@ -85,7 +87,7 @@ export function buildCinderellaCharacter(THREE, ballroom, parts, exhibit, obstac
   head.rotation.set(restPitch, restHeadTurn, -.065);
   buildPrincessFace(THREE, parts, head, {
     skin, blush: matte(0xe8a18b), brow: matte(0x795231), lip: matte(0xb34e65), iris: matte(0x437fbc), pearl,
-  });
+  }, false, { jaw: .22, eyeWidth: 1.02 });
   const coiffure = new THREE.Group();
   part(coiffure, 'sphere', hair, 0, .075, -.105, .321, .322, .269);
   part(coiffure, 'sphere', gold, 0, .346, -.107, .234, .220, .211);

@@ -33,7 +33,7 @@ export function buildArielCharacter(THREE, room, parts) {
   const head = addGroup(THREE, spine, 'Ariel head', 0, 1.08, .047);
   buildPrincessFace(THREE, parts, head, {
     skin, blush: matte(0xe8967b), brow: matte(0x772940), lip: matte(0xb53659), iris: matte(0x2783b1), pearl,
-  });
+  }, false, { jaw: .14, eyeWidth: 1.05 });
   const hair = new THREE.Group();
   part(hair, 'sphere', ginger, 0, .09, -.125, .365, .408, .292);
   part(hair, 'sphere', copper, -.147, .252, .173, .242, .145, .111).rotation.z = -.36;
@@ -59,8 +59,10 @@ export function buildArielCharacter(THREE, room, parts) {
 
   const arms = [-1, 1].map(side => {
     const shoulder = addGroup(THREE, spine, 'Ariel shoulder', side * .205, .703, 0);
+    part(shoulder, 'sphere', skin, 0, -.025, 0, .087, .094, .082);
     part(shoulder, 'sphere', skin, 0, -.116, 0, .080, .164, .075);
     const elbow = addGroup(THREE, shoulder, '', 0, -.254, .003);
+    part(elbow, 'sphere', skin, 0, -.035, 0, .070, .083, .068);
     part(elbow, 'sphere', skin, 0, -.110, 0, .061, .145, .062);
     part(elbow, 'sphere', skin, .007, -.240, .025, .062, .081, .044);
     part(elbow, 'sphere', skin, -side * .042, -.224, .041, .027, .054, .037).rotation.z = side * -.27;
@@ -79,6 +81,7 @@ export function buildArielCharacter(THREE, room, parts) {
     }
   }
   const tail = addGroup(THREE, hip, 'Ariel articulated tail tip', 0, -.460, -.045);
+  part(tail, 'sphere', jade, 0, -.050, 0, .154, .182, .128);
   part(tail, 'sphere', jade, 0, -.206, -.02, .130, .329, .112).rotation.x = .12;
   part(tail, 'sphere', emerald, 0, -.429, -.039, .086, .191, .072);
   const fan = addGroup(THREE, tail, 'Ariel tail fins', 0, -.537, -.047);

@@ -27,17 +27,21 @@ export function buildAgrabahCharacters(context) {
   const jasmineZ = 1.57;
   const jasmine = addGroup(THREE, room, 'Jasmine', jasmineX, AGRABAH_BALCONY, jasmineZ, .21);
   const figure = new THREE.Group();
-  const skirt = new THREE.LatheGeometry([[.54, .04], [.57, .17], [.48, .52], [.33, .89],
-    [.28, 1.15]].map(([r, y]) => new THREE.Vector2(r, y)), 16);
-  part(figure, skirt, teal, 0, 0, 0, 1, 1, .73);
-  part(figure, 'drum', blue, 0, .105, 0, .548, .075, .402);
+  // Distinct tapered harem trousers and slippers instead of a single skirt shell.
+  const trousers = new THREE.LatheGeometry([[.09,.14],[.20,.21],[.28,.47],[.25,.76],[.17,1.02],[.14,1.12]].map(([r,y])=>new THREE.Vector2(r,y)),12);
+  part(figure, 'sphere', teal, 0, .94, 0, .31, .25, .22);
+  for(const side of [-1,1]) {
+    part(figure,trousers,teal,side*.19,0,0,1,1,.77);
+    part(figure,'drum',brass,side*.19,.17,0,.105,.075,.093);
+    part(figure,'sphere',blue,side*.19,.085,.10,.115,.086,.205);
+  }
   part(figure, 'sphere', silk, 0, 1.28, .018, .34, .39, .233);
   part(figure, 'drum', brass, 0, 1.035, 0, .31, .091, .25);
   part(figure, 'gem', gold, 0, 1.11, .245, .096, .12, .04);
   part(figure, 'gem', blue, 0, 1.32, .24, .084, .15, .04);
   part(figure, 'drum', skin, 0, 1.61, .02, .13, .24, .13);
   for (const side of [-1, 1]) {
-    part(figure, 'sphere', shade, side * .28, .48, .214, .15, .49, .13).rotation.z = -side * .35;
+    part(figure, 'sphere', shade, side * .32, .53, .135, .083, .32, .072).rotation.z = side * -.12;
     part(figure, 'sphere', silk, side * .34, 1.45, -.002, .14, .16, .14);
     const wrist = [side * .51, 1.22 + (side + 1) * .085, .19 + (side + 1) * .065];
     beam(figure, skin, [side * .34, 1.39, 0], wrist, .111);
@@ -57,7 +61,7 @@ export function buildAgrabahCharacters(context) {
   part(hairModel, 'drum', gold, .268, -.72, -.285, .085, .069, .082).rotation.z = .40;
   part(hairModel, 'gem', blue, -.092, .285, .223, .093, .112, .066).rotation.z = .22;
   batch(figure, jasmine);
-  buildPrincessFace(THREE, parts, jasmineHead, { skin, blush, brow: hair, lip, iris: eye, pearl: cream });
+  buildPrincessFace(THREE, parts, jasmineHead, { skin, blush, brow: hair, lip, iris: eye, pearl: cream }, false, { jaw: .23, eyeWidth: 1.04 });
   addRoundSolid(obstacles, ...toWorld(jasmineX, jasmineZ), .30, AGRABAH_BALCONY + 2.28);
 
   const aladinX = 3.92, aladinZ = 5.33;
