@@ -58,7 +58,7 @@ function gameFixture(t, areas, startingArea, { online = true, preferences = new 
   document.createElement = () => new Element();
   const game = new Element();
   game.ownerDocument = document;
-  const location = new URL(`https://example.test/Kids-World/?area=${startingArea}`);
+  const location = new URL(`https://example.test/Kids-World/${startingArea == null ? '' : '?area=' + startingArea}`);
   const writes = [];
   const frames = new Map();
   const renders = [];
@@ -499,4 +499,51 @@ test('desktop A and D turn in one-finger mode and strafe in two-finger mode', as
   assert.equal(twoFinger.yaw, oneFinger.yaw);
   assert.ok(twoFinger.position.x > .55);
   hold('keyup', 'KeyD');
+});
+
+
+test('root startup opens the public area picker without loading the last area', async t => {
+  const scenes = [];
+  const garden = area('garden', async () => ({ default: visit(garden, scenes) }));
+  const snow = area('snow', async () => ({ default: visit(snow, scenes) }));
+  const secret = area('secret', () => assert.fail('hidden area was loaded'), false);
+  const f = gameFixture(t, { garden, snow, secret }, null, {
+    preferences: new Map([['kids-world-last-area', 'snow']]),
+  });
+  await f.ready;
+  assert.equal(f.game.dataset.home, 'true');
+  assert.equal(f.game.dataset.state, 'menu');
+  assert.deepEqual(scenes, []);
+  assert.deepEqual(f.writes, []);
+  assert.ok(f.game.querySelector('#level-picker').open);
+  assert.equal(f.game.querySelector('#restart').disabled, true);
+  const cards = f.game.querySelector('#area-list').children;
+  assert.deepEqual(cards.map(card => card.dataset.area), ['garden', 'snow']);
+  cards[0].click();
+  await setImmediate();
+  assert.deepEqual(scenes, ['garden']);
+  assert.equal(f.game.dataset.home, undefined);
+  assert.equal(f.location.searchParams.get('area'), 'garden');
+  assert.equal(f.writes[0][0], 'push');
+  f.location.searchParams.delete('area');
+  send(f.window, 'popstate');
+  assert.equal(f.game.dataset.home, 'true');
+  assert.ok(f.game.querySelector('#level-picker').open);
+  assert.deepEqual(scenes, ['garden']);
+});
+
+test('a failed first selection leaves the area menu usable', async t => {
+  t.mock.method(console, 'error', () => {});
+  const garden = area('garden', async () => ({ default: visit(garden, []) }));
+  const broken = area('broken', async () => { throw new Error('bad import'); });
+  const f = gameFixture(t, { garden, broken }, null);
+  await f.ready;
+  f.game.querySelector('#area-list').children[1].click();
+  await setImmediate();
+  assert.equal(f.game.dataset.home, 'true');
+  assert.match(f.game.querySelector('#notice').textContent, /broken could not load/);
+  f.game.querySelector('#start').click();
+  f.game.querySelector('#area-list').children[0].click();
+  await setImmediate();
+  assert.equal(f.game.dataset.level, 'garden');
 });
