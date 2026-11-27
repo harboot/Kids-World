@@ -126,10 +126,10 @@ export function buildWalkwayLift({ THREE, document, parent, parts, height, camer
   function onFloor(player, floor) {
     return Math.abs(player.y - EYE_HEIGHT - floor) < .27;
   }
-  function request(target) {
+  function request(target, callerFloor = stops[stop]) {
     const still = reducedMotion();
     trip = { target, elapsed: 0, doorTime: still ? .13 : .43, travelTime: still ? .19 : 8.0, nextMotor: .65 };
-    playCue(galleryCues.liftStart,cueSource(x,z,stops[stop]+EYE_HEIGHT,8));
+    playCue(galleryCues.liftStart,cueSource(x,z,callerFloor+EYE_HEIGHT,8));
   }
   function render(open, dock) {
     cabinDoors(open);
@@ -149,7 +149,7 @@ export function buildWalkwayLift({ THREE, document, parent, parts, height, camer
         onFloor(player, floor) && Math.hypot(player.x - this.x, player.z - this.z) <= this.radius;
     },
     act() {
-      if (this.active && camera && this.reachable(camera.position)) request(i);
+      if (this.active && camera && this.reachable(camera.position)) request(i, floor);
     },
   }));
   const ride = {
