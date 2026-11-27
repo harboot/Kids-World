@@ -41,7 +41,7 @@ export const exhibits = [
   },
   {
     id: 'snow-white', title: 'Snow White and the Seven Dwarfs', accent: 0xbb5c67, wing: 'woodland',
-    mission: 'Greet a character in Snow White’s woodland',
+    mission: 'Visit Snow White and the Seven Dwarfs',
     position: { x: -51, z: 6 }, rotation: 1.48,
     bounds: { width: 32, depth: 28, height: 22 }, shape: 'woodland', entrance: 8.2,
     approach: [-30, 7], status: 'complete', build: buildSnowWhite,
