@@ -82,12 +82,7 @@ test('public gallery opens by normal and drone URLs with no castle progress', as
     const { missions } = visit.area.missionStatus;
     assert.deepEqual(missions.map(mission => mission.id), exhibits.map(exhibit => exhibit.id));
     assert.ok(missions.every(mission => !mission.complete && mission.current === 0 && mission.total === 1));
-    assert.match(visit.area.missionStatus.hint, /Visit Rapunzel and jump onto the observation platform/);
-    assert.match(visit.area.missionStatus.hint, /Approach Snow White and the seven dwarfs/);
-    assert.match(visit.area.missionStatus.hint, /Cinderella’s glass slipper on the ballroom stairs/);
-    assert.match(visit.area.missionStatus.hint, /Approach the enchanted rose to wake Aurora/);
-    assert.match(visit.area.missionStatus.hint, /Board Ariel’s shipwreck/);
-    assert.match(visit.area.missionStatus.hint, /Approach Belle’s enchanted tea table/);
+    assert.equal(visit.area.missionStatus.hint, 'Visit all 10 princess exhibits.');
     assert.equal(game.progress.has(CASTLE), false);
     assert.equal(game.progress.has(ID), false);
   }
@@ -1310,7 +1305,18 @@ test('Mulan’s gong starts one demonstration from the garden path and can be st
   const gong = area.interactions.find(item => item.label === 'Strike the great gong');
   const disk = room.getObjectByName('Suspended bronze disk');
   const blade = room.getObjectByName('Mulan practice sword');
-  const body = room.getObjectByName('Mulan body');
+  const body = room.getObjectByName('Mulan waist pivot');
+  const hips = room.getObjectByName('Mulan hips');
+  const torso = room.getObjectByName('Mulan body');
+  const legs = hips.children.filter(child => child.name === 'Mulan leg');
+  assert.equal(legs.length, 2);
+  assert.equal(torso.parent, body);
+  const checkWaist = () => {
+    const waist = body.getWorldPosition(new THREE.Vector3());
+    assert.ok(waist.distanceTo(hips.getWorldPosition(new THREE.Vector3())) < 1e-6);
+    for (const leg of legs) assert.ok(leg.getWorldPosition(new THREE.Vector3()).distanceTo(waist) < .18);
+  };
+  checkWaist();
   const mission = area.missionStatus.missions.find(entry => entry.id === 'mulan');
   const pose = () => [disk.rotation.x, ...blade.rotation.toArray(), ...body.rotation.toArray(), ...body.position.toArray()];
   const idle = pose();
@@ -1336,7 +1342,7 @@ test('Mulan’s gong starts one demonstration from the garden path and can be st
   assert.notEqual(disk.rotation.x, 0);
   assert.notDeepEqual(pose(), idle);
   assert.equal(mission.complete, false);
-  for (let i = 0; i < 25; i++) worlds.update(.05, camera.position, .24);
+  for (let i = 0; i < 25; i++) { worlds.update(.05, camera.position, .24); checkWaist(); }
   assert.equal(mission.complete, true);
   assert.deepEqual(pose(), idle);
   assert.equal(gong.active, true);

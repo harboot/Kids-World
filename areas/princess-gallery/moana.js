@@ -23,27 +23,81 @@ export function buildMoana(context) {
     const shape = new THREE.Shape(points.map(([x,z]) => new THREE.Vector2(x,-z)));
     part(details,new THREE.ShapeGeometry(shape),material,0,y,0,1,1,1).rotation.x=-Math.PI/2;
   }
-  // Full footprint follows the existing irregular room boundary.
+  // Sample a smooth shoreline once; every water band shares the same outline.
+  // The deep-water surface and shallows form one mesh with vertex colors, not overlapping planes.
   floor(outline.map(([x,z])=>[x*.97,z*.97]),sand,0);
-  const coast = [[-10,3.8],[-7.6,4.2],[-4,3.95],[0,4.0],[4,4.1],[8.8,3.75],[10.8,2.0]];
-  const lagoon = [...coast,[10.8,-4.9],[6.8,-10.7],[-5.8,-10.0],[-11,-6.1]];
-  floor(lagoon,sea,SURFACE_GAP.trim);
-  for(let i=0;i<coast.length-1;i++){
-    const a=coast[i],b=coast[i+1];
-    beam(details,shallow,[a[0],.055,a[1]-.25],[b[0],.055,b[1]-.25],.035,.52);
-    beam(details,foam,[a[0],.078,a[1]-.48],[b[0],.078,b[1]-.48],.025,.12);
-    // Solid shoreline keeps walkers out of the display water; the guided ride bypasses it.
-    const mx=(a[0]+b[0])/2,mz=(a[1]+b[1])/2;
-    addSolid(obstacles,...toWorld(mx,mz),Math.hypot(b[0]-a[0],b[1]-a[1])+.1,.45,2.6,
-      exhibit.rotation+Math.atan2(a[1]-b[1],b[0]-a[0]));
+  const shoreControls = [[-10.3,3.0],[-8.1,4.0],[-5.0,4.45],[-2.3,4.1],
+    [0,4.0],[2.8,4.25],[6.2,4.5],[9.0,3.65],[11.1,1.7],
+    [10.3,-5.1],[6.4,-10.5],[-5.8,-10.1],[-10.6,-5.9]];
+  const curve = new THREE.CatmullRomCurve3(shoreControls.map(([x,z])=>new THREE.Vector3(x,0,z)),true,'centripetal');
+  const rim = curve.getPoints(96).slice(0,-1);
+  const center = new THREE.Vector3(0,0,-2.8);
+  const rings = [1,.96,.86,.70,.43,0];
+  const palette = [0x9ed8cb,0x83d9ce,0x42bfc0,0x269aa9,0x187f9e,0x197c9d].map(c=>new THREE.Color(c));
+  const vertices=[], colors=[], indices=[];
+  for(let k=0;k<rings.length;k++){
+    for(const p of rim){
+      const x=center.x+(p.x-center.x)*rings[k], z=center.z+(p.z-center.z)*rings[k];
+      vertices.push(x,.035,z);
+      const c=palette[k].clone().multiplyScalar(1+.025*Math.sin(x*1.7+z*.9));
+      colors.push(c.r,c.g,c.b);
+    }
   }
-  // A low rock boundary makes the lagoon's inaccessible edge visually clear.
-  for(let i=0;i<21;i++){
-    const a=coast[Math.min(coast.length-2,Math.floor(i/3))];
-    const b=coast[Math.min(coast.length-1,Math.floor(i/3)+1)];
-    const t=(i%3+.5)/3, x=THREE.MathUtils.lerp(a[0],b[0],t), z=THREE.MathUtils.lerp(a[1],b[1],t);
-    if(Math.abs(x)<1.65)continue;
-    part(details,'ball',stone,x,.24,z,.46,.34,.42).rotation.y=i*.73;
+  const n=rim.length;
+  for(let k=0;k<rings.length-1;k++)for(let i=0;i<n;i++){
+    const a=k*n+i,b=k*n+(i+1)%n,c=a+n,d=b+n;
+    indices.push(a,b,c);
+    if(k<rings.length-2)indices.push(b,d,c);
+  }
+  const waterGeo=new THREE.BufferGeometry();
+  waterGeo.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
+  waterGeo.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+  waterGeo.setIndex(indices);
+  waterGeo.computeVertexNormals();
+  // The rim is clockwise in X/Z; correct winding if necessary.
+  if(waterGeo.getAttribute('normal').getY(0)<0){
+    for(let i=0;i<indices.length;i+=3)[indices[i+1],indices[i+2]]=[indices[i+2],indices[i+1]];
+    waterGeo.setIndex(indices);waterGeo.computeVertexNormals();
+  }
+  const surface=part(details,waterGeo,matte(0xffffff,{vertexColors:true}),0,0,0,1,1,1);
+  surface.name='Moana lagoon gradient water';
+  // A continuous beach-side collision boundary matches the curved shoreline.
+  for(let i=0;i<n;i++){
+    const a=rim[i],b=rim[(i+1)%n];
+    const mx=(a.x+b.x)/2,mz=(a.z+b.z)/2;
+    addSolid(obstacles,...toWorld(mx,mz),Math.hypot(b.x-a.x,b.z-a.z)+.08,.25,2.6,
+      exhibit.rotation+Math.atan2(a.z-b.z,b.x-a.x));
+    if(i%4===0 && mz>2.5 && Math.abs(mx)>1.75){
+      part(details,'ball',stone,mx,.16,mz,.34,.22,.31).rotation.y=i*.73;
+    }
+  }
+  // Thin curved foam ribbons and scattered surface glints, above the water plane.
+  function ribbon(scale, first, count, width, material, y){
+    const positions=[], index=[];
+    for(let j=0;j<=count;j++){
+      const p=rim[(first+j)%n];
+      for(const r of [scale,scale-width]){
+        positions.push(center.x+(p.x-center.x)*r,y,center.z+(p.z-center.z)*r);
+      }
+      if(j<count){const i=j*2;index.push(i,i+1,i+2,i+1,i+3,i+2);}
+    }
+    const g=new THREE.BufferGeometry();
+    g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+    g.setIndex(index);g.computeVertexNormals();
+    if(g.getAttribute('normal').getY(0)<0){
+      for(let i=0;i<index.length;i+=3)[index[i+1],index[i+2]]=[index[i+2],index[i+1]];
+      g.setIndex(index);g.computeVertexNormals();
+    }
+    part(details,g,material,0,0,0,1,1,1);
+  }
+  for(let i=0;i<n;i+=12)ribbon(.965,i,8,.008,foam,.057);
+  for(let i=5;i<n;i+=16)ribbon(.88,i,7,.005,shallow,.049);
+  const ripples=addGroup(THREE,room,'Lagoon surface ripples');
+  const rippleMat=matte(0x9edee0,{transparent:true,opacity:.48,depthWrite:false});
+  for(let i=0;i<22;i++){
+    const angle=i*2.39996,r=.24+(i%5)*.12;
+    const x=Math.cos(angle)*8*r,z=-2.8+Math.sin(angle)*6*r;
+    part(ripples,'sphere',rippleMat,x,.063,z,.23+(i%4)*.14,.006,.036).rotation.y=.25*Math.sin(i);
   }
   // Boardwalk lies on the sand, keeping the existing floor-height contract.
   part(details,'box',wood,0,.06,5.0,2.9,.12,2.2);
@@ -196,6 +250,8 @@ export function buildMoana(context) {
   dock();
   return {interactions:[interaction],
     update(dt,_player,_grounded,still,elapsed=dt){
+      if(!still && !reducedMotion()) { ripples.position.y = .003*Math.sin((ripples.userData.phase=(ripples.userData.phase??0)+dt)*2); }
+      else ripples.position.y=0;
       if(!release)return false;
       time=Math.min(VOYAGE_DURATION,time+Math.max(0,elapsed));
       const steady=still||reducedMotion();
@@ -217,6 +273,6 @@ export function buildMoana(context) {
       if(completed)return false;
       completed=true;return true;
     },
-    reset(){stop(landing);completed=false;},
+    reset(){stop(landing);completed=false;ripples.position.y=0;ripples.userData.phase=0;},
   };
 }

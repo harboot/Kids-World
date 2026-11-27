@@ -34,8 +34,14 @@ export function buildMulanCharacter({ THREE, room, parts, colors }) {
   const actor = addGroup(THREE, room, 'Mulan', x, top, z);
   const body = addGroup(THREE, actor, 'Mulan body');
   const torso = new THREE.Group();
+  // The waist is the shared articulation point; a continuous hip volume overlaps both legs.
+  const hips = addGroup(THREE, actor, 'Mulan hips', 0, .78, 0);
+  part(hips, facets, pants, 0, -.025, 0, .29, .19, .18);
+  const waistJoint = addGroup(THREE, actor, 'Mulan waist pivot', 0, .78, 0);
+  waistJoint.add(body);
+  body.position.y = -.78;
 
-  part(torso, clothShell, tunic, 0, .92, 0, 1, 1, .72);
+  part(torso, clothShell, tunic, 0, .89, 0, 1, 1.24, .78);
   part(torso, tunicShell, cloth, 0, 1.27, 0, 1, 1, .72);
   part(torso, 'drum', sash, 0, 1.069, 0, .327, .105, .236);
   const collar = part(torso, facets, piping, 0, 1.50, .115, .25, .09, .133);
@@ -99,9 +105,9 @@ export function buildMulanCharacter({ THREE, room, parts, colors }) {
   batch(swordParts, sword);
 
   const legs = [-1, 1].map(side => {
-    const leg = addGroup(THREE, actor, 'Mulan leg', side * .165, .78, 0);
+    const leg = addGroup(THREE, hips, 'Mulan leg', side * .165, 0, 0);
     const clothes = new THREE.Group();
-    part(clothes, facets, pants, 0, -.285, 0, .161, .36, .139);
+    part(clothes, facets, pants, 0, -.255, 0, .174, .405, .151);
     part(clothes, 'box', boot, 0, -.582, .011, .231, .26, .234);
     part(clothes, facets, boot, 0, -.709, .068, .133, .09, .206);
     batch(clothes, leg);
@@ -112,9 +118,10 @@ export function buildMulanCharacter({ THREE, room, parts, colors }) {
     const mix = key => THREE.MathUtils.lerp(from[key], to[key], blend);
     const shift = mix('shift');
     const bow = mix('bow');
-    body.position.set(shift * .56, -Math.abs(shift) * .16, 0);
-    body.rotation.set(bow, mix('turn'), -shift * .38);
-    head.rotation.set(-bow * .28, -body.rotation.y * .28, shift * .21);
+    // Rotate the torso about the hips, not the floor. Both leg roots stay inside the tunic.
+    waistJoint.rotation.set(bow, mix('turn'), -shift * .38);
+    hips.rotation.y = mix('turn') * .35;
+    head.rotation.set(-bow * .28, -waistJoint.rotation.y * .28, shift * .21);
     arms[0].shoulder.rotation.set(-.27, 0, mix('free'));
     arms[0].elbow.rotation.x = -.35 - Math.abs(shift) * .60;
     arms[1].shoulder.rotation.set(mix('lift'), 0, mix('arm'));
