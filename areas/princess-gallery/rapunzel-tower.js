@@ -1,3 +1,4 @@
+import { buildPrincessFace } from './princess-face.js';
 import { addGroup, SURFACE_GAP } from '../../core/geometry.js';
 import { seededRandom } from '../../core/random.js';
 
@@ -232,10 +233,10 @@ function braidedStrand(THREE, curve, strand) {
   return geometry;
 }
 
-function buildRapunzelCharacter(THREE, actor, { part, matte }) {
+function buildRapunzelCharacter(THREE, actor, parts) {
+  const { part, matte } = parts;
   const linen = matte(0xf5cfb5);
   const blush = matte(0xe7a393);
-  const dark = matte(0x413242);
   const olive = matte(0x41584f);
   const petal = matte(0xe6a4b7);
   const hair = matte(0xecab40);
@@ -261,26 +262,15 @@ function buildRapunzelCharacter(THREE, actor, { part, matte }) {
   const head = addGroup(THREE, actor, 'Rapunzel head', 0, 1.83, 0.04);
   head.rotation.x = 0.14;
   part(head, 'sphere', hair, -0.035, 0.075, -0.077, 0.419, 0.416, 0.355);
-  part(head, 'sphere', linen, 0, 0, 0.046, 0.345, 0.352, 0.303);
+  const face = addGroup(THREE, head, 'Rapunzel portrait', 0, 0, .046);
+  face.scale.set(1.12, 1.04, 1.10);
+  buildPrincessFace(THREE, parts, face, { skin: linen, blush, brow: matte(0x98612e), lip: matte(0xb75a76), iris: olive, pearl: matte(0xfff0df) }, false, { jaw: .16, eyeWidth: 1.06 });
   part(head, 'sphere', highlights, -0.165, 0.248, 0.205, 0.278, 0.115, 0.142).rotation.z = 0.56;
   part(head, 'sphere', hair, 0.168, 0.23, 0.128, 0.22, 0.133, 0.169).rotation.z = -0.62;
   part(head, 'sphere', highlights, -0.301, 0.009, -0.011, 0.118, 0.33, 0.15).rotation.z = -0.24;
   for (const side of [-1, 1]) {
-    part(head, 'sphere', linen, side * 0.327, -0.037, 0.079, 0.078, 0.099, 0.074);
-    part(head, 'sphere', petal, side * 0.315, -0.115, 0.105, 0.042, 0.041, 0.044);
-    part(head, 'sphere', dark, side * 0.122, 0.048, 0.326, 0.064, 0.086, 0.026);
-    part(head, 'sphere', linen, side * .122, .047, .338, .053, .066, .023);
-    part(head, 'sphere', olive, side * 0.122, 0.041, 0.354, 0.035, 0.051, 0.019);
-    part(head, 'sphere', dark, side*.122,.041,.369,.017,.028,.008);
-    part(head, 'sphere', hair, side*.122,.147,.306,.068,.015,.021).rotation.z=side*-.12;
-    part(head, 'sphere', linen, side * 0.122 - 0.015, 0.072, 0.379, 0.017, 0.016, 0.012);
-    part(head, 'sphere', blush, side * 0.207, -0.081, 0.289, 0.069, 0.041, 0.021);
+    part(head, 'sphere', petal, side * .327, -.115, .050, .042, .041, .044);
   }
-  part(head, 'sphere', linen, 0, -0.051, 0.348, 0.060, 0.067, 0.072);
-  const smile = new THREE.CatmullRomCurve3([
-    [-0.093, -0.143, 0.326], [-0.043, -0.173, 0.329], [0.026, -0.177, 0.328], [0.090, -0.149, 0.327],
-  ].map(point => new THREE.Vector3(...point)));
-  part(head, new THREE.TubeGeometry(smile, 8, 0.016, 5, false), dark, 0, 0, 0, 1, 1, 1);
 
   for (const [x, y, z] of [[-0.28, 0.25, 0.17], [-0.34, 0.16, 0.18], [-0.38, 0.06, 0.16]]) {
     part(head, 'sphere', petal, x, y, z, 0.077, 0.065, 0.055);
