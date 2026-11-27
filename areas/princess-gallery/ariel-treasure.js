@@ -1,9 +1,10 @@
+import { cueSource, galleryCues } from './interaction-audio.js';
 import { addGroup, SURFACE_GAP } from '../../core/geometry.js';
 import { EYE_HEIGHT } from '../../core/player.js';
 import { seededRandom } from '../../core/random.js';
 import { addSolid, spaceTransform } from './parts.js';
 
-export function buildArielTreasure({ THREE, room, parts, palette, exhibit, obstacles, camera, isActive, reducedMotion }) {
+export function buildArielTreasure({ THREE, room, parts, palette, exhibit, obstacles, camera, isActive, reducedMotion, playCue = () => {} }) {
   const { part, batch, matte } = parts;
   const { gold, teal, ivory, deep } = palette;
   const wood = matte(0x785344);
@@ -63,13 +64,14 @@ export function buildArielTreasure({ THREE, room, parts, palette, exhibit, obsta
   }
   return {
     interaction: {
-      x: anchorX, z: anchorZ, radius, anchorY: .86, requiresView: true,
+      x: anchorX, z: anchorZ, radius, anchorY: .86, requiresView: true, silent: true,
       get active() { return isActive(); },
       get label() { return opened ? 'Close treasure chest' : 'Open treasure chest'; },
       reachable,
       act() {
         if (!isActive() || !camera || !reachable(camera.position)) return;
         opened = !opened;
+        playCue(opened ? galleryCues.chestOpen : galleryCues.chestClose,cueSource(x,z,EYE_HEIGHT,6));
         if (reducedMotion()) {
           amount = Number(opened);
           render();
