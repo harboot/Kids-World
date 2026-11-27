@@ -1,3 +1,5 @@
+import { EYE_HEIGHT } from '../../core/player.js';
+
 const turn = Math.PI * 2;
 const startAngle = -Math.PI / 2;
 const inner = 2.02;
@@ -17,7 +19,7 @@ export function towerStairPoint(tread, radius = (inner + outer) / 2, y = Math.mi
   return { x: ICE_TOWER.x + Math.sin(angle) * radius, y, z: ICE_TOWER.z + Math.cos(angle) * radius };
 }
 
-export function addIceTower(THREE, scene, { mesh, material, cone }) {
+export function addIceTower(THREE, scene, { mesh, material, cone }, { camera, ground, signal, isPlayerGrounded = () => true, reducedMotion = () => false, playCue } = {}) {
   const { x, z, deckHeight } = ICE_TOWER;
   const group = new THREE.Group();
   group.name = 'Ice Tower';
@@ -85,31 +87,121 @@ export function addIceTower(THREE, scene, { mesh, material, cone }) {
   stairs.receiveShadow = true;
   group.add(stairs);
 
+  // A continuous chute replaces the tread geometry while the player is at the lookout.
+  const chutePositions = [];
+  function chuteQuad(a,b,c,d) {
+    for (const p of [a,b,c,a,c,d]) chutePositions.push(p.x,p.y,p.z);
+  }
+  for(let i=0;i<treadCount;i++){
+    const a=Math.min(i,risingTreads)*treadHeight;
+    const b=Math.min(i+1,risingTreads)*treadHeight;
+    const p=(t,r,h)=>towerStairPoint(t,r,h);
+    chuteQuad(p(i,inner,a),p(i,outer,a),p(i+1,outer,b),p(i+1,inner,b));
+    for(const r of [inner,outer]) {
+      const A=p(i,r,a),B=p(i+1,r,b),C=p(i+1,r,b+.58),D=p(i,r,a+.58);
+      if(r===inner)chuteQuad(B,A,D,C);else chuteQuad(A,B,C,D);
+    }
+  }
+  const chuteGeometry=new THREE.BufferGeometry();
+  chuteGeometry.setAttribute('position',new THREE.Float32BufferAttribute(chutePositions,3));
+  chuteGeometry.computeVertexNormals();
+  const chute=new THREE.Mesh(chuteGeometry,new THREE.MeshLambertMaterial({color:0xa4e1f4,side:THREE.DoubleSide}));
+  chute.name='Ice Tower spiral slide';
+  chute.visible=false;
+  group.add(chute);
+  let slideMode=false, release=null, elapsed=0, entry=null, entryTread=0, duration=6;
+  const centerRadius=(inner+outer)/2;
+  function setSlideMode(value){
+    slideMode=value;
+    stairs.visible=!value;
+    chute.visible=value;
+  }
+  function treadAt(px,pz,feet=0){
+    const angle=Math.atan2(px-x,pz-z)-startAngle;
+    const t=((angle%turn+turn)%turn)/treadAngle;
+    let selected=null;
+    // A short zero-height entry apron lets the player cross the angular seam from the floor.
+    if(t>34.8 && feet<=footingTolerance)selected=t-36;
+    for(let n=t;n<=treadCount+.001;n+=36){
+      if(Math.min(n,risingTreads)*treadHeight>feet+footingTolerance)break;
+      selected=n;
+    }
+    return selected;
+  }
   function surface(px, pz, feet = 0) {
     const dx = px - x;
     const dz = pz - z;
     const radiusSquared = dx * dx + dz * dz;
     if (radiusSquared < inner * inner || radiusSquared > outer * outer) return null;
-    let tread = ((Math.atan2(dx, dz) - startAngle + turn) % turn) / treadAngle;
-    let floor = null;
-    // The same angle can cross multiple flights. Select the highest one within stepping range.
-    for (; tread <= treadCount; tread += 36) {
-      const height = Math.min(tread, risingTreads) * treadHeight;
-      if (height > feet + footingTolerance) break;
-      floor = height;
+    const tread=treadAt(px,pz,feet);
+    return tread===null?null:Math.max(0,Math.min(tread,risingTreads)*treadHeight);
+  }
+
+  function blocksGround(px,pz,radius,feet,from){
+    const distance=Math.hypot(px-x,pz-z);
+    const oldDistance=from?Math.hypot(from.x-x,from.z-z):distance;
+    // Permit a player already overlapping a rail to move out of it, never trap them.
+    if(distance<inner+radius && (feet??0)<columnHeight && (!from||distance<=oldDistance))return true;
+    if(!from)return false;
+    const previous=surface(from.x,from.z,feet);
+    if(previous===null||previous<=.34||feet-previous>1.8)return false;
+    if(distance>outer-.19-radius && distance>=oldDistance-1e-6)return true;
+    const next=surface(px,pz,feet);
+    return next===null||previous-next>footingTolerance;
+  }
+  function atTop(eye){
+    if(!eye||!isPlayerGrounded())return false;
+    const feet=eye.y-EYE_HEIGHT;
+    return Math.abs(feet-deckHeight)<.15&&surface(eye.x,eye.z,feet)===deckHeight;
+  }
+  const summit=towerStairPoint(treadCount-2);
+  const interaction={
+    x:summit.x,z:summit.z,anchorY:deckHeight+1,label:'Slide down Ice Tower',radius:4,silent:true,
+    get active(){return slideMode&&!release&&!signal?.aborted;},
+    reachable:atTop,
+    act({guideCamera}={}){
+      if(!interaction.active||!atTop(camera?.position)||typeof guideCamera!=='function')return false;
+      const eye=camera.position, feet=eye.y-EYE_HEIGHT;
+      entryTread=treadAt(eye.x,eye.z,feet)??treadCount-2;
+      entry={x:eye.x,z:eye.z,elevation:feet,yaw:camera.rotation.y,pitch:camera.rotation.x};
+      const restore=guideCamera(()=>{});
+      if(typeof restore!=='function')return false;
+      release=restore;elapsed=0;
+      duration=reducedMotion()?8:6;
+      playCue?.([[72,{endPitch:43,duration:.75,level:.1,wave:'triangle'}]]);
+      return true;
+    },
+  };
+  function stop(spawn){
+    const restore=release;
+    release=null;
+    setSlideMode(false);
+    restore?.(spawn);
+  }
+  function update(dt,eye){
+    if(!release){
+      if(atTop(eye))setSlideMode(true);
+      else if(slideMode&&eye&&eye.y-EYE_HEIGHT<.25)setSlideMode(false);
+      return;
     }
-    return floor;
+    if(signal?.aborted){stop(entry);return;}
+    elapsed=Math.min(duration,elapsed+dt);
+    const p=elapsed/duration;
+    // Accelerate gently then keep the descent fast; a short ground-level exit clears the rail.
+    const t=entryTread*(1-p*p*(3-2*p));
+    const point=towerStairPoint(t,centerRadius);
+    const before=towerStairPoint(Math.max(0,t-.2),centerRadius);
+    const after=towerStairPoint(t+.2,centerRadius);
+    const yaw=Math.atan2(after.x-before.x,after.z-before.z);
+    const blend=Math.min(1,elapsed/.35);
+    camera.position.set(entry.x+(point.x-entry.x)*blend,entry.elevation+EYE_HEIGHT+(point.y+.96-entry.elevation-EYE_HEIGHT)*blend,entry.z+(point.z-entry.z)*blend);
+    camera.rotation.set(-.12,yaw,0,'YXZ');
+    camera.updateMatrixWorld();
+    if(elapsed>=duration){
+      const exit={x:x-centerRadius,z:z-1.15,yaw,pitch:0};
+      stop(exit);
+    }
   }
-
-  function blocksGround(px, pz, radius, feet, from) {
-    const distance = Math.hypot(px - x, pz - z);
-    if (distance < inner + radius && (feet ?? 0) < columnHeight) return true;
-    if (!from) return false;
-    const previous = surface(from.x, from.z, feet);
-    if (previous === null || previous <= 2 * treadHeight || feet - previous > 1.8) return false;
-    const next = surface(px, pz, feet);
-    return distance > outer - 0.19 - radius || next === null || previous - next > footingTolerance;
-  }
-
-  return { surface, blocksGround };
+  return { surface, blocksGround, interaction, atTop, update, get riding(){return release!==null;},
+    reset(){stop(entry);}, cancel(){stop(entry);} };
 }

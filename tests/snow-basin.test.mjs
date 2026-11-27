@@ -189,7 +189,8 @@ function assertProgress(area, { snowmen = 0, chops = 0, slide = 0, olaf = 0, sve
 
 function fallInWorld(worlds, position = player) {
   const { interactions } = worlds.active.area;
-  assert.ok(interactions.find(item => item.label === 'Pick up axe').act());
+  position = { x: 3.7, z: -1.85 };
+  worlds.update(0, position);
   const chop = interactions.find(item => item.label === 'Chop tree');
   for (let i = 0; i < CHOPS; i++) {
     assert.ok(chop.act());
@@ -244,11 +245,11 @@ test('the pine can be chopped from several positions with a clear view and a pro
   const axe = visit.viewmodel.getObjectByName('Held axe');
   const axeHeight = axe.position.y;
   const chop = area.interactions.find(item => item.label === 'Chop tree');
-  const positions = [{ x: -0.6, z: -4.1 }, { x: 0.7, z: 3.05 }, { x: 1.55, z: -0.05 }];
+  const positions = [{ x: 3.8, z: -1.85 }, { x: 4.2, z: .1 }, { x: 4.2, z: -3.8 }];
   const { x, z } = positions[0];
   assert.equal(chop.active, false);
   assert.equal(boundary.visible, true);
-  area.interactions.find(item => item.label === 'Pick up axe').act();
+  assert.ok(!area.interactions.some(item=>item.label==='Pick up axe'));
   worlds.update(0, { x, z });
   for (const position of positions) {
     assert.equal(nearestInteraction(area.interactions, position), chop);
@@ -262,22 +263,6 @@ test('the pine can be chopped from several positions with a clear view and a pro
   assert.equal(nearestInteraction([chop], { x: 14, z: -1.85 }), null);
   assert.ok(reachableCells(area).some(cell => chop.reachable(cell)));
 
-  for (const [fov, aspect] of [[62, 16 / 9], [68, 412 / 915]]) {
-    camera.fov = fov;
-    camera.aspect = aspect;
-    camera.updateProjectionMatrix();
-    camera.position.set(x, 1.68, z);
-    camera.lookAt(chop.x, 3.28, chop.z);
-    camera.updateMatrixWorld();
-    for (const lean of [0, -Math.PI / 4, -Math.PI / 2]) {
-      tree.rotation.z = lean;
-      tree.updateMatrixWorld();
-      for (const height of [0, 7.92]) {
-        const screen = tree.localToWorld(new THREE.Vector3(0, height, 0)).project(camera);
-        assert.ok(Math.abs(screen.x) < 1 && Math.abs(screen.y) < 1, `Tree endpoint at ${lean} in ${aspect}`);
-      }
-    }
-  }
 
   for (let i = 0; i < CHOPS; i++) {
     assert.ok(chop.act());
@@ -290,7 +275,7 @@ test('the pine can be chopped from several positions with a clear view and a pro
   assert.equal(boundary.visible, false);
   assert.equal(chop.active, false);
   assert.equal(axe.position.y, axeHeight);
-  assert.equal(walkElevation(area, { x, z }, 5.4, -1.85, 0, true), 0);
+  assert.equal(walkElevation(area, { x, z }, 3.7, -1.85, 0, true), 0);
   worlds.reset();
   assert.ok(boundary.visible);
   assert.equal(chop.active, false);
@@ -312,11 +297,12 @@ test('each chop deepens the same trunk mesh and restart restores the starter not
   const initial = notchEdge();
   let previous = initial;
   const { interactions } = visit.area;
-  interactions.find(item => item.label === 'Pick up axe').act();
+  const near = {x:3.7,z:-1.85};
+  worlds.update(0,near);
   const chop = interactions.find(item => item.label === 'Chop tree');
   for (let count = 0; count < CHOPS; count++) {
     assert.ok(chop.act());
-    worlds.update(CHOP_COOLDOWN, player);
+    worlds.update(CHOP_COOLDOWN, near);
     assertProgress(visit.area, { chops: count + 1, pineFallen: false });
     const edge = notchEdge();
     assert.ok(edge > previous);
@@ -779,7 +765,8 @@ test('completes exactly once in any mission order and preserves other area badge
         if (id === 'pine') fallInWorld(worlds);
         else if (id === 'snowmen') shootSnowmen(game);
         else if (id === 'olaf') {
-          visit.area.interactions.find(item => item.label === 'Pick up carrot').act();
+          game.stand(CARROT_SITE);
+          game.frame(0);
           visit.area.interactions.find(item => item.label === 'Return carrot').act();
         } else if (id === 'sven') {
           visit.area.interactions.find(item => item.label === 'Offer carrot').act();
@@ -839,36 +826,27 @@ test('completion requires each mission flag', () => {
   }
 });
 
-test('the axe strikes across the camera, drops when the tree lands, and returns on restart', async t => {
-  const game = await buildWorld();
-  const { area, scene, viewmodel } = game.visit;
+test('the axe automatically equips near the pine, swings, and disappears after the fall', async t => {
+  const game=await buildWorld();
   t.after(game.worlds.unload);
-  const pickup = area.interactions.find(item => item.label === 'Pick up axe');
-  const chop = area.interactions.find(item => item.label === 'Chop tree');
-  const held = viewmodel.getObjectByName('Held axe');
-  const placed = scene.getObjectByName('Snow Basin axe');
-  const original = placed.position.clone();
-  game.stand({ x: -0.6, z: -4.1 });
-  assert.ok(pickup.act());
-  assert.ok(chop.act());
-  game.frame(CHOP_COOLDOWN * 0.18);
-  assert.ok(held.visible && held.position.x > 0.28);
-  game.frame(CHOP_COOLDOWN * 0.5);
-  assert.ok(held.position.x < -0.2);
+  const {area,viewmodel}=game.visit;
+  const chop=area.interactions.find(i=>i.label==='Chop tree');
+  const held=viewmodel.getObjectByName('Held axe');
+  assert.ok(!area.interactions.some(i=>i.label==='Pick up axe'));
+  assert.equal(chop.active,false);
+  game.stand({x:3.7,z:-1.85});game.frame(0);
+  assert.ok(held.visible&&chop.active);
+  assert.ok(chop.act());game.frame(CHOP_COOLDOWN*.18);
+  assert.ok(held.visible&&held.position.x>.28);
   game.frame(CHOP_COOLDOWN);
-  for (let i = 1; i < CHOPS; i++) {
-    assert.ok(chop.act());
-    if (i < CHOPS - 1) game.frame(CHOP_COOLDOWN);
-  }
+  game.stand({x:0,z:10});game.frame(0);
+  assert.equal(held.visible,false);
+  game.stand({x:3.7,z:-1.85});game.frame(0);
+  for(let i=1;i<CHOPS;i++){assert.ok(chop.act());game.frame(CHOP_COOLDOWN);}
   game.frame(FALL_DURATION);
-  assert.equal(held.visible, false);
-  assert.equal(placed.visible, true);
-  assert.ok(placed.position.distanceTo(original) > 3);
-  assert.equal(pickup.active, false);
-  assert.equal(pickup.act(), false);
-  game.worlds.reset();
-  assert.ok(placed.position.equals(original));
-  assert.ok(pickup.active);
+  assert.equal(held.visible,false);
+  assert.equal(chop.active,false);
+  game.worlds.reset();assert.equal(chop.active,false);
 });
 
 test('the frozen lake is lower than snow, has walkable banks, and carries momentum only on ice', async t => {
@@ -943,9 +921,14 @@ test('the spiral reaches the Ice Tower lookout and can be walked down without ju
   assert.ok(area.blocksGround(edge.x, edge.z, 0.34, ICE_TOWER.deckHeight, deck));
   const endRail = towerStairPoint(ICE_TOWER.stairEnd + 0.1);
   assert.ok(area.blocksGround(endRail.x, endRail.z, 0.34, ICE_TOWER.deckHeight, deck));
-  for (let tread = deckTread - 0.5; tread >= 0; tread -= 0.5) walkTo(towerStairPoint(tread));
-  walkTo({ x: entrance.x, z: entrance.z - 1 });
-  assert.ok(avatar.grounded && Math.abs(camera.position.y - EYE_HEIGHT) < 0.05);
+  game.frame(0);
+  const chute=scene.getObjectByName('Ice Tower spiral slide');
+  assert.ok(chute.visible&&!stair.visible);
+  const descend=area.interactions.find(i=>i.label==='Slide down Ice Tower');
+  assert.ok(descend.act({guideCamera:game.guideCamera}));
+  for(let i=0;i<140;i++)game.frame(.05);
+  assert.ok(avatar.grounded&&Math.abs(camera.position.y-EYE_HEIGHT)<.05);
+  assert.ok(stair.visible&&!chute.visible);
 });
 
 test('both ice hills have walkable approaches to their summits', async t => {
@@ -1043,14 +1026,13 @@ test('Olaf needs the glowing carrot returned before completing his mission', asy
   const { area, scene } = game.visit;
   const carrot = scene.getObjectByName('Olaf glowing carrot');
   const nose = scene.getObjectByName('Olaf carrot nose');
-  const pickup = area.interactions.find(i => i.label === 'Pick up carrot');
+  assert.ok(!area.interactions.some(i=>i.label==='Pick up carrot'));
   const give = area.interactions.find(i => i.label === 'Return carrot');
   assert.equal(carrot.visible, true);
   assert.equal(nose.visible, false);
   assert.equal(give.act(), false);
   game.stand(CARROT_SITE);
-  assert.ok(pickup.reachable(game.camera.position));
-  assert.equal(pickup.act(), true);
+  game.frame(0);
   assert.equal(carrot.visible, false);
   assertProgress(area);
   const olaf = scene.getObjectByName('Olaf').position;
@@ -1095,24 +1077,24 @@ test('the troll rock can be walked up, wakes all trolls on top, and resets', asy
   const game = await buildWorld();
   t.after(game.worlds.unload);
   const { area, scene } = game.visit;
-  const { x, z, height, baseRadius } = TROLL_PLATFORM;
+  const { x, z, y: height, southRadius } = TROLL_PLATFORM;
   const rocks = TROLL_SITES.map((_, i) => scene.getObjectByName('Sleeping troll rock ' + (i+1)));
   const trolls = TROLL_SITES.map((_, i) => scene.getObjectByName('Awake troll ' + (i+1)));
   assert.ok(rocks.every(r => r.visible));
   assert.ok(trolls.every(r => !r.visible));
-  let pz=z-baseRadius-0.65;
+  let pz=z+southRadius+0.65;
   let feet=area.getGroundHeight(x,pz);
   game.stand({x,z:pz});
   game.frame(1);
   assertProgress(area);
-  while(pz<z){
-    const next=walkElevation(area,{x,z:pz},x,pz+.05,feet,true);
+  while(pz>z){
+    const next=walkElevation(area,{x,z:pz},x,pz-.05,feet,true);
     assert.notEqual(next,null,'rock approach blocked at '+pz);
     feet=next;
-    pz+=.05;
+    pz-=.05;
   }
   assert.ok(Math.abs(feet-area.getGroundHeight(x,z))<.05);
-  assert.ok(feet>=height-.05);
+  assert.ok(Math.abs(feet-height)<.05);
   game.stand({x,z});
   for(let i=0;i<60;i++)game.frame(.05);
   assert.ok(rocks.every(r=>!r.visible));

@@ -1,10 +1,10 @@
 import { EYE_HEIGHT } from '../../core/player.js';
 
-// The clearing is southwest of the frozen lake, away from the other mission sites.
-export const TROLL_PLATFORM = Object.freeze({ x: -21, z: 18, height: 1.4, topRadius: 1.5, baseRadius: 3.9 });
+// Northeast clearing. The summit is at the requested world elevation.
+export const TROLL_PLATFORM = Object.freeze({ x: 24.93, y: 4.36, z: -23.92, topRadius: 1.5, baseRadius: 4.3, southRadius: 8.5 });
 export const TROLL_SITES = Object.freeze([
-  [-25.8,15.5],[-26.2,20.1],[-24.5,22.6],[-20.3,23.7],
-  [-16.4,22.8],[-15.8,18],[-16.7,13.7],[-24.5,13.1],
+  [20.0,-27.7],[24.0,-28.8],[28.9,-28.0],[30.3,-24.8],
+  [30.2,-20.9],[29.4,-17.3],[20.4,-19.1],[19.0,-23.3],
 ].map(Object.freeze));
 const cue = [
   [48,{duration:.18,level:.13,wave:'triangle'}],
@@ -14,8 +14,8 @@ const cue = [
 ];
 
 export function createTrollGathering({THREE,scene,kit,ground,reducedMotion,playCue,notify,onComplete,playerRadius=.34}) {
-  const {x,z,height,topRadius,baseRadius}=TROLL_PLATFORM;
-  const base=ground(x,z), top=base+height;
+  const {x,z,y:top,topRadius,baseRadius,southRadius}=TROLL_PLATFORM;
+  const base=ground(x,z), height=top-base;
   const {material,obstacles,cone,box}=kit;
   const group=new THREE.Group();
   group.name='Troll Gathering';
@@ -23,7 +23,7 @@ export function createTrollGathering({THREE,scene,kit,ground,reducedMotion,playC
   // The visible faceted platform and the continuous walk surface share exactly the
   // same square-ring profile; no jump, teleport, or invisible step is necessary.
   const outline=[[-1,-1],[0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0]];
-  const outer=outline.map(([dx,dz])=>[dx*baseRadius,0,dz*baseRadius]);
+  const outer=outline.map(([dx,dz])=>[dx*baseRadius,0,dz*(dz>0?southRadius:baseRadius)]);
   const inner=outline.map(([dx,dz])=>[dx*topRadius,height,dz*topRadius]);
   const vertices=[],colors=[];
   const shades=[0x78858d,0x87959a,0x697982,0x849198];
@@ -47,9 +47,10 @@ export function createTrollGathering({THREE,scene,kit,ground,reducedMotion,playC
   platform.receiveShadow=true;
   group.add(platform);
   function surface(px,pz) {
-    const r=Math.max(Math.abs(px-x),Math.abs(pz-z));
-    if(r>=baseRadius)return null;
-    return base+height*Math.min(1,(baseRadius-r)/(baseRadius-topRadius));
+    const dx=Math.abs(px-x), dz=pz-z;
+    const edge=dz>0?southRadius:baseRadius;
+    const t=Math.max((dx-topRadius)/(baseRadius-topRadius),(Math.abs(dz)-topRadius)/(edge-topRadius),0);
+    return t>=1?null:top-height*t;
   }
 
   const facet=new THREE.DodecahedronGeometry(1,0);
@@ -66,7 +67,7 @@ export function createTrollGathering({THREE,scene,kit,ground,reducedMotion,playC
     return mesh;
   }
   const trolls=TROLL_SITES.map(([tx,tz],i)=>{
-    const y=ground(tx,tz), size=.84+(i%4)*.09;
+    const y=Math.max(ground(tx,tz),surface(tx,tz)??-Infinity), size=.84+(i%4)*.09;
     const root=new THREE.Group();
     root.name='Troll '+(i+1);
     root.position.set(tx,y,tz);
@@ -141,7 +142,7 @@ export function createTrollGathering({THREE,scene,kit,ground,reducedMotion,playC
       playCue?.(cue);
       notify?.('The stones are waking up!');
     }
-    if(awake&&distance>11){awake=false;elapsed=0;}
+    if(awake&&distance>12){awake=false;elapsed=0;}
     const still=Boolean(reducedMotion?.());
     time=(time+dt)%600;
     const duration=1.05+trolls.at(-1).delay;
