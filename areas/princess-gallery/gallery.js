@@ -1,3 +1,4 @@
+import { buildTicketPost } from './ticket-post.js';
 import { addGroup, paintCanvasTexture, SURFACE_GAP } from '../../core/geometry.js';
 import { PLAYER_ONLY_LAYER } from '../../core/render-layers.js';
 import { seededRandom } from '../../core/random.js';
@@ -383,6 +384,7 @@ export function buildGallery(THREE, scene, document, obstacles, services) {
   buildPromenadeFurniture({ THREE, parent: shell, parts, colors, obstacles });
   const carts = buildConcessions({ THREE, document, parent: shell, parts, obstacles, ...services });
   buildHangingDecor({ THREE, parent: shell, parts, colors, ceiling });
-  const people = buildGalleryPeople({ THREE, parent: shell, parts, obstacles, vendors: carts.vendors });
+  const ticketOfficer = buildTicketPost({ THREE, document, parent: shell, parts, colors, obstacles });
+  const people = buildGalleryPeople({ THREE, parent: shell, parts, obstacles, vendors: carts.vendors, ticketOfficer });
   return { exhibitVisits, ceiling, walkway, lift, people, carts };
 }

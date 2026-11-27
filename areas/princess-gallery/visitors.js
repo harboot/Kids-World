@@ -17,6 +17,27 @@ const people = [
   { name: 'Adventure Wing stroller parent', route: 'stroller', x: 25.85, z: 17.25, yaw: -.53, color: 0x617caf,
     skin: 0xc68365, hair: 0x49323c, style: 'parent' },
 ];
+// Stationary ambient guests occupy the edges of the public paths.
+const extraPeople = [
+  ['Lobby ticket queue adult', 4.1, 51.6, 1.2, 'coat', 0x927aaf],
+  ['Lobby ticket queue child', 3.2, 52.8, 1.0, 'child', 0xe6a85e],
+  ['Lobby visitor with dress', -5.2, 53, -.5, 'dress', 0xc98291],
+  ['Lobby usher', -11, 43, 1.2, 'staff', 0x76537b],
+  ['South promenade visitor', -10, 30, .7, 'coat', 0x72929a],
+  ['Woodland visitor with dress', -30, 15, -1.5, 'dress', 0x8ea66c],
+  ['Woodland child visitor', -31.2, 16.4, -1.1, 'child', 0xdca05b],
+  ['Woodland attendant', -31, -8, 1.4, 'staff', 0x76537b],
+  ['Royal Wing visitor', -21, -29, 2.7, 'dress', 0xc68b83],
+  ['Royal Wing visitor with jacket', 22, -21, 2.5, 'coat', 0x547d91],
+  ['North Adventure guard', 31, -21, -.8, 'guard', 0x38466c],
+  ['Adventure Wing visitor', 36, 1, 1.5, 'coat', 0xb27b52],
+  ['Adventure Wing child visitor', 30, 20, 1.0, 'child', 0x7ea7bd],
+  ['Tiana promenade attendant', 13, 31, -.5, 'staff', 0x76537b],
+  ['Gallery janitor', 15, 27, -.8, 'janitor', 0x527c79],
+].map(([name,x,z,yaw,style,color],i)=>({name,x,z,yaw,style,color,
+  skin: [0xc4866e,0xe5ae90,0x9c624d,0xb77b5b][i%4],
+  hair: [0x392826,0x9d5e3c,0x322629][i%3], satchel: style==='coat' && i%2===0 }));
+
 const strolls = {
   lobby: { rx: .76, rz: -.45, period: 8.2 },
   royalGuard: { rx: .57, rz: -.40, period: 8.8 },
@@ -61,6 +82,8 @@ function buildPerson(THREE, group, parts, palette, style, color, skinColor, hair
   const child = style === 'child';
   const parent = style === 'parent';
   const vendor = style === 'vendor';
+  const staff = style === 'staff' || style === 'ticket';
+  const janitor = style === 'janitor';
   const skin = matte(skinColor);
   const hair = matte(hairColor);
   const clothing = guard ? navy : matte(color);
@@ -84,6 +107,10 @@ function buildPerson(THREE, group, parts, palette, style, color, skinColor, hair
       for (const y of [.973, 1.06, 1.15]) part(body, 'sphere', gold, 0, y, .156, .023, .023, .022);
       part(body, 'gem', gold, -.105, 1.192, .143, .049, .058, .030);
       part(body, 'box', leather, .139, .901, .124, .093, .124, .073);
+    }
+    if (staff || janitor) {
+      part(body, 'box', gold, -.105, 1.19, .155, .086, .056, .026);
+      part(body, 'box', linen, -.105, 1.19, .176, .062, .028, .012);
     }
     if (vendor) {
       for (const side of [-1, 1]) {
@@ -175,6 +202,15 @@ function buildPerson(THREE, group, parts, palette, style, color, skinColor, hair
     return { arm, elbow };
   });
 
+  // The janitor holds a lightweight mop; its handle stays with the animated hand.
+  if (janitor) {
+    const mop = addGroup(THREE, arms[1].elbow, 'Janitor mop', 0, -.201, .007);
+    const detail = new THREE.Group();
+    beam(detail, leather, [0, -.84, 0], [0, .62, 0], .036);
+    part(detail, 'box', trim, 0, -.84, 0, .19, .10, .12);
+    for (let i=0;i<7;i++) part(detail, 'box', linen, (i-3)*.032, -.90, 0, .027, .10, .16);
+    assemble(THREE, detail, mop, fabricMesh);
+  }
   return (time, still, phase, pace = 0, vendorNearby = false) => {
     const glance = still ? 0 : Math.sin(time * .86 + phase);
     const gesture = still ? 0 : Math.sin(time * 1.45 + phase);
@@ -192,6 +228,10 @@ function buildPerson(THREE, group, parts, palette, style, color, skinColor, hair
         -.11 + (gesture * .078 - step * .44) * side - serving * .62,
       pointing ? -.19 : 0, parent ? 0 : side * (pointing ? .23 : .12) + serving * .45);
       elbow.rotation.x = parent ? -.13 : pointing ? -.14 + gesture * .14 : (guard ? -.11 : -.21) - serving * .84;
+      if (janitor && index === 1) {
+        arm.rotation.set(-.36, 0, .14 + gesture * .08);
+        elbow.rotation.x = -.38 + gesture * .08;
+      }
     }
   };
 }
@@ -293,7 +333,7 @@ function occupant(obstacles, radius, offset) {
   };
 }
 
-export function buildGalleryPeople({ THREE, parent, parts, obstacles, vendors }) {
+export function buildGalleryPeople({ THREE, parent, parts, obstacles, vendors, ticketOfficer }) {
   const { matte } = parts;
   const drape = points => new THREE.LatheGeometry(points.map(point => new THREE.Vector2(...point)), 16);
   const palette = {
@@ -310,12 +350,12 @@ export function buildGalleryPeople({ THREE, parent, parts, obstacles, vendors })
   const staff = vendors.map((vendor, index) => ({
     ...vendor, style: 'vendor', skin: vendorLooks[index][0], hair: vendorLooks[index][1],
   }));
-  const guests = [...people, ...staff].map((site, index) => {
+  const guests = [...people, ...extraPeople, ...staff, ticketOfficer].filter(Boolean).map((site, index) => {
     const { name, x, z, yaw, style, color, skin, hair, satchel, route } = site;
     const scale = style === 'child' ? .64 : 1;
     const group = addGroup(THREE, visitors, name, x, 0, z, yaw);
     group.scale.setScalar(scale);
-    const bodies = [occupant(obstacles, style === 'child' ? .42 : .54, 0)];
+    const bodies = style === 'ticket' ? [] : [occupant(obstacles, style === 'child' ? .42 : .54, 0)];
     const pose = buildPerson(THREE, group, parts, palette, style, color, skin, hair, satchel);
     const stroller = style === 'parent' ? buildStroller(THREE, group, parts, palette) : null;
     if (stroller) bodies.push(occupant(obstacles, .72, 1.12));
@@ -327,7 +367,7 @@ export function buildGalleryPeople({ THREE, parent, parts, obstacles, vendors })
   let time = 0;
   function place(guest, x, z, yaw) {
     guest.distance += Math.hypot(x - guest.group.position.x, z - guest.group.position.z);
-    guest.group.position.set(x, 0, z);
+    guest.group.position.set(x, guest.site.y ?? 0, z);
     guest.group.rotation.y = yaw;
     for (const body of guest.bodies) body.place(x, z, yaw);
   }
