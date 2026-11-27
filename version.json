@@ -1,5 +1,5 @@
 {
-  "version": "48459210b4cd206c3a9f1e7d3c1499ae86e4867c38a25c00addd963b19228b19",
+  "version": "e6117590a2982da8ffe7ed2316a70175282f0d9d7bc8b30a310f763d405c342e",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "151b18be0d5724d1f3fb197567dc5f7f4794e7428feb42fe16286b83e9c34249"
+      "revision": "7229f3046827b4a28630462b816154d66ae48cc4372a204282c0064697097626"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -579,7 +579,7 @@
     },
     {
       "path": "./areas/princess-gallery/tasting.js",
-      "revision": "8a74c703736bf0bdb9136991f32e1f6d309024a1cb342e74f931c8cebbdb43ed"
+      "revision": "6c2c76186a7ff0ed235d55e89e1a8f77fec6b79415b45c9cda36dc8b67b9ccb0"
     },
     {
       "path": "./areas/princess-gallery/tiana.js",
@@ -735,7 +735,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "f6f6afb372a6fc9b6053614f54bfb58a9e3acfb7bd0e7523068bfd220b8475ae"
+      "revision": "e931467f39aa669bfef5b45beb0d1df0cf4c37678138aa04420d861525ac8556"
     },
     {
       "path": "./core/geometry.js",
@@ -807,7 +807,7 @@
     },
     {
       "path": "./pwa/bootstrap.js",
-      "revision": "9bdb7b73efcf6d83726a2a8a4cf13c4bd9cd34800ae9a5b990e81229aefd01f2"
+      "revision": "413050cf4091b18d7709d1b87c3dc01b7aad854e02903f7ac5feaec8a47bc06a"
     },
     {
       "path": "./pwa/cache.js",
