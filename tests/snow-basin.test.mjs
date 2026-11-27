@@ -926,6 +926,7 @@ test('the spiral reaches the Ice Tower lookout and transforms into a rideable sl
   game.frame(0);
   const chute=scene.getObjectByName('Ice Tower spiral slide');
   assert.ok(chute.visible&&!stair.visible);
+  assert.ok(chute.geometry.getAttribute('position').count>ICE_TOWER.stairEnd*6*8,'continuous thick rails and floor');
   const descend=area.interactions.find(i=>i.label==='Slide down Ice Tower');
   assert.ok(descend.act({guideCamera:game.guideCamera}));
   for(let i=0;i<140;i++)game.frame(.05);
@@ -1052,7 +1053,7 @@ test('Olaf needs the glowing carrot returned before completing his mission', asy
   assertProgress(area);
 });
 
-test('Marshmallow wakes, roars and waves, then hides without losing mission progress', async t => {
+test('Marshmallow repeatedly roars with pauses, then hides without losing mission progress', async t => {
   const game = await buildWorld();
   t.after(game.worlds.unload);
   const { area, scene } = game.visit;
@@ -1065,6 +1066,9 @@ test('Marshmallow wakes, roars and waves, then hides without losing mission prog
   assert.equal(giant.visible, true);
   assert.equal(mound.visible, false);
   assertProgress(area, { marshmallow: 1 });
+  const firstRoars=game.cues.filter(c=>c[0]?.[0]===35).length;
+  for(let i=0;i<120;i++)game.frame(.05);
+  assert.ok(game.cues.filter(c=>c[0]?.[0]===35).length>=firstRoars+2);
   game.stand(game.visit.definition.spawn);
   for (let i = 0; i < 30; i++) game.frame(0.05);
   assert.equal(mound.visible, true);
@@ -1109,4 +1113,23 @@ test('the troll rock can be walked up, wakes all trolls on top, and resets', asy
   assertProgress(area,{trolls:1});
   game.worlds.reset();
   assertProgress(area);
+});
+
+
+test('fallen pine can be walked across and jumped over without its landing exclusion', async t=>{
+  const game=await buildWorld();t.after(game.worlds.unload);
+  const {area}=game.visit;
+  fallInWorld(game.worlds);
+  const x=9.8,z=-1.85;
+  let pz=z-1.5,feet=area.getGroundHeight(x,pz);
+  for(;pz<z+1.5;pz+=.025){
+    const next=walkElevation(area,{x,z:pz},x,pz+.025,feet,true);
+    assert.notEqual(next,null,'fallen tree must not retain the landing barrier');
+    feet=next;
+  }
+  assert.ok(area.getGroundHeight(x,z)>.3);
+  game.stand({x,z:z-1.1});
+  assert.ok(game.avatar.jump(area));
+  for(let i=0;i<55;i++)game.avatar.move(.02,{x:0,y:1},game.visit);
+  assert.ok(game.camera.position.z>z+.6);
 });

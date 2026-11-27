@@ -1,7 +1,7 @@
 import { EYE_HEIGHT } from '../../core/player.js';
 
-// Northeast clearing. The summit is at the requested world elevation.
-export const TROLL_PLATFORM = Object.freeze({ x: 24.93, y: 4.36, z: -23.92, topRadius: 1.5, baseRadius: 4.3, southRadius: 8.5 });
+// Compact rock at the same northeast clearing; its top is low enough for easy access.
+export const TROLL_PLATFORM = Object.freeze({ x: 24.93, y: 1.15, z: -23.92, topRadius: 1.0, baseRadius: 2.65, southRadius: 2.85 });
 export const TROLL_SITES = Object.freeze([
   [20.0,-27.7],[24.0,-28.8],[28.9,-28.0],[30.3,-24.8],
   [30.2,-20.9],[29.4,-17.3],[20.4,-19.1],[19.0,-23.3],
