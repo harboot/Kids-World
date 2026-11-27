@@ -1,5 +1,5 @@
 {
-  "version": "ea85f47b9bea25fd5f0f6a59fd92d88bb36ce6b1166970e4ad9980ceed79754b",
+  "version": "14bd287d8f030473b41d5ff3d99ad7459c323c009c52985968c8e61ff1addc02",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "8e23af7e52eb33ceab2ceea681202212e3d02164cacfe7341288cbfc446cf980"
+      "revision": "6f828e14595cb0da817f6fecfbf963b5d695f4d02028229d1576908989c5eedc"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -475,7 +475,7 @@
     },
     {
       "path": "./areas/princess-gallery/gallery.js",
-      "revision": "7f6f02a1625e0de6ebdc461fd27f036cc8923c0d47c84d1cd9644937a2a997c0"
+      "revision": "821b9d835f6c9417e5f637d2f85ffc85e43afa6c10b95a15ce5e13c5e2c5d89c"
     },
     {
       "path": "./areas/princess-gallery/hanging-decor.js",
@@ -586,8 +586,12 @@
       "revision": "1c2a16a8956f9ce13648c5ecd373982f0668c10d47263cbec43eeda7615c882a"
     },
     {
+      "path": "./areas/princess-gallery/ticket-post.js",
+      "revision": "4c834ef316bad23d233282bffd631ee7a41dbe8f7e91ddd59379025a72bb890d"
+    },
+    {
       "path": "./areas/princess-gallery/visitors.js",
-      "revision": "2bbf4245eb12678175bc3953ca40674d2e4ee85ef9c7f5c811d93c346c27133a"
+      "revision": "a4c9b9ebb02381c0fdea06e4c8559bb21860f36f18c0dbe0cdd355816ac968ab"
     },
     {
       "path": "./areas/princess-gallery/walkway-lift.js",
