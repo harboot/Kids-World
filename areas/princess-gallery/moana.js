@@ -252,7 +252,7 @@ export function buildMoana(context) {
     boat.rotation.set(0,heading,still?0:.035*Math.sin(a*2));
     // Attach to the moving hull so her feet follow its pitch and roll.
     if(moana.parent!==boat)boat.add(moana);
-    moana.position.set(.17,.568,1.02);
+    moana.position.set(.17,.568,.79);
     moana.rotation.set(0,0,0);
     for(const {arm,elbow,s} of shoulders){
       arm.rotation.set(-.15,0,s*.32);
