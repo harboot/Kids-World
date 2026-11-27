@@ -201,5 +201,5 @@ export function createSnowActivity({ width, depth, obstacles, cue = () => {} }) 
 }
 
 export function snowMissionsComplete(missions) {
-  return Boolean(missions.pine && missions.snowmen && missions.slide && missions.olaf && missions.sven && missions.tower && missions.skating && missions.cabin);
+  return Boolean(missions.pine && missions.snowmen && missions.slide && missions.olaf && missions.sven && missions.tower && missions.skating && missions.cabin && missions.marshmallow);
 }
