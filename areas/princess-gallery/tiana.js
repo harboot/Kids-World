@@ -1,9 +1,10 @@
+import { cueSource, entryCue, galleryCues } from './interaction-audio.js';
 import { addGroup, SURFACE_GAP } from '../../core/geometry.js';
 import { EYE_HEIGHT } from '../../core/player.js';
 import { addGallerySign, addRoundSolid, addSolid, spaceTransform } from './parts.js';
 
 export const FROG_SITE = Object.freeze({ x: 0, z: -2.7 });
-export function buildTiana({ THREE, document, bay, parts, exhibit, obstacles }) {
+export function buildTiana({ THREE, document, bay, parts, exhibit, obstacles, playCue = () => {} }) {
   const { part, beam, batch, matte } = parts;
   const { toWorld, toLocal } = spaceTransform(exhibit);
   const room = addGroup(THREE, bay, 'Tiana Louisiana bayou');
@@ -124,6 +125,7 @@ export function buildTiana({ THREE, document, bay, parts, exhibit, obstacles }) 
     part(magic,'gem',glow,Math.cos(a)*.85,(i%4)*.40,Math.sin(a)*.85,.085,.13,.085);
   }
   const local=[0,0];
+  const audio=entryCue(playCue,galleryCues.tiana,cueSource(...toWorld(0,1.25),EYE_HEIGHT));
   let blend=0;
   function pose(){
     frog.visible=blend<.5;
@@ -133,7 +135,7 @@ export function buildTiana({ THREE, document, bay, parts, exhibit, obstacles }) 
     magic.rotation.y=blend*Math.PI;
     tiana.rotation.y=-.55*blend;
   }
-  function reset(){blend=0;pose();}
+  function reset(){audio.reset();blend=0;pose();}
   reset();
   return {
     reset,
@@ -141,6 +143,7 @@ export function buildTiana({ THREE, document, bay, parts, exhibit, obstacles }) 
       toLocal(player.x,player.z,local);
       const close=grounded && Math.abs(player.y-EYE_HEIGHT)<.35 &&
         Math.abs(local[0])<1.55 && local[1]>=1.25 && local[1]<=3.65;
+      audio.update(close,dt);
       const target=Number(close);
       blend=still?target:THREE.MathUtils.damp(blend,target,5,dt);
       if(Math.abs(blend-target)<.005) blend=target;
