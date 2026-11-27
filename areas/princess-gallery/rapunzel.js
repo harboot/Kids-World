@@ -214,7 +214,7 @@ export function buildRapunzel({ THREE, document, bay, exhibit, parts, obstacles,
   batch(components, bay);
 
   const greetingAudio = entryCue(playCue, galleryCues.rapunzel,
-    cueSource(position.x + Math.sin(rotation)*platform.z, position.z + Math.cos(rotation)*platform.z, EYE_HEIGHT+top));
+    cueSource(worldX(platform.x,platform.z), worldZ(platform.x,platform.z), EYE_HEIGHT+top));
   return {
     getGroundHeight(x, z) {
       const lx = localX(x, z);
