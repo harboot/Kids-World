@@ -1838,7 +1838,7 @@ test('visitors, guards and stroller stroll while vendors and exhibit actors move
   t.after(worlds.unload);
   const { scene, area } = await worlds.load(ID);
   const crowd = scene.getObjectByName('Gallery visitors and guards').children;
-  const guests = crowd.filter(actor => !actor.name.endsWith(' vendor'));
+  const guests = crowd.slice(0, 8); // The original strolling group; new ambient NPCs stay at their posts.
   const start = guests.map(actor => actor.position.clone());
   const vendors = crowd.filter(actor => actor.name.endsWith(' vendor'));
   const arms = vendors.map(vendor => vendor.getObjectByName(vendor.name + ' right arm'));
@@ -1990,4 +1990,29 @@ test('all ten princess portraits have finite geometry and the expected head hier
     });
     assert.ok(count>=3,name);
   }
+});
+
+
+test('extra gallery NPCs and ticket post are decorative and leave the entrance clear', async t => {
+  const { worlds, camera } = fixture();
+  t.after(worlds.unload);
+  const { scene, area } = await worlds.load(ID);
+  const crowd = scene.getObjectByName('Gallery visitors and guards');
+  assert.equal(crowd.children.length, 28);
+  const booth = scene.getObjectByName('Princess Gallery ticket post');
+  const officer = crowd.getObjectByName('Ticket officer');
+  const janitor = crowd.getObjectByName('Gallery janitor');
+  assert.ok(booth && officer && janitor.getObjectByName('Janitor mop'));
+  const local = booth.worldToLocal(officer.getWorldPosition(new THREE.Vector3()));
+  assert.ok(Math.abs(local.x) < 1 && Math.abs(local.z) < .6 && Math.abs(local.y-.16)<1e-6);
+  assert.ok(area.obstacles.some(o => overlaps(o, booth.position.x, booth.position.z)));
+  assertWalkable(area, [0,54.3], [0,44.2], 'main entrance stays clear');
+  const rest = officer.position.clone();
+  const head = officer.getObjectByName('Ticket officer head');
+  const rotation = head.rotation.toArray();
+  worlds.update(.6, camera.position);
+  assert.ok(officer.position.equals(rest));
+  assert.notDeepEqual(head.rotation.toArray(),rotation);
+  assert.equal(area.missionStatus.missions.length, 10);
+  assert.ok(area.interactions.every(item => !/ticket|janitor/i.test(item.label ?? '')));
 });
