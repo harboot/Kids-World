@@ -4,8 +4,8 @@ export const MARSHMALLOW_SITE = Object.freeze({ x: 17.2, z: 22.7 });
 const wakeRadius = 7;
 const hideRadius = 10;
 const riseTime = 1.25;
-const roarEnd = 2.05;
-const waveEnd = 3.5;
+const roarDuration = 0.8;
+const roarPeriod = 2.7; // 0.8 s roar, 1.9 s rest
 const roarCue = [
   [35, { duration: 0.38, endPitch: 27, level: 0.18, wave: 'triangle' }],
   [29, { duration: 0.39, endPitch: 22, level: 0.12, wave: 'sawtooth' }, 0.18],
@@ -69,7 +69,7 @@ export function createMarshmallow({ THREE, scene, kit, ground, reducedMotion, pl
     for(let i=0;i<3;i++)part(arm,cone,ice,side*(.34+i*.23),-1.78,.38,.105,.31,.11).rotation.z=Math.PI;
     return arm;
   });
-  let nearby=false, complete=false, phase=0, height=0, roared=false;
+  let nearby=false, complete=false, phase=0, height=0, lastRoar=-1;
   obstacles.push({
     get height(){return y+1.2+height*3.5;},
     touches(px,pz){return Math.hypot(px-x,pz-z)<1.55+playerRadius;}
@@ -80,16 +80,16 @@ export function createMarshmallow({ THREE, scene, kit, ground, reducedMotion, pl
     mound.scale.set(1-t*.2,1-t*.65,1-t*.2);
     giant.visible = t > 0.04;
     giant.scale.set(.86+t*.14,Math.max(.12,t),.86+t*.14);
-    const roar = nearby && phase >= riseTime && phase < roarEnd;
-    const wave = nearby && phase >= roarEnd;
+    const roar = nearby && phase >= riseTime && (phase-riseTime)%roarPeriod < roarDuration;
     jaw.position.y = roar ? -.51 : -.36;
     mouth.scale.y = roar ? .33 : .10;
     arms[0].rotation.z = roar ? -.66 : -.12;
-    arms[1].rotation.z = wave ? 2.05 + .28*Math.sin(Math.min(phase,waveEnd)*13) : roar ? .66 : .12;
+    arms[1].rotation.z = roar ? .66 : .12;
     head.rotation.x = roar ? -.12 : 0;
   }
   function reset() {
-    nearby=complete=roared=false;
+    nearby=complete=false;
+    lastRoar=-1;
     phase=height=0;
     pose();
   }
@@ -97,14 +97,18 @@ export function createMarshmallow({ THREE, scene, kit, ground, reducedMotion, pl
     if (!eye) return;
     const distance=Math.hypot(eye.x-x,eye.z-z);
     const closeHeight=Math.abs(eye.y-EYE_HEIGHT-ground(eye.x,eye.z))<1.3;
-    if (nearby && (distance>hideRadius || !closeHeight)) {nearby=false;phase=0;roared=false;}
-    if (!nearby && distance<=wakeRadius && closeHeight) {nearby=true;phase=0;roared=false;}
+    if (nearby && (distance>hideRadius || !closeHeight)) {nearby=false;phase=0;lastRoar=-1;}
+    if (!nearby && distance<=wakeRadius && closeHeight) {nearby=true;phase=0;lastRoar=-1;}
     const still=reducedMotion?.();
     height=still ? Number(nearby) : Math.max(0,Math.min(1,height+(nearby?1:-1)*dt/riseTime));
     if (nearby) {
-      phase=still ? waveEnd : Math.min(waveEnd,phase+dt);
-      if (phase>=riseTime && !roared) {roared=true;playCue?.(roarCue);}
-      if (phase>=waveEnd && !complete) {
+      phase=still && phase===0 ? riseTime : phase+dt;
+      const cycle=Math.floor((phase-riseTime)/roarPeriod);
+      if(cycle>=0 && cycle!==lastRoar) {
+        lastRoar=cycle;
+        playCue?.(roarCue);
+      }
+      if (phase>=riseTime+roarDuration && !complete) {
         complete=true;
         notify?.('Meet Marshmallow complete!');
         onComplete?.();

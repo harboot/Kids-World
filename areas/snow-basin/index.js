@@ -122,23 +122,25 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
     notify?.('Snow Basin complete!');
   }
 
-  // Reserve the landing side from the final chop onward. After impact the low log replaces the upright footprint.
+  // Reserve the landing only while falling. The fallen trunk has its own walkable surface.
   obstacles.push({
     left: treeSite.x - 0.57, front: treeSite.z - 0.6, back: treeSite.z + 0.6,
     get right() { return treeSite.x + (state.tree === 'upright' ? 0.57 : 5.45); },
-    get height() { return state.tree === 'upright' ? 5.3 : state.tree === 'falling' ? 2.45 : 0.79; },
+    get height() { return state.tree === 'upright' ? 5.3 : state.tree === 'falling' ? 2.45 : 0; },
     touches(x, z) {
       const dx = x - treeSite.x;
       const dz = z - treeSite.z;
-      if (state.tree !== 'fallen' && Math.hypot(dx, dz) < treeClearance) return true;
+      if (state.tree === 'fallen') return false;
+      if (Math.hypot(dx, dz) < treeClearance) return true;
       if (state.tree === 'upright') return false;
       const edge = Math.max(0, -dx, dx - 5.45);
       return Math.hypot(edge, dz) < 1.05 + playerRadius;
     },
   }, {
     ...landingBounds,
-    get height() { return state.tree === 'upright' ? 0 : 1.93; },
+    get height() { return state.tree === 'falling' ? 1.93 : 0; },
     touches(x, z) {
+      if(state.tree !== 'falling') return false;
       const dx = Math.max(0, this.left - x, x - this.right);
       const dz = Math.max(0, this.front - z, z - this.back);
       return Math.hypot(dx, dz) < 0.47 + playerRadius;
@@ -250,6 +252,16 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
     updateModels();
   }
 
+  // Continuous low crown over the fallen trunk: the top tracks its taper and
+  // the rounded approaches stay below the engine's maximum walking grade.
+  function fallenTreeSurface(x,z) {
+    if(state.tree!=='fallen')return null;
+    const dx=x-treeSite.x, dz=Math.abs(z-treeSite.z);
+    const taper=.60-.27*Math.max(0,Math.min(1,dx/5.34));
+    const endFade=Math.max(0,-dx,dx-5.34);
+    const crown=Math.max(0,taper-.63*Math.hypot(dz,endFade));
+    return crown>0?ground(x,z)+crown:null;
+  }
   const missionStatus = {
     missions: [
       {
@@ -324,7 +336,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
   };
   return {
     obstacles,
-    getGroundHeight: (x, z, feet) => Math.max(ground(x, z), tower.surface(x, z, feet) ?? -Infinity, trolls.surface(x, z) ?? -Infinity),
+    getGroundHeight: (x, z, feet) => Math.max(ground(x, z), tower.surface(x, z, feet) ?? -Infinity, trolls.surface(x, z) ?? -Infinity, fallenTreeSurface(x,z) ?? -Infinity),
     getGroundTraction: skating.getGroundTraction,
     blocksGround(x, z, radius, feet, from) {
       return terrain.blocksGround(x, z, radius) || slide.blocksGround(x, z, radius, feet) ||

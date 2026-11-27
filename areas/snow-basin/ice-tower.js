@@ -87,27 +87,59 @@ export function addIceTower(THREE, scene, { mesh, material, cone }, { camera, gr
   stairs.receiveShadow = true;
   group.add(stairs);
 
-  // A continuous chute replaces the tread geometry while the player is at the lookout.
-  const chutePositions = [];
-  function chuteQuad(a,b,c,d) {
-    for (const p of [a,b,c,a,c,d]) chutePositions.push(p.x,p.y,p.z);
+  // Complete closed cross-section: deck, underside, thick rails with top caps,
+  // and a solid terminal lookout wall. The downhill entrance stays open.
+  const chutePositions=[],chuteColors=[];
+  function chuteQuad(a,b,c,d,color) {
+    for (const p of [a,b,c,a,c,d]) {
+      chutePositions.push(p.x,p.y,p.z);
+      chuteColors.push(color.r,color.g,color.b);
+    }
+  }
+  const deckInk=new THREE.Color(0xa4e1f4);
+  const railInk=new THREE.Color(0x80bdd9);
+  const capInk=new THREE.Color(0xe0f7ff);
+  const undersideInk=new THREE.Color(0x629bb8);
+  const railThickness=.19,railHeight=.58,slab=.23;
+  const p=(t,r,h)=>towerStairPoint(t,r,h);
+  function railSegment(i,a,b,r0,r1){
+    chuteQuad(p(i,r0,a),p(i+1,r0,b),p(i+1,r0,b+railHeight),p(i,r0,a+railHeight),railInk);
+    chuteQuad(p(i,r1,a),p(i,r1,a+railHeight),p(i+1,r1,b+railHeight),p(i+1,r1,b),railInk);
+    chuteQuad(p(i,r0,a+railHeight),p(i+1,r0,b+railHeight),p(i+1,r1,b+railHeight),p(i,r1,a+railHeight),capInk);
   }
   for(let i=0;i<treadCount;i++){
     const a=Math.min(i,risingTreads)*treadHeight;
     const b=Math.min(i+1,risingTreads)*treadHeight;
-    const p=(t,r,h)=>towerStairPoint(t,r,h);
-    chuteQuad(p(i,inner,a),p(i,outer,a),p(i+1,outer,b),p(i+1,inner,b));
-    for(const r of [inner,outer]) {
-      const A=p(i,r,a),B=p(i+1,r,b),C=p(i+1,r,b+.58),D=p(i,r,a+.58);
-      if(r===inner)chuteQuad(B,A,D,C);else chuteQuad(A,B,C,D);
+    chuteQuad(p(i,inner,a),p(i,outer,a),p(i+1,outer,b),p(i+1,inner,b),deckInk);
+    chuteQuad(p(i,outer,a-slab),p(i,inner,a-slab),p(i+1,inner,b-slab),p(i+1,outer,b-slab),undersideInk);
+    chuteQuad(p(i,outer,a-slab),p(i+1,outer,b-slab),p(i+1,outer,b),p(i,outer,a),undersideInk);
+    chuteQuad(p(i,inner,a-slab),p(i,inner,a),p(i+1,inner,b),p(i+1,inner,b-slab),undersideInk);
+    if(i>=2){
+      railSegment(i,a,b,inner,inner+railThickness);
+      railSegment(i,a,b,outer-railThickness,outer);
     }
   }
+  // Close exposed rail starts and the upper terminal wall on all visible sides.
+  const first=2, firstY=first*treadHeight;
+  for(const [r0,r1] of [[inner,inner+railThickness],[outer-railThickness,outer]]){
+    chuteQuad(p(first,r0,firstY),p(first,r1,firstY),p(first,r1,firstY+railHeight),p(first,r0,firstY+railHeight),railInk);
+  }
+  const endT=treadCount, beforeEnd=endT-.35;
+  chuteQuad(p(endT,inner,deckHeight),p(endT,outer,deckHeight),p(endT,outer,deckHeight+railHeight),p(endT,inner,deckHeight+railHeight),railInk);
+  chuteQuad(p(beforeEnd,outer-railThickness,deckHeight),p(beforeEnd,inner+railThickness,deckHeight),
+    p(beforeEnd,inner+railThickness,deckHeight+railHeight),p(beforeEnd,outer-railThickness,deckHeight+railHeight),railInk);
+  chuteQuad(p(beforeEnd,inner+railThickness,deckHeight+railHeight),p(endT,inner+railThickness,deckHeight+railHeight),
+    p(endT,outer-railThickness,deckHeight+railHeight),p(beforeEnd,outer-railThickness,deckHeight+railHeight),capInk);
+  chuteQuad(p(endT,inner,deckHeight-slab),p(endT,outer,deckHeight-slab),p(endT,outer,deckHeight),p(endT,inner,deckHeight),undersideInk);
+  chuteQuad(p(0,outer,-slab),p(0,inner,-slab),p(0,inner,0),p(0,outer,0),undersideInk);
   const chuteGeometry=new THREE.BufferGeometry();
   chuteGeometry.setAttribute('position',new THREE.Float32BufferAttribute(chutePositions,3));
+  chuteGeometry.setAttribute('color',new THREE.Float32BufferAttribute(chuteColors,3));
   chuteGeometry.computeVertexNormals();
-  const chute=new THREE.Mesh(chuteGeometry,new THREE.MeshLambertMaterial({color:0xa4e1f4,side:THREE.DoubleSide}));
+  const chute=new THREE.Mesh(chuteGeometry,new THREE.MeshLambertMaterial({vertexColors:true,side:THREE.DoubleSide}));
   chute.name='Ice Tower spiral slide';
   chute.visible=false;
+  chute.receiveShadow=true;
   group.add(chute);
   let slideMode=false, release=null, elapsed=0, entry=null, entryTread=0, duration=6;
   const centerRadius=(inner+outer)/2;
