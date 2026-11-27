@@ -1,3 +1,4 @@
+import { cueSource, entryCue, galleryCues } from './interaction-audio.js';
 import { addGroup, paintCanvasTexture, SURFACE_GAP } from '../../core/geometry.js';
 import { EYE_HEIGHT } from '../../core/player.js';
 import { seededRandom } from '../../core/random.js';
@@ -137,7 +138,7 @@ function buildMagic(THREE, room, glowMap) {
   };
 }
 
-export function buildAurora({ THREE, document, bay, exhibit, parts, obstacles, outline, reducedMotion = () => false }) {
+export function buildAurora({ THREE, document, bay, exhibit, parts, obstacles, outline, reducedMotion = () => false, playCue = () => {} }) {
   const { matte } = parts;
   const palette = {
     ivory: matte(0xe9d8d9),
@@ -173,7 +174,8 @@ export function buildAurora({ THREE, document, bay, exhibit, parts, obstacles, o
   room.add(light);
   const sleepingLight = new THREE.Color(0xc28aff);
   const wakingLight = new THREE.Color(0xff9bd2);
-  const { toLocal } = spaceTransform(exhibit);
+  const { toLocal, toWorld } = spaceTransform(exhibit);
+  const audio = entryCue(playCue,galleryCues.aurora,cueSource(...toWorld(roseSite.x,roseSite.z),EYE_HEIGHT));
   const local = [0, 0];
   let nearby = false;
   let blend = 0;
@@ -189,6 +191,7 @@ export function buildAurora({ THREE, document, bay, exhibit, parts, obstacles, o
   }
 
   function reset() {
+    audio.reset();
     nearby = false;
     blend = time = 0;
     pose(reducedMotion());
@@ -202,6 +205,7 @@ export function buildAurora({ THREE, document, bay, exhibit, parts, obstacles, o
       const radius = nearby ? exitRadius : entryRadius;
       nearby = Math.abs(player.y - EYE_HEIGHT) < 1.5 &&
         (local[0] - roseSite.x) ** 2 + (local[1] - roseSite.z) ** 2 <= radius ** 2;
+      audio.update(nearby,dt);
       if (still) {
         blend = Number(nearby);
         time = 0;
