@@ -6,6 +6,7 @@ import { wreckDeck } from '../areas/princess-gallery/ariel-wreck.js';
 import { ATRIUM_RADII } from '../areas/princess-gallery/atrium.js';
 import { exhibits, exhibitOutline } from '../areas/princess-gallery/exhibits.js';
 import { MOANA_DOCK, VOYAGE_DURATION } from '../areas/princess-gallery/moana.js';
+import { entryCue, galleryCues, cueSource } from '../areas/princess-gallery/interaction-audio.js';
 import { CARPET_DOCK } from '../areas/princess-gallery/jasmine-carpet.js';
 import { MULAN_DEMONSTRATION_TIME } from '../areas/princess-gallery/mulan-character.js';
 import { GONG_SITE } from '../areas/princess-gallery/mulan.js';
@@ -1930,4 +1931,37 @@ test('Moana canoe sails and returns, completes one mission and resets', async t 
   assert.equal(restored,2);
   assert.ok(boat.position.equals(dock));
   assert.equal(mission.complete,false);
+});
+
+test('gallery proximity cues play once, rearm after departure, and reset', () => {
+  const played = [];
+  const source = cueSource(3,4,EYE_HEIGHT);
+  const audio = entryCue((notes, where) => played.push({notes,where}), galleryCues.rapunzel, source);
+  audio.update(true,.016);
+  for (let i=0;i<120;i++) audio.update(true,.016);
+  assert.equal(played.length,1);
+  assert.deepEqual(played[0],{notes:galleryCues.rapunzel,where:source});
+  audio.update(false,.1);
+  audio.update(true,.016);
+  assert.equal(played.length,1,'brief boundary chatter must not replay');
+  audio.update(false,.7);
+  audio.update(true,.016);
+  assert.equal(played.length,2);
+  audio.reset();
+  audio.update(true,.016);
+  assert.equal(played.length,3);
+});
+test('lift cabin has one visible walking surface at the physical floor height', async t => {
+  const {worlds} = fixture();
+  t.after(worlds.unload);
+  const {scene} = await worlds.load(ID);
+  const cabin = scene.getObjectByName('Glass lift cabin');
+  scene.updateMatrixWorld(true);
+  const origin = cabin.localToWorld(new THREE.Vector3(.29,.9,.43));
+  const ray = new THREE.Raycaster(origin,new THREE.Vector3(0,-1,0),0,1.1);
+  ray.layers.enable(PLAYER_ONLY_LAYER);
+  const hits = ray.intersectObject(cabin,true);
+  assert.ok(hits.length);
+  assert.ok(Math.abs(hits[0].point.y-cabin.position.y)<1e-6);
+  assert.equal(hits.filter(hit=>Math.abs(hit.point.y-cabin.position.y)<1e-6).length,1);
 });

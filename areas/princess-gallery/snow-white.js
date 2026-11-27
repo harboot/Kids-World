@@ -1,3 +1,4 @@
+import { cueSource, entryCue, galleryCues } from './interaction-audio.js';
 import { addGroup, paintCanvasTexture, SURFACE_GAP } from '../../core/geometry.js';
 import { EYE_HEIGHT } from '../../core/player.js';
 import { seededRandom } from '../../core/random.js';
@@ -177,7 +178,7 @@ function buildSnowWhiteModel(THREE, { part, matte }, { torso, head, arms, legs }
   }
 }
 
-function createActor({ THREE, parts, bay, ground, profile, toWorld, obstacles, palette, glasses }) {
+function createActor({ THREE, parts, bay, ground, profile, toWorld, obstacles, palette, glasses, playCue }) {
   const { part, beam, batch, matte } = parts;
   const { name, x, z, yaw, seat = 0, coat: coatColor, trim: trimColor, hat: hatColor, beard: beardColor } = profile;
   const princess = name === 'Snow White';
@@ -317,8 +318,10 @@ function createActor({ THREE, parts, bay, ground, profile, toWorld, obstacles, p
   }
 
   const greeting = profile.motion(.37);
+  const audio = entryCue(playCue, galleryCues.snow, cueSource(wx,wz,EYE_HEIGHT+y,6));
   addRoundSolid(obstacles, wx, wz, princess ? .88 : .78, y + (princess ? 2.48 : 2.08));
   function reset() {
+    audio.reset();
     blend = time = breathing = 0;
     actor.rotation.z = 0;
     pose(greeting);
@@ -331,6 +334,7 @@ function createActor({ THREE, parts, bay, ground, profile, toWorld, obstacles, p
       actor.rotation.z = still ? 0 : .031 * Math.sin(breathing * 1.54 + profile.x) * Math.min(1, breathing * 2.5);
       const close = (player.x - wx) ** 2 + (player.z - wz) ** 2 <= radius ** 2 &&
         Math.abs(player.y - EYE_HEIGHT - y) <= 1.65;
+      audio.update(close,dt);
       const target = Number(close);
       if (!close && blend === 0) return false;
       blend = still ? target : THREE.MathUtils.damp(blend, target, 9, dt);
@@ -343,7 +347,7 @@ function createActor({ THREE, parts, bay, ground, profile, toWorld, obstacles, p
   };
 }
 
-export function buildSnowWhite({ THREE, document, bay, exhibit, parts, obstacles, outline }) {
+export function buildSnowWhite({ THREE, document, bay, exhibit, parts, obstacles, outline, playCue = () => {} }) {
   const { part, beam, batch, matte } = parts;
   const { toWorld, toLocal } = spaceTransform(exhibit);
   const random = seededRandom(1937);
@@ -674,10 +678,18 @@ export function buildSnowWhite({ THREE, document, bay, exhibit, parts, obstacles
     shoe: matte(0x49363c), gold,
   };
   const glasses = new THREE.TorusGeometry(1, .15, 6, 16);
-  const actors = profiles.map(profile => createActor({ THREE, parts, bay, ground, profile, toWorld, obstacles, palette, glasses }));
+  // Nearby characters may share a trigger radius; avoid stacking identical notes.
+  let greetingCooldown = 0;
+  const greet = (notes, source) => {
+    if (greetingCooldown > 0) return;
+    greetingCooldown = .25;
+    playCue(notes, source);
+  };
+  const actors = profiles.map(profile => createActor({ THREE, parts, bay, ground, profile, toWorld, obstacles, palette, glasses, playCue: greet }));
   return {
     getGroundHeight(x, z) { return ground(...toLocal(x, z)); },
     update(dt, player, _grounded, still) {
+      greetingCooldown = Math.max(0, greetingCooldown - dt);
       let greeted = false;
       for (const actor of actors) {
         if (actor.update(dt, player, still)) greeted = true;
@@ -685,6 +697,7 @@ export function buildSnowWhite({ THREE, document, bay, exhibit, parts, obstacles
       return greeted;
     },
     reset() {
+      greetingCooldown = 0;
       for (const actor of actors) actor.reset();
     },
   };

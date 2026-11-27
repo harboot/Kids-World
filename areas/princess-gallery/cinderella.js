@@ -1,3 +1,4 @@
+import { cueSource, entryCue, galleryCues } from './interaction-audio.js';
 import { addGroup, paintCanvasTexture, SURFACE_GAP } from '../../core/geometry.js';
 import { EYE_HEIGHT } from '../../core/player.js';
 import { seededRandom } from '../../core/random.js';
@@ -528,7 +529,7 @@ function buildGlassSlipper(THREE, parent, parts, palette, site) {
   };
 }
 
-export function buildCinderella({ THREE, document, bay, exhibit, parts, obstacles, outline }) {
+export function buildCinderella({ THREE, document, bay, exhibit, parts, obstacles, outline, playCue = () => {} }) {
   const { matte, batch } = parts;
   const { toWorld, toLocal } = spaceTransform(exhibit);
   const palette = {
@@ -550,9 +551,11 @@ export function buildCinderella({ THREE, document, bay, exhibit, parts, obstacle
   const character = buildCinderellaCharacter(THREE, ballroom, parts, exhibit, obstacles, landingHeight);
   addRoundSolid(obstacles, ...toWorld(site.x, site.z), .39, site.y + 1.36);
   const slipper = buildGlassSlipper(THREE, ballroom, parts, palette, site);
+  const audio = entryCue(playCue,galleryCues.cinderella,cueSource(...toWorld(site.x,site.z),EYE_HEIGHT+site.y));
   const local = [0, 0];
   return {
     reset() {
+      audio.reset();
       slipper.reset();
       character.reset();
     },
@@ -562,6 +565,7 @@ export function buildCinderella({ THREE, document, bay, exhibit, parts, obstacle
       character.update(dt, x, z, player.y, feet, reducedMotion);
       const nearby = (x - site.x) ** 2 + (z - site.z) ** 2 <= approachRadius ** 2 &&
         Math.abs(feet - site.y) < 1.24;
+      audio.update(nearby,dt);
       slipper.update(dt, nearby, reducedMotion);
       return nearby;
     },

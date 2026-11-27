@@ -1,3 +1,4 @@
+import { cueSource, entryCue, galleryCues } from './interaction-audio.js';
 import { addGroup } from '../../core/geometry.js';
 import { EYE_HEIGHT } from '../../core/player.js';
 import { buildArielCharacter } from './ariel-character.js';
@@ -10,7 +11,7 @@ const initialPhase = -Math.PI * .32;
 const orbit = { centerZ: -.70, radiusX: 4.55, radiusZ: 5.33, speed: .37 };
 
 export function buildAriel(context) {
-  const { THREE, bay, exhibit, parts, reducedMotion, camera, isActive } = context;
+  const { THREE, bay, exhibit, parts, reducedMotion, camera, isActive, playCue = () => {} } = context;
   const { matte } = parts;
   const { clamp, smoothstep } = THREE.MathUtils;
   const room = addGroup(THREE, bay, 'Ariel undersea kingdom');
@@ -33,11 +34,13 @@ export function buildAriel(context) {
   const { toLocal } = spaceTransform(exhibit);
   const roomPoint = [0, 0];
   const shipPoint = [0, 0];
+  const audio = entryCue(playCue,galleryCues.ariel,cueSource(exhibit.position.x,exhibit.position.z,EYE_HEIGHT+wreckDeck.height,14));
   let blend = 0;
   let phase = initialPhase;
   let elapsed = 0;
 
   function reset() {
+    audio.reset();
     blend = elapsed = 0;
     phase = initialPhase;
     actor.position.set(0, 0, 0);
@@ -65,6 +68,7 @@ export function buildAriel(context) {
       wreck.toLocal(x, z, shipPoint);
       const onDeck = grounded && wreck.onDeck(shipPoint[0], shipPoint[1]) &&
         Math.abs(player.y - EYE_HEIGHT - wreckDeck.height) < .12;
+      audio.update(onDeck,dt);
       if (!onDeck && blend === 0) return false;
       blend = still ? Number(onDeck) : clamp(blend + dt * (onDeck ? 1.37 : -1.80), 0, 1);
       actor.visible = blend > 0;

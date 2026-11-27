@@ -1,3 +1,4 @@
+import { cueSource, entryCue, galleryCues } from './interaction-audio.js';
 import { addGroup, paintCanvasTexture, rectangleBounds, SURFACE_GAP } from '../../core/geometry.js';
 import { PLAYER_RADIUS } from '../../core/movement.js';
 import { EYE_HEIGHT } from '../../core/player.js';
@@ -18,7 +19,7 @@ function terrainHeight(x, z, width, front) {
     + 0.14 * Math.cos(z * 0.34 - x * 0.25) ** 2);
 }
 
-export function buildRapunzel({ THREE, document, bay, exhibit, parts, obstacles, interiorFace }) {
+export function buildRapunzel({ THREE, document, bay, exhibit, parts, obstacles, interiorFace, playCue = () => {} }) {
   const { part, beam, batch, matte } = parts;
   const { bounds: { width, depth }, position, rotation } = exhibit;
   const random = seededRandom(4553);
@@ -212,6 +213,8 @@ export function buildRapunzel({ THREE, document, bay, exhibit, parts, obstacles,
   const rapunzel = buildTower(THREE, bay, components, parts, tower);
   batch(components, bay);
 
+  const greetingAudio = entryCue(playCue, galleryCues.rapunzel,
+    cueSource(worldX(platform.x,platform.z), worldZ(platform.x,platform.z), EYE_HEIGHT+top));
   return {
     getGroundHeight(x, z) {
       const lx = localX(x, z);
@@ -223,10 +226,11 @@ export function buildRapunzel({ THREE, document, bay, exhibit, parts, obstacles,
       const onPlatform = grounded && Math.abs(player.y - EYE_HEIGHT - top) <= footTolerance &&
         Math.abs(localX(player.x, player.z) - platform.x) <= padWidth / 2 &&
         Math.abs(localZ(player.x, player.z) - platform.z) <= padDepth / 2;
+      greetingAudio.update(onPlatform, dt);
       rapunzel.update(dt, onPlatform, reducedMotion);
       return onPlatform;
     },
-    reset: rapunzel.reset,
+    reset() { greetingAudio.reset(); rapunzel.reset(); },
   };
 }
 

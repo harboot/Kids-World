@@ -1,3 +1,4 @@
+import { galleryCues } from './interaction-audio.js';
 import { addGroup, SURFACE_GAP } from '../../core/geometry.js';
 import { EYE_HEIGHT } from '../../core/player.js';
 import { addGallerySign, addRoundSolid, addSolid, spaceTransform } from './parts.js';
@@ -217,7 +218,7 @@ export function buildMoana(context) {
   const startEye=new THREE.Vector3(), eye=new THREE.Vector3(), stopEye=new THREE.Vector3(lx,EYE_HEIGHT,lz);
   const startRotation=new THREE.Quaternion(), facing=new THREE.Quaternion(), angles=new THREE.Euler(0,0,0,'YXZ');
   const local=[0,0];
-  let release=null,time=0,yaw=0,pitch=0,completed=false;
+  let release=null,time=0,yaw=0,pitch=0,completed=false,nextWave=2;
   const dock=()=>{boat.position.set(0,.13,MOANA_DOCK.z);boat.rotation.set(0,Math.PI/2,0);wake.visible=false;moana.position.set(-2.9,0,6);moana.rotation.y=.30;};
   function stop(spawn){const restore=release;release=null;dock();restore?.(spawn);}
   function reachable(position){
@@ -231,8 +232,8 @@ export function buildMoana(context) {
       if(!this.active||!reachable(camera?.position)||typeof guideCamera!=='function')return;
       const restore=guideCamera((dx,dy)=>{yaw=THREE.MathUtils.clamp(yaw-dx,-1.6,1.6);pitch=THREE.MathUtils.clamp(pitch-dy,-.65,.8);});
       if(typeof restore!=='function')return;
-      release=restore;startEye.copy(camera.position);startRotation.copy(camera.quaternion);time=yaw=pitch=0;
-      playCue([[67,{duration:.28,level:.07}],[72,{duration:.42,level:.07},.19]]);
+      release=restore;startEye.copy(camera.position);startRotation.copy(camera.quaternion);time=yaw=pitch=0;nextWave=2;
+      playCue(galleryCues.moanaDepart);
     }};
   function pose(a,still){
     const x=4.35*Math.sin(a),z=-2.55+5.65*Math.cos(a);
@@ -255,6 +256,8 @@ export function buildMoana(context) {
       if(!release)return false;
       time=Math.min(VOYAGE_DURATION,time+Math.max(0,elapsed));
       const steady=still||reducedMotion();
+      // The rider hears local water sounds at restrained intervals, never per frame.
+      if(time>=nextWave && time<15){nextWave=time+2.4;playCue(galleryCues.moanaWave);}
       if(time<1){
         pose(0,steady);wake.visible=false;
         camera.position.lerpVectors(startEye,eye,ease(time));
@@ -270,6 +273,7 @@ export function buildMoana(context) {
       camera.updateMatrixWorld();
       if(time<VOYAGE_DURATION)return false;
       stop({...landing,yaw:landing.yaw+yaw});
+      playCue(galleryCues.moanaArrive);
       if(completed)return false;
       completed=true;return true;
     },

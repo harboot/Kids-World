@@ -181,7 +181,7 @@ function buildLamp({ THREE, room, parts, colors, obstacles, toWorld, camera, isA
       if (!this.active || !near(camera?.position)) return;
       appearing = true;
       time = 0;
-      playCue(lampCue);
+      playCue(lampCue,{x:wx,z:wz,eyeY:EYE_HEIGHT,range:8,near:2.5,floorTolerance:2.4});
       pose(reducedMotion());
     },
   };

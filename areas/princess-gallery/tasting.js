@@ -1,14 +1,12 @@
 import { addGroup } from '../../core/geometry.js';
 
-const crunch = [[68, { endPitch: 52, duration: .085, level: .12, attack: .004, wave: 'triangle' }],
-  [75, { endPitch: 60, duration: .060, level: .075, attack: .004, wave: 'triangle' }, .072]];
-const sip = [[60, { endPitch: 75, duration: .17, level: .095, attack: .018, wave: 'sine' }],
-  [74, { endPitch: 59, duration: .105, level: .075, wave: 'sine' }, .145]];
+import { galleryCues } from './interaction-audio.js';
+
 const tastes = {
-  popcorn: { name: 'Popcorn', at: [.95, 2.02], cue: crunch },
+  popcorn: { name: 'Popcorn', at: [.95, 2.02], cue: galleryCues.popcorn },
   cotton: { name: 'Cotton candy', at: [.80, 1.93], cue: crunch },
   hotDog: { name: 'Hot dog', at: [.88, 2.02], cue: crunch },
-  drink: { name: 'Cold drink', at: [.87, 1.92], cue: sip },
+  drink: { name: 'Cold drink', at: [.87, 1.92], cue: galleryCues.drink },
 };
 const duration = 2.96;
 
