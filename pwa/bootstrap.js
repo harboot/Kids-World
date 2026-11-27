@@ -115,7 +115,12 @@ async function prepareGame(base, message) {
     throw new Error(game.querySelector('#menu-message').textContent);
   }
   status.textContent = message;
-  play.hidden = false;
+  if (game.dataset.home === 'true') {
+    // The release is ready: show the area selection directly, without loading a scene.
+    splash.hidden = true;
+    game.inert = false;
+    game.querySelector('#choose-level').click();
+  } else play.hidden = false;
 }
 
 async function selectRelease(requested) {
