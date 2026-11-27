@@ -12,7 +12,7 @@ export function buildMoana(context) {
   const { part, beam, batch, matte } = parts;
   const { toWorld, toLocal } = spaceTransform(exhibit);
   const room = addGroup(THREE, bay, 'Moana tropical lagoon');
-  const sand = matte(0xe8c68b), wetSand = matte(0xc9ad7a);
+  const sand = matte(0xe8c68b);
   const sea = matte(0x329fa9), foam = matte(0xd2f4e6), shallow = matte(0x69c9c2);
   const wood = matte(0x96603d), darkWood = matte(0x593d32), rope = matte(0xd7b47b);
   const green = matte(0x47874e), lime = matte(0x83b85d), stone = matte(0x706e66);
@@ -164,7 +164,7 @@ export function buildMoana(context) {
   const startRotation=new THREE.Quaternion(), facing=new THREE.Quaternion(), angles=new THREE.Euler(0,0,0,'YXZ');
   const local=[0,0];
   let release=null,time=0,yaw=0,pitch=0,completed=false;
-  const dock=()=>{boat.position.set(0,.13,MOANA_DOCK.z);boat.rotation.set(0,0,0);wake.visible=false;};
+  const dock=()=>{boat.position.set(0,.13,MOANA_DOCK.z);boat.rotation.set(0,Math.PI/2,0);wake.visible=false;moana.position.set(-2.9,0,6);moana.rotation.y=.30;};
   function stop(spawn){const restore=release;release=null;dock();restore?.(spawn);}
   function reachable(position){
     if(!position||!isPlayerGrounded()||Math.abs(position.y-EYE_HEIGHT)>.25)return false;
@@ -185,6 +185,8 @@ export function buildMoana(context) {
     const heading=Math.atan2(4.35*Math.cos(a),-5.65*Math.sin(a));
     boat.position.set(x,.13+(still?0:.065*Math.sin(a*4)),z);
     boat.rotation.set(0,heading,still?0:.035*Math.sin(a*2));
+    moana.position.set(x+Math.sin(heading)*1.15,boat.position.y+.56,z+Math.cos(heading)*1.15);
+    moana.rotation.y=heading;
     const [px,pz]=toWorld(x,z);
     eye.set(px,boat.position.y+.60+EYE_HEIGHT,pz);
     angles.set(pitch,heading+exhibit.rotation+Math.PI+yaw,0,'YXZ');
