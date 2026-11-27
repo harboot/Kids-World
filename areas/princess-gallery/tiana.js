@@ -137,6 +137,7 @@ export function buildTiana({ THREE, document, bay, parts, exhibit, obstacles, pl
     return actor;
   }
   const tiana=person('Tiana',-2.8,2.7,true);
+  const greetingShoulder=tiana.children.find(child=>child.name==='Tiana shoulder');
   addRoundSolid(obstacles,...toWorld(-2.8,2.7),.68,2.5);
   const prince=person('Prince Naveen',0,-2.7,false);
   prince.position.y=.40;
@@ -155,8 +156,7 @@ export function buildTiana({ THREE, document, bay, parts, exhibit, obstacles, pl
     magic.visible=blend>.03&&blend<.99;
     magic.rotation.y=blend*Math.PI;
     tiana.rotation.y=-.55*blend;
-    const shoulder=tiana.getObjectByName('Tiana shoulder');
-    if(shoulder)shoulder.rotation.x=-.42*blend;
+    greetingShoulder.rotation.x=-.42*blend;
   }
   function reset(){audio.reset();blend=0;pose();}
   reset();
