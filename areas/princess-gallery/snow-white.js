@@ -1,3 +1,4 @@
+import { buildPrincessFace } from './princess-face.js';
 import { cueSource, entryCue, galleryCues } from './interaction-audio.js';
 import { addGroup, paintCanvasTexture, SURFACE_GAP } from '../../core/geometry.js';
 import { EYE_HEIGHT } from '../../core/player.js';
@@ -5,7 +6,6 @@ import { seededRandom } from '../../core/random.js';
 import { PLAYER_ONLY_LAYER } from '../../core/render-layers.js';
 import { addGallerySign, addRoundSolid, addSolid, spaceTransform } from './parts.js';
 
-const radius = 3.15;
 const profiles = [
   {
     name: 'Snow White', x: 1.9, z: -2.55, yaw: .12, coat: 0x285da8, trim: 0xf4ca50, hat: 0xc6384f,
@@ -51,7 +51,8 @@ const profiles = [
   },
 ];
 
-function buildSnowWhiteModel(THREE, { part, matte }, { torso, head, arms, legs }, colors) {
+function buildSnowWhiteModel(THREE, parts, { torso, head, arms, legs }, colors) {
+  const { part, matte } = parts;
   const { coat, trim, hat, skin, shoe, white, gold } = colors;
   const sleeve = matte(0x3b79bd);
   const hair = matte(0x242130);
@@ -96,27 +97,9 @@ function buildSnowWhiteModel(THREE, { part, matte }, { torso, head, arms, legs }
   part(torso, collar, white, 0, 0, -.036, 1, 1, .78);
   part(torso, 'gem', gold, 0, 1.55, .219, .039, .047, .024);
 
-  // Turn a pentagonal facet toward the face. Taper the jaw behind that plane.
-  const face = facets.clone().rotateX(Math.atan((1 + Math.sqrt(5)) / 2));
-  const faceVertices = face.getAttribute('position');
-  for (let i = 0; i < faceVertices.count; i++) {
-    const x = faceVertices.getX(i);
-    const y = faceVertices.getY(i);
-    const z = faceVertices.getZ(i);
-    faceVertices.setX(i, x * (.91 + .11 * z + .19 * Math.min(0, y)));
-    if (y < 0) faceVertices.setY(i, y * .88);
-  }
-  face.computeVertexNormals();
-  // Soften the lighting across the cheeks while keeping the faceted outline.
-  const faceNormals = face.getAttribute('normal');
-  const normal = new THREE.Vector3();
-  const radial = new THREE.Vector3();
-  for (let i = 0; i < faceNormals.count; i++) {
-    radial.fromBufferAttribute(faceVertices, i).normalize();
-    normal.fromBufferAttribute(faceNormals, i).lerp(radial, .36).normalize();
-    faceNormals.setXYZ(i, normal.x, normal.y, normal.z);
-  }
-  part(head, face, skin, 0, .052, .021, .367, .33, .315);
+  const face = addGroup(THREE, head, 'Snow White portrait', 0, .052, .021);
+  face.scale.set(1.10, .97, 1.10);
+  buildPrincessFace(THREE, parts, face, { skin, blush: rouge, brow: ink, lip: lips, iris, pearl: white }, false, { jaw: .16, eyeWidth: 1.07 });
   part(head, facets, hair, 0, .101, -.107, .399, .396, .325);
   part(head, facets, bangs, -.105, .274, .157, .242, .119, .178).rotation.z = .39;
   part(head, facets, hair, .148, .262, .147, .194, .117, .174).rotation.z = -.51;
@@ -124,21 +107,8 @@ function buildSnowWhiteModel(THREE, { part, matte }, { torso, head, arms, legs }
     part(head, facets, hair, side * .269, .021, -.043, .15, .247, .242).rotation.z = side * .17;
     part(head, facets, hat, side * .103, .409, .121, .124, .072, .069).rotation.z = side * .43;
 
-    const x = side * .104;
-    part(head, facets, white, x, .062, .267, .068, .073, .026).rotation.z = side * .16;
-    part(head, facets, iris, x + .005, .064, .287, .032, .047, .016);
-    part(head, facets, ink, x+.005,.064,.299,.015,.025,.008);
-    part(head, 'gem', white, x - .004, .082, .302, .011, .014, .006);
-    part(head, facets, ink, x, .153, .27, .063, .015, .013).rotation.z = -side * .18;
-    part(head, facets, rouge, side * .156, -.039, .269, .045, .026, .010).rotation.z = side * .13;
   }
   part(head, facets, hat, 0, .398, .14, .056, .051, .072);
-  part(head, facets, skin, 0, -.015, .272, .04, .041, .05);
-  const smile = new THREE.Shape([
-    [-.068, .012], [-.029, .003], [0, .006], [.029, .003], [.068, .012],
-    [.042, -.012], [0, -.023], [-.042, -.012],
-  ].map(([x, y]) => new THREE.Vector2(x, y)));
-  part(head, new THREE.ShapeGeometry(smile), lips, 0, -.081, .275, 1, 1, 1);
   batchCostumeParts(head);
 
   for (const { upper, forearm } of arms) {
@@ -181,7 +151,7 @@ function buildSnowWhiteModel(THREE, { part, matte }, { torso, head, arms, legs }
   }
 }
 
-function createActor({ THREE, parts, bay, ground, profile, toWorld, obstacles, palette, glasses, playCue }) {
+function createActor({ THREE, parts, bay, ground, profile, toWorld, obstacles, palette, glasses }) {
   const { part, beam, batch, matte } = parts;
   const { name, x, z, yaw, seat = 0, coat: coatColor, trim: trimColor, hat: hatColor, beard: beardColor } = profile;
   const princess = name === 'Snow White';
@@ -321,10 +291,8 @@ function createActor({ THREE, parts, bay, ground, profile, toWorld, obstacles, p
   }
 
   const greeting = profile.motion(.37);
-  const audio = entryCue(playCue, galleryCues.snow, cueSource(wx,wz,EYE_HEIGHT+y,6));
   addRoundSolid(obstacles, wx, wz, princess ? .88 : .78, y + (princess ? 2.48 : 2.08));
   function reset() {
-    audio.reset();
     blend = time = breathing = 0;
     actor.rotation.z = 0;
     pose(greeting);
@@ -332,20 +300,16 @@ function createActor({ THREE, parts, bay, ground, profile, toWorld, obstacles, p
   reset();
   return {
     reset,
-    update(dt, player, still) {
+    update(dt, active, still) {
       if (!still) breathing += dt;
       actor.rotation.z = still ? 0 : .031 * Math.sin(breathing * 1.54 + profile.x) * Math.min(1, breathing * 2.5);
-      const close = (player.x - wx) ** 2 + (player.z - wz) ** 2 <= radius ** 2 &&
-        Math.abs(player.y - EYE_HEIGHT - y) <= 1.65;
-      audio.update(close,dt);
-      const target = Number(close);
-      if (!close && blend === 0) return false;
+      const target = Number(active);
+      if (!active && blend === 0) return;
       blend = still ? target : THREE.MathUtils.damp(blend, target, 9, dt);
       if (Math.abs(target - blend) < .001) blend = target;
       if (still || !blend) time = 0;
-      else if (close) time += dt;
+      else if (active) time += dt;
       pose(still ? greeting : profile.motion(time));
-      return close;
     },
   };
 }
@@ -672,7 +636,7 @@ export function buildSnowWhite({ THREE, document, bay, exhibit, parts, obstacles
   const cue = addGroup(THREE, bay, 'Snow White greeting sign', -5.85, ground(-5.85, 11.65), 11.65, .09);
   part(cue, 'box', wood[2], 0, .67, 0, .145, 1.34, .15);
   part(cue, 'box', gold, 0, 1.44, 0, 3.24, .79, .12);
-  addGallerySign(THREE, document, cue, ['Come Closer to Say Hello'], 0, 1.44, .06 + SURFACE_GAP.detail, 3.13, .67);
+  addGallerySign(THREE, document, cue, ['Welcome to the Woodland'], 0, 1.44, .06 + SURFACE_GAP.detail, 3.13, .67);
   round(-5.85, 11.65, .15, 1.78);
   batch(components, bay);
 
@@ -681,26 +645,24 @@ export function buildSnowWhite({ THREE, document, bay, exhibit, parts, obstacles
     shoe: matte(0x49363c), gold,
   };
   const glasses = new THREE.TorusGeometry(1, .15, 6, 16);
-  // Nearby characters may share a trigger radius; avoid stacking identical notes.
-  let greetingCooldown = 0;
-  const greet = (notes, source) => {
-    if (greetingCooldown > 0) return;
-    greetingCooldown = .25;
-    playCue(notes, source);
-  };
-  const actors = profiles.map(profile => createActor({ THREE, parts, bay, ground, profile, toWorld, obstacles, palette, glasses, playCue: greet }));
+  // One room-wide trigger. Each actor keeps its own motion profile and blend.
+  const entranceAudio = entryCue(playCue, galleryCues.snow,
+    cueSource(...toWorld(0, front - 1.5), EYE_HEIGHT, 10));
+  const actors = profiles.map(profile => createActor({ THREE, parts, bay, ground, profile, toWorld, obstacles, palette, glasses }));
+  const local = [0, 0];
   return {
     getGroundHeight(x, z) { return ground(...toLocal(x, z)); },
     update(dt, player, _grounded, still) {
-      greetingCooldown = Math.max(0, greetingCooldown - dt);
-      let greeted = false;
-      for (const actor of actors) {
-        if (actor.update(dt, player, still)) greeted = true;
-      }
-      return greeted;
+      const [x, z] = toLocal(player.x, player.z, local);
+      const floor = ground(x, z);
+      // A visitor inside the actual woodland footprint, not on the overhead walkway.
+      const inside = floor !== undefined && z < front && Math.abs(player.y - EYE_HEIGHT - floor) <= 1.65;
+      entranceAudio.update(inside, dt);
+      for (const actor of actors) actor.update(dt, inside, still);
+      return inside;
     },
     reset() {
-      greetingCooldown = 0;
+      entranceAudio.reset();
       for (const actor of actors) actor.reset();
     },
   };

@@ -22,7 +22,9 @@ class MemoryStorage {
   async keys() { return [...this.caches.keys()]; }
 
   async match(url, { cacheName }) {
-    return this.caches.get(cacheName)?.get(String(url))?.clone();
+    const entry = this.caches.get(cacheName)?.get(String(url));
+    if (!entry) return undefined;
+    return new Response(entry.body.slice(0), entry.init);
   }
 
   async delete(name) { return this.caches.delete(name); }
@@ -30,7 +32,11 @@ class MemoryStorage {
   async open(name) {
     if (!this.caches.has(name)) this.caches.set(name, new Map());
     const entries = this.caches.get(name);
-    return { async put(url, response) { entries.set(String(url), response.clone()); } };
+    return { async put(url, response) {
+      // CacheStorage persists bytes, not a chain of cloned live streams.
+      const body = await response.arrayBuffer();
+      entries.set(String(url), { body, init: { status: response.status, statusText: response.statusText, headers: [...response.headers] } });
+    } };
   }
 }
 
@@ -312,7 +318,7 @@ test('optional files are allowlisted, verified again on reuse, and isolated by r
   assert.deepEqual(requests, [entry]);
   const asset = await cache.readAsset(installed.tag, assetPath);
   assert.equal(asset.status, 503, 'only requested files were cached');
-  storage.caches.get(installed.cacheName).set(entry, new Response('tampered cached bytes'));
+  await (await storage.open(installed.cacheName)).put(entry, new Response('tampered cached bytes'));
   assert.equal((await cache.readAsset(installed.tag, hiddenEntry)).status, 503);
   assert.equal((await cache.ready())[0].tag, installed.tag);
 

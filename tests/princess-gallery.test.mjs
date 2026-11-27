@@ -445,46 +445,41 @@ test('Snow White has eight distinct actors visitors can walk up to, with one sha
   assert.equal(walkElevation(area, { x, z }, x, z, area.getGroundHeight(x, z), true), null, 'cottage has collision');
 });
 
-test('each actor animates independently, settles to idle on departure and responds again', async t => {
-  const { worlds } = fixture();
+test('all eight woodland actors animate on entry, settle on exit and restart together', async t => {
+  const { worlds, cues } = fixture();
   t.after(worlds.unload);
   const { scene, area } = await worlds.load(ID);
   const actors = snowActors(scene);
   const idle = actors.map(entry => entry.pose());
-  const far = { x: hall.spawn.x, y: EYE_HEIGHT, z: hall.spawn.z };
-  const advance = (frames, point) => {
-    for (let frame = 0; frame < frames; frame++) worlds.update(1 / 60, point);
+  const mission = area.missionStatus.missions.find(m => m.id === 'snow-white');
+  const { toWorld } = spaceTransform(snowWhite);
+  const point = (z, extra = 0) => {
+    const [x, wz] = toWorld(0, z);
+    return { x, z: wz, y: EYE_HEIGHT + (area.getGroundHeight(x, wz) ?? 0) + extra };
   };
-
-  for (const [index, entry] of actors.entries()) {
-    const name = entry.actor.name;
-    const near = approachActor(entry, area, .87);
-    advance(1, near);
-    const start = entry.pose();
-    advance(24, near);
-    const greeting = entry.pose();
-    assert.notDeepEqual(start, idle[index], name + ' starts reacting');
-    assert.notDeepEqual(greeting, start, name + ' blends in and moves');
-    advance(60, near);
-    assert.notDeepEqual(entry.pose(), greeting, name + ' continues while nearby');
-    assert.ok(actors.every((other, i) => i === index || other.pose().every((value, j) => value === idle[i][j])),
-      name + ' does not trigger the others');
-
-    advance(1, far);
-    assert.notDeepEqual(entry.pose(), idle[index], name + ' eases out');
-    advance(60, far);
-    assert.deepEqual(entry.pose(), idle[index], name + ' returns to rest');
-    advance(25, near);
-    assert.deepEqual(entry.pose(), greeting, name + ' can react again from the original pose');
-    advance(61, far);
-  }
-
-  const shared = actors[1].center().lerp(actors[2].center(), .5);
-  shared.y = EYE_HEIGHT + area.getGroundHeight(shared.x, shared.z);
-  advance(30, shared);
-  assert.notDeepEqual(actors[1].pose(), idle[1], 'Doc reacts');
-  assert.notDeepEqual(actors[2].pose(), idle[2], 'Grumpy reacts at the same time');
-  assert.deepEqual(actors[0].pose(), idle[0], 'Snow White stays idle');
+  const outside = point(snowWhite.bounds.depth / 2 + 1);
+  const inside = point(snowWhite.bounds.depth / 2 - .6);
+  const advance = (frames, p) => {
+    for (let i = 0; i < frames; i++) worlds.update(1 / 60, p);
+  };
+  advance(25, outside);
+  advance(25, point(0, 15.6));
+  assert.deepEqual(actors.map(entry => entry.pose()), idle);
+  assert.equal(mission.complete, false);
+  const before = cues.length;
+  advance(25, inside);
+  const greeting = actors.map(entry => entry.pose());
+  for (let i = 0; i < actors.length; i++) assert.notDeepEqual(greeting[i], idle[i], actors[i].actor.name);
+  assert.equal(mission.complete, true);
+  assert.equal(cues.length, before + 1);
+  advance(60, inside);
+  for (let i = 0; i < actors.length; i++) assert.notDeepEqual(actors[i].pose(), greeting[i], actors[i].actor.name);
+  assert.equal(cues.length, before + 1);
+  advance(61, outside);
+  assert.deepEqual(actors.map(entry => entry.pose()), idle);
+  advance(25, inside);
+  assert.deepEqual(actors.map(entry => entry.pose()), greeting);
+  assert.equal(cues.length, before + 2);
   worlds.reset();
   assert.deepEqual(actors.map(entry => entry.pose()), idle);
 });
@@ -1984,6 +1979,7 @@ test('all ten princess portraits have finite geometry and the expected head hier
     const bay=scene.getObjectByName(id+' exhibit');
     const head=bay?.getObjectByName(name);
     assert.ok(head?.isGroup,name);
+    assert.ok(head.getObjectByName('Open eyes')?.isGroup, name + ' uses the shared princess face');
     let count=0;
     head.traverse(mesh=>{
       if (!mesh.isMesh) return;
