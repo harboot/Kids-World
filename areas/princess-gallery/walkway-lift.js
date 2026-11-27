@@ -1,3 +1,4 @@
+import { cueSource, galleryCues } from './interaction-audio.js';
 import { addGroup, SURFACE_GAP } from '../../core/geometry.js';
 import { PLAYER_RADIUS } from '../../core/movement.js';
 import { EYE_HEIGHT } from '../../core/player.js';
@@ -10,7 +11,7 @@ export const walkwayLiftSite = {
 
 const cabinRoof = 2.91;
 
-export function buildWalkwayLift({ THREE, document, parent, parts, height, camera, isActive, reducedMotion, carryPlayer }) {
+export function buildWalkwayLift({ THREE, document, parent, parts, height, camera, isActive, reducedMotion, carryPlayer, playCue = () => {} }) {
   const { part, beam, batch, matte } = parts;
   const { clamp, lerp, smoothstep } = THREE.MathUtils;
   const { x, z, halfDepth, halfWidth } = walkwayLiftSite;
@@ -71,12 +72,13 @@ export function buildWalkwayLift({ THREE, document, parent, parts, height, camer
 
   const cabin = addGroup(THREE, root, 'Glass lift cabin');
   const cabinDetails = new THREE.Group();
-  part(cabinDetails, 'box', navy, 0, -.145, 0, halfWidth * 2, .29, halfDepth * 2);
-  part(cabinDetails, 'box', waxed, 0, -.018, 0, 2.73, .036, 2.68);
+  // One continuous walking surface at y=0. The supporting base ends below it.
+  part(cabinDetails, 'box', navy, 0, -.175, 0, halfWidth * 2, .23, halfDepth * 2);
+  part(cabinDetails, 'box', waxed, 0, -.030, 0, halfWidth * 2, .060, halfDepth * 2);
   for (const offset of [-1.12, 1.12]) {
     part(cabinDetails, 'box', bronze, offset, SURFACE_GAP.detail, 0, .045, .021, 2.56);
   }
-  part(cabinDetails, 'box', bronze, 0, -.039, halfDepth - .055, 2.94, .078, .106);
+  part(cabinDetails, 'box', bronze, 0, SURFACE_GAP.detail, halfDepth - .055, 2.94, .016, .106);
   for (const side of [-1, 1]) {
     const lx = side * (halfWidth - .044);
     for (const lz of [-halfDepth + .062, halfDepth - .062]) {
@@ -126,7 +128,8 @@ export function buildWalkwayLift({ THREE, document, parent, parts, height, camer
   }
   function request(target) {
     const still = reducedMotion();
-    trip = { target, elapsed: 0, doorTime: still ? .13 : .43, travelTime: still ? .19 : 8.0 };
+    trip = { target, elapsed: 0, doorTime: still ? .13 : .43, travelTime: still ? .19 : 8.0, nextMotor: .65 };
+    playCue(galleryCues.liftStart,cueSource(x,z,stops[stop]+EYE_HEIGHT,8));
   }
   function render(open, dock) {
     cabinDoors(open);
@@ -139,7 +142,7 @@ export function buildWalkwayLift({ THREE, document, parent, parts, height, camer
 
   const calls = stops.map((floor, i) => ({
     x: front + .36, z: z - 1.30, radius: 2.18, anchorY: floor + 1.19,
-    label: i === 0 ? 'Call lift to ground floor' : 'Call lift to Glass Walkway',
+    label: i === 0 ? 'Call lift to ground floor' : 'Call lift to Glass Walkway', silent: true,
     get active() { return isActive() && !trip && stop !== i; },
     reachable(player) {
       return player.x >= front + .12 && Math.abs(player.z - z) < 1.48 &&
@@ -150,7 +153,7 @@ export function buildWalkwayLift({ THREE, document, parent, parts, height, camer
     },
   }));
   const ride = {
-    x: x - .82, z: z + .80, radius: 3.44,
+    x: x - .82, z: z + .80, radius: 3.44, silent: true,
     get anchorY() { return cabin.position.y + 1.44; },
     get label() { return 'Ride lift to ' + titles[1 - stop]; },
     get active() { return isActive() && !trip; },
@@ -180,6 +183,10 @@ export function buildWalkwayLift({ THREE, document, parent, parts, height, camer
       const opening = inTransit < doorTime ? 1 - inTransit / doorTime :
         clamp((inTransit - doorTime - travelTime) / doorTime, 0, 1);
       cabin.position.y = lerp(stops[stop], stops[target], smoothstep(progress, 0, 1));
+      if(progress>0 && progress<1 && inTransit>=trip.nextMotor) {
+        trip.nextMotor=inTransit+1.35;
+        playCue(galleryCues.liftMotor,cueSource(x,z,cabin.position.y+EYE_HEIGHT,6));
+      }
       const feet = player.y - EYE_HEIGHT;
       if (cabin.position.y !== previous && inCabin(player.x, player.z) && feet >= previous - .08 && feet <= previous + 1.4) {
         carryPlayer(cabin.position.y - previous);
@@ -187,6 +194,7 @@ export function buildWalkwayLift({ THREE, document, parent, parts, height, camer
       if (progress === 1 && opening === 1) {
         stop = target;
         trip = null;
+        playCue(galleryCues.liftArrive,cueSource(x,z,stops[stop]+EYE_HEIGHT,8));
       }
       render(opening, progress === 0 ? stop : progress === 1 ? target : -1);
     },
