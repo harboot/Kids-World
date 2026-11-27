@@ -1,3 +1,4 @@
+import { buildPrincessFace } from './princess-face.js';
 import { cueSource, entryCue, galleryCues } from './interaction-audio.js';
 import { addGroup, SURFACE_GAP } from '../../core/geometry.js';
 import { EYE_HEIGHT } from '../../core/player.js';
@@ -85,11 +86,16 @@ export function buildTiana({ THREE, document, bay, parts, exhibit, obstacles, pl
     const actor=addGroup(THREE,room,name,x,0,z);
     const cloth=princess?dress:matte(0x47765b);
     if(princess){
-      part(actor,new THREE.CylinderGeometry(.24,.72,1.25,12),cloth,0,.72,0,1,1,1);
+      const skirt = new THREE.LatheGeometry([[.68,.06],[.75,.13],[.70,.36],[.55,.65],[.36,.96],[.245,1.20]].map(([r,y])=>new THREE.Vector2(r,y)),20);
+      part(actor,skirt,cloth,0,0,0,1,1,.79);
       for(let i=0;i<8;i++){
         const a=i*Math.PI/4;
-        part(actor,'sphere',silk,Math.sin(a)*.39,.75,Math.cos(a)*.39,.23,.52,.15).rotation.y=a;
+        const petal=part(actor,'sphere',silk,Math.sin(a)*.48,.55,Math.cos(a)*.37,.18,.46,.095);
+        petal.rotation.set(Math.cos(a)*.35,a,-Math.sin(a)*.35,'YXZ');
       }
+      part(actor,'sphere',cloth,0,1.19,0,.26,.18,.21);
+      part(actor,'drum',gold,0,1.19,0,.255,.065,.20);
+      part(actor,'gem',silk,0,1.37,.234,.08,.10,.035);
     }else{
       for(const s of [-1,1]){
         part(actor,'box',cream,s*.15,.44,0,.23,.82,.24);
@@ -98,21 +104,36 @@ export function buildTiana({ THREE, document, bay, parts, exhibit, obstacles, pl
     }
     part(actor,'sphere',cloth,0,1.35,0,.33,.42,.23);
     part(actor,'drum',skin,0,1.69,0,.12,.20,.12);
-    part(actor,'sphere',skin,0,1.99,0,.25,.31,.23);
-    part(actor,'sphere',hair,0,2.12,-.06,.26,.25,.22);
-    if(princess) part(actor,'sphere',hair,0,2.34,-.12,.19,.17,.17);
+    const head=addGroup(THREE,actor,name+' head',0,1.99,0);
+    if(princess){
+      buildPrincessFace(THREE,parts,head,{skin,blush:matte(0xb86e61),brow:hair,lip:matte(0x8e4148),iris:matte(0x56342a),pearl:cream},false,{jaw:.18,eyeWidth:1.02});
+      part(head,'sphere',hair,0,.095,-.11,.316,.32,.25);
+      part(head,'sphere',hair,0,.34,-.13,.205,.19,.19);
+      for(const side of [-1,1]){
+        part(head,'sphere',hair,side*.15,.22,.13,.16,.10,.11).rotation.z=side*-.45;
+        part(head,'gem',gold,side*.305,-.12,.02,.034,.062,.03);
+      }
+      for(let i=-1;i<=1;i++)part(head,'gem',gold,i*.09,.37,.12,.065,.115+(.03*(1-Math.abs(i))),.05);
+      part(head,'gem',silk,0,.42,.166,.033,.04,.025);
+    }else{
+      part(head,'sphere',skin,0,0,0,.25,.31,.23);
+      part(head,'sphere',hair,0,.13,-.06,.26,.25,.22);
+      for(const side of [-1,1])part(head,'sphere',dark,side*.087,.02,.207,.038,.047,.022);
+      part(head,'sphere',skin,0,-.03,.23,.045,.065,.055);
+      part(head,'sphere',matte(0x8e4148),0,-.12,.211,.08,.023,.025);
+    }
     for(const s of [-1,1]){
       const arm=addGroup(THREE,actor,name+' shoulder',s*.32,1.56,0);
       arm.rotation.z=s*.22;
-      part(arm,'sphere',cloth,0,-.12,0,.14,.19,.13);
-      part(arm,'sphere',skin,0,-.43,.02,.10,.24,.10);
-      part(arm,'sphere',skin,0,-.66,.03,.10,.12,.09);
-      part(actor,'sphere',dark,s*.087,2.01,.207,.038,.047,.022);
+      part(arm,'sphere',cloth,0,-.08,0,.14,.17,.13);
+      part(arm,'sphere',skin,0,-.23,0,.10,.19,.10);
+      const elbow=addGroup(THREE,arm,name+' elbow',0,-.35,.01);
+      part(elbow,'sphere',skin,0,-.015,0,.10,.10,.10);
+      part(elbow,'sphere',skin,0,-.16,.02,.085,.19,.085);
+      part(elbow,'sphere',skin,0,-.32,.03,.09,.11,.08);
+      if(princess)part(elbow,'drum',gold,0,-.26,.015,.091,.035,.087);
     }
-    part(actor,'sphere',skin,0,1.96,.23,.045,.065,.055);
-    part(actor,'sphere',matte(0x8e4148),0,1.87,.211,.08,.023,.025);
-    if(princess) for(let i=-1;i<=1;i++) part(actor,'gem',gold,i*.09,2.37,.08,.07,.13,.06);
-    else part(actor,'box',gold,0,1.38,.23,.10,.28,.028);
+    if(!princess)part(actor,'box',gold,0,1.38,.23,.10,.28,.028);
     return actor;
   }
   const tiana=person('Tiana',-2.8,2.7,true);
@@ -134,6 +155,8 @@ export function buildTiana({ THREE, document, bay, parts, exhibit, obstacles, pl
     magic.visible=blend>.03&&blend<.99;
     magic.rotation.y=blend*Math.PI;
     tiana.rotation.y=-.55*blend;
+    const shoulder=tiana.getObjectByName('Tiana shoulder');
+    if(shoulder)shoulder.rotation.x=-.42*blend;
   }
   function reset(){audio.reset();blend=0;pose();}
   reset();
