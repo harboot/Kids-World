@@ -163,8 +163,8 @@ test('ten distinct and nonoverlapping footprints surround the Central Atrium', a
     'rapunzel', 'snow-white', 'cinderella', 'aurora', 'ariel', 'belle', 'jasmine', 'mulan', 'tiana', 'moana',
   ]));
   assert.deepEqual(exhibits.filter(entry => entry.status === 'complete' && entry.build).map(entry => entry.id),
-    ['rapunzel', 'snow-white', 'aurora', 'belle', 'cinderella', 'jasmine', 'mulan', 'ariel']);
-  assert.equal(exhibits.filter(entry => entry.status === 'coming-soon' && !entry.build).length, 2);
+    ['rapunzel', 'snow-white', 'aurora', 'belle', 'cinderella', 'jasmine', 'mulan', 'ariel', 'tiana']);
+  assert.equal(exhibits.filter(entry => entry.status === 'coming-soon' && !entry.build).length, 1);
   assert.ok(new Set(exhibits.map(entry => entry.shape)).size >= 5);
   assert.ok(new Set(exhibits.map(entry => entry.rotation)).size >= 8);
   for (const key of ['width', 'depth', 'height']) {
@@ -1255,6 +1255,12 @@ test('the ten gallery missions record one interaction per exhibit and replay aft
           position = { x: deck.x, y: EYE_HEIGHT + deck.y, z: deck.z };
           break;
         }
+        case 'tiana': {
+          position = point(exhibit, 0, 2.75);
+          step({ ...position, y: EYE_HEIGHT + 15.6 });
+          assert.deepEqual(completed(), expected, 'the overlook does not count');
+          break;
+        }
         case 'cinderella': {
           const site = scene.getObjectByName('Cinderella slipper display');
           step(point(exhibit, site.position.x, site.position.z + 1.2));
@@ -1849,4 +1855,30 @@ test('visitors, guards and stroller stroll while vendors and exhibit actors move
   worlds.reset();
   assert.equal(wheel.rotation.x, 0);
   assert.ok(guests.every((actor, i) => actor.position.equals(start[i])));
+});
+
+test('Tiana transforms the frog into Naveen near the bank and resets when visitors leave', async t => {
+  const { worlds } = fixture({ reduced: true });
+  t.after(worlds.unload);
+  const { area, scene } = await worlds.load(ID);
+  const exhibit = exhibits.find(entry => entry.id === 'tiana');
+  const { toWorld } = spaceTransform(exhibit);
+  const frog = scene.getObjectByName('Enchanted frog');
+  const prince = scene.getObjectByName('Prince Naveen');
+  const mission = area.missionStatus.missions.find(entry => entry.id === 'tiana');
+  const point = (x,z,y=EYE_HEIGHT) => { const [wx,wz] = toWorld(x,z); return { x:wx,y,z:wz }; };
+  assert.ok(scene.getObjectByName('Tiana'));
+  assert.ok(frog.visible && !prince.visible);
+  worlds.update(.2, point(0,2.75,EYE_HEIGHT+15.6));
+  assert.equal(mission.complete,false);
+  worlds.update(.2, point(0,2.75));
+  assert.ok(!frog.visible && prince.visible);
+  assert.equal(mission.complete,true);
+  worlds.update(.2, point(0,6.5));
+  assert.ok(frog.visible && !prince.visible);
+  worlds.update(.2, point(0,2.75));
+  assert.ok(prince.visible);
+  worlds.reset();
+  assert.ok(frog.visible && !prince.visible);
+  assert.equal(mission.complete,false);
 });
