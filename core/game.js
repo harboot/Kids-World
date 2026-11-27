@@ -1,5 +1,5 @@
 import { renderAreaList } from './area-picker.js';
-import { isPublicArea, validateAreaRegistry } from './area-registry.js';
+import { hasArea, isPublicArea, validateAreaRegistry } from './area-registry.js';
 import { createAudio } from './audio.js';
 import { createControls } from './controls.js';
 import { createDroneView, isDroneView, replaceDroneView } from './drone-view.js';
@@ -11,21 +11,12 @@ import { createLevelProgress } from './level-progress.js';
 import { PLAYER_RADIUS } from './movement.js';
 import { createPlayer } from './player.js';
 import { createView } from './renderer.js';
-import { AreaInitializationError, areaURL, createWorldManager, resolveArea } from './world-manager.js';
+import { AreaInitializationError, areaURL, createWorldManager } from './world-manager.js';
 
-const areaKey = 'kids-world-last-area';
 const controlKey = 'kids-world-controls';
 const defaultControls = 'one-finger';
 const controlModes = new Set([defaultControls, 'two-finger']);
 const areaLoadTimeout = 30_000;
-
-function savedArea() {
-  try {
-    return localStorage.getItem(areaKey);
-  } catch {
-    return null;
-  }
-}
 
 function savedControls() {
   try {
@@ -35,15 +26,6 @@ function savedControls() {
     // Use the default when local storage is unavailable.
   }
   return defaultControls;
-}
-
-function rememberArea(areas, id) {
-  if (!isPublicArea(areas, id)) return;
-  try {
-    localStorage.setItem(areaKey, id);
-  } catch {
-    // Exploration still works in browsers that block local storage.
-  }
 }
 
 function speedSetting(dialog, id) {
@@ -132,6 +114,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     drone?.stop();
     droneEntry.hidden = true;
     missionHud.reset();
+    delete game.dataset.home;
     game.dataset.state = 'error';
     menuMessage.textContent = message;
     notice.textContent = '';
@@ -145,6 +128,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   }
 
   function showArea(id) {
+    delete game.dataset.home;
     const definition = areas[id];
     game.dataset.level = id;
     areaName.textContent = definition.title;
@@ -156,11 +140,20 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     menuMessage.textContent = definition.description;
   }
 
-  const restoringHistory = performance.getEntriesByType('navigation')[0]?.type === 'back_forward';
-  const initialURL = new URL(location.href);
-  const initialArea = resolveArea(initialURL, areas, defaultArea, restoringHistory ? null : savedArea());
-  showArea(initialArea);
-  notice.textContent = areas[initialArea].loadingMessage ?? `Loading ${areas[initialArea].title}…`;
+  // Only an explicit route selects an area; remembered areas never choose startup.
+  function requestedArea(url) {
+    const explicit = url.searchParams.get('area');
+    if (hasArea(areas, explicit)) return explicit;
+    const arrival = url.searchParams.get('arrive');
+    return isPublicArea(areas, arrival) ? arrival : null;
+  }
+  const initialArea = requestedArea(new URL(location.href));
+  if (initialArea) {
+    showArea(initialArea);
+    notice.textContent = areas[initialArea].loadingMessage ?? `Loading ${areas[initialArea].title}…`;
+  } else {
+    notice.textContent = 'Preparing the area menu…';
+  }
 
   let THREE;
   try {
@@ -302,6 +295,39 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     if (!paused) syncView();
   }
 
+  function showHome(open = false) {
+    cancelTransition();
+    stopPlaying();
+    clearVisitPresentation();
+    worlds.unload();
+    audio.setScore(undefined);
+    route = undefined;
+    activeURL = undefined;
+    delete game.dataset.level;
+    delete game.dataset.seated;
+    game.dataset.home = 'true';
+    game.dataset.state = 'menu';
+    areaName.textContent = 'Choose area';
+    document.title = 'Kids World';
+    theme.content = areas[defaultArea].themeColor;
+    canvas.setAttribute('aria-label', 'Kids World');
+    heading.firstChild.textContent = 'Kids ';
+    heading.querySelector('span').textContent = 'World';
+    menuMessage.textContent = 'Choose an area to explore.';
+    startLabel.textContent = 'Choose area';
+    start.hidden = false;
+    start.disabled = false;
+    restart.disabled = true;
+    chooseLevel.disabled = false;
+    openSettings.disabled = false;
+    droneEntry.hidden = true;
+    notice.textContent = '';
+    retryArea.hidden = true;
+    view.sceneChanged();
+    if (open && !game.inert) openAreaPicker();
+    finishStartup();
+  }
+
   function relocate(spawn) {
     controls.clear();
     stepDistance = 0;
@@ -391,7 +417,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
       return;
     }
     cancelTransition();
-    const request = { id, historyMode, url: areaURL(new URL(location.href), id) };
+    const request = { id, historyMode, fromHome: game.dataset.home === 'true', url: areaURL(new URL(location.href), id) };
     transition = request;
     try {
       game.dataset.state = 'traveling';
@@ -423,7 +449,6 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
       showArea(id);
       if (request.historyMode) history[request.historyMode](null, '', areaURL(new URL(location.href), id));
       activeURL = new URL(location.href);
-      rememberArea(areas, id);
       menu(false);
     } catch (error) {
       if (transition !== request) return;
@@ -441,6 +466,11 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
         if (activeURL && location.href !== activeURL.href) history.replaceState(null, '', activeURL);
         menu(false);
         notice.textContent = `${message} You can keep exploring ${worlds.active.definition.title}.`;
+        retryArea.href = request.url.href;
+        retryArea.hidden = false;
+      } else if (request.fromHome) {
+        showHome();
+        notice.textContent = `${message} Choose another area or reload to retry.`;
         retryArea.href = request.url.href;
         retryArea.hidden = false;
       } else {
@@ -473,19 +503,21 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     view.invalidate();
   });
 
-  chooseLevel.addEventListener('click', () => {
-    if (levelPicker.open || !worlds.active || transition || game.dataset.state === 'error') return;
+  function openAreaPicker() {
+    if (levelPicker.open || transition || terminal || game.dataset.state === 'error') return;
+    if (!worlds.active && game.dataset.home !== 'true') return;
     if (playing()) menu(true);
     progress.refresh();
     renderAreaList(areaList, {
-      areas, progress, current: worlds.active.id,
+      areas, progress, current: worlds.active?.id,
       select(id) {
-        if (id === worlds.active.id) levelPicker.close();
+        if (id === worlds.active?.id) levelPicker.close();
         else enterArea(id, 'pushState');
       },
     });
     levelPicker.showModal();
-  });
+  }
+  chooseLevel.addEventListener('click', openAreaPicker);
 
   function guideCamera(look, current, { camera: rideCamera, prompt, drive, fov, viewMode } = {}) {
     const stop = player.guide(look);
@@ -550,6 +582,7 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
 
   start.addEventListener('click', event => {
     if (game.dataset.state === 'error') location.reload();
+    else if (game.dataset.home === 'true') openAreaPicker();
     else startPlaying(event.pointerType);
   });
   droneEntry.addEventListener('click', () => {
@@ -561,7 +594,8 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   function restoreArea(fromCache = false) {
     if (terminal || suspended) return;
     const url = new URL(location.href);
-    const id = resolveArea(url, areas, defaultArea);
+    const id = requestedArea(url);
+    if (!id) { showHome(true); return; }
     if (worlds.active?.id !== id) {
       enterArea(id);
       return;
@@ -579,7 +613,6 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
       else syncView(url);
       return;
     }
-    rememberArea(areas, id);
     resetArea();
   }
 
@@ -672,7 +705,8 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
     }
   }
 
-  const url = new URL(location.href);
-  enterArea(url.href === initialURL.href ? initialArea : resolveArea(url, areas, defaultArea), 'replaceState');
+  const id = requestedArea(new URL(location.href));
+  if (id) enterArea(id, 'replaceState');
+  else showHome(true);
   await ready;
 }
