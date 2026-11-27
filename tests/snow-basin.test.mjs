@@ -7,6 +7,7 @@ import {
   CHOP_COOLDOWN, CHOPS, FALL_DURATION, SNOWBALL_RELOAD, SNOWBALL_STATION, SNOWMAN_COUNT, THROWING_POSITION,
   createSnowActivity, snowMissionsComplete, sweepSphere,
 } from '../areas/snow-basin/activity.js';
+import { SKATE_SITE, SKATE_CHECKPOINTS } from '../areas/snow-basin/skating.js';
 import { ICE_TOWER, towerStairPoint } from '../areas/snow-basin/ice-tower.js';
 import { ICE_HILLS, LAKE_LEVEL, MOUNTAIN_TRAIL } from '../areas/snow-basin/terrain.js';
 import { SLIDE_START, SLIDE_PATH, SLIDE_LANDING, SLIDE_PLATFORM } from '../areas/snow-basin/slide.js';
@@ -167,12 +168,15 @@ async function buildWorld({ reducedMotion = () => false, saved = [] } = {}) {
   };
 }
 
-function assertProgress(area, { snowmen = 0, chops = 0, slide = 0, olaf = 0, pineFallen = chops === CHOPS } = {}) {
+function assertProgress(area, { snowmen = 0, chops = 0, slide = 0, olaf = 0, sven = 0, tower = 0, skating = 0, pineFallen = chops === CHOPS } = {}) {
   assert.deepEqual(area.missionStatus.missions, [
     { id: 'pine', title: 'Chop Down the Pine', current: chops, total: 5, complete: pineFallen },
     { id: 'snowmen', title: 'Snowball Challenge', current: snowmen, total: 3, complete: snowmen === 3 },
     { id: 'slide', title: 'Ice Slide Adventure', current: slide, total: 1, complete: slide === 1 },
     { id: 'olaf', title: 'Meet Olaf', current: olaf, total: 1, complete: olaf === 1 },
+    { id: 'sven', title: 'Feed Sven', current: sven, total: 1, complete: sven === 1 },
+    { id: 'tower', title: 'Ice Tower Lookout', current: tower, total: 1, complete: tower === 1 },
+    { id: 'skating', title: 'Ice Skating Challenge', current: skating, total: 3, complete: skating === 3 },
   ]);
 }
 
@@ -749,6 +753,8 @@ test('completes exactly once in any mission order and preserves other area badge
   for (const order of orders.flatMap(base => Array.from({ length: 4 }, (_, index) => {
     const steps = base.split(' ');
     steps.splice(index, 0, 'olaf');
+    steps.push('sven', 'tower', 'skating');
+    if (index % 2) steps.reverse();
     return steps.join(' ');
   }))) {
     await t.test(order, async sub => {
@@ -769,17 +775,27 @@ test('completes exactly once in any mission order and preserves other area badge
           const { x, z } = visit.scene.getObjectByName('Olaf').position;
           game.stand({ x, z: z + 3 });
           game.frame(0);
+        } else if (id === 'sven') {
+          visit.area.interactions.find(item => item.label === 'Offer carrot').act();
+        } else if (id === 'tower') {
+          const point = towerStairPoint(ICE_TOWER.stairEnd - 2);
+          game.stand({ ...point, elevation: point.y });
+          game.frame(0);
+        } else if (id === 'skating') {
+          visit.area.interactions.find(item => item.label === 'Put on ice skates').act();
+          for (const point of SKATE_CHECKPOINTS) { game.stand(point); game.frame(0); }
         } else {
           startRide(game);
           finishRide(game);
         }
         missions.add(id);
         assertProgress(visit.area, { chops: missions.has('pine') ? 5 : 0,
-          snowmen: missions.has('snowmen') ? 3 : 0, slide: Number(missions.has('slide')), olaf: Number(missions.has('olaf')) });
-        assert.deepEqual(completions, missions.size === 4 ? ['snow'] : []);
+          snowmen: missions.has('snowmen') ? 3 : 0, slide: Number(missions.has('slide')), olaf: Number(missions.has('olaf')), sven: Number(missions.has('sven')),
+          tower: Number(missions.has('tower')), skating: missions.has('skating') ? 3 : 0 });
+        assert.deepEqual(completions, missions.size === 7 ? ['snow'] : []);
       }
       assert.ok(progress.has('snow'));
-      assert.deepEqual(new Set(game.records()), new Set(['snow@3', 'garden@3', 'frozen-castle']));
+      assert.deepEqual(new Set(game.records()), new Set(['snow@4', 'garden@3', 'frozen-castle']));
       assert.equal(game.missionHud.toast.textContent, 'Snow Basin complete!');
       assert.equal(visit.area.missionStatus.hint, 'Snow Basin complete!');
       startRide(game);
@@ -795,8 +811,10 @@ test('completion requires each mission flag', () => {
     for (const snowmen of [false, true]) {
       for (const slide of [false, true]) {
         for (const olaf of [false, true]) {
-          const missions = { pine, snowmen, slide, olaf };
-          assert.equal(snowMissionsComplete(missions), pine && snowmen && slide && olaf);
+          for (const sven of [false, true]) for (const tower of [false, true]) for (const skating of [false, true]) {
+            const missions = { pine, snowmen, slide, olaf, sven, tower, skating };
+            assert.equal(snowMissionsComplete(missions), pine && snowmen && slide && olaf && sven && tower && skating);
+          }
         }
       }
     }
@@ -928,4 +946,35 @@ test('both ice hills have walkable approaches to their summits', async t => {
     }
     assert.ok(feet >= hill.height - 0.25);
   }
+});
+
+
+test('skating requires skates, counts each checkpoint once, restores traction and permits re-equipping', async t => {
+  const game = await buildWorld();
+  t.after(game.worlds.unload);
+  const { area, scene } = game.visit;
+  const equip = area.interactions.find(item => item.label === 'Put on ice skates');
+  const gear = scene.getObjectByName('Ice skates');
+  game.stand(SKATE_CHECKPOINTS[0]);
+  game.frame(0);
+  assertProgress(area);
+  game.stand(SKATE_SITE);
+  assert.equal(equip.act(), true);
+  assert.equal(gear.visible, false);
+  assert.equal(area.getGroundTraction(-4, -7), 0.035);
+  assert.equal(area.getGroundTraction(0, 9.4), 1);
+  for (const [i, point] of SKATE_CHECKPOINTS.entries()) {
+    game.stand(point);
+    game.frame(0);
+    game.frame(0);
+    assertProgress(area, { skating: i + 1 });
+  }
+  assert.equal(gear.visible, true);
+  assert.equal(area.getGroundTraction(-4, -7), 0.08);
+  assert.equal(equip.act(), true);
+  assert.equal(area.getGroundTraction(-4, -7), 0.035);
+  assertProgress(area, { skating: 3 });
+  game.worlds.reset();
+  assertProgress(area);
+  assert.equal(gear.visible, true);
 });
