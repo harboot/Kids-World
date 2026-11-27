@@ -41,13 +41,13 @@ test('completion is independent of the last area and survives reopening', () => 
 test('the expanded Garden needs a new completion while other saved badges remain', () => {
   const storage = storageFixture();
   const key = 'kids-world-completed-levels';
-  storage.setItem(key, JSON.stringify(['garden@2', 'snow@4']));
+  storage.setItem(key, JSON.stringify(['garden@2', 'snow@5']));
   const open = () => createLevelProgress(areas, () => storage);
   const progress = open();
   assert.equal(progress.has('garden'), false);
   assert.equal(progress.has('snow'), true);
   progress.complete('garden');
-  assert.deepEqual(JSON.parse(storage.getItem(key)), ['snow@4', 'garden@3']);
+  assert.deepEqual(JSON.parse(storage.getItem(key)), ['snow@5', 'garden@3']);
   assert.equal(open().has('garden'), true);
   assert.equal(open().has('snow'), true);
 });

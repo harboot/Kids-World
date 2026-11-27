@@ -7,6 +7,7 @@ import {
   CHOP_COOLDOWN, CHOPS, FALL_DURATION, SNOWBALL_RELOAD, SNOWBALL_STATION, SNOWMAN_COUNT, THROWING_POSITION,
   createSnowActivity, snowMissionsComplete, sweepSphere,
 } from '../areas/snow-basin/activity.js';
+import { CABIN, FIREPLACE } from '../areas/snow-basin/cabin.js';
 import { SKATE_SITE, SKATE_CHECKPOINTS } from '../areas/snow-basin/skating.js';
 import { ICE_TOWER, towerStairPoint } from '../areas/snow-basin/ice-tower.js';
 import { ICE_HILLS, LAKE_LEVEL, MOUNTAIN_TRAIL } from '../areas/snow-basin/terrain.js';
@@ -168,7 +169,7 @@ async function buildWorld({ reducedMotion = () => false, saved = [] } = {}) {
   };
 }
 
-function assertProgress(area, { snowmen = 0, chops = 0, slide = 0, olaf = 0, sven = 0, tower = 0, skating = 0, pineFallen = chops === CHOPS } = {}) {
+function assertProgress(area, { snowmen = 0, chops = 0, slide = 0, olaf = 0, sven = 0, tower = 0, skating = 0, cabin = 0, pineFallen = chops === CHOPS } = {}) {
   assert.deepEqual(area.missionStatus.missions, [
     { id: 'pine', title: 'Chop Down the Pine', current: chops, total: 5, complete: pineFallen },
     { id: 'snowmen', title: 'Snowball Challenge', current: snowmen, total: 3, complete: snowmen === 3 },
@@ -177,6 +178,7 @@ function assertProgress(area, { snowmen = 0, chops = 0, slide = 0, olaf = 0, sve
     { id: 'sven', title: 'Feed Sven', current: sven, total: 1, complete: sven === 1 },
     { id: 'tower', title: 'Ice Tower Lookout', current: tower, total: 1, complete: tower === 1 },
     { id: 'skating', title: 'Ice Skating Challenge', current: skating, total: 3, complete: skating === 3 },
+    { id: 'cabin', title: 'Warm Up the Cabin', current: cabin, total: 1, complete: cabin === 1 },
   ]);
 }
 
@@ -753,7 +755,7 @@ test('completes exactly once in any mission order and preserves other area badge
   for (const order of orders.flatMap(base => Array.from({ length: 4 }, (_, index) => {
     const steps = base.split(' ');
     steps.splice(index, 0, 'olaf');
-    steps.push('sven', 'tower', 'skating');
+    steps.push('sven', 'tower', 'skating', 'cabin');
     if (index % 2) steps.reverse();
     return steps.join(' ');
   }))) {
@@ -781,6 +783,8 @@ test('completes exactly once in any mission order and preserves other area badge
           const point = towerStairPoint(ICE_TOWER.stairEnd - 2);
           game.stand({ ...point, elevation: point.y });
           game.frame(0);
+        } else if (id === 'cabin') {
+          visit.area.interactions.find(item => item.label === 'Light fireplace').act();
         } else if (id === 'skating') {
           visit.area.interactions.find(item => item.label === 'Put on ice skates').act();
           for (const point of SKATE_CHECKPOINTS) { game.stand(point); game.frame(0); }
@@ -791,11 +795,11 @@ test('completes exactly once in any mission order and preserves other area badge
         missions.add(id);
         assertProgress(visit.area, { chops: missions.has('pine') ? 5 : 0,
           snowmen: missions.has('snowmen') ? 3 : 0, slide: Number(missions.has('slide')), olaf: Number(missions.has('olaf')), sven: Number(missions.has('sven')),
-          tower: Number(missions.has('tower')), skating: missions.has('skating') ? 3 : 0 });
-        assert.deepEqual(completions, missions.size === 7 ? ['snow'] : []);
+          tower: Number(missions.has('tower')), skating: missions.has('skating') ? 3 : 0, cabin: Number(missions.has('cabin')) });
+        assert.deepEqual(completions, missions.size === 8 ? ['snow'] : []);
       }
       assert.ok(progress.has('snow'));
-      assert.deepEqual(new Set(game.records()), new Set(['snow@4', 'garden@3', 'frozen-castle']));
+      assert.deepEqual(new Set(game.records()), new Set(['snow@5', 'garden@3', 'frozen-castle']));
       assert.equal(game.missionHud.toast.textContent, 'Snow Basin complete!');
       assert.equal(visit.area.missionStatus.hint, 'Snow Basin complete!');
       startRide(game);
@@ -811,9 +815,9 @@ test('completion requires each mission flag', () => {
     for (const snowmen of [false, true]) {
       for (const slide of [false, true]) {
         for (const olaf of [false, true]) {
-          for (const sven of [false, true]) for (const tower of [false, true]) for (const skating of [false, true]) {
-            const missions = { pine, snowmen, slide, olaf, sven, tower, skating };
-            assert.equal(snowMissionsComplete(missions), pine && snowmen && slide && olaf && sven && tower && skating);
+          for (const sven of [false, true]) for (const tower of [false, true]) for (const skating of [false, true]) for (const cabin of [false, true]) {
+            const missions = { pine, snowmen, slide, olaf, sven, tower, skating, cabin };
+            assert.equal(snowMissionsComplete(missions), pine && snowmen && slide && olaf && sven && tower && skating && cabin);
           }
         }
       }
@@ -977,4 +981,43 @@ test('skating requires skates, counts each checkpoint once, restores traction an
   game.worlds.reset();
   assertProgress(area);
   assert.equal(gear.visible, true);
+});
+
+
+test('winter cabin has a walkable open doorway and the fireplace lights once and resets', async t => {
+  const game = await buildWorld();
+  t.after(game.worlds.unload);
+  const { area, scene } = game.visit;
+  const hearth = area.interactions.find(item => item.label === 'Light fireplace');
+  const fire = scene.getObjectByName('Cabin fire');
+  const smoke = scene.getObjectByName('Cabin chimney smoke');
+  const warmth = scene.getObjectByName('Cabin warmth');
+  assert.equal(fire.visible, false);
+  assert.equal(smoke.visible, false);
+  assert.equal(warmth.intensity, 0);
+  let z = CABIN.z - 3.1;
+  let feet = area.getGroundHeight(CABIN.x, z);
+  while (z < CABIN.z) {
+    const next = walkElevation(area, { x: CABIN.x, z }, CABIN.x, z + 0.06, feet, true);
+    assert.notEqual(next, null, 'open cabin doorway must be walkable');
+    feet = next;
+    z += 0.06;
+  }
+  assert.equal(hearth.reachable({ x: CABIN.x, y: EYE_HEIGHT, z: CABIN.z - 2.5 }), false);
+  game.stand({ x: FIREPLACE.x, z: FIREPLACE.z - 1.1 });
+  assert.equal(hearth.reachable(game.camera.position), true);
+  assert.equal(hearth.act(), true);
+  assert.equal(hearth.active, false);
+  assert.equal(hearth.act(), false);
+  assert.equal(fire.visible, true);
+  assert.equal(smoke.visible, true);
+  assert.ok(warmth.intensity > 0);
+  game.frame(0.1);
+  assertProgress(area, { cabin: 1 });
+  game.worlds.reset();
+  assertProgress(area);
+  assert.equal(hearth.active, true);
+  assert.equal(fire.visible, false);
+  assert.equal(smoke.visible, false);
+  assert.equal(warmth.intensity, 0);
 });

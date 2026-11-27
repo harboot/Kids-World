@@ -1,5 +1,6 @@
 import { CHOPS, CHOP_COOLDOWN, FALL_DURATION, SNOWMAN_COUNT, THROWING_POSITION, createSnowActivity, snowMissionsComplete } from './activity.js';
 import { addAxe, addIceSculpture, addChopTree, addSnowPlay, showSnowmen } from './props.js';
+import { createCabin } from './cabin.js';
 import { addWinterScenery } from './scenery.js';
 import { addSnowTerrain } from './terrain.js';
 import { EYE_HEIGHT } from '../../core/player.js';
@@ -47,6 +48,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
   const ground = terrain.getGroundHeight;
   const kit = addWinterScenery({ THREE, scene, touch, width, depth, ground, document: hud?.ownerDocument });
   const { obstacles } = kit;
+  const cabin = createCabin({ THREE, scene, kit, ground, reducedMotion, playCue, notify, onComplete: finishLevel });
   const slide = addIceSlide(THREE, scene, kit, ground);
   const tower = addIceTower(THREE, scene, kit);
   let greetedOlaf = false;
@@ -106,6 +108,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
     get sven() { return fedSven; },
     get tower() { return reachedTower; },
     get skating() { return skating.complete; },
+    get cabin() { return cabin.complete; },
   };
 
   function finishLevel() {
@@ -235,6 +238,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
     fedSven = false;
     reachedTower = false;
     skating.reset();
+    cabin.reset();
     lastEye = undefined;
     placeAxe(axeSite.x, axeSite.z);
     axe.ring.position.y = ground(axeSite.x, axeSite.z) + SURFACE_GAP.detail;
@@ -279,6 +283,11 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
         get current() { return skating.current; },
         get complete() { return missions.skating; },
       },
+      {
+        id: 'cabin', title: 'Warm Up the Cabin', total: 1,
+        get current() { return Number(missions.cabin); },
+        get complete() { return missions.cabin; },
+      },
     ],
     get hint() {
       if (snowMissionsComplete(missions)) return 'Snow Basin complete!';
@@ -292,7 +301,8 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
       if (!missions.olaf) return 'Walk up to Olaf by the frozen lake.';
       if (!missions.sven) return 'Offer Sven a carrot near the winter cabin.';
       if (!missions.tower) return 'Climb the spiral stairs to the top of Ice Tower.';
-      return skating.equipped ? 'Skate through three golden rings on the frozen lake.' : 'Put on the ice skates by the frozen lake.';
+      if (!missions.skating) return skating.equipped ? 'Skate through three golden rings on the frozen lake.' : 'Put on the ice skates by the frozen lake.';
+      return 'Enter the winter cabin and light the fireplace.';
     },
   };
   return {
@@ -324,6 +334,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
       ride.interaction,
       characters.interaction,
       skating.interaction,
+      cabin.interaction,
     ],
     update(dt, player) {
       lastEye = player;
@@ -339,6 +350,7 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
         }
         skating.update(player, true);
       }
+      cabin.update(dt);
       ride.update(dt);
       if (impactTime < 0.56) impactTime += dt;
       updateModels();

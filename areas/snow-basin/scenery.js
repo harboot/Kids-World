@@ -267,16 +267,28 @@ export function addWinterScenery({ THREE, scene, touch, width, depth, ground, do
     const x = -7.4;
     const z = 23.7;
     const planks = [0x916341, 0x81563a, 0x9d6e48];
-    // The shell casts one static shadow. Its trim and campsite share the scenery batches.
-    const cabin = mesh(box, material(planks[0]), x, 1.27, z, 6.1, 2.55, 4.2, true);
+    // Separate walls and an unobstructed 1.6-unit doorway replace the solid cabin shell.
+    const cabin = new THREE.Group();
     cabin.name = 'Snow-covered log cabin';
-    block(x, z, 6.2, 4.3, 2.55);
+    scene.add(cabin);
+    function wall(wx, wz, sx, sz, height = 2.55, y = height / 2) {
+      mesh(box, material(planks[0]), wx, y, wz, sx, height, sz, true, cabin);
+      if (y < 2) block(wx, wz, sx, sz, height);
+    }
+    wall(x, z + 2.05, 6.1, 0.22);
+    for (const side of [-1, 1]) {
+      wall(x + side * 2.95, z, 0.22, 4.1);
+      wall(x + side * 1.925, z - 2.05, 2.25, 0.22);
+    }
+    wall(x, z - 2.05, 1.6, 0.22, 0.35, 2.375);
     for (let i = 0; i < 8; i++) {
       const y = 0.19 + i * 0.31;
+      part(box, planks[i % 3], x, y, z + 2.12, 6.24, 0.28, 0.18);
       for (const side of [-1, 1]) {
-        part(box, planks[i % 3], x, y, z + side * 2.12, 6.24, 0.28, 0.18);
+        part(box, planks[i % 3], x + side * 1.96, y, z - 2.12, 2.32, 0.28, 0.18);
         part(box, planks[(i + 1) % 3], x + side * 3.07, y, z, 0.19, 0.28, 4.01);
       }
+      if (i === 7) part(box, planks[i % 3], x, y, z - 2.12, 1.60, 0.28, 0.18);
     }
     const halfSpan = 3.5;
     const rise = 1.87;
@@ -299,14 +311,22 @@ export function addWinterScenery({ THREE, scene, touch, width, depth, ground, do
       }
     }
     part(box, slate, x - 1.78, 4.14, z + 0.94, 0.68, 1.52, 0.64);
-    part(box, frost, x - 1.78, 4.91, z + 0.94, 0.78, 0.14, 0.75);
+    // An open chimney rim and a door swung outward along the left jamb.
+    for (const side of [-1, 1]) {
+      part(box, frost, x - 1.78 + side * 0.33, 4.97, z + 0.94, 0.12, 0.14, 0.75);
+      part(box, frost, x - 1.78, 4.97, z + 0.94 + side * 0.31, 0.54, 0.14, 0.12);
+    }
     const front = z - 2.23;
-    part(box, 0x593c2e, x, 1, front, 0.99, 2, 0.15);
-    part(box, 0xd2a46c, x - 0.31, 1.01, front - 0.097, 0.11, 0.12, 0.08);
+    for (const side of [-1, 1]) part(box, 0x593c2e, x + side * 0.83, 1.09, front, 0.12, 2.18, 0.15);
+    part(box, 0x593c2e, x, 2.20, front, 1.78, 0.13, 0.15);
+    const door = mesh(box, material(0x593c2e), x - 0.88, 1.04, front - 0.67, 0.12, 2.08, 1.34, true, cabin);
+    door.name = 'Winter Cabin open door';
+    part(box, 0xd2a46c, x - 0.80, 1.01, front - 1.18, 0.08, 0.11, 0.11);
+    block(x - 0.88, front - 0.67, 0.12, 1.34, 2.08);
     for (const side of [-1, 1]) {
       const wx = x + side * 1.9;
       part(box, 0x533a2e, wx, 1.52, front, 1.28, 1.04, 0.16);
-      part(box, 0xffca79, wx, 1.52, front - 0.09, 1.04, 0.81, 0.044);
+      // The cabin module supplies the cold/warm window panels.
       part(box, 0x533a2e, wx, 1.52, front - 0.124, 0.07, 0.84, 0.044);
       part(box, 0x533a2e, wx, 1.52, front - 0.124, 1.06, 0.075, 0.044);
       part(box, frost, wx, 1.03, front - 0.095, 1.36, 0.12, 0.28);
