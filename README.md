@@ -93,13 +93,13 @@ Keep changes area-local, modular, child-friendly, and compatible with the existi
 
 ## Worlds & Missions
 
-**8 public areas · 64 total missions**
+**8 public areas · 67 total missions**
 
 | World | Missions | Highlights |
 | --- | ---: | --- |
 | [Flower Garden](https://harboot.github.io/Kids-World/?area=garden) | 12 | Deliver apples, help garden animals, explore the pond, cave and balloon. |
 | [Wooden House](https://harboot.github.io/Kids-World/?area=wooden-house) | 11 | Help the family, tidy the rooms, wash dishes and put away toys. |
-| [Snow Basin](https://harboot.github.io/Kids-World/?area=snow) | 4 | Chop a pine, hit snowmen, ride the ice slide and meet Olaf. |
+| [Snow Basin](https://harboot.github.io/Kids-World/?area=snow) | 7 | Chop a pine, hit snowmen, ride the ice slide, meet Olaf, feed Sven, climb Ice Tower and skate. |
 | [Frozen Castle](https://harboot.github.io/Kids-World/?area=frozen-castle) | 3 | Activate ice crystals, build an ice staircase and play a melody. |
 | [Arendelle Village](https://harboot.github.io/Kids-World/?area=arendelle-village) | 3 | Catch and sell fish, return the lost reindeer and repair the clock tower. |
 | [Princess Gallery](https://harboot.github.io/Kids-World/?area=princess-gallery) | 10 | Explore fairy-tale exhibits, meet characters and discover interactive scenes. |

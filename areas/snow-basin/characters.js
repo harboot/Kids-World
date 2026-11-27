@@ -7,7 +7,7 @@ const svenCue = [
 ];
 const olafCue = [[76, { duration: 0.14, level: 0.08 }], [81, { duration: 0.18, level: 0.07 }, 0.075]];
 
-export function addSnowCharacters({ THREE, scene, kit, ground, playerRadius, reducedMotion, playCue, notify, onGreetOlaf }) {
+export function addSnowCharacters({ THREE, scene, kit, ground, playerRadius, reducedMotion, playCue, notify, onGreetOlaf, onFeedSven }) {
   const { box, cone, material, obstacles } = kit;
   const facet = new THREE.DodecahedronGeometry(1);
   const cylinder = new THREE.CylinderGeometry(1, 1, 1, 5);
@@ -214,6 +214,20 @@ export function addSnowCharacters({ THREE, scene, kit, ground, playerRadius, red
     scene.add(shadow);
   }
 
+  // Carrot appears at Sven's muzzle during feeding; no inventory pickup needed.
+  const carrot = new THREE.Group();
+  carrot.name = 'Sven offered carrot';
+  carrot.position.set(0, -0.14, 0.96);
+  carrot.rotation.x = Math.PI / 2;
+  const carrotRoot = new THREE.Mesh(new THREE.ConeGeometry(0.095, 0.42, 7), material(0xf58a26));
+  carrotRoot.rotation.z = Math.PI;
+  carrot.add(carrotRoot);
+  const leaves = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.16, 5), material(0x589646));
+  leaves.position.y = 0.27;
+  carrot.add(leaves);
+  svenHead.add(carrot);
+  carrot.visible = false;
+  let feeding = 0;
   const greetingRadius = 4.4;
   let time = 0;
   const characters = [
@@ -278,6 +292,18 @@ export function addSnowCharacters({ THREE, scene, kit, ground, playerRadius, red
   }
 
   return {
+    interaction: {
+      x: sven.position.x, z: sven.position.z, anchorY: sven.position.y + 1.8, radius: 2.7,
+      label: 'Offer carrot', get active() { return feeding === 0; },
+      act() {
+        if (feeding > 0) return false;
+        feeding = 1.5;
+        playCue?.(svenCue);
+        notify?.('Sven: Yum! Thank you for the carrot!');
+        onFeedSven?.();
+        return true;
+      },
+    },
     update(dt, eye) {
       const still = reducedMotion?.();
       if (!still) time = (time + dt) % 600;
@@ -298,8 +324,17 @@ export function addSnowCharacters({ THREE, scene, kit, ground, playerRadius, red
         const reaction = character.remaining > 0 ? 1 - character.remaining / character.duration : 0;
         character.pose(still ? 0 : time, reaction);
       }
+      feeding = Math.max(0, feeding - dt);
+      carrot.visible = feeding > 0.35;
+      carrot.scale.setScalar(Math.min(1, feeding / 0.75));
+      if (feeding > 0 && !still) {
+        svenHead.rotation.x = 0.19 + Math.sin(feeding * 18) * 0.08;
+        tail.rotation.y = Math.sin(feeding * 15) * 0.47;
+      }
     },
     reset() {
+      feeding = 0;
+      carrot.visible = false;
       time = 0;
       for (const character of characters) {
         character.remaining = 0;

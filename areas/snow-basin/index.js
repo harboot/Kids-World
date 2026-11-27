@@ -2,7 +2,9 @@ import { CHOPS, CHOP_COOLDOWN, FALL_DURATION, SNOWMAN_COUNT, THROWING_POSITION, 
 import { addAxe, addIceSculpture, addChopTree, addSnowPlay, showSnowmen } from './props.js';
 import { addWinterScenery } from './scenery.js';
 import { addSnowTerrain } from './terrain.js';
-import { addIceTower } from './ice-tower.js';
+import { EYE_HEIGHT } from '../../core/player.js';
+import { createSkating, SKATE_CHECKPOINTS } from './skating.js';
+import { ICE_TOWER, addIceTower } from './ice-tower.js';
 import { addIceSlide } from './slide.js';
 import { createSlideRide } from './slide-ride.js';
 import { bindSnowballControls } from './snowball-controls.js';
@@ -48,8 +50,15 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
   const slide = addIceSlide(THREE, scene, kit, ground);
   const tower = addIceTower(THREE, scene, kit);
   let greetedOlaf = false;
+  let fedSven = false;
+  let reachedTower = false;
+  const skating = createSkating({ THREE, scene, ground, terrain, playCue, notify, onComplete: finishLevel });
   const characters = addSnowCharacters({
     THREE, scene, kit, ground, playerRadius, reducedMotion, playCue, notify,
+    onFeedSven() {
+      fedSven = true;
+      finishLevel();
+    },
     onGreetOlaf() {
       greetedOlaf = true;
       finishLevel();
@@ -94,6 +103,9 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
     get snowmen() { return activity.missions.snowmen; },
     get slide() { return ride.completed; },
     get olaf() { return greetedOlaf; },
+    get sven() { return fedSven; },
+    get tower() { return reachedTower; },
+    get skating() { return skating.complete; },
   };
 
   function finishLevel() {
@@ -220,6 +232,9 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
     ride.reset();
     characters.reset();
     greetedOlaf = false;
+    fedSven = false;
+    reachedTower = false;
+    skating.reset();
     lastEye = undefined;
     placeAxe(axeSite.x, axeSite.z);
     axe.ring.position.y = ground(axeSite.x, axeSite.z) + SURFACE_GAP.detail;
@@ -249,6 +264,21 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
         get current() { return Number(missions.olaf); },
         get complete() { return missions.olaf; },
       },
+      {
+        id: 'sven', title: 'Feed Sven', total: 1,
+        get current() { return Number(missions.sven); },
+        get complete() { return missions.sven; },
+      },
+      {
+        id: 'tower', title: 'Ice Tower Lookout', total: 1,
+        get current() { return Number(missions.tower); },
+        get complete() { return missions.tower; },
+      },
+      {
+        id: 'skating', title: 'Ice Skating Challenge', total: SKATE_CHECKPOINTS.length,
+        get current() { return skating.current; },
+        get complete() { return missions.skating; },
+      },
     ],
     get hint() {
       if (snowMissionsComplete(missions)) return 'Snow Basin complete!';
@@ -259,13 +289,16 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
       if (!missions.pine) return state.axe ? 'Chop the pine from the pond side.' : 'Find the axe by the frozen lake.';
       if (!missions.snowmen) return 'Approach the snow pile in the west to pick up a snowball.';
       if (!missions.slide) return 'Follow the mountain trail to the ice slide.';
-      return 'Walk up to Olaf by the frozen lake.';
+      if (!missions.olaf) return 'Walk up to Olaf by the frozen lake.';
+      if (!missions.sven) return 'Offer Sven a carrot near the winter cabin.';
+      if (!missions.tower) return 'Climb the spiral stairs to the top of Ice Tower.';
+      return skating.equipped ? 'Skate through three golden rings on the frozen lake.' : 'Put on the ice skates by the frozen lake.';
     },
   };
   return {
     obstacles,
     getGroundHeight: (x, z, feet) => Math.max(ground(x, z), tower.surface(x, z, feet) ?? -Infinity),
-    getGroundTraction: terrain.getGroundTraction,
+    getGroundTraction: skating.getGroundTraction,
     blocksGround(x, z, radius, feet, from) {
       return terrain.blocksGround(x, z, radius) || slide.blocksGround(x, z, radius, feet) ||
         tower.blocksGround(x, z, radius, feet, from);
@@ -289,11 +322,23 @@ function loadSnow({ THREE, scene, camera, viewmodel, touch, signal, onCleanup, h
         act: activity.chop,
       },
       ride.interaction,
+      characters.interaction,
+      skating.interaction,
     ],
     update(dt, player) {
       lastEye = player;
       activity.update(dt, player);
       characters.update(dt, ride.riding ? undefined : player);
+      if (!ride.riding && player && (isPlayerGrounded?.() ?? true)) {
+        const feet = player.y - EYE_HEIGHT;
+        if (!reachedTower && Math.abs(feet - ICE_TOWER.deckHeight) < 0.15 &&
+            tower.surface(player.x, player.z, feet) === ICE_TOWER.deckHeight) {
+          reachedTower = true;
+          notify?.('Ice Tower Lookout complete!');
+          finishLevel();
+        }
+        skating.update(player, true);
+      }
       ride.update(dt);
       if (impactTime < 0.56) impactTime += dt;
       updateModels();
