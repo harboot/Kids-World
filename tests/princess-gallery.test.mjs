@@ -5,6 +5,7 @@ import { areas } from '../game.js';
 import { wreckDeck } from '../areas/princess-gallery/ariel-wreck.js';
 import { ATRIUM_RADII } from '../areas/princess-gallery/atrium.js';
 import { exhibits, exhibitOutline } from '../areas/princess-gallery/exhibits.js';
+import { MOANA_DOCK, VOYAGE_DURATION } from '../areas/princess-gallery/moana.js';
 import { CARPET_DOCK } from '../areas/princess-gallery/jasmine-carpet.js';
 import { MULAN_DEMONSTRATION_TIME } from '../areas/princess-gallery/mulan-character.js';
 import { GONG_SITE } from '../areas/princess-gallery/mulan.js';
@@ -163,8 +164,8 @@ test('ten distinct and nonoverlapping footprints surround the Central Atrium', a
     'rapunzel', 'snow-white', 'cinderella', 'aurora', 'ariel', 'belle', 'jasmine', 'mulan', 'tiana', 'moana',
   ]));
   assert.deepEqual(exhibits.filter(entry => entry.status === 'complete' && entry.build).map(entry => entry.id),
-    ['rapunzel', 'snow-white', 'aurora', 'belle', 'cinderella', 'jasmine', 'mulan', 'ariel', 'tiana']);
-  assert.equal(exhibits.filter(entry => entry.status === 'coming-soon' && !entry.build).length, 1);
+    ['rapunzel', 'snow-white', 'aurora', 'belle', 'cinderella', 'jasmine', 'mulan', 'ariel', 'moana', 'tiana']);
+  assert.equal(exhibits.filter(entry => entry.status === 'coming-soon' && !entry.build).length, 0);
   assert.ok(new Set(exhibits.map(entry => entry.shape)).size >= 5);
   assert.ok(new Set(exhibits.map(entry => entry.rotation)).size >= 8);
   for (const key of ['width', 'depth', 'height']) {
@@ -1255,6 +1256,15 @@ test('the ten gallery missions record one interaction per exhibit and replay aft
           position = { x: deck.x, y: EYE_HEIGHT + deck.y, z: deck.z };
           break;
         }
+        case 'moana': {
+          const ride = area.interactions.find(item => item.label === 'Sail with Moana');
+          position = point(exhibit, MOANA_DOCK.x, MOANA_DOCK.landingZ);
+          game.camera.position.set(position.x, position.y, position.z);
+          ride.act({ guideCamera: () => () => {} });
+          assert.deepEqual(completed(), expected, 'the voyage must finish');
+          for (let i = 0; i < Math.ceil(VOYAGE_DURATION / .2) + 2; i++) step(game.camera.position);
+          break;
+        }
         case 'tiana': {
           position = point(exhibit, 0, 2.75);
           step({ ...position, y: EYE_HEIGHT + 15.6 });
@@ -1880,5 +1890,38 @@ test('Tiana transforms the frog into Naveen near the bank and resets when visito
   assert.ok(prince.visible);
   worlds.reset();
   assert.ok(frog.visible && !prince.visible);
+  assert.equal(mission.complete,false);
+});
+
+test('Moana canoe sails and returns, completes one mission and resets', async t => {
+  const { worlds, camera } = fixture({ reduced: true });
+  t.after(worlds.unload);
+  const { area, scene } = await worlds.load(ID);
+  const exhibit = exhibits.find(entry => entry.id === 'moana');
+  const boat = scene.getObjectByName('Moana voyaging canoe');
+  const ride = area.interactions.find(item => item.label === 'Sail with Moana');
+  const mission = area.missionStatus.missions.find(entry => entry.id === 'moana');
+  const [x,z] = spaceTransform(exhibit).toWorld(MOANA_DOCK.x, MOANA_DOCK.landingZ);
+  const dock = boat.position.clone();
+  let restored = 0;
+  const guide = () => () => restored++;
+  camera.position.set(x,EYE_HEIGHT+15.6,z);
+  ride.act({guideCamera:guide});
+  assert.equal(ride.active,true);
+  camera.position.set(x,EYE_HEIGHT,z);
+  ride.act({guideCamera:guide});
+  assert.equal(ride.active,false);
+  for(let i=0;i<30;i++) worlds.update(.2,camera.position);
+  assert.ok(boat.position.distanceTo(dock)>1);
+  assert.equal(mission.complete,false);
+  for(let i=0;i<60;i++) worlds.update(.2,camera.position);
+  assert.equal(mission.complete,true);
+  assert.equal(restored,1);
+  assert.ok(boat.position.equals(dock));
+  camera.position.set(x,EYE_HEIGHT,z);
+  ride.act({guideCamera:guide});
+  worlds.reset();
+  assert.equal(restored,2);
+  assert.ok(boat.position.equals(dock));
   assert.equal(mission.complete,false);
 });
