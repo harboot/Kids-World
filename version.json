@@ -1,5 +1,5 @@
 {
-  "version": "93711ca02b6942dd8cc6312e2263f8c22e5338c5af7517d6096da7565aaf4362",
+  "version": "1f26a6f6a8915234a55d341eb6657b343d1868d7c37eb569cce3816533db5c85",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "960408aea807a4e6678ba0378f7b142a6b72b65954b74a03b0a64561f1a48512"
+      "revision": "287ac0057e516ccf032df6858460b32dc40885501fe2ff83ca6d881873bd2900"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -707,7 +707,7 @@
     },
     {
       "path": "./areas/waterfall-valley/field-interactions.js",
-      "revision": "910dfcbfa4fcbf622fa2cbab08ad344f2f7cbec65e0c4bb67b89f033b49b7a3d"
+      "revision": "31b8099bc605f72b97fa6779f5c0cdd4be14ac5758e73f931c34361566853909"
     },
     {
       "path": "./areas/waterfall-valley/flying-fox.js",
