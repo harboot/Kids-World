@@ -316,7 +316,7 @@ test('every mission works from different positions outside its clearance while f
 });
 
 test('all eleven tasks show one hint and can be completed in different orders', async () => {
-  const { worlds, getStorage, writes, completions, progress, cues, notifications } = fixture(['garden@3', 'snow@3']);
+  const { worlds, getStorage, writes, completions, progress, cues, notifications } = fixture(['garden@3', `snow@${areas.snow.completionRevision}`]);
   for (const order of [
     Object.keys(labels),
     ['toys', 'painting', 'tv', 'wake', 'bed', 'dishes', 'girl', 'table', 'bird', 'father', 'mother'],

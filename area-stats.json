@@ -1,12 +1,12 @@
 {
-  "updatedAt": "2026-11-27T07:04:56.000Z",
+  "updatedAt": "2026-11-28T02:19:17.135Z",
   "summary": {
-    "totalAreas": 9,
-    "publicAreas": 8,
+    "totalAreas": 10,
+    "publicAreas": 9,
     "hiddenAreas": 1,
-    "totalFiles": 197,
-    "totalBytes": 1609979,
-    "projectBytes": 2552348
+    "totalFiles": 206,
+    "totalBytes": 1684594,
+    "projectBytes": 2627102
   },
   "areas": [
     {
@@ -157,6 +157,25 @@
       "jsBytes": 125920,
       "imageFiles": 1,
       "imageBytes": 12557,
+      "imageFormats": [
+        "JPG"
+      ]
+    },
+    {
+      "id": "waterfall-valley",
+      "name": "Hidden Waterfall Valley",
+      "visibility": "Public",
+      "thumbnail": "./areas/waterfall-valley/waterfall-valley.jpg",
+      "width": 144,
+      "depth": 176,
+      "mapArea": 25344,
+      "missionCount": 0,
+      "folderBytes": 74615,
+      "totalFiles": 9,
+      "jsFiles": 8,
+      "jsBytes": 50729,
+      "imageFiles": 1,
+      "imageBytes": 23886,
       "imageFormats": [
         "JPG"
       ]

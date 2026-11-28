@@ -320,7 +320,7 @@ test('all mission orders record completion only once', async () => {
     ['stairs', 'crystals', 'melody'], ['stairs', 'melody', 'crystals'],
     ['melody', 'crystals', 'stairs'], ['melody', 'stairs', 'crystals'],
   ]) {
-    const game = await fixture({ saved: ['snow@3'] });
+    const game = await fixture({ saved: [`snow@${areas.snow.completionRevision}`] });
     const { worlds, area, recorded, writes, getStorage, notifications } = game;
     const totals = { crystals: 4, stairs: 3, melody: 3 };
     const completed = {};

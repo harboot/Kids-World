@@ -16,6 +16,7 @@ const publicFolders = {
   'princess-gallery': 'princess-gallery',
   'military-base': 'military-base',
   'kung-fu-hustle': 'kung-fu-hustle',
+  'waterfall-valley': 'waterfall-valley',
 };
 
 class Element extends EventTarget {
@@ -31,7 +32,7 @@ class Element extends EventTarget {
 test('the picker lists all public areas with thumbnails, regardless of missions or current area', async () => {
   const list = new Element();
   list.ownerDocument = { createElement: () => new Element() };
-  let saved = JSON.stringify(['snow@3', 'secret-apartment']);
+  let saved = JSON.stringify([`snow@${areas.snow.completionRevision}`, 'secret-apartment']);
   const progress = createLevelProgress(areas, () => ({
     getItem: () => saved,
     setItem(key, value) { saved = value; },

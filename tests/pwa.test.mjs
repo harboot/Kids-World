@@ -412,7 +412,8 @@ test('the worker shares a download and serves lazy area modules and versioned st
   assert.ok(loaders.includes(snowEntry));
   assert.ok(loaders.includes(hiddenEntry));
   assert.ok(loaders.includes('./areas/kung-fu-hustle/index.js'));
-  assert.equal(loaders.length, 9);
+  assert.ok(loaders.includes('./areas/waterfall-valley/index.js'));
+  assert.equal(loaders.length, 10);
   for (const path of loaders.filter(path => path !== hiddenEntry)) {
     const module = await request(new URL(path, gameURL), 'cors');
     assert.equal(module.status, 200, path);
