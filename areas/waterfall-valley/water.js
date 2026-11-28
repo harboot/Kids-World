@@ -1,3 +1,4 @@
+import { fishPools } from './detail-sites.js';
 import { seededRandom } from '../../core/random.js';
 import { CLIFF_Z, LAKE_LEVEL, clamp, cliffTop, faces, lakeDistance, mix, riverCenter, riverLevel, riverWidth, smooth } from './landform.js';
 
@@ -41,16 +42,34 @@ function flowTexture(THREE) {
 export function addWater(THREE, scene, terrain, touch) {
   const random = seededRandom(2423);
   const level = z => z < 26 ? LAKE_LEVEL : riverLevel(z);
-  const water = faces(THREE, scene, 'Lake and downstream water', new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false }));
+  const water = faces(THREE, scene, 'Lake and downstream water',
+    new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false }));
+  const shallows = faces(THREE, scene, 'Clear water over trout shoals',
+    new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false, transparent: true, depthWrite: false }));
+  const alpha = [];
   const teal = new THREE.Color(0x23778b), shallow = new THREE.Color(0x5db8ac), blue = new THREE.Color(0x286b93);
+  function transparency(x, z) {
+    return Math.max(...fishPools.map(({ x: px, z: pz, rx, rz }) =>
+      1 - smooth(0.61, 1.55, Math.hypot((x-px)/rx, (z-pz)/rz))));
+  }
   for (const tri of terrain.triangles()) {
     if (tri.every(p => p[1] >= level(p[2]))) continue;
     if (tri.every(([x, , z]) => lakeDistance(x, z) > 1.19 && (z < 15 || Math.abs(x - riverCenter(z)) > riverWidth(z) * 1.31))) continue;
     const variation = random();
-    water.triangle(...tri.map(([x, , z]) => [x, level(z) + 0.003, z]), tri.map(([x, y, z]) =>
-      teal.clone().lerp(blue, variation * 0.35).lerp(shallow, (1 - smooth(0.1, 2.8, level(z) - y)) * 0.91)));
+    const vertices = tri.map(([x, , z]) => [x, level(z) + 0.003, z]);
+    const colors = tri.map(([x, y, z]) =>
+      teal.clone().lerp(blue, variation * 0.35).lerp(shallow, (1 - smooth(0.1, 2.8, level(z) - y)) * 0.91));
+    const clear = tri.map(([x, , z]) => transparency(x, z));
+    if (clear.some(value => value > 0)) {
+      shallows.triangle(...vertices, colors);
+      alpha.push(...clear.map(value => 1 - value * 0.65));
+    } else water.triangle(...vertices, colors);
   }
   water.finish();
+  const clearWater = shallows.finish().geometry;
+  const rgb = clearWater.getAttribute('color'), rgba = [];
+  for (let i = 0; i < rgb.count; i++) rgba.push(rgb.getX(i), rgb.getY(i), rgb.getZ(i), alpha[i]);
+  clearWater.setAttribute('color', new THREE.Float32BufferAttribute(rgba, 4));
 
   const texture = flowTexture(THREE);
   const positions = [], uvs = [], colors = [], indices = [];
@@ -124,11 +143,11 @@ export function addWater(THREE, scene, terrain, touch) {
   }
   foam.finish();
 
-  const alpha = new Uint8Array(32 * 32 * 4).fill(255);
-  for (let i = 0; i < alpha.length; i += 4) {
-    alpha[i + 1] = 255 * (1 - clamp(Math.hypot(i / 4 % 32 - 15.5, Math.floor(i / 128) - 15.5) / 15.5)) ** 1.7;
+  const mistAlpha = new Uint8Array(32 * 32 * 4).fill(255);
+  for (let i = 0; i < mistAlpha.length; i += 4) {
+    mistAlpha[i + 1] = 255 * (1 - clamp(Math.hypot(i / 4 % 32 - 15.5, Math.floor(i / 128) - 15.5) / 15.5)) ** 1.7;
   }
-  const softness = new THREE.DataTexture(alpha, 32, 32);
+  const softness = new THREE.DataTexture(mistAlpha, 32, 32);
   softness.magFilter = THREE.LinearFilter;
   softness.needsUpdate = true;
   const spray = new THREE.BufferGeometry();

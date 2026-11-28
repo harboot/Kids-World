@@ -1,6 +1,11 @@
 import { EYE_HEIGHT } from '../../core/player.js';
 import { addBoat } from './boat.js';
 import { addCaverns } from './caverns.js';
+import { addValleyCharacters } from './characters.js';
+import { detailsBlock } from './detail-kit.js';
+import { addMineDetails } from './mine-details.js';
+import { addOutdoorDetails } from './outdoor-details.js';
+import { addValleyWildlife } from './wildlife.js';
 import { CLIFF_Z, LAKE_LEVEL, X_MIN, bedrockHeight, cliffRelief, heightGrid, hikingTrail, lakeDistance, nearest, riverCenter,
   riverLevel, riverWidth, smooth, terrainHeight, valleyWall, westTrail } from './landform.js';
 import { metadata } from './metadata.js';
@@ -39,7 +44,7 @@ function collisionIndex(items) {
 
 export default {
   ...metadata,
-  load({ THREE, scene, camera, touch = false, reducedMotion = () => false, carryPlayer = () => {}, notify = () => {} }) {
+  load({ THREE, scene, camera, hud, touch = false, reducedMotion = () => false, carryPlayer = () => {}, notify = () => {} }) {
     scene.background = new THREE.Color(0x65b7eb);
     scene.fog = new THREE.Fog(0x9fcce1, 57, 147);
     const daylight = new THREE.Color(0x9fcce1);
@@ -68,6 +73,17 @@ export default {
     const animateWater = addWater(THREE, scene, terrain, touch);
     kit.finish();
 
+    const document = hud?.ownerDocument;
+    const anchors = new Map();
+    function register(id, object, [x, z], elevation) {
+      if (anchors.has(id)) throw new Error('Duplicate valley landmark ' + id);
+      if (object) object.userData.landmarkId = id;
+      anchors.set(id, { object, x, z, elevation });
+    }
+    const outdoor = addOutdoorDetails({ THREE, scene, terrain, document, register });
+    const underground = addMineDetails({ THREE, scene, mine, document, register });
+    const outdoorDecks = [...bridges, ...outdoor.decks];
+
     const edgeRock = (x, z) => valleyWall(x, z) > 4.8
       && Math.min(nearest(hikingTrail, x, z).offset, nearest(westTrail, x, z).offset) > 4;
     const outsideObstacles = collisionIndex(trees);
@@ -76,7 +92,15 @@ export default {
     const world = { obstacles: railroad.platforms, getGroundHeight, getCeilingHeight, blocksGround };
     const rideContext = { THREE, scene, camera, world, reducedMotion, notify };
     const train = addTrain({ ...rideContext, mine });
-    const boat = addBoat({ ...rideContext, terrain, waterObstacles, bridges });
+    const boat = addBoat({ ...rideContext, terrain, waterObstacles, bridges: [...bridges, ...outdoor.waterStructures] });
+    const characters = addValleyCharacters({ THREE, scene, ground: terrain.sample, reducedMotion,
+      deckHeight: (x, z) => getGroundHeight(x, z) });
+    const wildlife = addValleyWildlife({ THREE, scene, terrain, mine, world, reducedMotion, touch, register });
+    const landmarks = Object.freeze(Object.fromEntries([...anchors].map(([id, { object, x, z, elevation }]) => {
+      const approach = Object.freeze({ x, z, y: elevation ?? getGroundHeight(x, z) });
+      const position = object ? Object.freeze({ x: object.position.x, y: object.position.y, z: object.position.z }) : approach;
+      return [id, Object.freeze({ id, object, position, approach })];
+    })));
     const emptyStatus = { missions: [] };
 
     function caveBridge(x, z, margin = 0) {
@@ -99,10 +123,12 @@ export default {
       if (z < CLIFF_Z) {
         if (lift.inside(x, z)) return lift.height;
         if (inAdit(x, z, feet)) return mine.adit.floor.sample(x, z);
-        return Math.max(mine.floor.sample(x, z), caveBridge(x, z) ?? -Infinity);
+        let elevation = Math.max(mine.floor.sample(x, z), caveBridge(x, z) ?? -Infinity);
+        for (const deck of underground.decks) elevation = Math.max(elevation, deck.surface(x, z) ?? -Infinity);
+        return elevation;
       }
       let height = terrain.sample(x, z);
-      for (const bridge of bridges) height = Math.max(height, bridge.surface(x, z) ?? -Infinity);
+      for (const bridge of outdoorDecks) height = Math.max(height, bridge.surface(x, z) ?? -Infinity);
       return height;
     }
 
@@ -112,6 +138,12 @@ export default {
         if (!ignoreTrain && train.blocks(x, z, radius, feet)) return true;
         if (lift.inside(x, z)) return false;
         if (inAdit(x, z, feet)) return mine.adit.opening.sample(x, z) <= radius;
+        if (detailsBlock(underground.collision, x, z, radius, feet)) return true;
+        for (const deck of underground.decks) {
+          if (deck.railing(x, z, radius)) return true;
+          const elevation = deck.surface(x, z, radius);
+          if (elevation !== undefined && feet >= elevation - 0.26) return false;
+        }
         if (from && inAdit(from.x, from.z, feet) && x >= 0) return true;
         // The western throat crosses the boundary of two matching cave meshes.
         const atThroat = x <= 0 && x >= -0.8 && Math.abs(z - aditEntryZ) < 3.8 && aditOpening(x, z) > radius;
@@ -123,8 +155,9 @@ export default {
         return lakeBasin(x, z) < 1.16 && mine.floor.sample(x, z) < mineLake.y - 0.42;
       }
       if (z - CLIFF_Z < radius + cliffRelief(x) * 1.04 && mine.opening.sample(x, CLIFF_Z) <= radius) return true;
-      if (edgeRock(x, z) || outsideObstacles(x, z, radius) || boat.blocks(x, z, radius, feet)) return true;
-      for (const bridge of bridges) {
+      if (edgeRock(x, z) || outsideObstacles(x, z, radius) || boat.blocks(x, z, radius, feet)
+        || detailsBlock(outdoor.collision, x, z, radius, feet)) return true;
+      for (const bridge of outdoorDecks) {
         if (bridge.railing(x, z, radius)) return true;
         if (bridge.surface(x, z, radius) !== undefined) return false;
       }
@@ -138,11 +171,14 @@ export default {
       ...world,
       interactions: [...train.interactions, ...boat.interactions, ...lift.interactions],
       missionStatus: emptyStatus,
+      landmarks,
       droneView: { center: { x: 0, z: -5 }, width: 144, depth: 166 },
       reset() {
         train.reset();
         boat.reset();
         lift.reset();
+        characters.reset();
+        wildlife.reset();
         time = 0;
         animateWater(time);
         scene.fog.color.copy(daylight);
@@ -156,6 +192,8 @@ export default {
       update(dt, player, elapsed = dt) {
         lift.update(dt, player);
         boat.update(elapsed);
+        characters.update(dt, player);
+        wildlife.update(dt, player);
         if (!reducedMotion()) {
           time = (time + elapsed) % 1200;
           animateWater(time);

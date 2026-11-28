@@ -156,7 +156,7 @@ export const areaMetadata = {
       "Hidden Waterfall",
       "Valley"
     ],
-    "description": "Pilot a wooden boat beneath the waterfall, drive a mining train through the caverns, or take the lift between cave levels.",
+    "description": "Explore the riverside camp and wildlife, sail beneath the waterfall, and take the mining train or lift to crystal caverns.",
     "canvasLabel": "3D alpine valley with a waterfall and an abandoned mine",
     "themeColor": "#479cce",
     "width": 144,

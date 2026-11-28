@@ -1,3 +1,4 @@
+import { crystalSites } from './detail-sites.js';
 import { seededRandom } from '../../core/random.js';
 import { CLIFF_Z, faces, mix, smooth } from './landform.js';
 import { chambers, lakeBasin, mineLake } from './mine-layout.js';
@@ -14,6 +15,7 @@ export function addCaverns(THREE, scene, layout, lamps, kit) {
   const warm = new THREE.Color(0xdc995c);
   const daylight = new THREE.Color(0x94a5a6);
   const random = seededRandom(301);
+  const mineralLight = crystalSites.map(site => ({ ...site, y: floor.sample(site.x, site.z), tint: new THREE.Color(site.color) }));
 
   function tint([x, y, z], strength, variation) {
     let light = 0;
@@ -23,9 +25,13 @@ export function addCaverns(THREE, scene, layout, lamps, kit) {
       light = Math.max(light, 1 - smooth(0.7, 9, d));
     }
     const reflected = (1 - smooth(0.65, 1.4, lakeBasin(x, z))) * (1 - smooth(1, 9, Math.abs(y - mineLake.y)));
-    return dark.clone().lerp(cool, reflected * 0.58).lerp(warm, light * 0.69)
-      .lerp(daylight, (1 - smooth(CLIFF_Z, -36, z)) * 0.72)
-      .multiplyScalar(strength * variation);
+    const rock = dark.clone().lerp(cool, reflected * 0.58).lerp(warm, light * 0.69)
+      .lerp(daylight, (1 - smooth(CLIFF_Z, -36, z)) * 0.72);
+    for (const mineral of mineralLight) {
+      const distance = Math.hypot(x-mineral.x, (y-mineral.y-0.52)*1.5, z-mineral.z);
+      if (distance < 6) rock.lerp(mineral.tint, (1-smooth(0.4,6,distance))*0.38);
+    }
+    return rock.multiplyScalar(strength * variation);
   }
 
   function atHeight(p, grid) {
