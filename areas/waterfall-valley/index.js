@@ -1,11 +1,15 @@
 import { EYE_HEIGHT } from '../../core/player.js';
+import { addBoat } from './boat.js';
 import { addCaverns } from './caverns.js';
 import { CLIFF_Z, LAKE_LEVEL, X_MIN, bedrockHeight, cliffRelief, heightGrid, hikingTrail, lakeDistance, nearest, riverCenter,
   riverLevel, riverWidth, smooth, terrainHeight, valleyWall, westTrail } from './landform.js';
 import { metadata } from './metadata.js';
-import { createMineLayout, lakeBasin, mineLake, shaft } from './mine-layout.js';
+import { addLift } from './lift.js';
+import { aditEntryZ, aditOpening } from './lift-layout.js';
+import { createMineLayout, lakeBasin, mineLake } from './mine-layout.js';
 import { addForest, addLandforms } from './outdoors.js';
 import { addFootbridge, addRailway, createTimberKit } from './structures.js';
+import { addTrain } from './train.js';
 import { addWater } from './water.js';
 
 function collisionIndex(items) {
@@ -35,7 +39,7 @@ function collisionIndex(items) {
 
 export default {
   ...metadata,
-  load({ THREE, scene, touch = false, reducedMotion }) {
+  load({ THREE, scene, camera, touch = false, reducedMotion = () => false, carryPlayer = () => {}, notify = () => {} }) {
     scene.background = new THREE.Color(0x65b7eb);
     scene.fog = new THREE.Fog(0x9fcce1, 57, 147);
     const daylight = new THREE.Color(0x9fcce1);
@@ -57,16 +61,22 @@ export default {
       [x, z, terrain.sample(x, z)], [xx, zz, terrain.sample(xx, zz)], width);
     const bridges = [bridge(-36, -18, -14, -18, 3.25), bridge(-5, 46, 13, 46, 3.55)];
     const railroad = addRailway(THREE, scene, mine, kit);
-    const rocks = addCaverns(THREE, scene, mine, railroad.lamps, railroad);
+    const lift = addLift({ THREE, scene, mine, carryPlayer });
+    const rocks = addCaverns(THREE, scene, mine, [...railroad.lamps, ...lift.lamps], railroad);
     addLandforms(THREE, scene, terrain, bedrock, mine);
-    const trees = addForest(THREE, scene, terrain, bedrock, bridges);
+    const { obstacles: trees, waterRocks } = addForest(THREE, scene, terrain, bedrock, bridges);
     const animateWater = addWater(THREE, scene, terrain, touch);
     kit.finish();
 
     const edgeRock = (x, z) => valleyWall(x, z) > 4.8
       && Math.min(nearest(hikingTrail, x, z).offset, nearest(westTrail, x, z).offset) > 4;
     const outsideObstacles = collisionIndex(trees);
-    const insideObstacles = collisionIndex([...rocks, ...railroad.posts, shaft]);
+    const insideObstacles = collisionIndex([...rocks, ...railroad.posts]);
+    const waterObstacles = collisionIndex(waterRocks);
+    const world = { obstacles: railroad.platforms, getGroundHeight, getCeilingHeight, blocksGround };
+    const rideContext = { THREE, scene, camera, world, reducedMotion, notify };
+    const train = addTrain({ ...rideContext, mine });
+    const boat = addBoat({ ...rideContext, terrain, waterObstacles, bridges });
     const emptyStatus = { missions: [] };
 
     function caveBridge(x, z, margin = 0) {
@@ -74,23 +84,46 @@ export default {
       return span && span.offset <= railroad.deckHalfWidth - margin ? railroad.deckHeight(x, z) : undefined;
     }
 
-    function getGroundHeight(x, z) {
-      if (z < CLIFF_Z) return Math.max(mine.floor.sample(x, z), caveBridge(x, z) ?? -Infinity);
+    function inAdit(x, z, feet) {
+      return x >= 0 && x <= 36 && z >= -64 && z <= -26
+        && feet < mine.adit.ceiling.sample(x, z) - 0.45 && mine.adit.opening.sample(x, z) > 0;
+    }
+
+    function getCeilingHeight(x, z, feet) {
+      if (lift.inside(x, z)) return mine.ceiling.sample(x, z);
+      if (inAdit(x, z, feet)) return mine.adit.ceiling.sample(x, z);
+      return z < CLIFF_Z && mine.opening.sample(x, z) >= 0 ? mine.ceiling.sample(x, z) : Infinity;
+    }
+
+    function getGroundHeight(x, z, feet) {
+      if (z < CLIFF_Z) {
+        if (lift.inside(x, z)) return lift.height;
+        if (inAdit(x, z, feet)) return mine.adit.floor.sample(x, z);
+        return Math.max(mine.floor.sample(x, z), caveBridge(x, z) ?? -Infinity);
+      }
       let height = terrain.sample(x, z);
       for (const bridge of bridges) height = Math.max(height, bridge.surface(x, z) ?? -Infinity);
       return height;
     }
 
-    function blocksGround(x, z, radius, feet) {
+    function blocksGround(x, z, radius, feet, from, ignoreTrain = false) {
       if (z < CLIFF_Z) {
-        // The clipped cave contour shares its rim exactly with the cliff mesh.
-        if (mine.opening.sample(x, z) <= radius * 1.08 || insideObstacles(x, z, radius)) return true;
+        if (lift.blocks(x, z, radius, feet, from)) return true;
+        if (!ignoreTrain && train.blocks(x, z, radius, feet)) return true;
+        if (lift.inside(x, z)) return false;
+        if (inAdit(x, z, feet)) return mine.adit.opening.sample(x, z) <= radius;
+        if (from && inAdit(from.x, from.z, feet) && x >= 0) return true;
+        // The western throat crosses the boundary of two matching cave meshes.
+        const atThroat = x <= 0 && x >= -0.8 && Math.abs(z - aditEntryZ) < 3.8 && aditOpening(x, z) > radius;
+        if ((!atThroat && mine.opening.sample(x, z) <= radius * 1.08) || insideObstacles(x, z, radius)) return true;
         const deck = caveBridge(x, z, radius);
         if (deck !== undefined && feet >= deck - 0.3) return false;
+        const span = mine.bridgeSpan(x, z);
+        if (span && Math.abs(span.offset - railroad.deckHalfWidth) < radius + 0.1 && feet >= span.y - 0.27) return true;
         return lakeBasin(x, z) < 1.16 && mine.floor.sample(x, z) < mineLake.y - 0.42;
       }
       if (z - CLIFF_Z < radius + cliffRelief(x) * 1.04 && mine.opening.sample(x, CLIFF_Z) <= radius) return true;
-      if (edgeRock(x, z) || outsideObstacles(x, z, radius)) return true;
+      if (edgeRock(x, z) || outsideObstacles(x, z, radius) || boat.blocks(x, z, radius, feet)) return true;
       for (const bridge of bridges) {
         if (bridge.railing(x, z, radius)) return true;
         if (bridge.surface(x, z, radius) !== undefined) return false;
@@ -102,24 +135,28 @@ export default {
 
     let time = 0;
     return {
-      obstacles: railroad.platforms,
-      interactions: [],
+      ...world,
+      interactions: [...train.interactions, ...boat.interactions, ...lift.interactions],
       missionStatus: emptyStatus,
-      getGroundHeight,
-      blocksGround,
-      getCeilingHeight(x, z) {
-        return z < CLIFF_Z && mine.opening.sample(x, z) >= 0 ? mine.ceiling.sample(x, z) : Infinity;
-      },
       droneView: { center: { x: 0, z: -5 }, width: 144, depth: 166 },
       reset() {
+        train.reset();
+        boat.reset();
+        lift.reset();
         time = 0;
         animateWater(time);
         scene.fog.color.copy(daylight);
         scene.fog.near = 57;
         scene.fog.far = 147;
       },
+      unload() {
+        train.cancel();
+        boat.cancel();
+      },
       update(dt, player, elapsed = dt) {
-        if (!reducedMotion?.()) {
+        lift.update(dt, player);
+        boat.update(elapsed);
+        if (!reducedMotion()) {
           time = (time + elapsed) % 1200;
           animateWater(time);
         }
