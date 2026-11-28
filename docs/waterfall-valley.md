@@ -1,6 +1,6 @@
 # Hidden Waterfall Valley
 
-Open the public area from the area picker. The nine missions can be completed in any order, and the boat, train, and lift are available throughout the visit.
+Open the public area from the area picker. The ten missions can be completed in any order, and the boat, train, and lift are available throughout the visit.
 
 | Mission | How to complete it |
 | --- | --- |
@@ -13,5 +13,6 @@ Open the public area from the area picker. The nine missions can be completed in
 | Restore Mine Power | Choose **Start Generator** at the underground power station control panel. |
 | Crystal Mining | Approach a deposit to equip the pickaxe. Choose **Mine Crystal** three times at each of the three deposits. |
 | Mine Train | Drive through the three amber beams along the main rail line. Checkpoints count in either direction. You can dismount and resume driving from where you parked. |
+| Flying Fox | Choose **Ride Flying Fox** outside the upper cave and ride the cable to the valley floor. |
 
-Use the displayed interaction prompt with Space on desktop or tap it on a touchscreen. The ranger, camper, fisherman, and miner give short local hints. Restarting or starting a new visit resets the valley to daytime and clears in-visit progress. The area picker keeps the completion badge once all nine missions have been earned.
+Use the displayed interaction prompt with Space on desktop or tap it on a touchscreen. The ranger, camper, fisherman, and miner give short local hints. Restarting or starting a new visit resets the valley to daytime and clears in-visit progress. The area picker keeps the completion badge once all ten missions have been earned.

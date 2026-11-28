@@ -54,7 +54,7 @@ test('every registered area provides a fresh mission status and releases its vis
     ['wooden-house', [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]],
     ['frozen-castle', [4, 3, 3]],
     ['arendelle-village', [3, 1, 3]],
-    ['waterfall-valley', [1, 1, 1, 3, 1, 2, 1, 3, 3]],
+    ['waterfall-valley', [1, 1, 1, 3, 1, 2, 1, 3, 3, 1]],
     ['secret-apartment', [2, 2, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1]],
   ]);
   for (const id of Object.keys(areas).sort((a, b) => Number(areas[b].show) - Number(areas[a].show))) {

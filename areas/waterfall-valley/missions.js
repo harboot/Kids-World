@@ -1,3 +1,4 @@
+import { createFlyingFox } from './flying-fox.js';
 import { createFieldInteractions, near } from './field-interactions.js';
 import { createBursts, checkpointBeam } from './mission-effects.js';
 import { LAKE_LEVEL } from './landform.js';
@@ -13,6 +14,7 @@ const missionDefinitions = [
   ['restore-mine-power','Restore Mine Power',1,'Find the underground generator and restore mine power.'],
   ['crystal-mining','Crystal Mining',3,'Mine three different crystals inside the cave.'],
   ['mine-train','Mine Train',3,'Drive the mining train through three checkpoints.'],
+  ['flying-fox','Flying Fox',1,'Ride the Flying Fox from the upper cave to the valley below.'],
 ];
 
 export const BOAT_CHECKPOINT = Object.freeze({ x:3.76, y:4.31, z:-17.69 });
@@ -27,14 +29,16 @@ export function trainCheckpoints(mine) {
 
 export function createValleyMissions({
   THREE, scene, viewmodel, camera, mine, landmarks, characters, wildlife, veins, basket,
-  boat, train, campfire, power, getCeilingHeight, notify, reducedMotion, touch,
+  boat, train, campfire, power, getGroundHeight, getCeilingHeight, notify, reducedMotion, touch,
   completeLevel, isLevelComplete, areaId,
 }) {
   const rows=missionDefinitions.map(([id,title,total])=>({id,title,total,current:0,complete:false}));
   const byId=new Map(rows.map(row=>[row.id,row]));
   const hints=new Map(missionDefinitions.map(([id,,,hint])=>[id,hint]));
   const effects=createBursts(THREE,scene,touch);
-  const driving=()=>boat.driving||train.driving;
+  const driving=()=>boat.driving||train.driving||zipline.riding;
+  const zipline=createFlyingFox({THREE,scene,camera,ground:getGroundHeight,
+    busy:()=>boat.driving||train.driving, onLand:()=>progress('flying-fox','Flying Fox ride complete!')});
   const gold=goldSites.map(([id])=>landmarks[id]);
   const entrances=[
     {point:landmarks['lower-cave-entrance'].approach, label:'Lower waterfall cave discovered!'},
@@ -89,6 +93,7 @@ export function createValleyMissions({
       notify('The generator is starting.');
     },1.52,()=>!power.started),
     ...field.interactions,
+    zipline.interaction,
   ];
   for(const [name,label,tip,radius] of [
     ['Park ranger','Talk to Ranger','Look for gold along the hiking trails. Two cave entrances hide behind the waterfall.',1.35],
@@ -141,7 +146,8 @@ export function createValleyMissions({
 
   function selectHint(atMine) {
     let options;
-    if(boat.driving)options=['boat-ride'];
+    if(zipline.riding)options=['flying-fox'];
+    else if(boat.driving)options=['boat-ride'];
     else if(train.driving)options=['mine-train','crystal-mining','restore-mine-power'];
     else if(field.fishing)options=['fishing'];
     else if(field.feeding)options=['feed-deer'];
@@ -163,6 +169,7 @@ export function createValleyMissions({
     railBeams.forEach(beam=>{beam.visible=false;});
     effects.reset();
     field.reset();
+    zipline.reset();
     hint=selectHint(false);
   }
   reset();
@@ -170,6 +177,7 @@ export function createValleyMissions({
   return {
     interactions, missionStatus, reset,
     update(dt,player,atMine){
+      zipline.update(dt);
       if(campfire.nighttime&&!isComplete('campfire'))progress('campfire','The campfire lit up the valley night.');
       if(power.ready&&!isComplete('restore-mine-power'))progress('restore-mine-power','Mine power restored!');
       if(player){
@@ -180,6 +188,6 @@ export function createValleyMissions({
       effects.update(dt);
       hint=selectHint(atMine);
     },
-    unload(){field.reset();effects.reset();},
+    unload(){zipline.reset();field.reset();effects.reset();},
   };
 }

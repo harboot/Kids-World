@@ -107,7 +107,7 @@ export default {
     const power=createMinePower({ THREE,scene,mine,generator:landmarks['mine-generator'].object,rockSurfaces,reducedMotion });
     const missions=createValleyMissions({
       THREE,scene,viewmodel,camera,mine,landmarks,characters,wildlife,veins:underground.veins,basket:outdoor.basket,
-      boat,train,campfire,power,getCeilingHeight,notify,reducedMotion,touch,completeLevel,isLevelComplete,areaId:metadata.id,
+      boat,train,campfire,power,getGroundHeight,getCeilingHeight,notify,reducedMotion,touch,completeLevel,isLevelComplete,areaId:metadata.id,
     });
 
     function caveBridge(x, z, margin = 0) {

@@ -34,7 +34,7 @@ function walk(origin, waypoints) {
 
 test('the public visit has a continuous walking loop through both entrances and over both outdoor bridges', () => {
   assert.equal(areas['waterfall-valley'].show, true);
-  assert.equal(visit.missionStatus.missions.length, 9);
+  assert.equal(visit.missionStatus.missions.length, 10);
   const { x, z } = definition.spawn;
   const lowerPath = [...westTrail.points.slice(3), [-14, -18], [-14, -23]];
   const bypass = [[-16.5, -23.05], [-18.5, -23.55], [-18.5, -33.5], [-19, -36], [-19, -38]];
