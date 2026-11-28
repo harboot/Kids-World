@@ -149,6 +149,25 @@ export const areaMetadata = {
       "z": 9.4
     }
   },
+  "waterfall-valley": {
+    "id": "waterfall-valley",
+    "title": "Hidden Waterfall Valley",
+    "heading": [
+      "Hidden Waterfall",
+      "Valley"
+    ],
+    "description": "Follow a mountain river to a giant waterfall, then explore the abandoned railway and caverns behind it.",
+    "canvasLabel": "3D alpine valley with a waterfall and an abandoned mine",
+    "themeColor": "#479cce",
+    "width": 144,
+    "depth": 176,
+    "missionCount": 0,
+    "spawn": {
+      "x": -21,
+      "z": 39,
+      "yaw": -0.32
+    }
+  },
   "wooden-house": {
     "id": "wooden-house",
     "title": "Wooden House",

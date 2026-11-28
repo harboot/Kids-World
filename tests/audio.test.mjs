@@ -145,7 +145,8 @@ function setup(t, { muted = false, failResume = false } = {}) {
 
 test('the nine scored areas export distinct local compositions compatible with the generic audio engine', async t => {
   const folders = { garden: 'flower-garden', snow: 'snow-basin' };
-  const scoredAreas = areas;
+  const { 'waterfall-valley': valley, ...scoredAreas } = areas;
+  assert.equal((await valley.loadModule()).default.music, undefined);
   assert.equal(Object.keys(scoredAreas).length, 9);
   const { contexts, renders, started, tick } = setup(t);
   const audio = createAudio(new SoundButton());

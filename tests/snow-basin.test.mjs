@@ -939,11 +939,13 @@ test('both ice hills have walkable approaches to their summits', async t => {
   t.after(worlds.unload);
   const { area } = visit;
   for (const hill of ICE_HILLS) {
-    let x = hill.x - hill.width - 0.3;
+    // The southern hill's west approach crosses the relocated trolls.
+    const direction = hill.z > 0 ? -1 : 1;
+    let x = hill.x - direction * (hill.width + 0.3);
     const { z } = hill;
     let feet = area.getGroundHeight(x, z);
-    while (x < hill.x) {
-      const next = Math.min(hill.x, x + 0.12);
+    while (x !== hill.x) {
+      const next = x + direction * Math.min(0.12, Math.abs(hill.x - x));
       feet = walkElevation(area, { x, z }, next, z, feet, true);
       assert.notEqual(feet, null, `hill blocked at ${next.toFixed(2)}, ${z}`);
       x = next;
