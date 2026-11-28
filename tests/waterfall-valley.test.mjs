@@ -3,7 +3,8 @@ import { test } from 'node:test';
 import * as THREE from '../vendor/three.module.min.js';
 import { PLAYER_RADIUS, walkElevation } from '../core/movement.js';
 import { areas } from '../game.js';
-import { CLIFF_Z, hikingTrail, westTrail } from '../areas/waterfall-valley/landform.js';
+import { CLIFF_Z, hikingTrail, nearest, westTrail } from '../areas/waterfall-valley/landform.js';
+import { safeStand } from '../areas/waterfall-valley/ride.js';
 import { shaft } from '../areas/waterfall-valley/lift-layout.js';
 import { chambers, createMineLayout } from '../areas/waterfall-valley/mine-layout.js';
 
@@ -75,6 +76,41 @@ test('the cavern network reaches every chamber and accounts for approximately 40
   }
   assert.ok(cavern.some(([x, z]) => x === 17 && z === -22.5), 'upper portal reachable without leaving the mine');
   const outdoor = reachable([definition.spawn.x, definition.spawn.z], CLIFF_Z, 87.5);
+  function isReachable(x, y, z) {
+    return (z < CLIFF_Z ? cavern : outdoor).some(([px, pz, feet]) =>
+      Math.hypot(px - x, pz - z) <= 0.58 && Math.abs(feet - y) < 0.38);
+  }
+
+  const expected = [
+    'feeding-deer', 'deer-feeding-location', 'fishing-rod', 'fishing-location',
+    'hiking-checkpoint-lower', 'hiking-checkpoint-middle', 'hiking-checkpoint-upper',
+    'camp-firewood', 'campfire', 'lower-cave-entrance', 'upper-cave-entrance',
+    'mine-generator', 'mine-power-control-panel', 'crystal-deposit-blue', 'crystal-deposit-violet',
+    'crystal-deposit-green', 'cargo-ore-crate', 'cargo-supplies-crate', 'cargo-loading', 'cargo-unloading',
+    'railway-lower-station', 'railway-upper-station', 'railway-crystal-junction',
+    'railway-shaft-junction', 'railway-echo-lake-trestle',
+  ];
+  assert.deepEqual(Object.keys(visit.landmarks).sort(), expected.sort());
+  for (const [id, landmark] of Object.entries(visit.landmarks)) {
+    const { x, y, z } = landmark.approach;
+    assert.equal(landmark.id, id);
+    assert.equal(landmark.object?.userData.landmarkId ?? id, id);
+    assert.ok(safeStand(visit, x, z, y), id + ' has a safe standing position');
+    assert.ok(isReachable(x, y, z), id + ' reachable from the normal walking routes');
+    if (id.startsWith('hiking-checkpoint-')) assert.equal(landmark.object, null);
+  }
+  for (const [name, x, z] of [
+    ['cabin interior', -42, -7.6], ['fishing pier', 16.05, 8], ['waterfall lookout', 34, -16.5],
+    ['Northern workshop', -27.3, -81.9], ['Echo Lake overlook', -41, -45.3],
+    ['Lower cargo deck', -22.3, -31.1], ['Upper cargo deck', 14.85, -33.2],
+  ]) {
+    const y = visit.getGroundHeight(x, z);
+    assert.ok(isReachable(x, y, z), name);
+  }
+  for (const id of ['cargo-loading', 'cargo-unloading']) {
+    const { x, y, z } = visit.landmarks[id].position;
+    assert.ok(Math.abs(y - nearest(mine.main, x, z).y - 0.88) < 1e-6, id + ' meets wagon height');
+  }
   const outdoorRatio = outdoor.length / (outdoor.length + cavern.length);
   assert.ok(outdoorRatio >= 0.55 && outdoorRatio <= 0.65, `outdoor walkable floor ratio ${outdoorRatio}`);
 });

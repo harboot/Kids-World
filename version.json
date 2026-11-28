@@ -1,13 +1,13 @@
 {
-  "version": "f2915fa0619d8cbc2225d383064c8a708e3801d58478404dc4bb3f3ee496a745",
+  "version": "5f2687f4b048bd2564f938625abff2e759a1ec032f565c82abe8ccb883604b55",
   "files": [
     {
       "path": "./area-catalog.js",
-      "revision": "32c1bc33353f6a7c52c8beef4af3b372a7b6570451b071f054677bb1222d34d4"
+      "revision": "1b8ca0577a9f3d19cd8cb086e35f06604d53b0cc52ad75569d348331b78dae35"
     },
     {
       "path": "./area-stats.json",
-      "revision": "e76fa19ae365c4ba073bd90185dfb4510f559611f4a21649c5f120c7f239e8bd"
+      "revision": "7fbf973e8f2731133111d57e4613a6fb0a697109648ae8a2a0d564c649e72598"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -683,11 +683,27 @@
     },
     {
       "path": "./areas/waterfall-valley/caverns.js",
-      "revision": "3a5e473495afef358095c46ae1470d705714fd43c80c81f7dc56561668c0349b"
+      "revision": "68cb07ce701a8c41b4a33d4269259d42c18a28788d2dd28cdf4abba3c1c1774c"
+    },
+    {
+      "path": "./areas/waterfall-valley/characters.js",
+      "revision": "71fd260662bc62d853934bf54e15c689d7a053b0dec9bab0d403014f4c355b3b"
+    },
+    {
+      "path": "./areas/waterfall-valley/detail-kit.js",
+      "revision": "f8c3fd1cfdb550db1c2d4d9998fa3a22d346341ffd2c106c996b6b73058a263d"
+    },
+    {
+      "path": "./areas/waterfall-valley/detail-props.js",
+      "revision": "b7153cfbec1d609fe13846a35eae37612a3f147bf489e2391e24d912fd77fd7c"
+    },
+    {
+      "path": "./areas/waterfall-valley/detail-sites.js",
+      "revision": "64458eb9c9a576fff6ae94b08fa1a012aa9f986dd07c48f2d28881ac51e20c36"
     },
     {
       "path": "./areas/waterfall-valley/index.js",
-      "revision": "daaf15ade05a996fbf724e328f1bdc9d18baecd5cfc7cf148d3e919e3e10dcd5"
+      "revision": "c9beafc4e343a395e9fa50901140413dfab738af763cb2c21e18676a75487a08"
     },
     {
       "path": "./areas/waterfall-valley/landform.js",
@@ -703,15 +719,23 @@
     },
     {
       "path": "./areas/waterfall-valley/metadata.js",
-      "revision": "11089141c146f549045af3ccca16d1bd3d99921718e4cb6c577c28a1ac946006"
+      "revision": "0d75433efc72245e683772a4dbc13ab58100ff59e096d6c9f307f08946dc86b4"
+    },
+    {
+      "path": "./areas/waterfall-valley/mine-details.js",
+      "revision": "1a7ff62f29083dcc3c29570683cd7ace45cd19fe197a2da1cff7eb2f603914f0"
     },
     {
       "path": "./areas/waterfall-valley/mine-layout.js",
       "revision": "17fcc14dee13786244fa37946624de3adb7d724206e39b72388bca48479df5e1"
     },
     {
+      "path": "./areas/waterfall-valley/outdoor-details.js",
+      "revision": "85826d3f94ae3bc50c80f8a3044e85a4a49e9642f56bbbc53d4d33e6de17b7cd"
+    },
+    {
       "path": "./areas/waterfall-valley/outdoors.js",
-      "revision": "e7733cf765ce0ae88d9ccb9a9c117850163b304000b1c2aafcf5779108bc5500"
+      "revision": "3df82774866ee849e32377ba204c7b96d725f1edc4082f386bf247f63a773508"
     },
     {
       "path": "./areas/waterfall-valley/rail-route.js",
@@ -731,11 +755,15 @@
     },
     {
       "path": "./areas/waterfall-valley/water.js",
-      "revision": "fb5cb30ba8759aec2f4fdc0d19ee853cc5ef57b6aa538f2e12ec90b6e6a41d4e"
+      "revision": "cf270df7698c0615846f040109092f99600dc726d1c73aac33b78bdb87db6963"
     },
     {
       "path": "./areas/waterfall-valley/waterfall-valley.jpg",
       "revision": "d9f5de912afc1c92031d01aa6f685eed5551c3174a956d67937c4738ea648717"
+    },
+    {
+      "path": "./areas/waterfall-valley/wildlife.js",
+      "revision": "d1a7edc68f93b6cd42ce43b231046d366c2a0ab52e8bff4f83faad3656aff1b7"
     },
     {
       "path": "./areas/wooden-house/cleaning.js",

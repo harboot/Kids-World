@@ -1,3 +1,4 @@
+import { detailClearing } from './detail-sites.js';
 import { seededRandom } from '../../core/random.js';
 import {
   CLIFF_Z, LOWER_X, LAKE_LEVEL, cliffRelief, faces, hikingTrail, westTrail, lakeDistance,
@@ -162,11 +163,16 @@ export function addForest(THREE, scene, terrain, bedrock, bridges) {
   }
   const facets = new THREE.MeshLambertMaterial({ flatShading: true });
   const stones = new THREE.DodecahedronGeometry(1);
+  const inClearing = entry => detailClearing(entry.matrix.elements[12], entry.matrix.elements[14]);
+  for (const batch of [trunks, tree, rocks, bushes, grass]) {
+    for (let i = batch.length - 1; i >= 0; i--) if (inClearing(batch[i])) batch.splice(i, 1);
+  }
   finish('Pine trunks', trunks, new THREE.CylinderGeometry(0.67, 1.15, 1, 5), facets);
   finish('Pine crowns', tree, new THREE.CylinderGeometry(0.04, 1, 1, 7), facets);
   finish('Granite boulders', rocks, stones, facets);
   finish('Alpine undergrowth', bushes, stones, facets);
   finish('Bunchgrasses', grass, new THREE.ConeGeometry(1, 1, 4), facets);
   finish('Faceted clouds', clouds, new THREE.IcosahedronGeometry(1, 1), new THREE.MeshBasicMaterial({ toneMapped: false }));
-  return { obstacles, waterRocks };
+  return { obstacles: obstacles.filter(({ x,z }) => !detailClearing(x,z)),
+    waterRocks: waterRocks.filter(({ x,z }) => !detailClearing(x,z)) };
 }
