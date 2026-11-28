@@ -83,3 +83,25 @@ export function checkpointBeam(THREE, scene, name, point, base, top, color, widt
   scene.add(group);
   return group;
 }
+
+/** Terrain-following marker for collectible or mineable objects. */
+export function groundMarker(THREE,scene,point,radius,color,ground) {
+  const geometry=new THREE.RingGeometry(radius*0.83,radius,40).rotateX(-Math.PI/2);
+  const positions=geometry.getAttribute('position');
+  for(let i=0;i<positions.count;i++){
+    const x=point.x+positions.getX(i), z=point.z+positions.getZ(i);
+    const y=ground?.(x,z,point.y);
+    positions.setY(i,(Number.isFinite(y)?y:point.y)-point.y+0.045);
+  }
+  positions.needsUpdate=true;
+  geometry.computeBoundingSphere();
+  const marker=new THREE.Mesh(geometry,new THREE.MeshBasicMaterial({
+    color,side:THREE.DoubleSide,transparent:true,opacity:0.9,depthWrite:false,
+    toneMapped:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2,
+  }));
+  marker.name='Collectible ground marker';
+  marker.position.set(point.x,point.y,point.z);
+  marker.layers.set(PLAYER_ONLY_LAYER);
+  scene.add(marker);
+  return marker;
+}

@@ -1,6 +1,7 @@
 import { EYE_HEIGHT } from '../../core/player.js';
 import { PLAYER_ONLY_LAYER } from '../../core/render-layers.js';
 import { detailKit } from './detail-kit.js';
+import { groundMarker } from './mission-effects.js';
 import { crystalSites } from './detail-sites.js';
 import { clamp, LAKE_LEVEL, mix, smooth } from './landform.js';
 
@@ -11,7 +12,7 @@ export function near(point, player, radius, height = 1.12) {
 
 export function createFieldInteractions({
   THREE, scene, viewmodel, camera, landmarks, wildlife, basket, veins, effects, notify, reducedMotion,
-  finish, markCrystal, isComplete, driving, random=Math.random,
+  finish, markCrystal, isComplete, driving, getGroundHeight, random=Math.random,
 }) {
   const hands=viewmodel??new THREE.Group();
   const basic=color=>new THREE.MeshBasicMaterial({color,toneMapped:false});
@@ -23,6 +24,7 @@ export function createFieldInteractions({
   const parkedRod=landmarks['fishing-rod'].object;
   let fedAnimal;
   const interactions=[];
+  let hasCatch=false;
   let player, feedTime=0, feeding=false, heartTime=0, fishing=null, strike=null, rewardTime=0;
   const hits = crystalSites.map(() => 0);
 
@@ -127,7 +129,8 @@ export function createFieldInteractions({
     fishing=null;
     pole.visible=cast.visible=false;
     parkedRod.visible=true;
-    if(!isComplete('fishing'))caught.visible=false;
+    caught.visible=hasCatch;
+    if(hasCatch){caught.position.copy(basketTop);caught.rotation.set(0,1.38,0.46);}
   }
 
   interactions.push({
@@ -137,10 +140,10 @@ export function createFieldInteractions({
       if(fishing?.stage==='bite')return 'Catch Fish';
       return fishing?'Cancel Fishing':'Start Fishing';
     },
-    get active(){return !isComplete('fishing')&&!driving()&&!feeding&&!strike&&fishing?.stage!=='reel';},
+    get active(){return !driving()&&!feeding&&!strike&&fishing?.stage!=='reel';},
     reachable(p){return near(rodSpot,p,fishing?2.65:1.62);},
     act(){
-      if(!suitable(rodSpot,fishing?2.65:1.62)||isComplete('fishing')||feeding||strike)return;
+      if(!suitable(rodSpot,fishing?2.65:1.62)||feeding||strike)return;
       if(fishing?.stage==='bite') {
         fishing.stage='reel';fishing.time=0;
         caught.position.copy(lure);
@@ -202,7 +205,9 @@ export function createFieldInteractions({
         if(time>=reelTime){
           caught.position.copy(basketTop);
           caught.rotation.set(0,1.38,0.46);
-          finish('fishing','Fish caught and placed in the basket!');
+          hasCatch=true;
+          if(!isComplete('fishing'))finish('fishing','Fish caught and placed in the basket!');
+          else notify('Fish caught and placed in the basket!');
           stopFishing();
           return;
         }
@@ -216,14 +221,22 @@ export function createFieldInteractions({
 
   const deposits=crystalSites.map(site=>({
     ...site,anchor:landmarks[site.id].approach,source:landmarks[site.id].position,cluster:veins.get(site.id).cluster,
+    marker:groundMarker(THREE,scene,landmarks[site.id].position,1.14,0x79e8ff,getGroundHeight),
   }));
-  deposits.forEach(({anchor},i)=>{
+  // Measure reach from the actual deposit or its walkable approach.
+  // Keep vertical checks so crystals cannot be mined through another floor.
+  const mineRadius=2.65;
+  const nearDeposit=(deposit,p,extra=0)=>near(deposit.source,p,mineRadius+extra,1.65)
+    ||near(deposit.anchor,p,1.95+extra,1.65);
+  const canMine=(deposit,extra=0)=>!driving()&&nearDeposit(deposit,camera?.position??player,extra);
+  deposits.forEach((deposit,i)=>{
+    const {source}=deposit;
     interactions.push({
-      x:anchor.x,z:anchor.z,anchorY:anchor.y+0.95,radius:1.36,silent:true,label:'Mine Crystal',
+      x:source.x,z:source.z,anchorY:source.y+1.05,radius:4.2,silent:true,label:'Mine Crystal',
       get active(){return hits[i]<3&&!strike&&!fishing&&!feeding&&!driving();},
-      reachable(p){return near(anchor,p,1.36,1.22);},
+      reachable(p){return nearDeposit(deposit,p);},
       act(){
-        if(hits[i]>=3||strike||fishing||feeding||!suitable(anchor,1.36,1.22))return;
+        if(hits[i]>=3||strike||fishing||feeding||!canMine(deposit))return;
         strike={index:i,time:0,contact:false};
         pickaxe.visible=true;
       },
@@ -231,10 +244,10 @@ export function createFieldInteractions({
   });
 
   function animateTools(dt) {
-    pickaxe.visible=!feeding&&!fishing&&!driving()&&deposits.some(({anchor},i)=>hits[i]<3&&suitable(anchor,1.5,1.22));
+    pickaxe.visible=!feeding&&!fishing&&!driving()&&deposits.some((deposit,i)=>hits[i]<3&&canMine(deposit,0.2));
     if(strike){
       const {index}=strike, deposit=deposits[index];
-      if(!suitable(deposit.anchor,1.62,1.28)){
+      if(!canMine(deposit,0.45)){
         strike=null;
       }else{
         strike.time+=dt;
@@ -246,6 +259,7 @@ export function createFieldInteractions({
           if(!reducedMotion())effects.emit(aim,deposit.color,hits[index]===3?11:6);
           deposit.cluster.scale.y=[1,.89,.72,.26][hits[index]];
           if(hits[index]===3){
+            deposit.marker.visible=false;
             rewardTime=0.77;
             crystal.material.color.setHex(deposit.color);
             markCrystal();
@@ -307,6 +321,7 @@ export function createFieldInteractions({
     heartTime=rewardTime=0;
     wildlife.stopFeeding();
     pickaxe.visible=crystal.visible=false;
+    hasCatch=false;
     stopFishing();
     caught.visible=false;
   }
@@ -314,7 +329,7 @@ export function createFieldInteractions({
   function hitReset() {
     hits.fill(0);
     strike=null;
-    for(const deposit of deposits)deposit.cluster.scale.y=1;
+    for(const deposit of deposits){deposit.cluster.scale.y=1;deposit.marker.visible=true;}
   }
 
   return {
