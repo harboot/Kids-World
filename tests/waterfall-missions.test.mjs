@@ -11,7 +11,7 @@ import { createMineLayout } from '../areas/waterfall-valley/mine-layout.js';
 import { BOAT_CHECKPOINT, trainCheckpoints } from '../areas/waterfall-valley/missions.js';
 
 const titles = ['Boat Ride','Feed the Deer','Fishing','Gold Hunt','Campfire','Waterfall Discovery',
-  'Restore Mine Power','Crystal Mining','Mine Train'];
+  'Restore Mine Power','Crystal Mining','Mine Train','Flying Fox'];
 const crystalIds = ['crystal-deposit-blue','crystal-deposit-violet','crystal-deposit-green'];
 const goldIds = ['gold-nugget-lower','gold-nugget-middle','gold-nugget-upper'];
 
@@ -82,11 +82,11 @@ function fixture(t, reducedMotion = false) {
     tick,stand,landmark,model,row,prompt,act,board,drive,dismount};
 }
 
-test('nine English missions start at zero and NPC hints leave progress untouched',t=>{
+test('ten English missions start at zero and NPC hints leave progress untouched',t=>{
   const f=fixture(t);
   const status=normalizeMissionStatus(f.visit.missionStatus);
   assert.deepEqual(status.missions.map(m=>m.title),titles);
-  assert.deepEqual(status.missions.map(m=>m.total),[1,1,1,3,1,2,1,3,3]);
+  assert.deepEqual(status.missions.map(m=>m.total),[1,1,1,3,1,2,1,3,3,1]);
   assert.ok(status.missions.every(m=>!m.current&&!m.complete));
   assert.equal(status.hint,'Drive the boat beneath the waterfall.');
   assert.equal(f.visit.interactions.some(item=>/cargo|firewood|pick up food/i.test(item.label)),false);
@@ -242,6 +242,22 @@ function trainRoute(f, reverse) {
 
 function finishObjective(f,id){
   switch(id){
+    case 'flying-fox': {
+      const {x,z}=f.visit.interactions.find(item=>item.label==='Ride Flying Fox');
+      const y=f.visit.getGroundHeight(x,z);
+      f.stand({x,y,z});
+      const ride=f.prompt();
+      assert.equal(ride.label,'Ride Flying Fox');
+      let landing;
+      ride.act({guideCamera:()=>point=>{landing=point;}});
+      f.tick(2);
+      assert.equal(f.row(id).current,0);
+      f.tick(5);
+      assert.ok(landing && landing.z>20);
+      const floor=f.visit.getGroundHeight(landing.x,landing.z);
+      assert.equal(f.visit.blocksGround(landing.x,landing.z,0.34,floor,landing),false);
+      break;
+    }
     case 'boat-ride':
       f.board('Drive Boat');
       navigateBoat(f);

@@ -7,7 +7,8 @@ export const metadata = {
   themeColor: '#479cce',
   width: 144,
   depth: 176,
-  missionCount: 9,
+  missionCount: 10,
+  completionRevision: 2,
   showMissionCount: true,
   spawn: { x: -21, z: 39, yaw: -0.32 },
 };

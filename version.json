@@ -1,13 +1,13 @@
 {
-  "version": "8f3db9f35e5d2a4155cb0f7106d78c47c9a5a6ed61dbce4d9b75f770fd8436de",
+  "version": "fcb227681e42dd35eb27dc13208629396996dfbb4131fa0dc0b735ebbd2bf3dc",
   "files": [
     {
       "path": "./area-catalog.js",
-      "revision": "6d64f9f6438480e7c5bd8fcd7ab4807edc90f8717ba176027e814270dd069124"
+      "revision": "27929efb3506eca554b27321ae6380d60efa9674e3ede4f6b9815c5a84c63e50"
     },
     {
       "path": "./area-stats.json",
-      "revision": "3c962f315a46eef98b4edcf78f978b2f7887af4b71c167b8d69327685c86f4dc"
+      "revision": "32764ae4b0c5c08697f42490e3ea284e690dfa290f6d84ddea56c66941079efa"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -710,8 +710,12 @@
       "revision": "91c1990852082d08a2b9c0168fad566889bf2e2cd7ee230fe7e19ed8f918f252"
     },
     {
+      "path": "./areas/waterfall-valley/flying-fox.js",
+      "revision": "06c40f216fb0af48540c71c746b8dbe25d1fece461b5ad2b58b898d8c0e5fa1f"
+    },
+    {
       "path": "./areas/waterfall-valley/index.js",
-      "revision": "b551e54b03b6b1a63da765d2f1dc07940b152aadc441d906b13c2d5e74e33fcb"
+      "revision": "be6402f2bce12a23cf268fbbdfb945a8bc694c0536e57d2333c90a34d299fa22"
     },
     {
       "path": "./areas/waterfall-valley/landform.js",
@@ -727,7 +731,7 @@
     },
     {
       "path": "./areas/waterfall-valley/metadata.js",
-      "revision": "426ad43a747a377887e7508816c2b145b239ea0ceef5137c18053ee8ad7c81d0"
+      "revision": "766704516527cfaaa4a0dd718470d39a9e17269593d5d285b160b1ea65f74052"
     },
     {
       "path": "./areas/waterfall-valley/mine-details.js",
@@ -747,7 +751,7 @@
     },
     {
       "path": "./areas/waterfall-valley/missions.js",
-      "revision": "609b185981097e6e2cb7b7794c80e018d3af5985206ab14850d98979638940bb"
+      "revision": "590c4347faabc4a7d56f15f5ac7f33f71fe82b38d736e0f01fcb401d9690eea6"
     },
     {
       "path": "./areas/waterfall-valley/outdoor-details.js",
