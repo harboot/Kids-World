@@ -117,7 +117,7 @@ export function addCaverns(THREE, scene, layout, lamps, kit) {
       formations.triangle(...tri, tri.map(p => tint(p, 0.8, 0.87 + random() * 0.36)));
     }
   }
-  formations.finish();
+  rockSurfaces.push(formations.finish());
 
   const water = faces(THREE, scene, 'Still water in Echo Lake', material);
   const pool = new THREE.Color(0x25636d);
@@ -128,6 +128,6 @@ export function addCaverns(THREE, scene, layout, lamps, kit) {
     if (Math.min(a[1], b[1], c[1]) >= mineLake.y) continue;
     water.triangle(...tri.map(([x, , z]) => [x, mineLake.y, z]), pool.clone().lerp(glint, random() * 0.46));
   }
-  water.finish();
+  rockSurfaces.push(water.finish());
   return { outcrops, rockSurfaces };
 }

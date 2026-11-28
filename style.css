@@ -622,3 +622,5 @@ kbd {
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
+
+#game:not([data-state="paused"]) #pause-reset { display: none; }

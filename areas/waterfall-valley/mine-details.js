@@ -25,7 +25,6 @@ export function addMineDetails({ THREE, scene, mine, document, register }) {
     const zone = region(title + ' station and cargo depot');
     const [signX,signZ,yaw] = station.sign;
     zone.sign(title.toUpperCase() + ' STATION', signX, signZ, yaw, 2.35);
-    zone.sign('MINE SHIFT BOARD\n06:10   14:20   21:45', signX - 1.5, signZ - 0.9, yaw, 1.78);
     const { x,z } = station;
     // Cargo platforms meet the existing wagon bed above the railhead.
     const platformY = nearest(mine.main,x,z).y + 0.88;
@@ -324,7 +323,6 @@ export function addMineDetails({ THREE, scene, mine, document, register }) {
   lake.finish();
 
   const stories=region('Abandoned sidings and tunnel markers');
-  stories.sign('UPPER STATION →',17.8,-40.8,0.62,2.06);
   stories.sign('LOWER STATION ←',-26.5,-48.1,1.03,1.98);
   stories.sign('LIFT ACCESS →',-7,-35.8,-0.34,1.58);
   const closed=stories.group('Boarded secondary working',-4.0,-66.7,-.35);

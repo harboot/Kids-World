@@ -20,6 +20,11 @@ test('deer and rabbits animate over valid ground and the ranger tracks a nearby 
   const ranger = scene.getObjectByName('Park ranger');
   const terrain = heightGrid(X_MIN, 72, CLIFF_Z, 88, terrainHeight);
   assert.equal(deer.length, 3);
+  for (const animal of deer) {
+    const { x, y, z } = animal.position;
+    assert.equal(visit.blocksGround(x, z, 0.25, y, { x: x - 2, z }), true);
+    assert.equal(visit.blocksGround(x + 0.05, z, 0.25, y, { x, z }), false);
+  }
   assert.equal(rabbits.length, 6);
   for (const name of ['Camper', 'Fisherman', 'Retired miner']) assert.ok(scene.getObjectByName(name));
   const head = ranger.children[1];
@@ -33,7 +38,7 @@ test('deer and rabbits animate over valid ground and the ranger tracks a nearby 
       const { x, y, z } = animal.position;
       const floor = terrain.sample(x, z);
       assert.ok(y >= floor - 0.001 && y <= floor + 0.17);
-      assert.equal(visit.blocksGround(x, z, 0.25, floor, { x, z }), false);
+      assert.equal(visit.blocksGround(x, z, 0.25, floor, { x, z }), deer.includes(animal));
     }
   }
   assert.ok(Math.abs(head.rotation.y - startRotation) > 0.2);

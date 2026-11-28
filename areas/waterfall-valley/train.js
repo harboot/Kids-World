@@ -211,7 +211,8 @@ export function addTrain({ THREE, scene, camera, mine, world, reducedMotion, not
     scene.add(panel);
     const kit = createTimberKit(THREE, panel);
     const metal = new THREE.MeshBasicMaterial({ color: 0x515e61, toneMapped: false });
-    const lampA = new THREE.MeshBasicMaterial({ toneMapped: false }), lampB = lampA.clone();
+    const lampA = new THREE.MeshBasicMaterial({ name: 'Railway turnout indicator', toneMapped: false });
+    const lampB = lampA.clone();
     kit.box(metal, 0, 0.49, 0, 0.14, 0.98, 0.18);
     kit.box(metal, 0, 0.17, 0, 0.47, 0.23, 0.37);
     kit.box(metal, 0, 1.74, 0, 0.49, 0.56, 0.16);

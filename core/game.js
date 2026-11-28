@@ -617,6 +617,9 @@ export async function createGame({ game, loadThree, areas, defaultArea }) {
   }
 
   restart.addEventListener('click', resetArea);
+  game.querySelector('#pause-reset').addEventListener('click', () => {
+    if (game.dataset.state === 'paused') resetArea();
+  });
   document.addEventListener('visibilitychange', () => {
     if (terminal || suspended) return;
     if (document.hidden) {
