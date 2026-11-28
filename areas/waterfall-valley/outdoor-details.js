@@ -1,7 +1,7 @@
 import { seededRandom } from '../../core/random.js';
 import { detailKit, detailRegion } from './detail-kit.js';
 import { barrel, bench, cart, crate, lantern, table, toolsOnRack } from './detail-props.js';
-import { checkpoints, outdoorSites } from './detail-sites.js';
+import { goldSites, outdoorSites } from './detail-sites.js';
 import { faces, LAKE_LEVEL, mix } from './landform.js';
 import { localPoint } from './ride.js';
 import { addFootbridge, createTimberKit } from './structures.js';
@@ -130,12 +130,30 @@ export function addOutdoorDetails({ THREE, scene, terrain, document, register })
   const tackle = detailKit(THREE, rods);
   tackle.beam(0x966d41, [0, 0.22, 0], [0, 1.35, 1.25], 0.045);
   tackle.beam(0x505d5a, [0, 1.35, 1.25], [0, 1.53, 1.91], 0.026);
-  tackle.beam(0xa6b4a9, [0, 1.53, 1.91], [0, -0.34, 1.91], 0.012);
+  const parkedLine = new THREE.Group();
+  parkedLine.name = 'Parked fishing line';
+  rods.add(parkedLine);
+  const line = detailKit(THREE, parkedLine);
+  line.beam(0xa6b4a9, [0, 1.53, 1.91], [0, -0.34, 1.91], 0.012);
+  line.finish();
   tackle.part('ring', 0x565d51, 0.045, 0.58, 0.37, 0.16, 0.16, 0.16, Math.PI / 2);
   tackle.finish();
   register('fishing-rod', rods, [16.5, pierZ], pierY);
   register('fishing-location', null, [15.85, pierZ], fishingDeck.surface(15.85,pierZ));
-  barrel(fishing.kit, 18.15, fishingDeck.surface(18.15,pierZ), 8.6, 0.38, 0xb48d55);
+  const basket = fishing.group('Fishing basket', 18.15, 8.6, 0, fishingDeck.surface(18.15,pierZ));
+  const shell = new THREE.Mesh(new THREE.CylinderGeometry(0.284,0.193,0.375,10,1,true),
+    new THREE.MeshLambertMaterial({color:0xb48d55,flatShading:true,side:THREE.DoubleSide}));
+  shell.position.y=0.195;
+  basket.add(shell);
+  const wicker = detailKit(THREE, basket);
+  wicker.part('cylinder',0x886642,0,0.079,0,0.431,0.079,0.431);
+  for(const [y,width] of [[0.12,0.444],[0.25,0.516],[0.382,0.588]]) {
+    wicker.part('ring',0x927244,0,y,0,width,width,0.24,0,Math.PI/2);
+  }
+  wicker.beam(0xa98251,[-.23,.27,0],[-.208,.49,0],.041);
+  wicker.beam(0xa98251,[-.208,.49,0],[.208,.49,0],.041);
+  wicker.beam(0xa98251,[.208,.49,0],[.23,.27,0],.041);
+  wicker.finish();
   crate(fishing.kit, 17.55, fishingDeck.surface(17.55,pierZ), 8.67, 0.39, 0.03, 0x6d7b5a);
   const seatY = ground(19.05, 9.33);
   bench(fishing.kit, 19.05, seatY, 9.33, 1.45);
@@ -176,7 +194,30 @@ export function addOutdoorDetails({ THREE, scene, terrain, document, register })
   }
   const logY=ground(32,34);
   trail.kit.beam(0x796048,[31,logY+0.15,34.1],[33,logY+0.2,34.45],0.35,0.36,'cylinder');
-  for(const [id,x,z] of checkpoints) register(id,null,[x,z],ground(x,z));
+  const goldGeometry=new THREE.IcosahedronGeometry(0.5,0);
+  const goldPositions=goldGeometry.getAttribute('position');
+  const faceColors=[];
+  for(let i=0;i<goldPositions.count;i+=3){
+    const color=new THREE.Color([0xd78d20,0xf2be45,0xffd35f,0xbb7320][(i/3)%4]);
+    for(let j=0;j<3;j++)faceColors.push(color.r,color.g,color.b);
+  }
+  goldGeometry.setAttribute('color',new THREE.Float32BufferAttribute(faceColors,3));
+  const goldMaterial=new THREE.MeshLambertMaterial({vertexColors:true,flatShading:true,
+    emissive:0x7d4910,emissiveIntensity:0.24});
+  for(const [i,[id,x,z]] of goldSites.entries()){
+    const nugget=trail.group('Trail gold nugget '+(i+1),x,z);
+    const stone=new THREE.Mesh(goldGeometry,goldMaterial);
+    stone.position.y=0.22;
+    stone.scale.set(.68,.47,.52);
+    stone.rotation.set(.21,i*1.75,-.23);
+    nugget.add(stone);
+    const chip=new THREE.Mesh(goldGeometry,goldMaterial);
+    chip.position.set(.31,.13,.15);
+    chip.scale.set(.26,.26,.24);
+    chip.rotation.set(-.28,.58,.11);
+    nugget.add(chip);
+    register(id,nugget,[x,z]);
+  }
   trail.finish();
 
   function fence(region, points) {
@@ -276,5 +317,5 @@ export function addOutdoorDetails({ THREE, scene, terrain, document, register })
     kit.finish();
   }
 
-  return { collision, decks, waterStructures };
+  return { collision, decks, waterStructures, basket };
 }

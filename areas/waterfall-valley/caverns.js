@@ -82,7 +82,7 @@ export function addCaverns(THREE, scene, layout, lamps, kit) {
   }
   addCavity(layout, false);
   addCavity(layout.adit, true);
-  for (const mesh of [floorMesh, walls, roof]) mesh.finish();
+  const rockSurfaces = [floorMesh, walls, roof].map(mesh => mesh.finish());
 
   const formations = faces(THREE, scene, 'Stalactites and flowstone', material);
   const outcrops = [];
@@ -129,5 +129,5 @@ export function addCaverns(THREE, scene, layout, lamps, kit) {
     water.triangle(...tri.map(([x, , z]) => [x, mineLake.y, z]), pool.clone().lerp(glint, random() * 0.46));
   }
   water.finish();
-  return outcrops;
+  return { outcrops, rockSurfaces };
 }

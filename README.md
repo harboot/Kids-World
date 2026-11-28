@@ -93,7 +93,7 @@ Keep changes area-local, modular, child-friendly, and compatible with the existi
 
 ## Worlds & Missions
 
-**9 public areas · 70 total missions**
+**9 public areas · 79 total missions**
 
 | World | Missions | Highlights |
 | --- | ---: | --- |
@@ -105,6 +105,6 @@ Keep changes area-local, modular, child-friendly, and compatible with the existi
 | [Princess Gallery](https://harboot.github.io/Kids-World/?area=princess-gallery) | 10 | Explore fairy-tale exhibits, meet characters and discover interactive scenes. |
 | [Military Base](https://harboot.github.io/Kids-World/?area=military-base) | 10 | Patrol, direct tank repair, delivery, radar, helicopter tour, driving checkpoints, night vision, CCTV, generator and barracks inspection. |
 | [Kung Fu Hustle](https://harboot.github.io/Kids-World/?area=kung-fu-hustle) | 11 | Meet residents, draw water, eat a bun, dance, play guzheng, buy a lollipop and discover Buddha Palm. |
-| [Hidden Waterfall Valley](https://harboot.github.io/Kids-World/?area=waterfall-valley) | 0 | Hike along the river, walk behind the waterfall, and follow an abandoned railway through the mountain. |
+| [Hidden Waterfall Valley](https://harboot.github.io/Kids-World/?area=waterfall-valley) | 9 | Pilot the boat, feed a deer, catch a fish, find gold, light the campfire, discover both caves, restore mine power, mine crystals, and drive the train. [Valley mission guide](docs/waterfall-valley.md) |
 
 Areas without formal missions offer free exploration and interactive activities. See [Area Statistics](https://harboot.github.io/Kids-World/stats.html) for the current area inventory.

@@ -34,7 +34,7 @@ function walk(origin, waypoints) {
 
 test('the public visit has a continuous walking loop through both entrances and over both outdoor bridges', () => {
   assert.equal(areas['waterfall-valley'].show, true);
-  assert.deepEqual(visit.missionStatus.missions, []);
+  assert.equal(visit.missionStatus.missions.length, 9);
   const { x, z } = definition.spawn;
   const lowerPath = [...westTrail.points.slice(3), [-14, -18], [-14, -23]];
   const bypass = [[-16.5, -23.05], [-18.5, -23.55], [-18.5, -33.5], [-19, -36], [-19, -38]];
@@ -83,7 +83,7 @@ test('the cavern network reaches every chamber and accounts for approximately 40
 
   const expected = [
     'feeding-deer', 'deer-feeding-location', 'fishing-rod', 'fishing-location',
-    'hiking-checkpoint-lower', 'hiking-checkpoint-middle', 'hiking-checkpoint-upper',
+    'gold-nugget-lower', 'gold-nugget-middle', 'gold-nugget-upper',
     'camp-firewood', 'campfire', 'lower-cave-entrance', 'upper-cave-entrance',
     'mine-generator', 'mine-power-control-panel', 'crystal-deposit-blue', 'crystal-deposit-violet',
     'crystal-deposit-green', 'cargo-ore-crate', 'cargo-supplies-crate', 'cargo-loading', 'cargo-unloading',
@@ -97,7 +97,7 @@ test('the cavern network reaches every chamber and accounts for approximately 40
     assert.equal(landmark.object?.userData.landmarkId ?? id, id);
     assert.ok(safeStand(visit, x, z, y), id + ' has a safe standing position');
     assert.ok(isReachable(x, y, z), id + ' reachable from the normal walking routes');
-    if (id.startsWith('hiking-checkpoint-')) assert.equal(landmark.object, null);
+    if (id.startsWith('gold-nugget-')) assert.ok(landmark.object.visible);
   }
   for (const [name, x, z] of [
     ['cabin interior', -42, -7.6], ['fishing pier', 16.05, 8], ['waterfall lookout', 34, -16.5],

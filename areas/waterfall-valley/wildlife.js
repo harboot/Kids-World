@@ -10,6 +10,7 @@ export function addValleyWildlife({ THREE, scene, terrain, mine, world, reducedM
   const random=seededRandom(15483);
   const ground=terrain.sample;
   const animals=[], fliers=[], fish=[];
+  let feedingPose = null;
   function group(name,x=0,y=0,z=0){
     const node=new THREE.Group();
     node.name=name;
@@ -192,6 +193,7 @@ export function addValleyWildlife({ THREE, scene, terrain, mine, world, reducedM
 
   function pose(eye, reset=false){
     for(const a of animals){
+      if(feedingPose && a===animals[0]) continue;
       const [x,z]=a.origin, distance=eye?Math.hypot(eye.x-x,eye.z-z):Infinity;
       a.root.visible=reset || (distance<41 && (eye.z>-27 || eye.y>a.root.position.y+12));
       if(!a.root.visible)continue;
@@ -270,8 +272,38 @@ export function addValleyWildlife({ THREE, scene, terrain, mine, world, reducedM
     }
   }
   pose(null,true);
+  const feedingDeer = animals[0];
+  function startFeeding(player) {
+    const { x, z } = feedingDeer.root.position;
+    const gap = Math.hypot(player.x-x,player.z-z);
+    const step = gap > 0.01 ? Math.min(0.58, Math.max(0,gap-0.82))/gap : 0;
+    const tx=x+(player.x-x)*step, tz=z+(player.z-z)*step, y=ground(tx,tz);
+    const clear=!world.blocksGround(tx,tz,0.28,y,{x,z});
+    feedingPose={x,z,tx:clear?tx:x,tz:clear?tz:z,
+      yaw:gap > 0.01 ? Math.atan2(player.x-x,player.z-z) : feedingDeer.root.rotation.y};
+  }
+
+  function feedAt(progress) {
+    if(!feedingPose)return;
+    const { root,neck,head,legs }=feedingDeer;
+    const {x,z,tx,tz,yaw}=feedingPose;
+    const t=clamp(progress/0.37);
+    const px=mix(x,tx,t),pz=mix(z,tz,t);
+    root.position.set(px,ground(px,pz),pz);
+    root.rotation.y=yaw;
+    head.rotation.y=0;
+    neck.rotation.x=t*0.86+Math.sin(progress*23)*0.045*t;
+    legs.forEach((leg,i)=>{
+      leg.rotation.x=t<1?Math.sin(t*Math.PI*2)*(i%2?0.20:-0.20):0;
+    });
+  }
+
   return {
-    reset(){age=frame=0;pose(null,true);},
+    feedingDeer: feedingDeer.root,
+    startFeeding, feedAt,
+    stopFeeding(){ feedingPose=null; },
+    fishModel: fish[0].root,
+    reset(){age=frame=0;feedingPose=null;pose(null,true);},
     update(dt,eye){
       if(reducedMotion()){
         drops.visible=ripples.visible=false;

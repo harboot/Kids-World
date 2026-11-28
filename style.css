@@ -502,6 +502,14 @@ kbd {
 
 .area-card-title { padding: 8px 10px; line-height: 1.28; }
 
+.area-card-mission-count {
+  margin: 0 10px 8px;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.area-card-title:has(+ .area-card-mission-count) { padding-bottom: 3px; }
+
 .area-card-completion {
   display: inline-flex;
   gap: 5px;

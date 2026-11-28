@@ -45,8 +45,7 @@ test('deer and rabbits animate over valid ground and the ranger tracks a nearby 
   assert.ok(deer[0].position.equals(before));
   visit.reset();
   assert.ok(deer[0].position.equals(locations[0]));
-  assert.deepEqual(visit.missionStatus.missions, []);
-  assert.equal(visit.interactions.some(item => /fish|feed|fire|collect crystal|restore power/i.test(item.label)), false);
+  assert.equal(visit.missionStatus.missions.find(row => row.id === 'feed-deer').current, 0);
 });
 
 test('shoaling fish stay submerged and Echo Lake bats and droplets remain in the cave', () => {

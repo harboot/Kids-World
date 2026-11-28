@@ -1,3 +1,5 @@
+import { detailKit } from './detail-kit.js';
+import { barrel, crate } from './detail-props.js';
 import { EYE_HEIGHT } from '../../core/player.js';
 import { CAR_SPACING, WHEELBASE, createRailRoute } from './rail-route.js';
 import { approach, createRide, hitsBody, localPoint, safeStand } from './ride.js';
@@ -60,6 +62,17 @@ function buildTrain(THREE, scene) {
       }
     }
     kit.finish();
+    if (index) {
+      const load = detailKit(THREE, ground, true);
+      if (index === 1) {
+        crate(load, -0.24, 0.729, 0.37, 0.50, -0.17);
+        crate(load, 0.31, 0.729, -0.25, 0.42, 0.18);
+      } else {
+        barrel(load, -0.22, 0.729, -0.38, 0.42);
+        for (const side of [-1, 1]) load.box(0x936e49, 0.23 + side * 0.11, 0.825, 0.35, 0.18, 0.19, 0.96);
+      }
+      load.finish();
+    }
 
     const wheels = [];
     for (const z of [-WHEELBASE / 2, WHEELBASE / 2]) {
@@ -94,7 +107,7 @@ export function addTrain({ THREE, scene, camera, mine, world, reducedMotion, not
   const direction = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
   const switchNames = ['Crystal Hall', 'Shaft Hall'];
   const locomotive = cars[0];
-  let speed = 0, steerHeld = false;
+  let speed = 0, steerHeld = false, distanceTravelled = 0;
 
   function pose(distance = 0) {
     for (const [i, car] of cars.entries()) {
@@ -172,7 +185,10 @@ export function addTrain({ THREE, scene, camera, mine, world, reducedMotion, not
       const requested = speed * dt;
       const moved = track.move(requested);
       if (Math.abs(moved - requested) > 0.0001) speed = 0;
-      if (moved) pose(moved);
+      if (moved) {
+        distanceTravelled += Math.abs(moved);
+        pose(moved);
+      }
     }
     return speed === 0;
   }
@@ -245,12 +261,17 @@ export function addTrain({ THREE, scene, camera, mine, world, reducedMotion, not
   function reset() {
     ride.cancel();
     track.reset();
-    speed = 0;
+    speed = distanceTravelled = 0;
     steerHeld = false;
     for (const car of cars) for (const wheel of car.wheels) wheel.rotation.x = 0;
     controls.forEach((_, index) => updateSwitch(index));
     pose();
   }
   reset();
-  return { interactions, blocks, reset, cancel: ride.cancel };
+  return {
+    interactions, blocks, reset, cancel: ride.cancel,
+    get driving() { return ride.active; },
+    get distanceTravelled() { return distanceTravelled; },
+    position: locomotive.ground.position,
+  };
 }
