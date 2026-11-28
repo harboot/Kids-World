@@ -165,7 +165,7 @@ export function addOutdoorDetails({ THREE, scene, terrain, document, register })
   const lookout = outdoorSites.lookout;
   bridge(trail.root, 34, -13.55, lookout.x, lookout.z - 1, 2.9, ground(34,-13.55) - 0.04);
   for (const [text,x,z,yaw] of [
-    ['WATERFALL ↑', -29.2, 29, 0.42], ['CAMP →', -9.4, 48, Math.PI], ['UPPER FALLS ↑', 39.3, 16.85, 0.55],
+    ['WATERFALL ↑', -29.2, 29, 0.42], ['UPPER FALLS ↑', 39.3, 16.85, 0.55],
     ['LOOKOUT ←', 35.6, -12.1, -0.4], ['LOWER MINE →', -34, -14.35, 0.72],
   ]) trail.sign(text,x,z,yaw,1.45);
   for (const [x,z] of [[-27.7,26],[-31.2,13],[-38.2,-4],[25.1,36],[30.0,24],[44.1,11.4],[43.3,-8.3]]) {

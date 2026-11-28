@@ -3,9 +3,11 @@ import { detailKit } from './detail-kit.js';
 import { near } from './field-interactions.js';
 import { clamp, smooth } from './landform.js';
 
+export const flyingFoxRoute = { start: [17, -20], end: [11, 27] };
+
 export function createFlyingFox({ THREE, scene, camera, ground, busy, onLand }) {
-  const start = new THREE.Vector3(17, ground(17, -20) + EYE_HEIGHT, -20);
-  const end = new THREE.Vector3(11, ground(11, 27) + EYE_HEIGHT, 27);
+  const point = ([x,z]) => new THREE.Vector3(x,ground(x,z)+EYE_HEIGHT,z);
+  const start = point(flyingFoxRoute.start), end = point(flyingFoxRoute.end);
   const heading = Math.atan2(start.x - end.x, start.z - end.z);
   const landing = { x: end.x, z: end.z, yaw: heading };
   const offset = 0.78;

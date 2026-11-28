@@ -1,7 +1,7 @@
 import { detailKit } from './detail-kit.js';
-import { smooth } from './landform.js';
+import { CLIFF_Z, mix, smooth } from './landform.js';
 
-export function createMinePower({ THREE, scene, mine, generator, rockSurfaces, reducedMotion }) {
+export function createMinePower({ THREE, scene, mine, generator, rockSurfaces, mineObjects, reducedMotion }) {
   const sites = [
     [[-19.3,-28.1],[-20.9,-34.3],[20.7,-31.5],[24.9,-33.5]],
     [[-28.2,-82.3],[-23.1,-82.8],[1,-70]],
@@ -31,6 +31,12 @@ export function createMinePower({ THREE, scene, mine, generator, rockSurfaces, r
   const buffers = rockSurfaces.map(mesh => {
     const p = mesh.geometry.getAttribute('position'), colors = mesh.geometry.getAttribute('color');
     const initial = colors.array.slice();
+    const unpowered = new Float32Array(p.count);
+    for (let i = 0; i < p.count; i++) {
+      const daylight = smooth(-36, CLIFF_Z, p.getZ(i));
+      const nearGenerator = 1 - smooth(2, 8, Math.hypot(p.getX(i) - 23.2, p.getZ(i) + 61.9));
+      unpowered[i] = Math.max(mix(0.065, 1, daylight), 0.19 * nearGenerator);
+    }
     const night = stages.map(({records})=>{
       const points=[];
       for(let i=0;i<p.count;i++){
@@ -45,7 +51,7 @@ export function createMinePower({ THREE, scene, mine, generator, rockSurfaces, r
       }
       return points;
     });
-    return {colors,initial,night};
+    return {colors,initial,unpowered,night};
   });
 
   const rotor = new THREE.Group();
@@ -61,13 +67,34 @@ export function createMinePower({ THREE, scene, mine, generator, rockSurfaces, r
   base.finish();
   generator.add(rotor);
 
+  const rockMaterials = new Set(rockSurfaces.map(mesh => mesh.material));
+  const props = new Map();
+  for (const root of mineObjects) {
+    root.traverse(({ material }) => {
+      if (material?.color && material.name !== 'Railway turnout indicator' &&
+          !rockMaterials.has(material) && !props.has(material)) {
+        props.set(material, material.color.clone());
+      }
+    });
+  }
+
   let elapsed = 0, active = false, stage = 0;
   function lighting(count) {
     stage=count;
     stages.forEach(({material},i)=>{material.color.setHex(i<count?0xffe7ad:0x6b6254);});
-    for(const {colors,initial,night} of buffers) {
+    const power = count / stages.length;
+    for (const [material, color] of props) {
+      material.color.copy(color).multiplyScalar(mix(0.13, 1, power));
+    }
+    for(const {colors,initial,unpowered,night} of buffers) {
       const array=colors.array;
-      array.set(initial);
+      for (let i = 0; i < unpowered.length; i++) {
+        const offset = i * 3;
+        const glow = mix(unpowered[i], 1, power);
+        array[offset] = initial[offset] * glow;
+        array[offset+1] = initial[offset+1] * glow;
+        array[offset+2] = initial[offset+2] * glow;
+      }
       for(let i=0;i<count;i++)for(const [offset,strength] of night[i]){
         array[offset]+=(tint.r-array[offset])*strength;
         array[offset+1]+=(tint.g-array[offset+1])*strength;
@@ -76,6 +103,7 @@ export function createMinePower({ THREE, scene, mine, generator, rockSurfaces, r
       colors.needsUpdate=true;
     }
   }
+  lighting(0);
   return {
     get started(){return active;},
     get ready(){return stage===stages.length;},

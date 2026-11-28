@@ -223,7 +223,11 @@ test('a rock inside the boat clearance stops the hull sweep before impact', () =
   const stopped = hull.position.clone();
   for (let i = 0; i < 30; i++) controls.drive(0.05, { x: 0, y: -1 }, 1);
   assert.ok(hull.position.equals(stopped));
+  for (let i = 0; i < 26; i++) controls.drive(0.05, { x: -1, y: 1 }, 1);
+  assert.ok(hull.position.distanceTo(stopped) > 0.5, 'reverse and steering clear the rock without removing it');
   rockPresent = false;
+  boat.reset();
+  boat.interactions[0].act({ guideCamera(look, options) { controls = options; return () => {}; } });
   for (let i = 0; i < 110; i++) controls.drive(0.05, { x: 0, y: -1 }, 1);
   assert.ok(hull.position.z < 9);
 });

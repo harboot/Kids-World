@@ -131,6 +131,24 @@ test('the boat has one exact marker and scores only by driving at lake elevation
   assert.ok(f.visit.interactions.some(item=>item.label==='Drive Train'&&item.active!==false));
 });
 
+test('every rabbit and deer can be fed repeatedly and only deer count for the mission', t => {
+  const f = fixture(t, true);
+  for (const [species, count] of [['Rabbit', 6], ['Deer', 3]]) {
+    const items = f.visit.interactions.filter(item => item.label === 'Feed ' + species);
+    assert.equal(items.length, count);
+    for (const item of [...items, items[0]]) {
+      const y = f.visit.getGroundHeight(item.x, item.z);
+      f.stand({ x: item.x, z: item.z, y });
+      assert.ok(item.active && item.reachable(f.camera.position));
+      item.act({});
+      assert.equal(item.active, false);
+      f.tick(2);
+      assert.equal(item.active, true);
+      assert.equal(f.row('feed-deer').current, species === 'Deer' ? 1 : 0);
+    }
+  }
+});
+
 test('fishing cancels without taking input and waits for a bite until one fish reaches the basket',t=>{
   const f=fixture(t);
   f.landmark('fishing-rod');
@@ -167,6 +185,15 @@ test('mine power and an indefinite campfire night are independent and reset per 
   const workshop=f.model('Mine workshop industrial lamps').material.color;
   const tunnel=f.model('Mine tunnel industrial lamps').material.color;
   const dark=station.clone();
+  const floor = f.model('Faceted cavern floors').geometry;
+  const positions = floor.getAttribute('position');
+  const colors = floor.getAttribute('color');
+  const sample = predicate => Array.from({ length: positions.count }, (_, i) => i)
+    .find(i => predicate(positions.getZ(i)));
+  const deep = sample(z => z < -58);
+  const mouth = sample(z => z === -22);
+  const deepDark = colors.getX(deep);
+  const mouthDaylight = colors.getX(mouth);
   f.landmark('mine-power-control-panel');
   f.act('Start Generator');
   f.tick(0.65);
@@ -174,6 +201,8 @@ test('mine power and an indefinite campfire night are independent and reset per 
   f.tick(1.1);
   assert.ok(!station.equals(dark) && !workshop.equals(dark) && !tunnel.equals(dark));
   assert.equal(f.row('restore-mine-power').complete,true);
+  assert.ok(colors.getX(deep) > deepDark * 4);
+  assert.equal(colors.getX(mouth), mouthDaylight);
   const lit=station.clone();
   f.landmark('campfire');
   f.act('Light Campfire');

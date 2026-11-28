@@ -1,3 +1,4 @@
+import { flyingFoxRoute } from './flying-fox.js';
 import { detailClearing } from './detail-sites.js';
 import { seededRandom } from '../../core/random.js';
 import {
@@ -95,8 +96,18 @@ export function addForest(THREE, scene, terrain, bedrock, bridges) {
     dummy.updateMatrix();
     batch.push({ matrix: dummy.matrix.clone(), color: makeColor(color).multiplyScalar(0.84 + random() * 0.28) });
   }
+  const [ax, az] = flyingFoxRoute.start, [bx, bz] = flyingFoxRoute.end;
+  const cableLengthSquared = (bx - ax) ** 2 + (bz - az) ** 2;
   function plant(x, y, z, size, collision) {
     const radius = size * (0.17 + random() * 0.033);
+    const field = collision ? terrain : bedrock;
+    const t = Math.max(0, Math.min(1, ((x - ax) * (bx - ax) + (z - az) * (bz - az)) / cableLengthSquared));
+    const corridor = Math.hypot(x - mix(ax, bx, t), z - mix(az, bz, t)) < radius * 1.25 + 1.65;
+    const surface = field.sample(x, z);
+    const steep = [[0.65, 0], [-0.65, 0], [0, 0.65], [0, -0.65]].some(([dx, dz]) =>
+      Math.abs(field.sample(x + dx, z + dz) - surface) > 0.62);
+    const remove = corridor || steep || detailClearing(x, z);
+    const crownCount = tree.length;
     place(trunks, x, y + size * 0.39, z, radius * 0.27, size * 0.78, radius * 0.27, 0x66503a);
     const colors = [0x224d2c, 0x386831, 0x518134, 0x679039];
     for (let i = 0; i < colors.length; i++) {
@@ -104,7 +115,10 @@ export function addForest(THREE, scene, terrain, bedrock, bridges) {
       place(tree, x + i * 0.036, y + size * (0.36 + i * 0.163), z, width,
         size * (0.48 - i * 0.041), width * 0.92, colors[i], i * 0.53, 0.028);
     }
-    if (collision) obstacles.push({ x, z, radius: radius * 0.24 });
+    if (remove) {
+      trunks.pop();
+      tree.length = crownCount;
+    } else if (collision) obstacles.push({ x, z, radius: radius * 0.24 });
   }
   const sightline = (x, z) => z > 9 && z < 41 && Math.abs(x + 21 - (39 - z) * 0.34) < 5.5;
   const clearing = (x, z) => sightline(x, z) || Math.hypot(x + 18, z - 44) < 9
@@ -125,8 +139,10 @@ export function addForest(THREE, scene, terrain, bedrock, bridges) {
       if (Math.abs(x - LOWER_X) < 5.6 && z < -14) continue;
       const height = rock * (0.5 + random() * 0.5);
       place(rocks, x, y + rock * 0.28, z, rock, height, rock * 0.8, 0x727381, undefined, 0.19);
-      if (y + rock * 0.28 + height > LAKE_LEVEL - 0.23) waterRocks.push({ x, z, radius: rock * 0.85 });
-      if (rock > 0.64 && y > 0.1) obstacles.push({ x, z, radius: rock * 0.69 });
+      if (!detailClearing(x, z)) {
+        if (y + rock * 0.28 + height > LAKE_LEVEL - 0.23) waterRocks.push({ x, z, radius: rock * 0.85 });
+        if (rock > 0.64 && y > 0.1) obstacles.push({ x, z, radius: rock * 0.69 });
+      }
     }
     if (trail > 1.5 && y > 1 && !riparian && random() < 0.32) {
       const size = 0.19 + random() * 0.4;
@@ -164,7 +180,7 @@ export function addForest(THREE, scene, terrain, bedrock, bridges) {
   const facets = new THREE.MeshLambertMaterial({ flatShading: true });
   const stones = new THREE.DodecahedronGeometry(1);
   const inClearing = entry => detailClearing(entry.matrix.elements[12], entry.matrix.elements[14]);
-  for (const batch of [trunks, tree, rocks, bushes, grass]) {
+  for (const batch of [rocks, bushes, grass]) {
     for (let i = batch.length - 1; i >= 0; i--) if (inClearing(batch[i])) batch.splice(i, 1);
   }
   finish('Pine trunks', trunks, new THREE.CylinderGeometry(0.67, 1.15, 1, 5), facets);

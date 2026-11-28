@@ -1,5 +1,5 @@
 {
-  "version": "fcb227681e42dd35eb27dc13208629396996dfbb4131fa0dc0b735ebbd2bf3dc",
+  "version": "aaa63575d0724beacfb95f6a2097656a4b7b888f839f2f0fa113d841f0ca0600",
   "files": [
     {
       "path": "./area-catalog.js",
@@ -7,7 +7,7 @@
     },
     {
       "path": "./area-stats.json",
-      "revision": "32764ae4b0c5c08697f42490e3ea284e690dfa290f6d84ddea56c66941079efa"
+      "revision": "177f10c79836739ebb67ebcde6d804f842a7cb454d24b9754e2061eab724c6c9"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -679,7 +679,7 @@
     },
     {
       "path": "./areas/waterfall-valley/boat.js",
-      "revision": "aedc2e52c7669ee74aa0ccc77ab620a59c3523a96941864ddb3378165b75e18c"
+      "revision": "1507e4f85263c4f9231e63370d216bbc1d690814cd92e1d2f97c1729d4d8210b"
     },
     {
       "path": "./areas/waterfall-valley/campfire.js",
@@ -687,7 +687,7 @@
     },
     {
       "path": "./areas/waterfall-valley/caverns.js",
-      "revision": "fbc2de63a1cc436e968d95ec824227d545d2ff8804744a610bfd970589483333"
+      "revision": "eda7bb370c6877c07318e988665f66d427c99d5a855f4b83698d6da87d405015"
     },
     {
       "path": "./areas/waterfall-valley/characters.js",
@@ -707,15 +707,15 @@
     },
     {
       "path": "./areas/waterfall-valley/field-interactions.js",
-      "revision": "91c1990852082d08a2b9c0168fad566889bf2e2cd7ee230fe7e19ed8f918f252"
+      "revision": "984c8436e99f12b7e18a510976cd50159fae196d0d9dfc8e9ac83f4d1c31a82a"
     },
     {
       "path": "./areas/waterfall-valley/flying-fox.js",
-      "revision": "06c40f216fb0af48540c71c746b8dbe25d1fece461b5ad2b58b898d8c0e5fa1f"
+      "revision": "da006753006842c95fd091ade4c4f402d8a1b1a1ffd2fd12577ce2b75c24cf32"
     },
     {
       "path": "./areas/waterfall-valley/index.js",
-      "revision": "be6402f2bce12a23cf268fbbdfb945a8bc694c0536e57d2333c90a34d299fa22"
+      "revision": "fe6ce6a646e0471814511ac786b31e80f558e16c67753cd6ed7400c8685a0c0b"
     },
     {
       "path": "./areas/waterfall-valley/landform.js",
@@ -735,7 +735,7 @@
     },
     {
       "path": "./areas/waterfall-valley/mine-details.js",
-      "revision": "b8890d88301efd956494c108e2a1be38577818d426900ab4278460bafeb8f3cf"
+      "revision": "de206469597c55ff34f8af3247fdd94f55e5ff113ee15b2e8cb1e8d5df9e7d9c"
     },
     {
       "path": "./areas/waterfall-valley/mine-layout.js",
@@ -743,7 +743,7 @@
     },
     {
       "path": "./areas/waterfall-valley/mine-power.js",
-      "revision": "5a7a527de1dbb42fd2c87488882a4f9c9f06d6fcebb1dd9eb5bbb26a41da720c"
+      "revision": "f96d7c1627121ff3d0945055429d9bcc0640eaf2109f1244b15fc3bae16faaaf"
     },
     {
       "path": "./areas/waterfall-valley/mission-effects.js",
@@ -755,11 +755,11 @@
     },
     {
       "path": "./areas/waterfall-valley/outdoor-details.js",
-      "revision": "75bd5abed079be440c4b63db8808cb1cc01e0803c252f0bd64bd0e52e2a60d25"
+      "revision": "c1bc0aed365a8423f901a934d5ef776aeecbfbaf00cbf8e65810f6e52e7176a4"
     },
     {
       "path": "./areas/waterfall-valley/outdoors.js",
-      "revision": "3df82774866ee849e32377ba204c7b96d725f1edc4082f386bf247f63a773508"
+      "revision": "82fe99a259e330487ca9074a1d2edf0408ea595f85972c8d7a5537896ef4d08f"
     },
     {
       "path": "./areas/waterfall-valley/rail-route.js",
@@ -775,7 +775,7 @@
     },
     {
       "path": "./areas/waterfall-valley/train.js",
-      "revision": "8b2682431bc8819858f6fc536ed90fa17aab334ad10456c9c9a8c771082e8633"
+      "revision": "85676f907dd2e6cb46ce0b9a314a88ffc005d1af2d467abc09e97c8cfa1e690f"
     },
     {
       "path": "./areas/waterfall-valley/water.js",
@@ -787,7 +787,7 @@
     },
     {
       "path": "./areas/waterfall-valley/wildlife.js",
-      "revision": "42cf3de234d12e81110411862fd17dd6db13de3be3411298e038d7cd1082054e"
+      "revision": "d2d5cd34c17ae3a8cd61c331c0b87ad7d6414d30b397303e03d341ff8300cd11"
     },
     {
       "path": "./areas/wooden-house/cleaning.js",
@@ -871,7 +871,7 @@
     },
     {
       "path": "./core/game.js",
-      "revision": "e931467f39aa669bfef5b45beb0d1df0cf4c37678138aa04420d861525ac8556"
+      "revision": "aadce195819e4120671cf7f936e248eab34eda70bfe3b1b60bdc3a227a65b00c"
     },
     {
       "path": "./core/geometry.js",
@@ -935,7 +935,7 @@
     },
     {
       "path": "./index.html",
-      "revision": "c4f8cf0f4cd21f2f4146adb97fde598e96376343d69bf27c6889f621fe246b0e"
+      "revision": "577cf8da7edd50731dc903fda6436257f56215741a3f32c11295ff250b948b32"
     },
     {
       "path": "./manifest.webmanifest",
@@ -971,7 +971,7 @@
     },
     {
       "path": "./style.css",
-      "revision": "5908853008f8ea5717422d4a3926974f5de35381cff8eef8181754fe8ff3cc4b"
+      "revision": "c519ee8cf87ff700db67a6b2ba1e4f518813e5b83e389dce52533a67cf466347"
     },
     {
       "path": "./vendor/three.LICENSE",

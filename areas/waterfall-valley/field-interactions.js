@@ -21,7 +21,7 @@ export function createFieldInteractions({
   const basketTop=basket.position.clone().add(new THREE.Vector3(0,0.318,0));
   const rodSpot=landmarks['fishing-rod'].approach;
   const parkedRod=landmarks['fishing-rod'].object;
-  const deer=wildlife.feedingDeer;
+  let fedAnimal;
   const interactions=[];
   let player, feedTime=0, feeding=false, heartTime=0, fishing=null, strike=null, rewardTime=0;
   const hits = crystalSites.map(() => 0);
@@ -98,24 +98,30 @@ export function createFieldInteractions({
   function suitable(point,radius,height) {
     return !driving() && near(point,camera?.position??player,radius,height);
   }
-  function pointAt(object) { return object.position; }
 
-  interactions.push({
-    label:'Feed Deer',silent:true,radius:1.78,
-    get x(){return deer.position.x;},
-    get z(){return deer.position.z;},
-    get anchorY(){return deer.position.y+1.06;},
-    get active(){return !feeding&&!fishing&&!strike&&!isComplete('feed-deer')&&!driving();},
-    reachable(p){return deer.visible&&near(pointAt(deer),p,1.78);},
-    act(){
-      const eye=camera?.position??player;
-      if(feeding||fishing||strike||isComplete('feed-deer')||!suitable(pointAt(deer),1.78))return;
-      wildlife.startFeeding(eye);
-      feedTime=0;
-      feeding=true;
-      food.visible=true;
-    },
-  });
+  for (const animal of wildlife.animals) {
+    const { root } = animal;
+    const deer = animal.kind === 'deer';
+    interactions.push({
+      label: deer ? 'Feed Deer' : 'Feed Rabbit',
+      silent: true,
+      radius: 1.78,
+      get x() { return root.position.x; },
+      get z() { return root.position.z; },
+      get anchorY() { return root.position.y + (deer ? 1.06 : 0.42); },
+      get active() { return !feeding && !fishing && !strike && !driving(); },
+      reachable(p) { return root.visible && near(root.position, p, 1.78); },
+      act() {
+        const eye = camera?.position ?? player;
+        if (!root.visible || feeding || fishing || strike || !suitable(root.position, 1.78)) return;
+        fedAnimal = animal;
+        wildlife.startFeeding(animal, eye);
+        feedTime = 0;
+        feeding = true;
+        food.visible = true;
+      },
+    });
+  }
 
   function stopFishing(){
     fishing=null;
@@ -260,7 +266,8 @@ export function createFieldInteractions({
 
   function animateDeer(dt) {
     if(feeding){
-      if(!suitable(pointAt(deer),2.85)){
+      const deer=fedAnimal.root;
+      if(!suitable(deer.position,2.85)){
         feeding=food.visible=false;
         wildlife.stopFeeding();
       }else{
@@ -274,9 +281,10 @@ export function createFieldInteractions({
           feeding=food.visible=false;
           wildlife.stopFeeding();
           hearts.position.copy(deer.position);
-          hearts.position.y+=1.43;
+          hearts.position.y+=fedAnimal.kind==='deer'?1.43:0.46;
           heartTime=1.15;
-          finish('feed-deer','The deer enjoyed its snack!');
+          if(fedAnimal.kind==='deer' && !isComplete('feed-deer'))finish('feed-deer','The deer enjoyed its snack!');
+          else notify(fedAnimal.kind==='deer'?'The deer enjoyed its snack!':'The rabbit enjoyed its snack!');
         }
       }
     }

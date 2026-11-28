@@ -67,9 +67,13 @@ export default {
     const bridge = (x, z, xx, zz, width) => addFootbridge(THREE, kit, terrain.sample,
       [x, z, terrain.sample(x, z)], [xx, zz, terrain.sample(xx, zz)], width);
     const bridges = [bridge(-36, -18, -14, -18, 3.25), bridge(-5, 46, 13, 46, 3.55)];
-    const railroad = addRailway(THREE, scene, mine, kit);
+    const mineStart = scene.children.length;
+    const railKit = createTimberKit(THREE, scene);
+    const railroad = addRailway(THREE, scene, mine, railKit);
+    railKit.finish();
     const lift = addLift({ THREE, scene, mine, carryPlayer });
     const { outcrops, rockSurfaces } = addCaverns(THREE, scene, mine, [...railroad.lamps, ...lift.lamps], railroad);
+    const mineObjects = scene.children.slice(mineStart);
     addLandforms(THREE, scene, terrain, bedrock, mine);
     const { obstacles: trees, waterRocks } = addForest(THREE, scene, terrain, bedrock, bridges);
     const animateWater = addWater(THREE, scene, terrain, touch);
@@ -83,7 +87,9 @@ export default {
       anchors.set(id, { object, x, z, elevation });
     }
     const outdoor = addOutdoorDetails({ THREE, scene, terrain, document, register });
+    const detailStart = scene.children.length;
     const underground = addMineDetails({ THREE, scene, mine, document, register });
+    mineObjects.push(...scene.children.slice(detailStart));
     const outdoorDecks = [...bridges, ...outdoor.decks];
 
     const edgeRock = (x, z) => valleyWall(x, z) > 4.8
@@ -93,18 +99,21 @@ export default {
     const waterObstacles = collisionIndex(waterRocks);
     const world = { obstacles: railroad.platforms, getGroundHeight, getCeilingHeight, blocksGround };
     const rideContext = { THREE, scene, camera, world, reducedMotion, notify };
+    const trainStart = scene.children.length;
     const train = addTrain({ ...rideContext, mine });
+    mineObjects.push(...scene.children.slice(trainStart));
     const boat = addBoat({ ...rideContext, terrain, waterObstacles, bridges: [...bridges, ...outdoor.waterStructures] });
     const characters = addValleyCharacters({ THREE, scene, ground: terrain.sample, reducedMotion,
       deckHeight: (x, z) => getGroundHeight(x, z) });
-    const wildlife = addValleyWildlife({ THREE, scene, terrain, mine, world, reducedMotion, touch, register });
+    let wildlife;
+    wildlife = addValleyWildlife({ THREE, scene, terrain, mine, world, reducedMotion, touch, register });
     const landmarks = Object.freeze(Object.fromEntries([...anchors].map(([id, { object, x, z, elevation }]) => {
       const approach = Object.freeze({ x, z, y: elevation ?? getGroundHeight(x, z) });
       const position = object ? Object.freeze({ x: object.position.x, y: object.position.y, z: object.position.z }) : approach;
       return [id, Object.freeze({ id, object, position, approach })];
     })));
     const campfire=createCampfire({ THREE,scene,hearth:landmarks.campfire.object,sky,sun,reducedMotion,touch });
-    const power=createMinePower({ THREE,scene,mine,generator:landmarks['mine-generator'].object,rockSurfaces,reducedMotion });
+    const power=createMinePower({ THREE,scene,mine,generator:landmarks['mine-generator'].object,rockSurfaces,mineObjects,reducedMotion });
     const missions=createValleyMissions({
       THREE,scene,viewmodel,camera,mine,landmarks,characters,wildlife,veins:underground.veins,basket:outdoor.basket,
       boat,train,campfire,power,getGroundHeight,getCeilingHeight,notify,reducedMotion,touch,completeLevel,isLevelComplete,areaId:metadata.id,
@@ -139,7 +148,7 @@ export default {
       return height;
     }
 
-    function blocksGround(x, z, radius, feet, from, ignoreTrain = false) {
+    function blocksGround(x, z, radius, feet, from, ignoreTrain = false, ignoreDeer = false) {
       if (z < CLIFF_Z) {
         if (lift.blocks(x, z, radius, feet, from)) return true;
         if (!ignoreTrain && train.blocks(x, z, radius, feet)) return true;
@@ -162,7 +171,7 @@ export default {
         return lakeBasin(x, z) < 1.16 && mine.floor.sample(x, z) < mineLake.y - 0.42;
       }
       if (z - CLIFF_Z < radius + cliffRelief(x) * 1.04 && mine.opening.sample(x, CLIFF_Z) <= radius) return true;
-      if (edgeRock(x, z) || outsideObstacles(x, z, radius) || boat.blocks(x, z, radius, feet)
+      if ((!ignoreDeer && wildlife?.blocksDeer(x,z,radius,feet,from)) || edgeRock(x, z) || outsideObstacles(x, z, radius) || boat.blocks(x, z, radius, feet)
         || detailsBlock(outdoor.collision, x, z, radius, feet)) return true;
       for (const bridge of outdoorDecks) {
         if (bridge.railing(x, z, radius)) return true;

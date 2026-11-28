@@ -93,7 +93,29 @@ export function addBoat({ THREE, scene, camera, world, terrain, waterObstacles, 
   const { ground, boat, wake, pattern, foam, wheel } = buildBoat(THREE, scene);
   const hull = { ...berth, width: hullWidth, length: hullLength };
   const samples = hullSections.flatMap(([z, w]) => [[-w, z], [0, z], [w, z]]);
+  const clearPoses = [];
   let speed, time, turn, distanceTravelled;
+
+  function rememberPose() {
+    const last = clearPoses.at(-1);
+    if (last && Math.hypot(hull.x - last.x, hull.z - last.z) < 0.12) return;
+    clearPoses.push({ x: hull.x, z: hull.z, yaw: hull.yaw });
+    if (clearPoses.length > 14) clearPoses.shift();
+  }
+
+  function retreat(step) {
+    const last = clearPoses.at(-1);
+    if (!last || step <= 0) return;
+    const distance = Math.hypot(hull.x - last.x, hull.z - last.z);
+    const progress = distance > 0 ? Math.min(1, step * 2.5 / distance) : 1;
+    const x = hull.x + (last.x - hull.x) * progress;
+    const z = hull.z + (last.z - hull.z) * progress;
+    const angle = last.yaw - hull.yaw;
+    const yaw = hull.yaw + Math.atan2(Math.sin(angle), Math.cos(angle)) * progress;
+    if (!fits(x, z, yaw)) return;
+    Object.assign(hull, { x, z, yaw });
+    if (progress === 1) clearPoses.pop();
+  }
 
   function fits(x, z, yaw) {
     for (const [side, forward] of samples) {
@@ -115,15 +137,21 @@ export function addBoat({ THREE, scene, camera, world, terrain, waterObstacles, 
     for (let i = 0; i < steps; i++) {
       const step = dt / steps;
       const yaw = hull.yaw + turn * step * (0.59 + Math.min(0.68, Math.abs(speed) * 0.17));
-      if (yaw !== hull.yaw && fits(hull.x, hull.z, yaw)) hull.yaw = Math.atan2(Math.sin(yaw), Math.cos(yaw));
-      if (!speed) continue;
+      const blockedTurn = yaw !== hull.yaw && !fits(hull.x, hull.z, yaw);
+      if (!blockedTurn) hull.yaw = Math.atan2(Math.sin(yaw), Math.cos(yaw));
+      if (!speed) {
+        if (!stopping && blockedTurn && steering) retreat(step);
+        continue;
+      }
       const next = localPoint(hull.x, hull.z, hull.yaw, 0, speed * step);
       if (fits(next.x, next.z, hull.yaw)) {
         distanceTravelled += Math.abs(speed * step);
         hull.x = next.x;
         hull.z = next.z;
+        rememberPose();
       } else {
         speed = 0;
+        if (!stopping && (throttle < 0 || (blockedTurn && steering))) retreat(step);
         break;
       }
     }
@@ -197,6 +225,8 @@ export function addBoat({ THREE, scene, camera, world, terrain, waterObstacles, 
     ride.cancel();
     Object.assign(hull, berth);
     speed = turn = time = distanceTravelled = 0;
+    clearPoses.length = 0;
+    rememberPose();
     pose();
   }
   reset();

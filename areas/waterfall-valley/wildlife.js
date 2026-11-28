@@ -1,3 +1,5 @@
+import { EYE_HEIGHT } from '../../core/player.js';
+import { hitsBody } from './ride.js';
 import { seededRandom } from '../../core/random.js';
 import { detailKit, detailRegion } from './detail-kit.js';
 import { fishPools } from './detail-sites.js';
@@ -193,7 +195,7 @@ export function addValleyWildlife({ THREE, scene, terrain, mine, world, reducedM
 
   function pose(eye, reset=false){
     for(const a of animals){
-      if(feedingPose && a===animals[0]) continue;
+      if(feedingPose?.animal===a) continue;
       const [x,z]=a.origin, distance=eye?Math.hypot(eye.x-x,eye.z-z):Infinity;
       a.root.visible=reset || (distance<41 && (eye.z>-27 || eye.y>a.root.position.y+12));
       if(!a.root.visible)continue;
@@ -203,7 +205,10 @@ export function addValleyWildlife({ THREE, scene, terrain, mine, world, reducedM
       const px=x+dx*path,pz=z+dz*path, moving=path>.015&&phase<.9 && !reset;
       const stride=moving?Math.sin(t*8.2):0;
       const hop=a.kind==='rabbit'&&moving?.16*Math.abs(stride)**2:0;
-      a.root.position.set(px,ground(px,pz)+hop,pz);
+      const floor = ground(px, pz);
+      if (a.kind==='deer' && eye && Math.abs(eye.y-EYE_HEIGHT-floor)<1.3 &&
+          Math.hypot(eye.x-px,eye.z-pz)<1.23) continue;
+      a.root.position.set(px,floor+hop,pz);
       a.root.rotation.y=Math.atan2(dx,dz)+(phase>.58?Math.PI:0);
       if(a.kind==='deer'){
         a.legs.forEach((leg,i)=>{leg.rotation.x=stride*.33*(i%3===0?1:-1);});
@@ -272,25 +277,29 @@ export function addValleyWildlife({ THREE, scene, terrain, mine, world, reducedM
     }
   }
   pose(null,true);
-  const feedingDeer = animals[0];
-  function startFeeding(player) {
-    const { x, z } = feedingDeer.root.position;
+  function startFeeding(animal, player) {
+    const { x, z } = animal.root.position;
     const gap = Math.hypot(player.x-x,player.z-z);
-    const step = gap > 0.01 ? Math.min(0.58, Math.max(0,gap-0.82))/gap : 0;
+    const step = gap > 0.01 ? Math.min(0.58, Math.max(0,gap-(animal.kind==='deer'?1.18:0.63)))/gap : 0;
     const tx=x+(player.x-x)*step, tz=z+(player.z-z)*step, y=ground(tx,tz);
-    const clear=!world.blocksGround(tx,tz,0.28,y,{x,z});
-    feedingPose={x,z,tx:clear?tx:x,tz:clear?tz:z,
-      yaw:gap > 0.01 ? Math.atan2(player.x-x,player.z-z) : feedingDeer.root.rotation.y};
+    const clear=animal.kind==='deer' && !world.blocksGround(tx,tz,0.28,y,{x,z},false,true);
+    feedingPose={animal,x,z,tx:clear?tx:x,tz:clear?tz:z,
+      yaw:gap > 0.01 ? Math.atan2(player.x-x,player.z-z) : animal.root.rotation.y};
   }
 
   function feedAt(progress) {
     if(!feedingPose)return;
-    const { root,neck,head,legs }=feedingDeer;
+    const { root,neck,head,legs,ears }=feedingPose.animal;
     const {x,z,tx,tz,yaw}=feedingPose;
     const t=clamp(progress/0.37);
     const px=mix(x,tx,t),pz=mix(z,tz,t);
     root.position.set(px,ground(px,pz),pz);
     root.rotation.y=yaw;
+    if (ears) {
+      root.rotation.x=0.16*Math.sin(progress*Math.PI);
+      for (const ear of ears) ear.rotation.x=0.25+Math.sin(progress*19)*0.16;
+      return;
+    }
     head.rotation.y=0;
     neck.rotation.x=t*0.86+Math.sin(progress*23)*0.045*t;
     legs.forEach((leg,i)=>{
@@ -299,11 +308,24 @@ export function addValleyWildlife({ THREE, scene, terrain, mine, world, reducedM
   }
 
   return {
-    feedingDeer: feedingDeer.root,
+    animals,
+    blocksDeer(x,z,radius,feet,from) {
+      return animals.some(({kind,root})=>{
+        const p=root.position;
+        if(kind!=='deer'||feet>p.y+1.65||feet<p.y-1) return false;
+        const body={x:p.x,z:p.z,yaw:root.rotation.y,width:0.74,length:1.58};
+        if(!hitsBody(x,z,radius,body))return false;
+        return !(from && hitsBody(from.x,from.z,radius,body) &&
+          Math.hypot(x-p.x,z-p.z)>Math.hypot(from.x-p.x,from.z-p.z));
+      });
+    },
     startFeeding, feedAt,
-    stopFeeding(){ feedingPose=null; },
+    stopFeeding(){ if(feedingPose)feedingPose.animal.root.rotation.x=0; feedingPose=null; },
     fishModel: fish[0].root,
-    reset(){age=frame=0;feedingPose=null;pose(null,true);},
+    reset(){
+      if (feedingPose) feedingPose.animal.root.rotation.x = 0;
+      age=frame=0;feedingPose=null;pose(null,true);
+    },
     update(dt,eye){
       if(reducedMotion()){
         drops.visible=ripples.visible=false;
