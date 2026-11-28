@@ -271,7 +271,8 @@ export function createFieldInteractions({
     }
     if(!strike)pickaxe.rotation.x=-0.31;
     pickaxe.position.set(0.38,-0.48,-0.68);
-    pickaxe.rotation.y=-.17;
+    // Turn the pickaxe head toward the strike direction, keeping the handle upright.
+    pickaxe.rotation.y=Math.PI/2-.17;
     pickaxe.rotation.z=-.2;
     rewardTime=Math.max(0,rewardTime-dt);
     crystal.visible=rewardTime>0 && !driving();
