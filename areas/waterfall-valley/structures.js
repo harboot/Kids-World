@@ -1,5 +1,4 @@
 import { faces, nearest, route } from './landform.js';
-import { shaft } from './mine-layout.js';
 
 export function createTimberKit(THREE, scene) {
   const batches = new Map();
@@ -93,7 +92,7 @@ export function addRailway(THREE, scene, layout, kit) {
   const lamps = [], posts = [];
   const trestle = [];
   const gauge = 1.24;
-  const deckHalfWidth = 2.16;
+  const deckHalfWidth = 2.94;
   const ties = faces(THREE, scene, 'Elevated rail trestle deck',
     new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false }));
   const trackBed = new THREE.Color(0x765239);
@@ -111,7 +110,7 @@ export function addRailway(THREE, scene, layout, kit) {
       const rails = [-gauge / 2, gauge / 2].map(offset => at(offset, 0.15));
       const previous = i > 0 ? path.points[i - 1] : null;
       const openAir = z > -23;
-      if (!openAir) kit.box(dark, x, y + 0.04, z, 2.05, 0.14, 0.24, angle);
+      if (!openAir && (!index || i > 1)) kit.box(dark, x, y + 0.04, z, 2.05, 0.14, 0.24, angle);
       if (previous && previous[1] < -23 && !openAir) {
         for (let j = 0; j < 2; j++) kit.beam(iron, previousRails[j], rails[j], 0.083);
       }
@@ -183,15 +182,6 @@ export function addRailway(THREE, scene, layout, kit) {
 
   ties.finish();
 
-  const shaftY = nearest(main, shaft.x, shaft.z).y;
-  for (let i = 0; i < 10; i++) {
-    const a = i / 10 * Math.PI * 2, b = (i + 1) / 10 * Math.PI * 2;
-    const end = (angle, dy) => [shaft.x + Math.cos(angle) * shaft.radius, shaftY + dy, shaft.z + Math.sin(angle) * shaft.radius];
-    kit.beam(wood, end(a, 1.05), end(b, 1.05), 0.16);
-    const [px, , pz] = end(a, 0);
-    kit.beam(dark, [px, floor.sample(px, pz) - 0.15, pz], end(a, 1.12), 0.2);
-  }
-  lamp(shaft.x - shaft.radius, shaftY + 1.64, shaft.z);
   function deckHeight(x, z) {
     for (const [a, b, c] of sections) {
       const ax = b[0] - a[0], az = b[2] - a[2];

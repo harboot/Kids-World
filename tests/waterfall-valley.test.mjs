@@ -4,7 +4,8 @@ import * as THREE from '../vendor/three.module.min.js';
 import { PLAYER_RADIUS, walkElevation } from '../core/movement.js';
 import { areas } from '../game.js';
 import { CLIFF_Z, hikingTrail, westTrail } from '../areas/waterfall-valley/landform.js';
-import { chambers, createMineLayout, shaft } from '../areas/waterfall-valley/mine-layout.js';
+import { shaft } from '../areas/waterfall-valley/lift-layout.js';
+import { chambers, createMineLayout } from '../areas/waterfall-valley/mine-layout.js';
 
 const definition = (await areas['waterfall-valley'].loadModule()).default;
 const headHeight = 1.82;
@@ -24,7 +25,7 @@ function walk(origin, waypoints) {
       x += dx;
       z += dz;
       feet = next;
-      assert.ok(feet + headHeight <= visit.getCeilingHeight(x, z), `low ceiling at ${x}, ${z}`);
+      assert.ok(feet + headHeight <= visit.getCeilingHeight(x, z, feet), `low ceiling at ${x}, ${z}`);
     }
   }
   return feet;
@@ -35,10 +36,11 @@ test('the public visit has a continuous walking loop through both entrances and 
   assert.deepEqual(visit.missionStatus.missions, []);
   const { x, z } = definition.spawn;
   const lowerPath = [...westTrail.points.slice(3), [-14, -18], [-14, -23]];
-  const minePath = [...mine.main.points.filter(([, z]) => z < CLIFF_Z - 1), [17, -23]];
+  const bypass = [[-16.5, -23.05], [-18.5, -23.55], [-18.5, -33.5], [-19, -36], [-19, -38]];
+  const minePath = [...bypass, ...mine.main.points.filter(([x, z]) => z < -37.7 || x > 0 && z < CLIFF_Z - 1), [17, -23]];
   const upperPath = [...hikingTrail.points.slice(0, 10), [13, 46], [-5, 46], ...westTrail.points.slice(1, 3)];
   assert.ok(walk([x, z], [...lowerPath, ...minePath, ...upperPath]) > 3);
-  assert.ok(walk([17, -23], [...minePath.slice(0, -1).reverse(), [-14, -18], [-36, -18]]) > 1);
+  assert.ok(walk([17, -23], [...minePath.slice(0, -1).reverse(), [-14, -23], [-14, -18], [-36, -18]]) > 1);
   assert.equal(visit.blocksGround(4, CLIFF_Z - 0.1, PLAYER_RADIUS, 13), true, 'cliff between entrances');
   assert.equal(visit.blocksGround(shaft.x, shaft.z, PLAYER_RADIUS, 17), true, 'guarded shaft');
 });
@@ -48,21 +50,21 @@ test('the cavern network reaches every chamber and accounts for approximately 40
   function reachable(start, minZ, maxZ) {
     const queue = [];
     const keys = new Set();
-    function enqueue(x, z) {
-      const key = `${x},${z}`;
+    function enqueue(x, z, elevation) {
+      const ground = visit.getGroundHeight(x, z, elevation);
+      const key = `${x},${z},${ground}`;
       if (keys.has(key)) return;
       keys.add(key);
-      queue.push([x, z]);
+      queue.push([x, z, ground]);
     }
-    enqueue(...start);
+    enqueue(...start, visit.getGroundHeight(...start));
     for (let i = 0; i < queue.length; i++) {
-      const [x, z] = queue[i];
-      const feet = visit.getGroundHeight(x, z);
+      const [x, z, feet] = queue[i];
       for (const [dx, dz] of [[0, -pitch], [pitch, 0], [0, pitch], [-pitch, 0]]) {
         const px = x + dx, pz = z + dz;
         if (Math.abs(px) >= definition.width / 2 || pz < minZ || pz > maxZ) continue;
         const next = walkElevation(visit, { x, z }, px, pz, feet, true);
-        if (next !== null && next + headHeight <= visit.getCeilingHeight(px, pz)) enqueue(px, pz);
+        if (next !== null && next + headHeight <= visit.getCeilingHeight(px, pz, next)) enqueue(px, pz, next);
       }
     }
     return queue;

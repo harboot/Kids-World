@@ -2,6 +2,8 @@ import {
   CLIFF_Z, LOWER_X, UPPER_X, LOWER_LEVEL, UPPER_LEVEL, X_MIN, clamp, heightGrid,
   mix, nearest, portalHeight, route, smooth,
 } from './landform.js';
+import { aditCeiling, aditEntryZ, aditHeight, aditOpening, createLowerAdit, shaft } from './lift-layout.js';
+
 
 export const chambers = [
   { name: 'Lower station', x: -16, z: -32, rx: 10, rz: 10 },
@@ -14,7 +16,6 @@ export const chambers = [
 ];
 
 export const mineLake = { x: -42, z: -54, rx: 14, rz: 8.5, y: 3.05 };
-export const shaft = { x: 29, z: -55, radius: 3.65, depth: 9 };
 
 function curveRoute(THREE, positions) {
   const curve = new THREE.CatmullRomCurve3(positions.map(([x, z]) => new THREE.Vector3(x, 0, z)));
@@ -71,8 +72,10 @@ export function createMineLayout(THREE) {
       const distance = Math.hypot((x - cx) / rx, (z - cz) / rz);
       opening = Math.max(opening, (1 - distance) * Math.min(rx, rz));
     }
-    return opening + smooth(CLIFF_Z, -29, z) * (0.43 * Math.sin(x * 0.71 + z * 0.43)
+    const irregular = opening + smooth(CLIFF_Z, -29, z) * (0.43 * Math.sin(x * 0.71 + z * 0.43)
       + 0.36 * Math.sin(x * 0.31 - z * 0.84));
+    if (x > 0 || x < -15 || Math.abs(z - aditEntryZ) > 6) return irregular;
+    return Math.max(irregular, Math.min(-x, aditOpening(x, z)));
   }
 
   function bridgeSpan(x, z) {
@@ -82,19 +85,30 @@ export function createMineLayout(THREE) {
 
   function floor(x, z) {
     const track = nearest(main, x, z);
-    const spur = nearest(crystalBranch, x, z);
+    const crystalTrack = nearest(crystalBranch, x, z);
     const shaftTrack = nearest(shaftBranch, x, z);
     const trail = nearest(connector, x, z);
     let base = mix(track.y, trail.y, 1 - smooth(1.5, 6, trail.offset));
-    base = mix(base, spur.y, 1 - smooth(2.15, 10, spur.offset));
+    base = mix(base, crystalTrack.y, 1 - smooth(2.15, 10, crystalTrack.offset));
     base = mix(base, shaftTrack.y, 1 - smooth(2.15, 8, shaftTrack.offset));
     base = mix(track.y, base, smooth(1.8, 4.4, track.offset));
     const relief = (Math.sin(x * 0.65 + z * 0.39) * 0.24 + Math.cos(x * 0.33 - z * 0.55) * 0.27)
       * smooth(2, 7, track.offset);
     const basin = 1 - smooth(0.56, 1.12, lakeBasin(x, z));
-    const pit = 1 - smooth(1.22, 2.75, Math.hypot(x - shaft.x, z - shaft.z));
-    const bed = mix(base + relief, mineLake.y - 1.6 + relief, basin) - pit * shaft.depth;
-    return mix(portalHeight(x), bed, smooth(CLIFF_Z, -29, z));
+    const bed = mix(base + relief, mineLake.y - 1.6 + relief, basin);
+    let y = mix(portalHeight(x), bed, smooth(CLIFF_Z, -29, z));
+    const landing = Math.max(Math.abs(x - shaft.x), Math.abs(z - shaft.z));
+    y = mix(shaft.upper, y, smooth(2.6, 6.6, landing));
+    if (x <= 0 && x >= -14 && Math.abs(z - aditEntryZ) < 6) {
+      const entrance = smooth(-14, -7, x) * (1 - smooth(4.1, 6, Math.abs(z - aditEntryZ)));
+      y = mix(y, aditHeight(x, z), entrance);
+    }
+    // Shape the spur shoulders beneath the railheads through the turnout
+    // overlaps, where the surrounding galleries climb at different grades.
+    for (const spur of [shaftTrack, crystalTrack]) {
+      y = Math.min(y, mix(spur.y - 0.06, y, smooth(1.85, 3.25, spur.offset)));
+    }
+    return y;
   }
 
   function ceiling(x, z) {
@@ -105,12 +119,15 @@ export function createMineLayout(THREE) {
       + smooth(CLIFF_Z, -31, z) * (Math.sin(x * 0.57 + z * 0.24) * 0.64 + Math.cos(z * 0.6) * 0.48);
     const rail = nearest(main, x, z);
     const bed = Math.max(floor(x, z), rail.y - 6);
-    // Keep raised track clear independently of the lower lake bed.
-    return Math.max(bed + height, rail.y + 4.5 * (1 - smooth(2, 4, rail.offset)));
+    const raised = Math.max(bed + height, rail.y + 4.5 * (1 - smooth(2, 4, rail.offset)));
+    if (x > 0 || x < -14 || Math.abs(z - aditEntryZ) >= 6) return raised;
+    const entrance = smooth(-14, -7, x) * (1 - smooth(4.1, 6, Math.abs(z - aditEntryZ)));
+    return mix(raised, aditCeiling(x, z), entrance);
   }
 
   return {
     main,
+    adit: createLowerAdit(),
     branches: [crystalBranch, shaftBranch],
     bridgeSpan,
     opening: heightGrid(X_MIN, 72, -88, CLIFF_Z, signedOpening),

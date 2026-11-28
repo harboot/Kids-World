@@ -1,13 +1,13 @@
 {
-  "version": "23d2a5b554fe07390cfc13eaf78487e7203e97d51703679198068e0b6b8099e3",
+  "version": "f2915fa0619d8cbc2225d383064c8a708e3801d58478404dc4bb3f3ee496a745",
   "files": [
     {
       "path": "./area-catalog.js",
-      "revision": "7c4071bc98b96e9512748b1bc17d3b6bb9108655a248863764248850a491db5c"
+      "revision": "32c1bc33353f6a7c52c8beef4af3b372a7b6570451b071f054677bb1222d34d4"
     },
     {
       "path": "./area-stats.json",
-      "revision": "9d3746b491ebc2f9dbddc0ef7e0cf8720fbf653621e70d4313a6b5a6ee9b4646"
+      "revision": "e76fa19ae365c4ba073bd90185dfb4510f559611f4a21649c5f120c7f239e8bd"
     },
     {
       "path": "./areas/arendelle-village/arendelle-village.jpg",
@@ -678,32 +678,56 @@
       "revision": "38d469d4d4c2d537d14f870e45b085a11105aa3a0b3c4650fe2e25d0fa323151"
     },
     {
+      "path": "./areas/waterfall-valley/boat.js",
+      "revision": "3c8f6d12a56a87fb71f42ca1b92c93ab7429cfff6e16e04f7fa4dd4503058bbc"
+    },
+    {
       "path": "./areas/waterfall-valley/caverns.js",
-      "revision": "18eeb6463e2bd2d1efa29cde038ce167784daff8562315424cc33abdebc199ab"
+      "revision": "3a5e473495afef358095c46ae1470d705714fd43c80c81f7dc56561668c0349b"
     },
     {
       "path": "./areas/waterfall-valley/index.js",
-      "revision": "b736c3e82744d1dde12d07cf8731b0611cef61e4b4378fbcc65054160eed9f04"
+      "revision": "daaf15ade05a996fbf724e328f1bdc9d18baecd5cfc7cf148d3e919e3e10dcd5"
     },
     {
       "path": "./areas/waterfall-valley/landform.js",
       "revision": "bbe8d2b1669372c854fac56518491baddc7acbc9a460ced03db5d3085730c49e"
     },
     {
+      "path": "./areas/waterfall-valley/lift-layout.js",
+      "revision": "3095869c8c6922ee35d353261944f282952bf561ca7d37f567ca3672a1838ed8"
+    },
+    {
+      "path": "./areas/waterfall-valley/lift.js",
+      "revision": "a03b715a7235fc94d28558b3b7bbc6cc84c240c21ac0477350789717eb8cc3e9"
+    },
+    {
       "path": "./areas/waterfall-valley/metadata.js",
-      "revision": "0301427f9c37a7a9af64a6dc28f244990751e3509203c024dc6c04a9bbae8af7"
+      "revision": "11089141c146f549045af3ccca16d1bd3d99921718e4cb6c577c28a1ac946006"
     },
     {
       "path": "./areas/waterfall-valley/mine-layout.js",
-      "revision": "ba5bdb805e2d90beeb8c7fdc13e7a9d39270cc3e88753c15550da83751ba0dea"
+      "revision": "17fcc14dee13786244fa37946624de3adb7d724206e39b72388bca48479df5e1"
     },
     {
       "path": "./areas/waterfall-valley/outdoors.js",
-      "revision": "558e30819ba6b29e737a8a68c684719936b93787f761cdb4e24946905a0bdd2b"
+      "revision": "e7733cf765ce0ae88d9ccb9a9c117850163b304000b1c2aafcf5779108bc5500"
+    },
+    {
+      "path": "./areas/waterfall-valley/rail-route.js",
+      "revision": "7fddf7a177f7ae6892ff04f91b773c8b0eec220a0d3f973e3d8a047c37b75de6"
+    },
+    {
+      "path": "./areas/waterfall-valley/ride.js",
+      "revision": "0bfc1e01c880a38a6e078475534f99413b7e8fa4efeeda0b33653f1e2346a3b0"
     },
     {
       "path": "./areas/waterfall-valley/structures.js",
-      "revision": "6fb803df138a34719629e47f6611199da596e7f4d1bc0897e13671fdc35a0855"
+      "revision": "4fbf14669c93fab4023e2b97cd7b8a455ba2c907b3cfa1cd585fa2cfb6777f80"
+    },
+    {
+      "path": "./areas/waterfall-valley/train.js",
+      "revision": "902c2fa7f57c8048e755deaf21370b84d2ad2a40ef7bb78e9d039fb64ae17fc0"
     },
     {
       "path": "./areas/waterfall-valley/water.js",

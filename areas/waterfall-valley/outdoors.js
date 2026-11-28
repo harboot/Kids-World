@@ -84,7 +84,7 @@ export function addForest(THREE, scene, terrain, bedrock, bridges) {
   const random = seededRandom(989);
   const dummy = new THREE.Object3D();
   const tree = [], trunks = [], rocks = [], bushes = [], clouds = [], grass = [];
-  const obstacles = [];
+  const obstacles = [], waterRocks = [];
   const makeColor = hex => new THREE.Color(hex);
 
   function place(batch, x, y, z, sx, sy, sz, color, yaw = random() * 6.283, lean = 0) {
@@ -122,7 +122,9 @@ export function addForest(THREE, scene, terrain, bedrock, bridges) {
     } else if (trail > 1.8 && !clearing(x, z) && (shoreline > 0.79 && shoreline < 1.25 || random() < 0.29)) {
       const rock = 0.34 + random() ** 2 * 1.7;
       if (Math.abs(x - LOWER_X) < 5.6 && z < -14) continue;
-      place(rocks, x, y + rock * 0.28, z, rock, rock * (0.5 + random() * 0.5), rock * 0.8, 0x727381, undefined, 0.19);
+      const height = rock * (0.5 + random() * 0.5);
+      place(rocks, x, y + rock * 0.28, z, rock, height, rock * 0.8, 0x727381, undefined, 0.19);
+      if (y + rock * 0.28 + height > LAKE_LEVEL - 0.23) waterRocks.push({ x, z, radius: rock * 0.85 });
       if (rock > 0.64 && y > 0.1) obstacles.push({ x, z, radius: rock * 0.69 });
     }
     if (trail > 1.5 && y > 1 && !riparian && random() < 0.32) {
@@ -166,5 +168,5 @@ export function addForest(THREE, scene, terrain, bedrock, bridges) {
   finish('Alpine undergrowth', bushes, stones, facets);
   finish('Bunchgrasses', grass, new THREE.ConeGeometry(1, 1, 4), facets);
   finish('Faceted clouds', clouds, new THREE.IcosahedronGeometry(1, 1), new THREE.MeshBasicMaterial({ toneMapped: false }));
-  return obstacles;
+  return { obstacles, waterRocks };
 }
