@@ -1,6 +1,6 @@
 import { createFlyingFox } from './flying-fox.js';
 import { createFieldInteractions, near } from './field-interactions.js';
-import { createBursts, checkpointBeam } from './mission-effects.js';
+import { createBursts, checkpointBeam, groundMarker } from './mission-effects.js';
 import { LAKE_LEVEL } from './landform.js';
 import { goldSites } from './detail-sites.js';
 
@@ -39,7 +39,11 @@ export function createValleyMissions({
   const driving=()=>boat.driving||train.driving||zipline.riding;
   const zipline=createFlyingFox({THREE,scene,camera,ground:getGroundHeight,
     busy:()=>boat.driving||train.driving, onLand:()=>progress('flying-fox','Flying Fox ride complete!')});
-  const gold=goldSites.map(([id])=>landmarks[id]);
+  const gold=goldSites.map(([id])=>{
+    const landmark=landmarks[id];
+    const marker=groundMarker(THREE,scene,landmark.position,0.72,0xffd65c,getGroundHeight);
+    return {...landmark,marker};
+  });
   const entrances=[
     {point:landmarks['lower-cave-entrance'].approach, label:'Lower waterfall cave discovered!'},
     {point:landmarks['upper-cave-entrance'].approach, label:'Upper waterfall cave discovered!'},
@@ -72,7 +76,7 @@ export function createValleyMissions({
 
   const field=createFieldInteractions({
     THREE, scene, viewmodel, camera, landmarks, wildlife, basket, veins, effects, notify, reducedMotion,
-    finish:progress,isComplete,driving,
+    finish:progress,isComplete,driving,getGroundHeight,
     markCrystal(){progress('crystal-mining','Crystal collected ('+(byId.get('crystal-mining').current+1)+'/3).');},
   });
 
@@ -95,13 +99,7 @@ export function createValleyMissions({
     ...field.interactions,
     zipline.interaction,
   ];
-  for(const [name,label,tip,radius] of [
-    ['Park ranger','Talk to Ranger','Look for gold along the hiking trails. Two cave entrances hide behind the waterfall.',1.35],
-    ['Camper','Talk to Camper','Light the campfire to bring on the night. Extinguish it to bring back the daylight.',1.35],
-    ['Fisherman','Talk to Fisherman','Use the spare rod at the pier. Wait for a bite, then reel in your fish.',1.0],
-    ['Retired miner','Talk to Miner','The train can stop beside the crystal galleries. Look for the generator in the power station.',1.36],
-  ]) interactions.push(interactionAt(characters.people[name].position,label,()=>notify(tip),radius,
-    ()=>!field.fishing&&!field.feeding));
+
 
   function updateVehicles(){
     const boatMoved=boat.distanceTravelled>previousBoat, trainMoved=train.distanceTravelled>previousTrain;
@@ -128,9 +126,9 @@ export function createValleyMissions({
 
   function inspectFoot(player,atMine) {
     if(!driving()&&!atMine&&!isComplete('gold-hunt')){
-      gold.forEach(({object,approach},index)=>{
+      gold.forEach(({object,approach,marker},index)=>{
         if(!object.visible||!near(approach,player,1.18,0.9))return;
-        object.visible=false;
+        object.visible=marker.visible=false;
         if(!reducedMotion())effects.emit({x:approach.x,y:approach.y+0.36,z:approach.z},0xf7cf61,8);
         progress('gold-hunt','Gold nugget '+(index+1)+' found ('+(byId.get('gold-hunt').current+1)+'/3).');
       });
@@ -160,7 +158,7 @@ export function createValleyMissions({
   const missionStatus={missions:rows,get hint(){return hint;}};
   function reset(){
     for(const row of rows){row.current=0;row.complete=false;}
-    gold.forEach(({object})=>{object.visible=true;});
+    gold.forEach(({object,marker})=>{object.visible=marker.visible=true;});
     entranceVisited.fill(false);
     trainVisited.fill(false);
     previousBoat=previousTrain=0;
