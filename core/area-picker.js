@@ -25,6 +25,13 @@ export function renderAreaList(list, { areas, progress, current, select }) {
     title.textContent = area.title;
     card.append(title);
 
+    if (area.showMissionCount && Number.isInteger(area.missionCount) && area.missionCount > 0) {
+      const total = document.createElement('span');
+      total.className = 'area-card-mission-count';
+      total.textContent = `${area.missionCount} ${area.missionCount === 1 ? 'mission' : 'missions'}`;
+      card.append(total);
+    }
+
     if (progress.has(id)) {
       const badge = document.createElement('span');
       badge.className = 'area-card-completion';

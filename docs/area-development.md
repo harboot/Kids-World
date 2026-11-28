@@ -32,7 +32,7 @@ Use literal relative JavaScript imports and `new URL('./asset.ext', import.meta.
 | `missionCount` | Number of mission rows shown in the area HUD and on Area Statistics |
 | `spawn` | Finite `x` and `z` coordinates, with optional finite `yaw` in radians and `elevation` for selecting an elevated surface |
 
-`loadingMessage` can override the default loading text. Set or increment the positive integer `completionRevision` when a changed mission list requires a new completion badge.
+`loadingMessage` can override the default loading text. Set `showMissionCount: true` to display the declared mission total on a public area card. Set or increment the positive integer `completionRevision` when a changed mission list requires a new completion badge.
 
 ### Background music
 

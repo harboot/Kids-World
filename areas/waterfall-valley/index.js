@@ -1,6 +1,9 @@
 import { EYE_HEIGHT } from '../../core/player.js';
 import { addBoat } from './boat.js';
 import { addCaverns } from './caverns.js';
+import { createCampfire } from './campfire.js';
+import { createMinePower } from './mine-power.js';
+import { createValleyMissions } from './missions.js';
 import { addValleyCharacters } from './characters.js';
 import { detailsBlock } from './detail-kit.js';
 import { addMineDetails } from './mine-details.js';
@@ -44,11 +47,10 @@ function collisionIndex(items) {
 
 export default {
   ...metadata,
-  load({ THREE, scene, camera, hud, touch = false, reducedMotion = () => false, carryPlayer = () => {}, notify = () => {} }) {
+  load({ THREE, scene, viewmodel, camera, hud, touch = false, reducedMotion = () => false,
+    carryPlayer = () => {}, notify = () => {}, completeLevel = () => {}, isLevelComplete = () => false }) {
     scene.background = new THREE.Color(0x65b7eb);
     scene.fog = new THREE.Fog(0x9fcce1, 57, 147);
-    const daylight = new THREE.Color(0x9fcce1);
-    const caveFog = new THREE.Color(0x293941);
     const sky = new THREE.HemisphereLight(0xd0ebff, 0x6f7650, 1.46);
     const sun = new THREE.DirectionalLight(0xffe5b7, 2.17);
     sun.position.set(-43, 68, 35);
@@ -67,7 +69,7 @@ export default {
     const bridges = [bridge(-36, -18, -14, -18, 3.25), bridge(-5, 46, 13, 46, 3.55)];
     const railroad = addRailway(THREE, scene, mine, kit);
     const lift = addLift({ THREE, scene, mine, carryPlayer });
-    const rocks = addCaverns(THREE, scene, mine, [...railroad.lamps, ...lift.lamps], railroad);
+    const { outcrops, rockSurfaces } = addCaverns(THREE, scene, mine, [...railroad.lamps, ...lift.lamps], railroad);
     addLandforms(THREE, scene, terrain, bedrock, mine);
     const { obstacles: trees, waterRocks } = addForest(THREE, scene, terrain, bedrock, bridges);
     const animateWater = addWater(THREE, scene, terrain, touch);
@@ -87,7 +89,7 @@ export default {
     const edgeRock = (x, z) => valleyWall(x, z) > 4.8
       && Math.min(nearest(hikingTrail, x, z).offset, nearest(westTrail, x, z).offset) > 4;
     const outsideObstacles = collisionIndex(trees);
-    const insideObstacles = collisionIndex([...rocks, ...railroad.posts]);
+    const insideObstacles = collisionIndex([...outcrops, ...railroad.posts]);
     const waterObstacles = collisionIndex(waterRocks);
     const world = { obstacles: railroad.platforms, getGroundHeight, getCeilingHeight, blocksGround };
     const rideContext = { THREE, scene, camera, world, reducedMotion, notify };
@@ -101,7 +103,12 @@ export default {
       const position = object ? Object.freeze({ x: object.position.x, y: object.position.y, z: object.position.z }) : approach;
       return [id, Object.freeze({ id, object, position, approach })];
     })));
-    const emptyStatus = { missions: [] };
+    const campfire=createCampfire({ THREE,scene,hearth:landmarks.campfire.object,sky,sun,reducedMotion,touch });
+    const power=createMinePower({ THREE,scene,mine,generator:landmarks['mine-generator'].object,rockSurfaces,reducedMotion });
+    const missions=createValleyMissions({
+      THREE,scene,viewmodel,camera,mine,landmarks,characters,wildlife,veins:underground.veins,basket:outdoor.basket,
+      boat,train,campfire,power,getCeilingHeight,notify,reducedMotion,touch,completeLevel,isLevelComplete,areaId:metadata.id,
+    });
 
     function caveBridge(x, z, margin = 0) {
       const span = mine.bridgeSpan(x, z);
@@ -169,8 +176,8 @@ export default {
     let time = 0;
     return {
       ...world,
-      interactions: [...train.interactions, ...boat.interactions, ...lift.interactions],
-      missionStatus: emptyStatus,
+      interactions: [...train.interactions, ...boat.interactions, ...lift.interactions, ...missions.interactions],
+      missionStatus: missions.missionStatus,
       landmarks,
       droneView: { center: { x: 0, z: -5 }, width: 144, depth: 166 },
       reset() {
@@ -181,13 +188,15 @@ export default {
         wildlife.reset();
         time = 0;
         animateWater(time);
-        scene.fog.color.copy(daylight);
-        scene.fog.near = 57;
-        scene.fog.far = 147;
+        campfire.reset();
+        power.reset();
+        missions.reset();
       },
       unload() {
         train.cancel();
         boat.cancel();
+        missions.unload();
+        campfire.reset();
       },
       update(dt, player, elapsed = dt) {
         lift.update(dt, player);
@@ -198,12 +207,11 @@ export default {
           time = (time + elapsed) % 1200;
           animateWater(time);
         }
-        if (!player) return;
-        const inside = smooth(CLIFF_Z - 2, CLIFF_Z - 15, player.z)
-          * (1 - smooth(0, 2.5, player.y - EYE_HEIGHT - mine.ceiling.sample(player.x, player.z)));
-        scene.fog.color.copy(daylight).lerp(caveFog, inside);
-        scene.fog.near = 57 - inside * 42;
-        scene.fog.far = 147 - inside * 97;
+        const inside = player ? smooth(CLIFF_Z - 2, CLIFF_Z - 15, player.z)
+          * (1 - smooth(0, 2.5, player.y - EYE_HEIGHT - mine.ceiling.sample(player.x, player.z))) : 0;
+        campfire.update(dt,inside,player);
+        power.update(dt);
+        missions.update(dt,player,inside>0.62);
       },
     };
   },

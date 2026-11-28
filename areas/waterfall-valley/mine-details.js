@@ -8,6 +8,7 @@ import { addFootbridge, createTimberKit } from './structures.js';
 
 export function addMineDetails({ THREE, scene, mine, document, register }) {
   const collision = [], decks = [];
+  const veins = new Map();
   const ground = mine.floor.sample;
   const region = name => detailRegion(THREE, scene, name, ground, { cave: true, document, collision, decks });
   const random = seededRandom(47352);
@@ -234,30 +235,39 @@ export function addMineDetails({ THREE, scene, mine, document, register }) {
   }
   const facets=crystalMesh.finish().geometry;
   const palette=new Map();
-  function crystal(color,x,y,z,height,width,rx,rz,yaw=random()*Math.PI*2){
-    if(!palette.has(color))palette.set(color,[]);
+  function crystal(color,x,y,z,height,width,rx,rz,yaw=random()*Math.PI*2,batch=palette){
+    if(!batch.has(color))batch.set(color,[]);
     const shape = new THREE.Object3D();
     shape.position.set(x,y,z);
     shape.rotation.set(rx,yaw,rz);
     shape.scale.set(width,height,width);
     shape.updateMatrix();
-    palette.get(color).push(shape.matrix.clone());
+    batch.get(color).push(shape.matrix.clone());
   }
   function deposit(id,x,z,color,approach,scale=1){
     const node=crystals.group(id ? id.replaceAll('-',' ') : 'Crystal outcrop',x,z);
     const base=node.position.y;
     const kit=detailKit(THREE,node,true);
+    const miningBatch=id?new Map():palette;
+    const makeShard=(cx,cy,cz,h,w,rx,rz)=>crystal(color,id?cx-x:cx,id?cy-base:cy,id?cz-z:cz,
+      h,w,rx,rz,undefined,miningBatch);
     for(let i=0;i<5;i++){
       const a=i*Math.PI*2/5, r=.45+random()*.27;
       const dx=Math.cos(a)*r*scale, dz=Math.sin(a)*r*scale;
       const h=ground(x+dx,z+dz);
       kit.part('stone',0x526373,dx,h-base+.17,dz,.61*scale,.51*scale,.56*scale,random()*6);
-      crystal(color,x+dx,h+.04,z+dz,scale*(.63+random()*.79),scale*(.16+random()*.14),dz*.57,-dx*.54);
+      makeShard(x+dx,h+.04,z+dz,scale*(.63+random()*.79),scale*(.16+random()*.14),dz*.57,-dx*.54);
     }
-    crystal(color,x,base+.03,z,scale*1.86,scale*.34,.1,-.22);
+    makeShard(x,base+.03,z,scale*1.86,scale*.34,.1,-.22);
     kit.finish();
     crystals.bounds(node,0,0,0,1.42*scale,1.42*scale,1.84*scale);
-    if(id)register(id,node,approach);
+    if(id) {
+      register(id,node,approach);
+      const cluster=new THREE.Group();
+      cluster.name='Mineable crystal formation';
+      node.add(cluster);
+      veins.set(id,{ cluster,batch:miningBatch });
+    }
   }
   for(const site of crystalSites)deposit(site.id,site.x,site.z,site.color,site.approach);
   for(const [x,z,color,scale] of [[-24.1,-61.2,0xe1a64e,.64],[-8.4,-60.9,0x5ec9f6,.61],
@@ -284,15 +294,17 @@ export function addMineDetails({ THREE, scene, mine, document, register }) {
     shading.push(s,s,s);
   }
   facets.setAttribute('color',new THREE.Float32BufferAttribute(shading,3));
-  for(const [color,matrices] of palette){
-    const material=new THREE.MeshLambertMaterial({
-      color,emissive:color,emissiveIntensity:.45,vertexColors:true,flatShading:true,
-    });
-    const instances=new THREE.InstancedMesh(facets,material,matrices.length);
-    instances.name='Mineral facets';
-    matrices.forEach((matrix,i)=>instances.setMatrixAt(i,matrix));
-    crystals.root.add(instances);
+  function renderCrystals(batch,parent) {
+    for(const [color,matrices] of batch){
+      const material=new THREE.MeshBasicMaterial({color,vertexColors:true,toneMapped:false});
+      const instances=new THREE.InstancedMesh(facets,material,matrices.length);
+      instances.name='Mineral facets';
+      matrices.forEach((matrix,i)=>instances.setMatrixAt(i,matrix));
+      parent.add(instances);
+    }
   }
+  renderCrystals(palette,crystals.root);
+  for(const {cluster,batch} of veins.values())renderCrystals(batch,cluster);
   crystals.sign('CRYSTAL GALLERY',-16.8,-54.05,0.5,1.74);
   crystals.finish();
 
@@ -349,5 +361,5 @@ export function addMineDetails({ THREE, scene, mine, document, register }) {
     const line=nearest(mine.main,x,z);
     register(id,null,[x,z],line.y);
   }
-  return { collision,decks };
+  return { collision,decks,veins };
 }

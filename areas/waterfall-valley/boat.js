@@ -93,7 +93,7 @@ export function addBoat({ THREE, scene, camera, world, terrain, waterObstacles, 
   const { ground, boat, wake, pattern, foam, wheel } = buildBoat(THREE, scene);
   const hull = { ...berth, width: hullWidth, length: hullLength };
   const samples = hullSections.flatMap(([z, w]) => [[-w, z], [0, z], [w, z]]);
-  let speed, time, turn;
+  let speed, time, turn, distanceTravelled;
 
   function fits(x, z, yaw) {
     for (const [side, forward] of samples) {
@@ -119,6 +119,7 @@ export function addBoat({ THREE, scene, camera, world, terrain, waterObstacles, 
       if (!speed) continue;
       const next = localPoint(hull.x, hull.z, hull.yaw, 0, speed * step);
       if (fits(next.x, next.z, hull.yaw)) {
+        distanceTravelled += Math.abs(speed * step);
         hull.x = next.x;
         hull.z = next.z;
       } else {
@@ -195,12 +196,15 @@ export function addBoat({ THREE, scene, camera, world, terrain, waterObstacles, 
   function reset() {
     ride.cancel();
     Object.assign(hull, berth);
-    speed = turn = time = 0;
+    speed = turn = time = distanceTravelled = 0;
     pose();
   }
   reset();
   return {
     interactions, blocks, reset, cancel: ride.cancel,
+    get driving() { return ride.active; },
+    get distanceTravelled() { return distanceTravelled; },
+    position: ground.position,
     update(elapsed) {
       time = (time + elapsed) % 1200;
       pose();

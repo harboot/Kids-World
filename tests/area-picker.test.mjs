@@ -42,7 +42,10 @@ test('the picker lists all public areas with thumbnails, regardless of missions 
   renderAreaList(list, { areas, progress, current: 'secret-apartment', select });
 
   assert.deepEqual(list.children.map(card => card.dataset.area), Object.keys(publicFolders));
-  assert.deepEqual(list.children.filter(card => card.children[2]).map(card => card.dataset.area), ['snow']);
+  const withBadge = list.children.filter(card => card.children.some(child => child.className === 'area-card-completion'));
+  assert.deepEqual(withBadge.map(card => card.dataset.area), ['snow']);
+  const counts = list.children.flatMap(card => card.children.filter(child => child.className === 'area-card-mission-count'));
+  assert.deepEqual(counts.map(label => label.textContent), ['9 missions']);
   assert.ok(list.children.every(card => !card.attributes.has('aria-current')));
   const release = JSON.parse(await readFile(new URL('../version.json', import.meta.url)));
   await Promise.all(list.children.map(async card => {

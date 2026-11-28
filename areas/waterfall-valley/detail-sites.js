@@ -5,10 +5,10 @@ export const outdoorSites = {
   lookout: { x: 34, z: -16.2 },
 };
 
-export const checkpoints = [
-  ['hiking-checkpoint-lower', -27, 31],
-  ['hiking-checkpoint-middle', 40, 15],
-  ['hiking-checkpoint-upper', 33, -13],
+export const goldSites = [
+  ['gold-nugget-lower', -27, 31],
+  ['gold-nugget-middle', 40, 15],
+  ['gold-nugget-upper', 33, -13],
 ];
 
 export const crystalSites = [

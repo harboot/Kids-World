@@ -116,6 +116,7 @@ export function addValleyCharacters({ THREE, scene, ground, deckHeight, reducedM
   }
   pose(undefined,true);
   return {
+    people: Object.fromEntries(models.map(({root}) => [root.name, root])),
     reset(){ age=elapsed=0;pose(undefined,true); },
     update(dt,player){
       if(reducedMotion())return;
